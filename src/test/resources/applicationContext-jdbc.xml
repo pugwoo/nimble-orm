@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	                    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	                    http://www.springframework.org/schema/context
+	                    http://www.springframework.org/schema/context/spring-context-3.0.xsd
+	                    http://www.springframework.org/schema/tx
+	                    http://www.springframework.org/schema/tx/spring-tx.xsd">
+    
+    <!-- 支持注解注入 -->
+    <context:component-scan base-package="*" />
+    
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:jdbc.properties" />
+	</bean> 
+    
+    <!-- 配置DBCP连接池的数据源 -->
+    <!-- 这里也可以使用org.springframework.jdbc.datasource.DriverManagerDataSource数据源 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="initialSize" value="8" /><!-- 初始连接池大小 -->
+		<property name="maxActive" value="20" /><!-- 最大活动连接数 -->
+		<property name="validationQuery" value="SELECT 1" /> <!-- validationQuery和testOnBorrow是重连用 -->
+		<property name="testOnBorrow" value="true" />
+	</bean>
+	
+	<!-- 配置JdbcTemplate -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- 配置namedParameterTemplate -->
+	<bean id="namedParameterJdbcTemplate" 
+	    class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+	    <constructor-arg ref="dataSource" />
+	</bean>
+	
+	<!-- 支持事务，包括：Test中@Transactional -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+	</bean>
+	
+	<!-- 使得DAO中@Transactional注解生效 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<!-- DBHelper -->
+	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
+	    <property name="jdbcTemplate" ref="jdbcTemplate" />
+	</bean>
+	
+</beans>
