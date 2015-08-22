@@ -130,6 +130,8 @@ public class DOInfoReader {
 	public static boolean setValue(Field field, Object object, Object value) {
 		String fieldName = field.getName();
 		String setMethodName = "set" + firstLetterUpperCase(fieldName);
+		value = TypeAutoCast.cast(value, field.getType());
+		
 		Method method = null;
 		try {
 			method = object.getClass().getMethod(setMethodName, value.getClass());
