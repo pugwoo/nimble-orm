@@ -140,16 +140,19 @@ public class SpringJdbcDBHelper implements DBHelper {
 			String postSql, Object... args) {
 		int offset = (page - 1) * pageSize;
 		List<T> data = _getList(clazz, offset, pageSize, postSql, args);
-		int total = getTotal(clazz, postSql, args);
+		// 性能优化，当page=1 且拿到的数据少于pageSzie，则不需要查总数
+		int total = 0;
+		if(page == 1 && data.size() < pageSize) {
+			total = data.size();
+		} else {
+			total = getTotal(clazz, postSql, args);
+		}
 		return new PageData<T>(total, data);
 	}
 	
     @Override
-	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {
-		int offset = (page - 1) * pageSize;
-		List<T> data = _getList(clazz, offset, pageSize, null);
-		int total = getTotal(clazz, null);
-		return new PageData<T>(total, data);
+	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {		
+		return getPage(clazz, page, pageSize, null);
 	}
 	
     @Override
