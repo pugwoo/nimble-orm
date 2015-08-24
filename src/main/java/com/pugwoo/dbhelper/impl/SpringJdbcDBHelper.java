@@ -18,6 +18,7 @@ import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
 /**
  * 2015年1月12日 16:41:03 数据库操作封装：增删改查
@@ -189,11 +190,13 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		System.out.println("Exec SQL:" + sql.toString());
 		if(postSql == null) {
-			return jdbcTemplate.query(sql.toString(),
+			return namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz));
 		} else {
-			return jdbcTemplate.query(sql.toString(),
-					new AnnotationSupportRowMapper(clazz), args);
+			return namedParameterJdbcTemplate.query(
+					NamedParameterUtils.trans(sql.toString()),
+					NamedParameterUtils.transParam(args),
+					new AnnotationSupportRowMapper(clazz));
 		}
 	}
 	
