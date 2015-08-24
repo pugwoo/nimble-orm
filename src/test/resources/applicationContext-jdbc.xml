@@ -56,6 +56,7 @@
 	<!-- DBHelper -->
 	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
 	    <property name="jdbcTemplate" ref="jdbcTemplate" />
+	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
 	</bean>
 	
 </beans>

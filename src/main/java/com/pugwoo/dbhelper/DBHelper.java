@@ -60,6 +60,13 @@ public interface DBHelper {
 	public <T> List<T> getAll(Class<T> clazz);
 	
 	/**
+	 * 查询列表，查询所有记录
+	 * @param clazz
+	 * @return
+	 */
+	public <T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
+	
+	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。
 	 * 

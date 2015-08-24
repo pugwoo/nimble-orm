@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
@@ -24,9 +25,15 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 public class SpringJdbcDBHelper implements DBHelper {
 	
 	private JdbcTemplate jdbcTemplate;
+	
+	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		this.jdbcTemplate = jdbcTemplate;
+	}
+	
+	public void setNamedParameterJdbcTemplate(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
 	
 	@Override
@@ -147,6 +154,11 @@ public class SpringJdbcDBHelper implements DBHelper {
     @Override
 	public <T> List<T> getAll(final Class<T> clazz) {
 		return _getList(clazz, null, null, null);
+	}
+    
+    @Override
+	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
+		return _getList(clazz, null, null, postSql, args);
 	}
 
 	/**
