@@ -128,16 +128,25 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 	
     @Override
+	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
+			String postSql, Object... args) {
+		int offset = (page - 1) * pageSize;
+		List<T> data = _getList(clazz, offset, pageSize, postSql, args);
+		int total = getTotal(clazz, postSql, args);
+		return new PageData<T>(total, data);
+	}
+	
+    @Override
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {
 		int offset = (page - 1) * pageSize;
-		List<T> data = _getList(clazz, offset, pageSize);
-		int total = getTotal(clazz);
+		List<T> data = _getList(clazz, offset, pageSize, null);
+		int total = getTotal(clazz, null);
 		return new PageData<T>(total, data);
 	}
 	
     @Override
 	public <T> List<T> getAll(final Class<T> clazz) {
-		return _getList(clazz, null, null);
+		return _getList(clazz, null, null, null);
 	}
 
 	/**
@@ -146,10 +155,13 @@ public class SpringJdbcDBHelper implements DBHelper {
 	 * @param clazz
 	 * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
 	 * @param limit null时不生效
+	 * @param postSql sql的where/group/order等sql语句
+	 * @param args 参数
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T> List<T> _getList(Class<T> clazz, Integer offset, Integer limit) {
+	private <T> List<T> _getList(Class<T> clazz, Integer offset, Integer limit,
+			String postSql, Object... args) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 
@@ -158,10 +170,19 @@ public class SpringJdbcDBHelper implements DBHelper {
 
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(table.value());
+		if(postSql != null) {
+			sql.append(" ").append(postSql);
+		}
 		sql.append(limit(offset, limit));
 		
 		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.query(sql.toString(), new AnnotationSupportRowMapper(clazz));
+		if(postSql == null) {
+			return jdbcTemplate.query(sql.toString(),
+					new AnnotationSupportRowMapper(clazz));
+		} else {
+			return jdbcTemplate.query(sql.toString(),
+					new AnnotationSupportRowMapper(clazz), args);
+		}
 	}
 	
 	/**
@@ -169,15 +190,18 @@ public class SpringJdbcDBHelper implements DBHelper {
 	 * @param clazz
 	 * @return
 	 */
-	private int getTotal(Class<?> clazz) {
+	private int getTotal(Class<?> clazz, String postSql, Object... args) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT count(*)");
 		
 		Table table = DOInfoReader.getTable(clazz);
 		sql.append(" FROM ").append(table.value());
+		if(postSql != null) {
+			sql.append(" ").append(postSql); // TODO 需要优化，只需要where子句
+		}
 		
 		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.queryForObject(sql.toString(), Integer.class);
+		return jdbcTemplate.queryForObject(sql.toString(), Integer.class, args);
 	}
 	
 	/**

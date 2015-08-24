@@ -43,6 +43,16 @@ public interface DBHelper {
 	public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize);
 	
 	/**
+	 * 查询列表，没有查询条件
+	 * @param clazz
+	 * @param page 从1开始
+	 * @param pageSize
+	 * @return
+	 */
+	public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
+			String postSql, Object... args);
+	
+	/**
 	 * 查询列表，查询所有记录
 	 * @param clazz
 	 * @return
