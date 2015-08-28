@@ -147,7 +147,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		} else {
 			total = getTotal(clazz, postSql, args);
 		}
-		return new PageData<T>(total, data);
+		return new PageData<T>(total, data, pageSize);
 	}
 	
     @Override
