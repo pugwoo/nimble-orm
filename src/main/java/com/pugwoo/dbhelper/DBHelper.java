@@ -84,4 +84,26 @@ public interface DBHelper {
 	 */
 	public <T> int insertInOneSQL(List<T> list);
 	
+	/**
+	 * 更新数据库记录，返回数据库实际修改条数
+	 * @param t
+	 * @return
+	 */
+	public <T> int updateNotNull(T t);
+	
+	/**
+	 * 删除数据库记录，返回数据库实际修改条数
+	 * @param t
+	 * @return
+	 */
+	public <T> int delete(T t);
+	
+	/**
+	 * 自定义条件删除数据
+	 * @param clazz
+	 * @param postSql 必须提供，必须写where
+	 * @param args
+	 * @return
+	 */
+	public <T> int delete(Class<T> clazz, String postSql, Object... args);
 }

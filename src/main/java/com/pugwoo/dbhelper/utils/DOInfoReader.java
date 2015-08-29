@@ -67,6 +67,12 @@ public class DOInfoReader {
 		return result;
 	}
 	
+	/**
+	 * 获得字段里面的key字段
+	 * @param fields
+	 * @return
+	 * @throws NoKeyColumnAnnotationException
+	 */
 	public static List<Field> getKeyColumns(List<Field> fields) 
 	    throws NoKeyColumnAnnotationException {
 		List<Field> keyFields = new ArrayList<Field>();
@@ -78,6 +84,23 @@ public class DOInfoReader {
 		}
 		if(keyFields.isEmpty()) {
 			throw new NoKeyColumnAnnotationException();
+		}
+		return keyFields;
+	}
+	
+	/**
+	 * 获得字段里面的非key字段
+	 * @param fields
+	 * @return
+	 * @throws NoKeyColumnAnnotationException
+	 */
+	public static List<Field> getNotKeyColumns(List<Field> fields) {
+		List<Field> keyFields = new ArrayList<Field>();
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(!column.isKey()) {
+				keyFields.add(field);
+			}
 		}
 		return keyFields;
 	}
@@ -120,7 +143,7 @@ public class DOInfoReader {
 	}
 	
 	/**
-	 * 先按照setter的约定寻找setter方法(必须严格匹配参数类型)。<br>
+	 * 先按照setter的约定寻找setter方法(必须严格匹配参数类型或自动转换)<br>
 	 * 如果有则按setter方法，如果没有则直接写入
 	 * 
 	 * @param field
@@ -165,24 +188,4 @@ public class DOInfoReader {
 		String firstLetter = str.substring(0, 1).toUpperCase();
 		return firstLetter + str.substring(1, str.length());
 	}
-	
-	public static void main(String[] args) {
-//		StudentDO studentDO = new StudentDO();
-//		studentDO.setId(3L);
-//		studentDO.setName("nick");
-//		studentDO.setAge(27);
-
-//		Table table = getTable(studentDO.getClass());
-//		System.out.println("table name:" + table.value());
-
-		// 遍历所有field，获得列注解
-//		List<Field> fields = getColumns(studentDO.getClass());
-//		for (Field field : fields) {
-//			System.out.println(field.getAnnotation(Column.class));
-//		}
-
-//		System.out.println(setValue(fields.get(0), studentDO, 5L));
-//		System.out.println(studentDO.getId());
-	}
-
 }

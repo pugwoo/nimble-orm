@@ -14,6 +14,7 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
@@ -26,13 +27,11 @@ import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 public class SpringJdbcDBHelper implements DBHelper {
 	
 	private JdbcTemplate jdbcTemplate;
-	
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		this.jdbcTemplate = jdbcTemplate;
 	}
-	
 	public void setNamedParameterJdbcTemplate(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
@@ -47,6 +46,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
 		List<Object> keyValues = new ArrayList<Object>();
+		
+		// TODO 需要判断keyFields是否为空
 		
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
 		sql.append(join(fields, ","));
@@ -309,6 +310,76 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return jdbcTemplate.update(sql.toString(), values.toArray());
 	}
 	
+	@Override
+	public <T> int updateNotNull(T t) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(fields);
+		
+		if(notKeyFields.isEmpty()) {
+			return 0; // log: not need to update
+		}
+		if(keyFields.isEmpty()) {
+			throw new NoKeyColumnAnnotationException();
+		}
+		
+		sql.append(table.value()).append(" SET ");
+		List<Object> keyValues = new ArrayList<Object>();
+		String setSql = joinSetAndGetValue(notKeyFields, keyValues, t, false);
+		if(keyValues.isEmpty()) {
+			return 0; // all field is null, not need to update
+		}
+		sql.append(setSql).append(" WHERE ");
+		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		sql.append(where);
+		
+		System.out.println("Exec SQL:" + sql.toString());
+		return jdbcTemplate.update(sql.toString(), keyValues.toArray());
+	}
+	
+	@Override
+	public <T> int delete(T t) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("DELETE FROM ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		
+		if(keyFields.isEmpty()) {
+			throw new NoKeyColumnAnnotationException();
+		}
+		
+		sql.append(table.value()).append(" WHERE ");
+		List<Object> keyValues = new ArrayList<Object>();
+		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		sql.append(where);
+		
+		System.out.println("Exec SQL:" + sql.toString());
+		return jdbcTemplate.update(sql.toString(), keyValues.toArray());
+	}
+	
+	@Override
+	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
+		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous
+			throw new InvalidParameterException(); 
+		}
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("DELETE FROM ");
+		
+		Table table = DOInfoReader.getTable(clazz);
+		sql.append(table.value()).append(" ").append(postSql);
+		
+		return namedParameterJdbcTemplate.update(
+				NamedParameterUtils.trans(sql.toString()),
+				NamedParameterUtils.transParam(args));
+	}
+	
 	private static Field getAutoIncrementField(List<Field> fields) {
 		for(Field field : fields) {
 			Column column = DOInfoReader.getColumnInfo(field);
@@ -319,7 +390,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return null;
 	}
 	
-	// str=?,times=3,sep=,  返回 ?,?,?
+	// 例如：str=?,times=3,sep=,  返回 ?,?,?
     private static String join(String str, int times, String sep) {
     	StringBuilder sb = new StringBuilder();
     	for(int i = 0; i < times; i++) {
@@ -343,6 +414,14 @@ public class SpringJdbcDBHelper implements DBHelper {
     	return values;
     }
     
+    /**
+     * 拼凑字段逗号,分隔子句（用于insert），并把参数放到values中
+     * @param fields
+     * @param sep
+     * @param values
+     * @param obj
+     * @return
+     */
 	private static String joinAndGetValue(List<Field> fields, String sep,
 			List<Object> values, Object obj) {
     	StringBuilder sb = new StringBuilder();
@@ -360,6 +439,14 @@ public class SpringJdbcDBHelper implements DBHelper {
     	return sb.toString();
 	}
 
+	/**
+	 * 拼凑where子句，并把需要的参数写入到values中
+	 * @param fields
+	 * @param logicOperate 操作符
+	 * @param values
+	 * @param obj
+	 * @return
+	 */
 	private static String joinWhereAndGetValue(List<Field> fields,
 			String logicOperate, List<Object> values, Object obj) {
 		StringBuilder sb = new StringBuilder();
@@ -373,6 +460,28 @@ public class SpringJdbcDBHelper implements DBHelper {
 			values.add(DOInfoReader.getValue(fields.get(i), obj));
 		}
 		return sb.toString();
+	}
+	
+	/**
+	 * 拼凑set子句
+	 * @param fields
+	 * @param values
+	 * @param obj
+	 * @return
+	 */
+	private static String joinSetAndGetValue(List<Field> fields,
+			List<Object> values, Object obj, boolean withNull) {
+		StringBuilder sb = new StringBuilder();
+		int fieldSize = fields.size();
+		for(int i = 0; i < fieldSize; i++) {
+			Column column = DOInfoReader.getColumnInfo(fields.get(i));
+			Object value = DOInfoReader.getValue(fields.get(i), obj);
+			if(withNull || value != null) {
+				sb.append(column.value()).append("=?,");
+				values.add(value);
+			}
+		}
+		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
 	
 	private static String limit(Integer offset, Integer limit) {
