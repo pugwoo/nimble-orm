@@ -11,7 +11,7 @@ import com.pugwoo.dbhelper.model.PageData;
 public interface DBHelper {
 
 	/**
-	 * 
+	 * 通过T的主键，将数据查出来并设置到T中
 	 * @param t 值设置在t中
 	 * @return 存在返回true，否则返回false
 	 */
@@ -43,10 +43,11 @@ public interface DBHelper {
 	public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize);
 	
 	/**
-	 * 查询列表，没有查询条件
+	 * 查询列表，postSql可以带查询条件
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
+	 * @param postSql 包含where关键字起的后续SQL语句
 	 * @return
 	 */
 	public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,

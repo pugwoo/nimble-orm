@@ -46,21 +46,20 @@ public class SpringJdbcDBHelper implements DBHelper {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
 		List<Object> keyValues = new ArrayList<Object>();
-		
-		// TODO 需要判断keyFields是否为空
+		if(keyFields == null || keyFields.isEmpty()) {
+			return false;
+		}
 		
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(table.value());
-		if(!where.isEmpty()) {
-			sql.append(" WHERE ").append(where);
-		}
+		sql.append(" WHERE ").append(where);
 		
 		System.out.println("Exec SQL:" + sql.toString());
 		try {
 			jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(t.getClass(), t),
-					keyValues.toArray());
+					keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 			return true;
 		} catch (EmptyResultDataAccessException e) {
 			return false;
@@ -92,7 +91,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		try {
 			return (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
-					keyValue);
+					keyValue); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -130,7 +129,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		try {
 			return (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
-					values.toArray());
+					values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -167,7 +166,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 
 	/**
-	 * 查询列表，没有查询条件
+	 * 查询列表
 	 * 
 	 * @param clazz
 	 * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
@@ -195,12 +194,12 @@ public class SpringJdbcDBHelper implements DBHelper {
 		System.out.println("Exec SQL:" + sql.toString());
 		if(postSql == null) {
 			return namedParameterJdbcTemplate.query(sql.toString(),
-					new AnnotationSupportRowMapper(clazz));
+					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		} else {
 			return namedParameterJdbcTemplate.query(
 					NamedParameterUtils.trans(sql.toString()),
 					NamedParameterUtils.transParam(args),
-					new AnnotationSupportRowMapper(clazz));
+					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		}
 	}
 	
@@ -216,20 +215,17 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Table table = DOInfoReader.getTable(clazz);
 		sql.append(" FROM ").append(table.value());
 		if(postSql != null) {
-			sql.append(" ").append(postSql); // TODO 需要优化，只需要where子句
+			sql.append(" ").append(postSql); // TODO 可以优化，查count(*)只需要where子句
 		}
 		
 		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.queryForObject(sql.toString(), Integer.class, args);
+		return namedParameterJdbcTemplate.queryForObject(
+				NamedParameterUtils.trans(sql.toString()),
+				NamedParameterUtils.transParam(args),
+				Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
 	}
 	
-	/**
-	 * 插入一条记录，返回数据库实际修改条数。<br>
-	 * 如果包含了自增id，则自增Id会被设置。
-	 * 
-	 * @param t
-	 * @return
-	 */
+	@Override
 	public <T> int insert(T t) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("INSERT INTO ");
@@ -246,7 +242,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(")");
 		
 		System.out.println("Exec sql:" + sql.toString());
-		int rows = jdbcTemplate.update(sql.toString(), values.toArray());
+		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		if(autoIncrementField != null && rows == 1) {
 			Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()",
 					Long.class);
@@ -255,13 +251,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return rows;
 	}
 	
-	/**
-	 * 插入几条数据，通过拼凑成一条sql插入
-	 *【注】批量插入不支持回设自增id。
-	 * 
-	 * @param list
-	 * @return 返回影响的行数
-	 */
+	@Override
 	public <T> int insertInOneSQL(List<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -307,7 +297,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		
 		System.out.println("Exec sql:" + sql.toString());
-		return jdbcTemplate.update(sql.toString(), values.toArray());
+		return jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 	}
 	
 	@Override
@@ -338,7 +328,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(where);
 		
 		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.update(sql.toString(), keyValues.toArray());
+		return jdbcTemplate.update(sql.toString(), keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 	}
 	
 	@Override
@@ -360,7 +350,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(where);
 		
 		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.update(sql.toString(), keyValues.toArray());
+		return jdbcTemplate.update(sql.toString(), keyValues.toArray());  // 此处可以用jdbcTemplate，因为没有in (?)表达式
 	}
 	
 	@Override
@@ -377,7 +367,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		return namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args));
+				NamedParameterUtils.transParam(args)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 	}
 	
 	private static Field getAutoIncrementField(List<Field> fields) {
@@ -442,7 +432,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	/**
 	 * 拼凑where子句，并把需要的参数写入到values中
 	 * @param fields
-	 * @param logicOperate 操作符
+	 * @param logicOperate 操作符，例如AND
 	 * @param values
 	 * @param obj
 	 * @return
@@ -467,6 +457,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	 * @param fields
 	 * @param values
 	 * @param obj
+	 * @param withNull 当为true时，如果field的值为null，也加入
 	 * @return
 	 */
 	private static String joinSetAndGetValue(List<Field> fields,
@@ -484,6 +475,12 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
 	
+	/**
+	 * 拼凑limit字句
+	 * @param offset 可以为null
+	 * @param limit 不能为null
+	 * @return
+	 */
 	private static String limit(Integer offset, Integer limit) {
 		StringBuilder sb = new StringBuilder();
 		if (limit != null) {
