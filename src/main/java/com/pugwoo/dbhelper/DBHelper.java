@@ -107,11 +107,20 @@ public interface DBHelper {
 	<T> int insertInOneSQL(List<T> list);
 	
 	/**
+	 * 更新数据库记录，只更新非null的字段，返回数据库实际修改条数
+	 * @param t
+	 * @return
+	 * @throws NullKeyValueException
+	 */
+	<T> int updateNotNull(T t) throws NullKeyValueException;
+	
+	/**
 	 * 更新数据库记录，返回数据库实际修改条数
 	 * @param t
 	 * @return
+	 * @throws NullKeyValueException
 	 */
-	<T> int updateNotNull(T t);
+	<T> int update(T t) throws NullKeyValueException;
 	
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数

@@ -332,7 +332,16 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 	
 	@Override
-	public <T> int updateNotNull(T t) {
+	public <T> int update(T t) throws NullKeyValueException {
+		return _update(t, true);
+	}
+	
+	@Override
+	public <T> int updateNotNull(T t) throws NullKeyValueException {
+		return _update(t, false);
+	}
+	
+	private <T> int _update(T t, boolean withNull) throws NullKeyValueException {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
@@ -350,12 +359,19 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		sql.append(table.value()).append(" SET ");
 		List<Object> keyValues = new ArrayList<Object>();
-		String setSql = joinSetAndGetValue(notKeyFields, keyValues, t, false);
+		String setSql = joinSetAndGetValue(notKeyFields, keyValues, t, withNull);
 		if(keyValues.isEmpty()) {
-			return 0; // all field is null, not need to update
+			return 0; // all field is empty, not need to update
 		}
 		sql.append(setSql).append(" WHERE ");
+		int setFieldSize = keyValues.size();
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		// 检查key值是否有null的，不允许有null
+		for(int i = setFieldSize; i < keyValues.size(); i++) {
+			if(keyValues.get(i) == null) {
+				throw new NullKeyValueException();
+			}
+		}
 		sql.append(where);
 		
 		System.out.println("Exec SQL:" + sql.toString());
