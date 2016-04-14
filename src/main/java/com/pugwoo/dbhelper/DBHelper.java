@@ -16,7 +16,7 @@ public interface DBHelper {
 	 * @param t 值设置在t中
 	 * @return 存在返回true，否则返回false
 	 */
-	public <T> boolean getByKey(T t) throws NullKeyValueException;
+	<T> boolean getByKey(T t) throws NullKeyValueException;
 	
 	/**
 	 * 适合于只有一个Key的情况
@@ -24,7 +24,7 @@ public interface DBHelper {
 	 * @param key
 	 * @return
 	 */
-	public <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
+    <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
 	
 	/**
 	 * 适合于只有一个或多个Key的情况
@@ -32,7 +32,7 @@ public interface DBHelper {
 	 * @param keyMap
 	 * @return
 	 */
-	public <T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) throws NullKeyValueException;
+	<T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) throws NullKeyValueException;
 	
 	/**
 	 * 查询列表，没有查询条件
@@ -41,8 +41,8 @@ public interface DBHelper {
 	 * @param pageSize
 	 * @return
 	 */
-	public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize);
-	
+	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize);
+
 	/**
 	 * 查询列表，postSql可以带查询条件
 	 * @param clazz
@@ -51,7 +51,27 @@ public interface DBHelper {
 	 * @param postSql 包含where关键字起的后续SQL语句
 	 * @return
 	 */
-	public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
+	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
+			String postSql, Object... args);
+	
+	/**
+	 * 查询列表，没有查询条件；不查询总数
+	 * @param clazz
+	 * @param page 从1开始
+	 * @param pageSize
+	 * @return
+	 */
+	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize);
+	
+	/**
+	 * 查询列表，postSql可以带查询条件；不查询总数
+	 * @param clazz
+	 * @param page 从1开始
+	 * @param pageSize
+	 * @param postSql 包含where关键字起的后续SQL语句
+	 * @return
+	 */
+	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args);
 	
 	/**
@@ -59,14 +79,14 @@ public interface DBHelper {
 	 * @param clazz
 	 * @return
 	 */
-	public <T> List<T> getAll(Class<T> clazz);
+	<T> List<T> getAll(Class<T> clazz);
 	
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用
 	 * @param clazz
 	 * @return
 	 */
-	public <T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
+	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
@@ -75,7 +95,7 @@ public interface DBHelper {
 	 * @param t
 	 * @return
 	 */
-	public <T> int insert(T t);
+	<T> int insert(T t);
 	
 	/**
 	 * 插入几条数据，通过拼凑成一条sql插入
@@ -84,21 +104,21 @@ public interface DBHelper {
 	 * @param list
 	 * @return 返回影响的行数
 	 */
-	public <T> int insertInOneSQL(List<T> list);
+	<T> int insertInOneSQL(List<T> list);
 	
 	/**
 	 * 更新数据库记录，返回数据库实际修改条数
 	 * @param t
 	 * @return
 	 */
-	public <T> int updateNotNull(T t);
+	<T> int updateNotNull(T t);
 	
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数
 	 * @param t
 	 * @return
 	 */
-	public <T> int delete(T t);
+	<T> int delete(T t);
 	
 	/**
 	 * 自定义条件删除数据
@@ -107,5 +127,5 @@ public interface DBHelper {
 	 * @param args
 	 * @return
 	 */
-	public <T> int delete(Class<T> clazz, String postSql, Object... args);
+	<T> int delete(Class<T> clazz, String postSql, Object... args);
 }

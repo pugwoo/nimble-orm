@@ -167,10 +167,23 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		return new PageData<T>(total, data, pageSize);
 	}
-	
+    
     @Override
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {		
 		return getPage(clazz, page, pageSize, null);
+	}
+    
+    @Override
+    public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
+			String postSql, Object... args) {
+		int offset = (page - 1) * pageSize;
+		List<T> data = _getList(clazz, offset, pageSize, postSql, args);
+		return new PageData<T>(-1, data, pageSize);
+    }
+    
+    @Override
+	public <T> PageData<T> getPageWithoutCount(final Class<T> clazz, int page, int pageSize) {		
+		return getPageWithoutCount(clazz, page, pageSize, null);
 	}
 	
     @Override
