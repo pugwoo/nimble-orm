@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper;
 import java.util.List;
 import java.util.Map;
 
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 
 /**
@@ -15,7 +16,7 @@ public interface DBHelper {
 	 * @param t 值设置在t中
 	 * @return 存在返回true，否则返回false
 	 */
-	public <T> boolean getByKey(T t);
+	public <T> boolean getByKey(T t) throws NullKeyValueException;
 	
 	/**
 	 * 适合于只有一个Key的情况
@@ -23,7 +24,7 @@ public interface DBHelper {
 	 * @param key
 	 * @return
 	 */
-	public <T> T getByKey(Class<?> clazz, Object keyValue);
+	public <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
 	
 	/**
 	 * 适合于只有一个或多个Key的情况
@@ -31,7 +32,7 @@ public interface DBHelper {
 	 * @param keyMap
 	 * @return
 	 */
-	public <T> T getByKey(Class<?> clazz, Map<String, Object> keyMap);
+	public <T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) throws NullKeyValueException;
 	
 	/**
 	 * 查询列表，没有查询条件
@@ -54,14 +55,14 @@ public interface DBHelper {
 			String postSql, Object... args);
 	
 	/**
-	 * 查询列表，查询所有记录
+	 * 查询列表，查询所有记录，如果数据量大请慎用
 	 * @param clazz
 	 * @return
 	 */
 	public <T> List<T> getAll(Class<T> clazz);
 	
 	/**
-	 * 查询列表，查询所有记录
+	 * 查询列表，查询所有记录，如果数据量大请慎用
 	 * @param clazz
 	 * @return
 	 */

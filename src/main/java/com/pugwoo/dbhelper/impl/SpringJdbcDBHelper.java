@@ -16,6 +16,7 @@ import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotSupportMethodException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -38,7 +39,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> boolean getByKey(T t) {
+	public <T> boolean getByKey(T t) throws NullKeyValueException {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 		
@@ -51,6 +52,12 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		// 检查主键不允许为null
+		for(Object value : keyValues) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(table.value());
 		sql.append(" WHERE ").append(where);
@@ -68,7 +75,11 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> T getByKey(Class<?> clazz, Object keyValue) {
+	public <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException {
+		if(keyValue == null) {
+			throw new NullKeyValueException();
+		}
+		
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 
@@ -123,6 +134,13 @@ public class SpringJdbcDBHelper implements DBHelper {
 			isFirst = false;
 			sql.append(key).append("=?");
 			values.add(keyMap.get(key));
+		}
+		
+		// 检查主键不允许为null
+		for(Object value : values) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
 		}
 		
 		System.out.println("Exec SQL:" + sql.toString());
