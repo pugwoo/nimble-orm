@@ -99,7 +99,7 @@ public interface DBHelper {
 	
 	/**
 	 * 插入几条数据，通过拼凑成一条sql插入
-	 *【注】批量插入不支持回设自增id。
+	 *【重要】批量插入不支持回设自增id。
 	 * 
 	 * @param list
 	 * @return 返回影响的行数
@@ -118,7 +118,7 @@ public interface DBHelper {
 	 * @param t
 	 * @return
 	 */
-	<T> int delete(T t);
+	<T> int deleteByKey(T t) throws NullKeyValueException;
 	
 	/**
 	 * 自定义条件删除数据

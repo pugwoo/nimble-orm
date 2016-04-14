@@ -363,7 +363,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 	
 	@Override
-	public <T> int delete(T t) {
+	public <T> int deleteByKey(T t) throws NullKeyValueException {
 		StringBuilder sql = new StringBuilder();
 		sql.append("DELETE FROM ");
 		
@@ -378,6 +378,12 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(table.value()).append(" WHERE ");
 		List<Object> keyValues = new ArrayList<Object>();
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		// 检查key的值是不是null
+		for(Object value : keyValues) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
 		sql.append(where);
 		
 		System.out.println("Exec SQL:" + sql.toString());
