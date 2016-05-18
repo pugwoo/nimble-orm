@@ -59,7 +59,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			}
 		}
 		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(table.value());
+		sql.append(" FROM ").append(getTableName(table));
 		sql.append(" WHERE ").append(where);
 		
 		System.out.println("Exec SQL:" + sql.toString());
@@ -95,8 +95,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
 		
 		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(table.value());
-		sql.append(" WHERE ").append(keyColumn.value()).append("=?");
+		sql.append(" FROM ").append(getTableName(table));
+		sql.append(" WHERE ").append(getColumnName(keyColumn)).append("=?");
 		
 		System.out.println("Exec SQL:" + sql.toString());
 		try {
@@ -122,7 +122,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		
 		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(table.value());
+		sql.append(" FROM ").append(getTableName(table));
 		sql.append(" WHERE ");
 		
 		List<Object> values = new ArrayList<Object>();
@@ -216,7 +216,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 
 		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(table.value());
+		sql.append(" FROM ").append(getTableName(table));
 		if(postSql != null) {
 			sql.append(" ").append(postSql);
 		}
@@ -244,7 +244,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append("SELECT count(*)");
 		
 		Table table = DOInfoReader.getTable(clazz);
-		sql.append(" FROM ").append(table.value());
+		sql.append(" FROM ").append(getTableName(table));
 		if(postSql != null) {
 			sql.append(" ").append(postSql); // TODO 可以优化，查count(*)只需要where子句
 		}
@@ -265,7 +265,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		Field autoIncrementField = getAutoIncrementField(fields);
 		
-		sql.append(table.value()).append(" (");
+		sql.append(getTableName(table)).append(" (");
 		List<Object> values = new ArrayList<Object>();
 		sql.append(joinAndGetValue(fields, ",", values, t));
 		sql.append(") VALUES (");
@@ -312,7 +312,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		
-		sql.append(table.value()).append(" (");
+		sql.append(getTableName(table)).append(" (");
 		sql.append(join(fields, ","));
 		sql.append(") VALUES ");
 		
@@ -357,7 +357,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			throw new NoKeyColumnAnnotationException();
 		}
 		
-		sql.append(table.value()).append(" SET ");
+		sql.append(getTableName(table)).append(" SET ");
 		List<Object> keyValues = new ArrayList<Object>();
 		String setSql = joinSetAndGetValue(notKeyFields, keyValues, t, withNull);
 		if(keyValues.isEmpty()) {
@@ -391,7 +391,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			throw new NoKeyColumnAnnotationException();
 		}
 		
-		sql.append(table.value()).append(" WHERE ");
+		sql.append(getTableName(table)).append(" WHERE ");
 		List<Object> keyValues = new ArrayList<Object>();
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
 		// 检查key的值是不是null
@@ -416,7 +416,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append("DELETE FROM ");
 		
 		Table table = DOInfoReader.getTable(clazz);
-		sql.append(table.value()).append(" ").append(postSql);
+		sql.append(getTableName(table)).append(" ").append(postSql);
 		
 		return namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql.toString()),
@@ -471,7 +471,7 @@ public class SpringJdbcDBHelper implements DBHelper {
     	int size = fields.size();
     	for(int i = 0; i < size; i++) {
     		Column column = DOInfoReader.getColumnInfo(fields.get(i));
-    		sb.append(column.value());
+    		sb.append(getColumnName(column));
     		if(i < size - 1) {
     			sb.append(sep);
     		}
@@ -496,7 +496,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
 			Column column = DOInfoReader.getColumnInfo(fields.get(i));
-			sb.append(column.value()).append("=?");
+			sb.append(getColumnName(column)).append("=?");
 			if(i < fieldSize - 1) {
 				sb.append(" ").append(logicOperate).append(" ");
 			}
@@ -521,7 +521,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			Column column = DOInfoReader.getColumnInfo(fields.get(i));
 			Object value = DOInfoReader.getValue(fields.get(i), obj);
 			if(withNull || value != null) {
-				sb.append(column.value()).append("=?,");
+				sb.append(getColumnName(column)).append("=?,");
 				values.add(value);
 			}
 		}
@@ -544,5 +544,13 @@ public class SpringJdbcDBHelper implements DBHelper {
 			sb.append(limit);
 		}
 		return sb.toString();
+	}
+	
+	private static String getTableName(Table table) {
+		return "`" + table.value() + "`";
+	}
+	
+	private static String getColumnName(Column column) {
+		return "`" + column.value() + "`";
 	}
 }
