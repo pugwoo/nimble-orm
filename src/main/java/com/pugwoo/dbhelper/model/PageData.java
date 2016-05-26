@@ -1,11 +1,14 @@
 package com.pugwoo.dbhelper.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * 2015年4月22日 13:32:30 记录分页数据和总数
  */
-public class PageData<T> {
+public class PageData<T> implements Serializable {
+
+	private static final long serialVersionUID = 3L;
 
 	/**
 	 * 总数
