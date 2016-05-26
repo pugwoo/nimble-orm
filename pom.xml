@@ -66,9 +66,22 @@
 				<configuration>
 					<source>1.7</source>
 					<target>1.7</target>
-					<encoding>utf8</encoding> <!-- 指定编码 -->
+					<encoding>utf8</encoding>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 
