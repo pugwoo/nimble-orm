@@ -10,7 +10,13 @@ import com.pugwoo.dbhelper.model.PageData;
  * 2015年8月17日 18:18:57
  */
 public interface DBHelper {
-
+	
+	/**
+	 * 设置SQL执行超时的WARN log，超时时间为1秒
+	 * @param timeMS 毫秒
+	 */
+	void setTimeoutWarningValve(long timeMS);
+	
 	/**
 	 * 通过T的主键，将数据查出来并设置到T中
 	 * @param t 值设置在t中

@@ -57,6 +57,7 @@
 	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
 	    <property name="jdbcTemplate" ref="jdbcTemplate" />
 	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
+	    <property name="timeoutWarningValve" value="1000" /> <!-- 超过3秒的话就告警 -->
 	</bean>
 	
 </beans>

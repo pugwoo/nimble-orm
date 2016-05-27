@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -24,17 +26,25 @@ import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
 /**
  * 2015年1月12日 16:41:03 数据库操作封装：增删改查
+ * @author pugwoo
  */
 public class SpringJdbcDBHelper implements DBHelper {
 	
+	private static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
+	
 	private JdbcTemplate jdbcTemplate;
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	private long timeoutWarningValve = 1000;
 
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 	public void setNamedParameterJdbcTemplate(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+	}
+	
+	public void setTimeoutWarningValve(long timeMS) {
+		timeoutWarningValve = timeMS;
 	}
 	
 	@Override
@@ -62,11 +72,16 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(" FROM ").append(getTableName(table));
 		sql.append(" WHERE ").append(where);
 		
-		System.out.println("Exec SQL:" + sql.toString());
 		try {
+			LOGGER.debug("ExecSQL:{}", sql);
+			long start = System.currentTimeMillis();
 			jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(t.getClass(), t),
 					keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			long cost = System.currentTimeMillis() - start;
+			if(cost > timeoutWarningValve) {
+				LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
+			}
 			return true;
 		} catch (EmptyResultDataAccessException e) {
 			return false;
@@ -98,11 +113,17 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(" FROM ").append(getTableName(table));
 		sql.append(" WHERE ").append(getColumnName(keyColumn)).append("=?");
 		
-		System.out.println("Exec SQL:" + sql.toString());
 		try {
-			return (T) jdbcTemplate.queryForObject(sql.toString(),
+			LOGGER.debug("ExecSQL:{}", sql);
+			long start = System.currentTimeMillis();
+			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
 					keyValue); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			long cost = System.currentTimeMillis() - start;
+			if(cost > timeoutWarningValve) {
+				LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
+			}
+			return t;
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -143,11 +164,17 @@ public class SpringJdbcDBHelper implements DBHelper {
 			}
 		}
 		
-		System.out.println("Exec SQL:" + sql.toString());
 		try {
-			return (T) jdbcTemplate.queryForObject(sql.toString(),
+			LOGGER.debug("ExecSQL:{}", sql);
+			long start = System.currentTimeMillis();
+			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
 					values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			long cost = System.currentTimeMillis() - start;
+			if(cost > timeoutWarningValve) {
+				LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
+			}
+			return t;
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -234,16 +261,23 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		sql.append(limit(offset, limit));
 		
-		System.out.println("Exec SQL:" + sql.toString());
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		List<T> list = null;
 		if(postSql == null) {
-			return namedParameterJdbcTemplate.query(sql.toString(),
+			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		} else {
-			return namedParameterJdbcTemplate.query(
+			list = namedParameterJdbcTemplate.query(
 					NamedParameterUtils.trans(sql.toString()),
 					NamedParameterUtils.transParam(args),
 					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		}
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
+		}
+		return list;
 	}
 	
 	/**
@@ -261,11 +295,17 @@ public class SpringJdbcDBHelper implements DBHelper {
 			sql.append(" ").append(postSql); // TODO 可以优化，查count(*)只需要where子句
 		}
 		
-		System.out.println("Exec SQL:" + sql.toString());
-		return namedParameterJdbcTemplate.queryForObject(
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = namedParameterJdbcTemplate.queryForObject(
 				NamedParameterUtils.trans(sql.toString()),
 				NamedParameterUtils.transParam(args),
 				Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
+		}
+		return rows;
 	}
 	
 	@Override
@@ -284,12 +324,17 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(join("?", fields.size(), ","));
 		sql.append(")");
 		
-		System.out.println("Exec sql:" + sql.toString());
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		if(autoIncrementField != null && rows == 1) {
 			Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()",
 					Long.class);
 			DOInfoReader.setValue(autoIncrementField, t, id);
+		}
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
 		}
 		return rows;
 	}
@@ -339,8 +384,14 @@ public class SpringJdbcDBHelper implements DBHelper {
 			values.addAll(getValue(fields, list.get(i)));
 		}
 		
-		System.out.println("Exec sql:" + sql.toString());
-		return jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
+		}
+		return rows;
 	}
 	
 	@Override
@@ -414,8 +465,14 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		sql.append(where);
 		
-		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.update(sql.toString(), keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
+		}
+		return rows;
 	}
 	
 	@Override
@@ -442,8 +499,14 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		sql.append(where);
 		
-		System.out.println("Exec SQL:" + sql.toString());
-		return jdbcTemplate.update(sql.toString(), keyValues.toArray());  // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), keyValues.toArray());  // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
+		}
+		return rows;
 	}
 	
 	@Override
@@ -458,9 +521,16 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Table table = DOInfoReader.getTable(clazz);
 		sql.append(getTableName(table)).append(" ").append(postSql);
 		
-		return namedParameterJdbcTemplate.update(
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql.toString()),
 				NamedParameterUtils.transParam(args)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
+		}
+		return rows;
 	}
 	
 	private static Field getAutoIncrementField(List<Field> fields) {
