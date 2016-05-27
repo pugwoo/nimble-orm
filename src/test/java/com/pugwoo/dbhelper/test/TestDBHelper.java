@@ -30,9 +30,14 @@ public class TestDBHelper {
 	private DBHelper dbHelper;
 		
 	@Test
+	@Rollback(false)
 	public void test() {
-		List<StudentDO> list = dbHelper.getAll(StudentDO.class);
-		System.out.println(list);
+		StudentDO studentDO = new StudentDO();
+		studentDO.setNum("hello world".getBytes());
+		dbHelper.insert(studentDO);
+		
+		StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		System.out.println(new String(st.getNum()));
 	}
 
 	@Test

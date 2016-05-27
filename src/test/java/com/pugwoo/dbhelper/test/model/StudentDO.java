@@ -20,6 +20,9 @@ public class StudentDO {
 	@Column("age")
 	private Integer age;
 	
+	@Column("num")
+	private byte[] num;
+	
 	@Override
 	public String toString() {
 		return "id:" + id + ",name:" + name + ",age:" + age;
@@ -47,6 +50,14 @@ public class StudentDO {
 
 	public void setAge(Integer age) {
 		this.age = age;
+	}
+
+	public byte[] getNum() {
+		return num;
+	}
+
+	public void setNum(byte[] num) {
+		this.num = num;
 	}
 
 }
