@@ -28,6 +28,12 @@ public class TestDBHelper {
 	
 	@Autowired
 	private DBHelper dbHelper;
+		
+	@Test
+	public void test() {
+		List<StudentDO> list = dbHelper.getAll(StudentDO.class);
+		System.out.println(list);
+	}
 
 	@Test
 	public void testGetList() {

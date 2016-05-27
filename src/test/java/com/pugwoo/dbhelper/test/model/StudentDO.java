@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.test.model;
 
+
+
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 
@@ -17,7 +19,7 @@ public class StudentDO {
 	
 	@Column("age")
 	private Integer age;
-
+	
 	@Override
 	public String toString() {
 		return "id:" + id + ",name:" + name + ",age:" + age;
