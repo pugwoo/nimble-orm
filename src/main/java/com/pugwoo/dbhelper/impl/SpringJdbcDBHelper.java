@@ -353,6 +353,34 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return _update(t, false);
 	}
 	
+	@Override
+	public <T> int updateNotNull(List<T> list) throws NullKeyValueException {
+		if(list == null || list.isEmpty()) {
+			return 0;
+		}
+		int rows = 0;
+		for(T t : list) {
+			if(t != null) {
+				rows += updateNotNull(t);
+			}
+		}
+		return rows;
+	}
+	
+	@Override
+	public <T> int update(List<T> list) throws NullKeyValueException {
+		if(list == null || list.isEmpty()) {
+			return 0;
+		}
+		int rows = 0;
+		for(T t : list) {
+			if(t != null) {
+				rows += update(t);
+			}
+		}
+		return rows;
+	}
+	
 	private <T> int _update(T t, boolean withNull) throws NullKeyValueException {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");

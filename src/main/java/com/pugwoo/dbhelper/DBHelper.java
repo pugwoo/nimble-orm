@@ -139,6 +139,24 @@ public interface DBHelper {
 	<T> int update(T t) throws NullKeyValueException;
 	
 	/**
+	 * 更新数据库记录，只更新非null的字段，返回数据库实际修改条数。
+	 * 【注】批量更新的方法并不会比程序中循环调用int updateNotNull(T t)更快
+	 * @param t
+	 * @return
+	 * @throws NullKeyValueException
+	 */
+	<T> int updateNotNull(List<T> list) throws NullKeyValueException;
+	
+	/**
+	 * 更新数据库记录，返回数据库实际修改条数。
+	 * 【注】批量更新的方法并不会比程序中循环调用int update(T t)更快
+	 * @param t
+	 * @return
+	 * @throws NullKeyValueException
+	 */
+	<T> int update(List<T> list) throws NullKeyValueException;
+	
+	/**
 	 * 删除数据库记录，返回数据库实际修改条数
 	 * @param t
 	 * @return
