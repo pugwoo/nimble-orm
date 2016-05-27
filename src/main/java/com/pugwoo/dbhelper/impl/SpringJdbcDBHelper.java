@@ -195,6 +195,18 @@ public class SpringJdbcDBHelper implements DBHelper {
 	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
 		return _getList(clazz, null, null, postSql, args);
 	}
+    
+    @Override
+	public <T> T getOne(Class<T> clazz) {
+    	List<T> list = _getList(clazz, 0, 1, null);
+    	return list == null || list.isEmpty() ? null : list.get(0);
+    }
+	
+    @Override
+    public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
+    	List<T> list = _getList(clazz, 0, 1, postSql, args);
+    	return list == null || list.isEmpty() ? null : list.get(0);
+    }
 
 	/**
 	 * 查询列表

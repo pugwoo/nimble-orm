@@ -89,6 +89,22 @@ public interface DBHelper {
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 	
 	/**
+	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。
+	 * @param clazz
+	 * @return 如果不存在则返回null
+	 */
+	<T> T getOne(Class<T> clazz);
+	
+	/**
+	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。
+	 * @param clazz
+	 * @param postSql
+	 * @param args
+	 * @return
+	 */
+	<T> T getOne(Class<T> clazz, String postSql, Object... args);
+	
+	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。
 	 * 
