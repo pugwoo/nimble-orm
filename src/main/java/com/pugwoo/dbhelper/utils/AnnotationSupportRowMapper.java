@@ -37,8 +37,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			List<Field> fields = DOInfoReader.getColumns(clazz);
 			for (Field field : fields) {
 				Column column = DOInfoReader.getColumnInfo(field);
-				Object value = dbToJavaTypeAutoCast(field.getType(),
-						rs.getObject(column.value()));
+				Object value = TypeAutoCast.cast(rs.getObject(column.value()), field.getType());
 				DOInfoReader.setValue(field, obj, value);
 			}
 			return obj;
@@ -48,24 +47,4 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
-	/**
-	 * 自动转换数据库到java的类型 TODO 待持续完善
-	 * 
-	 * @param targetClass
-	 * @param value
-	 * @return
-	 */
-	private static Object dbToJavaTypeAutoCast(Class<?> targetClass,
-			Object value) {
-		if (targetClass.isInstance(value)) {
-			return value;
-		}
-		if (targetClass == Long.class || targetClass == long.class) {
-			if (Integer.class.isInstance(value) || int.class.isInstance(value)) {
-				return ((Integer) value).longValue();
-			}
-		}
-
-		return value;
-	}
 }

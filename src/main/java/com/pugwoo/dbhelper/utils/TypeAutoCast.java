@@ -17,6 +17,11 @@ public class TypeAutoCast {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T cast(Object obj, Class<T> clazz) {
+		// 已经是同类型的就不用转
+		if(obj != null && clazz.isInstance(obj)) {
+			return (T) obj;
+		}
+		
 		// 对于obj是null但是目标clazz是【基础类型】时，转成 0
 		if(clazz == Integer.class || clazz == int.class) {
 			if(obj == null) {
