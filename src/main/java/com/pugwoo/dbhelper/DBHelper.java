@@ -28,7 +28,7 @@ public interface DBHelper {
 	 * 适合于只有一个Key的情况
 	 * @param clazz
 	 * @param key
-	 * @return
+	 * @return 如果不存在则返回null
 	 */
     <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
 	
@@ -36,7 +36,7 @@ public interface DBHelper {
 	 * 适合于只有一个或多个Key的情况
 	 * @param clazz
 	 * @param keyMap
-	 * @return
+	 * @return 如果不存在则返回null
 	 */
 	<T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) throws NullKeyValueException;
 	
@@ -45,7 +45,7 @@ public interface DBHelper {
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
-	 * @return
+	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize);
 
@@ -55,7 +55,7 @@ public interface DBHelper {
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @param postSql 包含where关键字起的后续SQL语句
-	 * @return
+	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args);
@@ -65,7 +65,7 @@ public interface DBHelper {
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
-	 * @return
+	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize);
 	
@@ -75,7 +75,7 @@ public interface DBHelper {
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @param postSql 包含where关键字起的后续SQL语句
-	 * @return
+	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args);
@@ -83,14 +83,14 @@ public interface DBHelper {
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用
 	 * @param clazz
-	 * @return
+	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz);
 	
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用
 	 * @param clazz
-	 * @return
+	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 	
@@ -106,7 +106,7 @@ public interface DBHelper {
 	 * @param clazz
 	 * @param postSql
 	 * @param args
-	 * @return
+	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
 	
