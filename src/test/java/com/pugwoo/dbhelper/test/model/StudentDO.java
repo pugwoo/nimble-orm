@@ -17,6 +17,10 @@ public class StudentDO {
 	@Column("name")
 	private String name;
 	
+	// 不支持枚举
+//	@Column("type")
+//	private StudentTypeEnum type;
+	
 	@Column("age")
 	private Integer age;
 	
@@ -59,5 +63,13 @@ public class StudentDO {
 	public void setNum(byte[] num) {
 		this.num = num;
 	}
+
+//	public StudentTypeEnum getType() {
+//		return type;
+//	}
+//
+//	public void setType(StudentTypeEnum type) {
+//		this.type = type;
+//	}
 
 }

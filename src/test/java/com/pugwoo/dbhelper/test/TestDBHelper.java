@@ -39,7 +39,7 @@ public class TestDBHelper {
 		StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
 		System.out.println(new String(st.getNum()));
 	}
-
+	
 	@Test
 	public void testGetList() {
 		// 测试获取全部
