@@ -5,6 +5,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
@@ -17,6 +20,8 @@ import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
  * 1. 继承的类的信息读取 XXX 待验证，去重的情况怎样处理
  */
 public class DOInfoReader {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(DOInfoReader.class);
 	
 	/**
 	 * 获取DO的@Table信息
@@ -129,7 +134,7 @@ public class DOInfoReader {
 			try {
 				return method.invoke(object);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOGGER.error("method invoke", e);
 			}
 		}
 		
@@ -137,7 +142,7 @@ public class DOInfoReader {
 		try {
 			return field.get(object);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.error("method invoke", e);
 			return null;
 		}
 	}
@@ -165,7 +170,7 @@ public class DOInfoReader {
 			try {
 				method.invoke(object, value);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOGGER.error("method invoke", e);
 				return false;
 			}
 		} else {
@@ -173,7 +178,7 @@ public class DOInfoReader {
 			try {
 				field.set(object, value);
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOGGER.error("method invoke", e);
 				return false;
 			}
 		}
