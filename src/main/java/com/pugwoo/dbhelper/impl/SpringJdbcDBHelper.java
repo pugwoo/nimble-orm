@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -292,7 +293,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Table table = DOInfoReader.getTable(clazz);
 		sql.append(" FROM ").append(getTableName(table));
 		if(postSql != null) {
-			sql.append(" ").append(postSql); // TODO 可以优化，查count(*)只需要where子句
+			sql.append(" ").append(postSql); // XXX 可以优化，查count(*)只需要where子句
 		}
 		
 		LOGGER.debug("ExecSQL:{}", sql);
@@ -396,12 +397,22 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	@Override
 	public <T> int update(T t) throws NullKeyValueException {
-		return _update(t, true);
+		return _update(t, true, null);
+	}
+	
+	@Override
+	public <T> int update(T t, String postSql, Object... args) throws NullKeyValueException {
+		return _update(t, true, postSql, args);
 	}
 	
 	@Override
 	public <T> int updateNotNull(T t) throws NullKeyValueException {
-		return _update(t, false);
+		return _update(t, false, null);
+	}
+	
+	@Override
+	public <T> int updateNotNull(T t, String postSql, Object... args) throws NullKeyValueException {
+		return _update(t, false, postSql, args);
 	}
 	
 	@Override
@@ -432,7 +443,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return rows;
 	}
 	
-	private <T> int _update(T t, boolean withNull) throws NullKeyValueException {
+	private <T> int _update(T t, boolean withNull, String postSql, Object... args) 
+			throws NullKeyValueException {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
@@ -463,6 +475,21 @@ public class SpringJdbcDBHelper implements DBHelper {
 				throw new NullKeyValueException();
 			}
 		}
+		
+		// 带上postSql
+		if(postSql != null) {
+			postSql = postSql.trim();
+			if(!postSql.isEmpty()) {
+				if(postSql.startsWith("where")) {
+					postSql = " AND " + postSql.substring(5);
+				}
+				where = where + postSql;
+				if(args != null) {
+					keyValues.addAll(Arrays.asList(args));
+				}
+			}
+		}
+		
 		sql.append(where);
 		
 		LOGGER.debug("ExecSQL:{}", sql);

@@ -8,6 +8,7 @@ import com.pugwoo.dbhelper.model.PageData;
 
 /**
  * 2015年8月17日 18:18:57
+ * @author pugwoo
  */
 public interface DBHelper {
 	
@@ -129,20 +130,41 @@ public interface DBHelper {
 	<T> int insertInOneSQL(List<T> list);
 	
 	/**
-	 * 更新数据库记录，只更新非null的字段，返回数据库实际修改条数
+	 * 更新单个实例数据库记录，必须带上object的key，只更新非null的字段
 	 * @param t
-	 * @return
+	 * @return 返回数据库实际修改条数
 	 * @throws NullKeyValueException
 	 */
 	<T> int updateNotNull(T t) throws NullKeyValueException;
 	
 	/**
-	 * 更新数据库记录，返回数据库实际修改条数
+	 * 带条件的更新单个对象，必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改
+	 * 
 	 * @param t
-	 * @return
+	 * @param postSql where及后续的sql，包含where关键字
+	 * @param args
+	 * @return 返回数据库实际修改条数
+	 * @throws NullKeyValueException
+	 */
+	<T> int updateNotNull(T t, String postSql, Object... args) throws NullKeyValueException;
+	
+	/**
+	 * 更新单条数据库记录,必须带上object的key
+	 * @param t
+	 * @return 返回数据库实际修改条数
 	 * @throws NullKeyValueException
 	 */
 	<T> int update(T t) throws NullKeyValueException;
+	
+	/**
+	 * 更新单条数据库记录,必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改
+	 * @param t
+	 * @param postSql where及后续的sql，包含where关键字
+	 * @param args
+	 * @return 返回数据库实际修改条数
+	 * @throws NullKeyValueException
+	 */
+	<T> int update(T t, String postSql, Object... args) throws NullKeyValueException;
 	
 	/**
 	 * 更新数据库记录，只更新非null的字段，返回数据库实际修改条数。
