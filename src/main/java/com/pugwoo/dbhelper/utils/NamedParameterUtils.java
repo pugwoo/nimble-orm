@@ -13,28 +13,6 @@ import java.util.Map;
  */
 public class NamedParameterUtils {
 	
-	public static void main(String[] args) {
-		String[] strs = new String[5];
-		System.out.println(strs instanceof Object[]);
-		
-		Object obj = new Object();
-		
-		int[] a = new int[6];
-		System.out.println(obj instanceof long[]);
-		System.out.println(a.getClass().isArray());
-		
-		
-		for(Object o : a) {
-			System.out.println(o);
-		}
-		
-		byte[] b = new byte[10];
-		System.out.println(b.getClass().isArray());
-		
-		System.out.println(((Object)b) instanceof byte[]);
-		System.out.println(((Object)b) instanceof int[]);
-	}
-	
 	public static Map<String, Object> transParam(Object... params) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		if(params != null) {
