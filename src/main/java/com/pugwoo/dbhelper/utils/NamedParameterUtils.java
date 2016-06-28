@@ -1,6 +1,8 @@
 package com.pugwoo.dbhelper.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,11 +13,73 @@ import java.util.Map;
  */
 public class NamedParameterUtils {
 	
+	public static void main(String[] args) {
+		String[] strs = new String[5];
+		System.out.println(strs instanceof Object[]);
+		
+		Object obj = new Object();
+		
+		int[] a = new int[6];
+		System.out.println(obj instanceof long[]);
+		System.out.println(a.getClass().isArray());
+		
+		
+		for(Object o : a) {
+			System.out.println(o);
+		}
+		
+		byte[] b = new byte[10];
+		System.out.println(b.getClass().isArray());
+		
+		System.out.println(((Object)b) instanceof byte[]);
+		System.out.println(((Object)b) instanceof int[]);
+	}
+	
 	public static Map<String, Object> transParam(Object... params) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		if(params != null) {
 			int currParamIndex = 1;
 			for(Object param : params) {
+				// 如果参数是数组，同时【不是】byte[]，则转换成List
+				if(param != null && param.getClass().isArray()) {
+					List<Object> p = new ArrayList<Object>();
+					if(param instanceof char[]) {
+						for(char c : (char[]) param) {
+							p.add(new Character(c));
+						}
+						param = p;
+					} else if(param instanceof short[]) {
+						for(short s : (short[]) param) {
+							p.add(new Short(s));
+						}
+						param = p;
+					} else if(param instanceof int[]) {
+						for(int i : (int[]) param) {
+							p.add(new Integer(i));
+						}
+						param = p;
+					} else if(param instanceof long[]) {
+						for(long l : (long[]) param) {
+							p.add(new Long(l));
+						}
+						param = p;
+					} else if(param instanceof float[]) {
+						for(float f : (float[]) param) {
+							p.add(new Float(f));
+						}
+						param = p;
+					} else if(param instanceof double[]) {
+						for(double d : (double[]) param) {
+							p.add(new Double(d));
+						}
+						param = p;
+					} else if(param instanceof Object[]) {
+						for(Object o : (Object[]) param) {
+							p.add(o);
+						}
+						param = p;
+					}
+				}
 				map.put("param" + (currParamIndex++), param);
 			}
 		}

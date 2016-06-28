@@ -24,7 +24,7 @@ public class StudentDO {
 	@Column("age")
 	private Integer age;
 	
-	@Column("num")
+//	@Column("num")
 	private byte[] num;
 	
 	@Override

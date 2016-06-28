@@ -41,6 +41,12 @@ public class TestDBHelper {
 	}
 	
 	@Test
+	public void testGetByArray() {
+		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{1,2,3});
+		System.out.println(list.size());
+	}
+	
+	@Test
 	public void testGetList() {
 		// 测试获取全部
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class);
