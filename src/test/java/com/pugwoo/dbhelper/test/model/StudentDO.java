@@ -9,11 +9,8 @@ import com.pugwoo.dbhelper.annotation.Table;
  * 2015年1月12日 15:20:09 这个是有注解的DO
  */
 @Table("t_student")
-public class StudentDO {
-	
-	@Column(value = "id", isKey = true, isAutoIncrement = true)
-	private Long id;
-	
+public class StudentDO extends IdableBaseDO {
+		
 	@Column("name")
 	private String name;
 	
@@ -29,16 +26,8 @@ public class StudentDO {
 	
 	@Override
 	public String toString() {
-		return "id:" + id + ",name:" + name + ",age:" + age;
+		return "id:" + getId() + ",name:" + name + ",age:" + age;
 	};
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
 
 	public String getName() {
 		return name;
