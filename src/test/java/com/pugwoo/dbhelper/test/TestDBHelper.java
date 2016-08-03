@@ -57,6 +57,22 @@ public class TestDBHelper {
 		
 		System.out.println("===============================");
 		
+		// 测试获取有条件的查询
+		Long[] ids = new Long[3];
+		ids[0] = 2L;
+		ids[1] = 4L;
+		ids[2] = 6L;
+		//List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
+		//		ids); // 这样是错误的范例，getAll只会取ids的第一个参数传入in (?)中
+		List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
+				ids, 1); // 这是一种hack的写法，后面带上的参数1，可以让Java把ids当作单个参数处理
+		System.out.println("total:" + list2.size());
+		for(StudentDO studentDO : list2) {
+			System.out.println(studentDO);
+		}
+		
+		System.out.println("===============================");
+		
 		// 测试分页获取
 		PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
 		System.out.println("total:" + page1.getTotal());
