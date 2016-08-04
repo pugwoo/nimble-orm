@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -128,6 +130,54 @@ public class SpringJdbcDBHelper implements DBHelper {
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues) {
+		if(keyValues == null || keyValues.isEmpty()) {
+			return new HashMap<K, T>();
+		}
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT ");
+		
+		Table table = DOInfoReader.getTable(clazz);
+		List<Field> fields = DOInfoReader.getColumns(clazz);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		
+		if (keyFields.size() != 1) {
+			throw new NotSupportMethodException(
+					"must have only one key column, actually has "
+							+ keyFields.size() + " key columns");
+		}
+		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
+		
+		sql.append(join(fields, ","));
+		sql.append(" FROM ").append(getTableName(table));
+		sql.append(" WHERE ").append(getColumnName(keyColumn)).append(" in (?)");
+		
+		List<T> list = namedParameterJdbcTemplate.query(
+				NamedParameterUtils.trans(sql.toString()),
+				NamedParameterUtils.transParam(keyValues),
+				new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
+		
+		if(list == null || list.isEmpty()) {
+			return new HashMap<K, T>();
+		}
+		
+		Map<K, T> map = new LinkedHashMap<K, T>();
+		for(K key : keyValues) {
+			if(key == null) {continue;}
+			for(T t : list) {
+				Object k = DOInfoReader.getValue(keyFields.get(0), t);
+				if(k != null && key.equals(k)) {
+					map.put(key, t);
+					break;
+				}
+			}
+		}
+		return map;
 	}
 	
 	@Override

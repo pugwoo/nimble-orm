@@ -32,6 +32,14 @@ public interface DBHelper {
 	 * @return 如果不存在则返回null
 	 */
     <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
+    
+    /**
+     * 通过多个key查询对象
+     * @param clazz
+     * @param keyValues
+     * @return 返回的值是LinkedHashMap对象，按照keyValues的顺序来，但如果key不存在，那么不会再返回值的map key中
+     */
+    <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues);
 	
 	/**
 	 * 适合于只有一个或多个Key的情况

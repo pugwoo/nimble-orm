@@ -102,6 +102,16 @@ public class TestDBHelper {
 	}
 	
 	@Test
+	public void testGetByKeyList() {
+		List<Long> ids = new ArrayList<>();
+		ids.add(50L);
+		ids.add(52L);
+		ids.add(54L);
+		Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
+		System.out.println(map);
+	}
+	
+	@Test
 	@Rollback(false)
 	public void testInsert() {
 		StudentDO studentDO = new StudentDO();
