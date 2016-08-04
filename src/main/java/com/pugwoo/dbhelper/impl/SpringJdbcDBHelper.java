@@ -311,6 +311,15 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	@Override
 	public <T> int insert(T t) {
+		return insert(t, false);
+	}
+	
+	@Override
+	public <T> int insertWithNull(T t) {
+		return insert(t, true);
+	}
+	
+	private <T> int insert(T t, boolean isWithNullValue) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("INSERT INTO ");
 		
@@ -320,9 +329,9 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		sql.append(getTableName(table)).append(" (");
 		List<Object> values = new ArrayList<Object>();
-		sql.append(joinAndGetValue(fields, ",", values, t));
+		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
 		sql.append(") VALUES (");
-		sql.append(join("?", fields.size(), ","));
+		sql.append(join("?", values.size(), ","));
 		sql.append(")");
 		
 		LOGGER.debug("ExecSQL:{}", sql);
@@ -339,9 +348,9 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		return rows;
 	}
-	
+		
 	@Override
-	public <T> int insertInOneSQL(List<T> list) {
+	public <T> int insertWithNullInOneSQL(List<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
@@ -582,8 +591,14 @@ public class SpringJdbcDBHelper implements DBHelper {
     	return sb.toString();
     }
     
+    /**
+     * 拼凑select的field的语句
+     * @param fields
+     * @param sep
+     * @return
+     */
     private static String join(List<Field> fields, String sep) {
-    	return joinAndGetValue(fields, sep, null, null);
+    	return joinAndGetValue(fields, sep, null, null, false);
     }
     
     private static List<Object> getValue(List<Field> fields, Object obj) {
@@ -595,28 +610,40 @@ public class SpringJdbcDBHelper implements DBHelper {
     }
     
     /**
-     * 拼凑字段逗号,分隔子句（用于insert），并把参数放到values中
+     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
      * @param fields
      * @param sep
      * @param values
      * @param obj
+     * @param isWithNullValue 是否把null值放到values中
      * @return
      */
 	private static String joinAndGetValue(List<Field> fields, String sep,
-			List<Object> values, Object obj) {
+			List<Object> values, Object obj, boolean isWithNullValue) {
     	StringBuilder sb = new StringBuilder();
-    	int size = fields.size();
-    	for(int i = 0; i < size; i++) {
-    		Column column = DOInfoReader.getColumnInfo(fields.get(i));
-    		sb.append(getColumnName(column));
-    		if(i < size - 1) {
-    			sb.append(sep);
-    		}
+    	for(Field field : fields) {
+    		Column column = DOInfoReader.getColumnInfo(field);
+
+    		boolean isAppendColumn = true;
     		if(values != null && obj != null) {
-    			values.add(DOInfoReader.getValue(fields.get(i), obj));
+    			Object value = DOInfoReader.getValue(field, obj);
+    			if(isWithNullValue) {
+    				values.add(value);
+    			} else {
+    				if(value == null) {
+    					isAppendColumn = false;
+    				} else {
+    					values.add(value);
+    				}
+    			}
+    		}
+    		
+    		if(isAppendColumn) {
+        		sb.append(getColumnName(column)).append(sep);
     		}
     	}
-    	return sb.toString();
+    	int len = sb.length();
+    	return len == 0 ? "" : sb.toString().substring(0, len - 1);
 	}
 
 	/**

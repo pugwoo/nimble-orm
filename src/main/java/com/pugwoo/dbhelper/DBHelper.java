@@ -113,22 +113,30 @@ public interface DBHelper {
 	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
-	 * 如果包含了自增id，则自增Id会被设置。
-	 * 
+	 * 如果包含了自增id，则自增Id会被设置。<br>
+	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNull。
 	 * @param t
 	 * @return
 	 */
 	<T> int insert(T t);
 	
 	/**
+	 * 插入一条记录，返回数据库实际修改条数。<br>
+	 * 如果包含了自增id，则自增Id会被设置。
+	 * @param t
+	 * @return
+	 */
+	<T> int insertWithNull(T t);
+	
+	/**
 	 * 插入几条数据，通过拼凑成一条sql插入
-	 *【重要】批量插入不支持回设自增id。
-	 * 
+	 *【重要】批量插入不支持回设自增id。批量插入会把所有属性都插入，不支持只插入非null的值。
+	 * (说明:这个方法之前叫insertInOneSQL)
 	 * @param list
 	 * @return 返回影响的行数
 	 */
-	<T> int insertInOneSQL(List<T> list);
-	
+	<T> int insertWithNullInOneSQL(List<T> list);
+		
 	/**
 	 * 更新单个实例数据库记录，必须带上object的key，只更新非null的字段
 	 * @param t

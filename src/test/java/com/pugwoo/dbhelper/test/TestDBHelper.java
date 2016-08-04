@@ -106,9 +106,10 @@ public class TestDBHelper {
 	public void testInsert() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick888");
-		studentDO.setAge(28);
+		// studentDO.setAge(28); 
 		
-		int row = dbHelper.insert(studentDO);
+		int row = dbHelper.insert(studentDO); // 如果值为null，则用数据库默认值
+		// int row = dbHelper.insertWithNull(studentDO);
 		System.out.println("affected rows:" + row);
 		System.out.println(studentDO);
 		
@@ -120,7 +121,7 @@ public class TestDBHelper {
 			stu.setAge(i);
 			students.add(stu);
 		}
-		row = dbHelper.insertInOneSQL(students);
+		row = dbHelper.insertWithNullInOneSQL(students);
 		System.out.println("affected rows:" + row);
 	}
 	
