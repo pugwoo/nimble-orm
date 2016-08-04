@@ -348,6 +348,57 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		return rows;
 	}
+	
+	@Override
+	public <T> int insertWhereNotExist(T t, String whereSql, Object... args) {
+		return insertWhereNotExist(t, false, whereSql, args);
+	}
+	
+	@Override
+	public <T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args) {
+		return insertWhereNotExist(t, true, whereSql, args);
+	}
+	
+	private <T> int insertWhereNotExist(T t, boolean isWithNullValue, String whereSql, Object... args) {
+		if(whereSql == null || whereSql.isEmpty()) {
+			return insert(t, isWithNullValue);
+		}
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("INSERT INTO ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		Field autoIncrementField = getAutoIncrementField(fields);
+		String tableName = getTableName(table);
+		
+		sql.append(tableName).append(" (");
+		List<Object> values = new ArrayList<Object>();
+		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
+		sql.append(") select ");
+		sql.append(join("?", values.size(), ","));
+		sql.append(" from dual where not exists (select 1 from ");
+		sql.append(tableName).append(" where ").append(whereSql).append(" limit 1)");
+		if(args != null) {
+			for(Object arg : args) {
+				values.add(arg);
+			}
+		}
+		
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		if(autoIncrementField != null && rows == 1) {
+			Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()",
+					Long.class);
+			DOInfoReader.setValue(autoIncrementField, t, id);
+		}
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
+		}
+		return rows;
+	}
 		
 	@Override
 	public <T> int insertWithNullInOneSQL(List<T> list) {

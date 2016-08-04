@@ -125,4 +125,22 @@ public class TestDBHelper {
 		System.out.println("affected rows:" + row);
 	}
 	
+	@Test
+	@Rollback(false)
+	public void testInsertWhereNotExists() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("nick99");
+		
+		int row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		System.out.println("row=" + row);
+		
+		// 这个不会插入
+		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		System.out.println("row=" + row);
+		
+		// 这个不会插入
+		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		System.out.println("row=" + row);
+	}
+	
 }

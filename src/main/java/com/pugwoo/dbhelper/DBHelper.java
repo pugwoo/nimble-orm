@@ -122,11 +122,34 @@ public interface DBHelper {
 	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
+	 * 如果包含了自增id，则自增Id会被设置。<br>
+	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNullWhereNotExist。
+	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
+	 * @param t
+	 * @param whereSql 不含where关键字，不能包含order/group/limit等后续语句
+	 * @param args
+	 * @return
+	 */
+	<T> int insertWhereNotExist(T t, String whereSql, Object... args);
+	
+	/**
+	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。
 	 * @param t
 	 * @return
 	 */
 	<T> int insertWithNull(T t);
+	
+	/**
+	 * 插入一条记录，返回数据库实际修改条数。<br>
+	 * 如果包含了自增id，则自增Id会被设置。<br>
+	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
+	 * @param t
+	 * @param whereSql 不含where关键字，不能包含order/group/limit等后续语句
+	 * @param args
+	 * @return
+	 */
+	<T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args);
 	
 	/**
 	 * 插入几条数据，通过拼凑成一条sql插入
