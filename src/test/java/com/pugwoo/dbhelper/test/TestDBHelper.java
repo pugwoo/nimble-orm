@@ -153,4 +153,10 @@ public class TestDBHelper {
 		System.out.println("row=" + row);
 	}
 	
+	@Test
+	@Rollback(false)
+	public void deleteByKey() {
+		int rows = dbHelper.deleteByKey(StudentDO.class, 47);
+		System.out.println(rows);
+	}
 }

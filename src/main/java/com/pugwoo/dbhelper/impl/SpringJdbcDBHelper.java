@@ -647,6 +647,39 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 	
 	@Override
+	public <T> int deleteByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException {
+		if(keyValue == null) {
+			throw new NullKeyValueException();
+		}
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("DELETE FROM ");
+		
+		Table table = DOInfoReader.getTable(clazz);
+		List<Field> fields = DOInfoReader.getColumns(clazz);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		
+		if (keyFields.size() != 1) {
+			throw new NotSupportMethodException(
+					"must have only one key column, actually has "
+							+ keyFields.size() + " key columns");
+		}
+		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
+		
+		sql.append(getTableName(table)).append(" WHERE ");
+		sql.append(getColumnName(keyColumn)).append("=?");
+		
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), keyValue);// 此处可以用jdbcTemplate，因为没有in (?)表达式
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
+		}
+		return rows;
+	}
+	
+	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous
 			throw new InvalidParameterException(); 

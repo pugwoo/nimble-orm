@@ -231,6 +231,15 @@ public interface DBHelper {
 	<T> int deleteByKey(T t) throws NullKeyValueException;
 	
 	/**
+	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况
+	 * @param clazz
+	 * @param keyValue
+	 * @return
+	 * @throws NullKeyValueException
+	 */
+	<T> int deleteByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
+		
+	/**
 	 * 自定义条件删除数据
 	 * @param clazz
 	 * @param postSql 必须提供，必须写where
