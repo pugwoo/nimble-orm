@@ -33,11 +33,16 @@ public class TestDBHelper {
 	@Rollback(false)
 	public void test() {
 		StudentDO studentDO = new StudentDO();
-		studentDO.setNum("hello world".getBytes());
+		studentDO.setName("mytestname");
+		studentDO.setAge(12);
 		dbHelper.insert(studentDO);
 		
 		StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-		System.out.println(new String(st.getNum()));
+		System.out.println(st.getName());
+		
+		// 测试=?时传的参数是null的情况,会爆异常
+		// st = dbHelper.getOne(StudentDO.class, "where id=?", null);
+		// System.out.println(st);
 	}
 	
 	@Test

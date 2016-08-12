@@ -10,6 +10,8 @@
 
 如果参数列表需要传入的是Object...（例如getAll之类的方法），那么当需要传入一组集合时，强烈使用List来传，因为使用Object[]来传的话，Object...本身就是Object[]类型，但只有单个Object[]的话，就只会取Object[]的第一个参数作为参数，这样就导致错误。有一种hack的方式是，传入Object[]参数后面，再加上一个任意类型的参数，让Java不要认为参数是Object...即可。
 
+参数列表中不能出现null，否则会报org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'
+
 ## 一些思考和选择
 
  - 为什么insert默认只插入非null的值，而单独提供一个insertWithNull的方法呢?
