@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
@@ -48,6 +49,11 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	public void setTimeoutWarningValve(long timeMS) {
 		timeoutWarningValve = timeMS;
+	}
+	
+	@Override
+	public void rollback() {
+		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	}
 	
 	@Override

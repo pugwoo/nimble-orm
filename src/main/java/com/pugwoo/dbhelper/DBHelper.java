@@ -13,6 +13,12 @@ import com.pugwoo.dbhelper.model.PageData;
 public interface DBHelper {
 	
 	/**
+	 * 手动回滚@Transactional的事务。
+	 * 对于已知需要回滚的动作，我更推荐主动调用让其回滚，而非抛出RuntimeException
+	 */
+	void rollback();
+	
+	/**
 	 * 设置SQL执行超时的WARN log，超时时间为1秒
 	 * @param timeMS 毫秒
 	 */
