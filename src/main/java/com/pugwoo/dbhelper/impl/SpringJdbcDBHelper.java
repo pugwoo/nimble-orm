@@ -237,6 +237,16 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 	}
 	
+	@Override
+	public <T> int getCount(Class<T> clazz) {
+		return getTotal(clazz, null);
+	}
+	
+	@Override
+	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
+		return getTotal(clazz, postSql, args);
+	}
+	
     @Override
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {

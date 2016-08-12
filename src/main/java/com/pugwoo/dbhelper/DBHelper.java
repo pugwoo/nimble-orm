@@ -76,6 +76,22 @@ public interface DBHelper {
 			String postSql, Object... args);
 	
 	/**
+	 * 计算总数
+	 * @param clazz
+	 * @return
+	 */
+	<T> int getCount(Class<T> clazz);
+	
+	/**
+	 * 计算总数
+	 * @param clazz
+	 * @param postSql
+	 * @param args
+	 * @return
+	 */
+	<T> int getCount(Class<T> clazz, String postSql, Object... args);
+	
+	/**
 	 * 查询列表，没有查询条件；不查询总数
 	 * @param clazz
 	 * @param page 从1开始
