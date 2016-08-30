@@ -3,6 +3,8 @@ package com.pugwoo.dbhelper;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 
@@ -23,6 +25,52 @@ public interface DBHelper {
 	 * @param timeMS 毫秒
 	 */
 	void setTimeoutWarningValve(long timeMS);
+	
+	// 几个常用的jdbcTemplate的方法，目的是用dbHelper时可以使用in (?)传入list的参数
+	
+	/**
+	 * jdbcTemplate方式查询对象，clazz不需要Dbhelper的@Table等注解。
+	 * @param clazz 一般是Long,String等基本类型
+	 * @param sql 必须是完整的sql
+	 * @param args
+	 * @return
+	 */
+	<T> T queryForObject(Class<T> clazz, String sql, Object... args);
+	
+	/**
+	 * jdbcTemplate方式查询对象
+	 * @param sql 必须是完整的sql
+	 * @param args
+	 * @return
+	 */
+	SqlRowSet queryForRowSet(String sql, Object... args);
+	
+	/**
+	 * jdbcTemplate方式查询对象
+	 * @param sql 必须是完整的sql
+	 * @param args
+	 * @return
+	 */
+	Map<String, Object> queryForMap(String sql, Object... args);
+	
+	/**
+	 * 查询多列的结果
+	 * @param sql 必须是完整的sql
+	 * @param args
+	 * @return
+	 */
+	List<Map<String, Object>> queryForList(String sql, Object... args);
+	
+	/**
+	 * 查询多列结果
+	 * @param clazz
+	 * @param sql
+	 * @param args
+	 * @return
+	 */
+	<T> List<T> queryForList(Class<T> clazz, String sql, Object... args);
+	
+	// END
 	
 	/**
 	 * 通过T的主键，将数据查出来并设置到T中

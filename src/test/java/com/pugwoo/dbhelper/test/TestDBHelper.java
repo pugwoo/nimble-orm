@@ -45,9 +45,23 @@ public class TestDBHelper {
 		// System.out.println(st);
 	}
 	
+	/**
+	 * 测试jdbcTemplate
+	 */
+	@Test
+	public void testJdbcTemplate() {
+		Integer count = dbHelper.queryForObject(
+				Integer.class, "select count(*) from t_student where id<?", 50);
+		System.out.println("count:" + count);
+		
+		Map<String, Object> map = dbHelper.queryForMap("select * from t_student limit 1");
+		System.out.println(map);
+	}
+	
 	@Test
 	public void testGetByArray() {
-		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{1,2,3});
+		// 但是这种写法不稳定的，推荐传入List参数值
+		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
 		System.out.println(list.size());
 	}
 	
