@@ -55,3 +55,9 @@ public class StudentDO extends IdableBaseDO {
 * 如果参数需要传入的是Object...（例如getAll之类的方法），那么当需要传入若干参数时，强烈使用List来传。因为如果使用Object[]来传，Object...本身就是Object[]类型，当只有单个Object[]的时候，就只会取Object[]的第一个参数作为参数，这样就有错误，而且是语义错误，很隐蔽。有一种hack的方式，但不推荐，在传入Object[]参数后面，再加上一个任意类型的参数，让Java不要认为参数是Object...。
 
 * 参数列表中不能出现null，否则会报org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'
+
+## 未来规划
+
+1. 拦截器设计。
+
+2. Join方式设计。
