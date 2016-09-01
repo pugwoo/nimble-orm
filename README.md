@@ -40,6 +40,27 @@ public class StudentDO extends IdableBaseDO {
 </dependency>
 ```
 
+同时nimble-orm是基于jdbcTemplate的，需要拿到配置好的jdbcTemplate和namedJdbcTemplate:
+
+```xml
+	<!-- 配置JdbcTemplate -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- 配置namedParameterTemplate -->
+	<bean id="namedParameterJdbcTemplate" 
+	    class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+	    <constructor-arg ref="dataSource" />
+	</bean>
+	
+	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
+	    <property name="jdbcTemplate" ref="jdbcTemplate" />
+	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
+	    <property name="timeoutWarningValve" value="1000" /> <!-- 超过1秒的话就告警打log -->
+	</bean>
+```
+
 ## 关于数据库字段到Java字段的映射关系
 
 强烈建议java POJO不要使用基础类型(如int long)，同时引用类型也不要设置默认值。因为：
