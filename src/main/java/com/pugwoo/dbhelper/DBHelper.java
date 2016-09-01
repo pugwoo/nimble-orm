@@ -82,7 +82,7 @@ public interface DBHelper {
 	/**
 	 * 适合于只有一个Key的情况
 	 * @param clazz
-	 * @param key
+	 * @param keyValue
 	 * @return 如果不存在则返回null
 	 */
     <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
@@ -278,7 +278,7 @@ public interface DBHelper {
 	/**
 	 * 更新数据库记录，只更新非null的字段，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int updateNotNull(T t)更快
-	 * @param t
+	 * @param list
 	 * @return
 	 * @throws NullKeyValueException
 	 */
@@ -287,7 +287,7 @@ public interface DBHelper {
 	/**
 	 * 更新数据库记录，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int update(T t)更快
-	 * @param t
+	 * @param list
 	 * @return
 	 * @throws NullKeyValueException
 	 */

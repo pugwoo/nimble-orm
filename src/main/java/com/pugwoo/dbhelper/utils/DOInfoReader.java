@@ -27,7 +27,7 @@ public class DOInfoReader {
 	 * 获取DO的@Table信息
 	 * 
 	 * @param clazz
-	 * @throws 当clazz没有@Table注解时抛出NoTableAnnotationException
+	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
 	 * @return
 	 */
 	public static Table getTable(Class<?> clazz)
@@ -43,7 +43,7 @@ public class DOInfoReader {
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先
 	 * 
-	 * @param objectDO
+	 * @param clazz
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
 	 */
@@ -152,7 +152,7 @@ public class DOInfoReader {
 	 * 如果有则按setter方法，如果没有则直接写入
 	 * 
 	 * @param field
-	 * @param obejct
+	 * @param object
 	 * @param value
 	 */
 	public static boolean setValue(Field field, Object object, Object value) {
