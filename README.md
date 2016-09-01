@@ -30,6 +30,16 @@ public class StudentDO extends IdableBaseDO {
 }
 ```
 
+项目只需要maven引入：
+
+```xml
+<dependency>
+    <groupId>com.pugwoo</groupId>
+    <artifactId>nimble-orm</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
 ## 关于数据库字段到Java字段的映射关系
 
 强烈建议java POJO不要使用基础类型(如int long)，同时引用类型也不要设置默认值。因为：
