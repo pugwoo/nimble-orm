@@ -189,6 +189,8 @@ public interface DBHelper {
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
 	
+	
+	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。<br>
@@ -239,12 +241,12 @@ public interface DBHelper {
 	<T> int insertWithNullInOneSQL(List<T> list);
 		
 	/**
-	 * 更新单个实例数据库记录，必须带上object的key，只更新非null的字段
+	 * 更新单个实例数据库记录，必须带上object的key，包含更新null值的字段
 	 * @param t
 	 * @return 返回数据库实际修改条数
 	 * @throws NullKeyValueException
 	 */
-	<T> int updateNotNull(T t) throws NullKeyValueException;
+	<T> int updateWithNull(T t) throws NullKeyValueException;
 	
 	/**
 	 * 带条件的更新单个对象，必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改
@@ -255,10 +257,10 @@ public interface DBHelper {
 	 * @return 返回数据库实际修改条数
 	 * @throws NullKeyValueException
 	 */
-	<T> int updateNotNull(T t, String postSql, Object... args) throws NullKeyValueException;
+	<T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException;
 	
 	/**
-	 * 更新单条数据库记录,必须带上object的key
+	 * 更新单条数据库记录,必须带上object的key。【只更新非null字段】
 	 * @param t
 	 * @return 返回数据库实际修改条数
 	 * @throws NullKeyValueException
@@ -266,7 +268,9 @@ public interface DBHelper {
 	<T> int update(T t) throws NullKeyValueException;
 	
 	/**
-	 * 更新单条数据库记录,必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改
+	 * 更新单条数据库记录,必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改。
+	 * 【只更新非null字段】
+	 * 
 	 * @param t
 	 * @param postSql where及后续的sql，包含where关键字
 	 * @param args
@@ -276,17 +280,18 @@ public interface DBHelper {
 	<T> int update(T t, String postSql, Object... args) throws NullKeyValueException;
 	
 	/**
-	 * 更新数据库记录，只更新非null的字段，返回数据库实际修改条数。
+	 * 更新数据库记录，更新包含null的字段，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int updateNotNull(T t)更快
 	 * @param list
 	 * @return
 	 * @throws NullKeyValueException
 	 */
-	<T> int updateNotNull(List<T> list) throws NullKeyValueException;
+	<T> int updateWithNull(List<T> list) throws NullKeyValueException;
 	
 	/**
 	 * 更新数据库记录，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int update(T t)更快
+	 * 【只更新非null字段】
 	 * @param list
 	 * @return
 	 * @throws NullKeyValueException

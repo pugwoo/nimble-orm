@@ -2,7 +2,7 @@
 
 这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成Mysql的增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
 
-1. Hibernate因为比较复杂难以使用好，互联网公司都没有采用，用得多的是MyBatis。而MyBatis的xml文件中，会出现大量相同的列名。增删一个列或修改一个列名，对于xml文件都是很大的改变。有一种方式是用MyBatis的Generator生成xml，但是这样的xml文件如果修改过，下次生成就会覆盖，很容易出错。因此，这种xml方式维护sql，虽然足够灵活，但也非常繁琐。
+1. Hibernate因为比较复杂难以使用好，互联网公司大都没有采用，用得多的是MyBatis。而MyBatis的xml文件中，会出现大量相同的列名。增删一个列或修改一个列名，对于xml文件都是很大的改变。有一种方式是用MyBatis的Generator生成xml，但是这样的xml文件如果修改过，下次生成就会覆盖，很容易出错。因此，这种xml方式维护sql，虽然足够灵活，但也非常繁琐。
 
 2. MyBatis对null值的处理不够灵活。例如只想更新非null值，或只插入非null值，MyBatis的写法会出现很多判断语句，大量的重复列名出现。
 
@@ -73,9 +73,9 @@ public class StudentDO extends IdableBaseDO {
 
 ## 一些思考和选择
 
-* 为什么insert默认只插入非null的值，而单独提供一个insertWithNull的方法呢?
+* 为什么insert和update默认只插入非null的值，而单独提供一个insertWithNull和updateWithNull的方法呢?
 
-> 答：对于null值，如果写入到数据库，那肯定是null，同时无法使用数据库的默认值。因此null值是没有必要默认就写入数据库的。
+> 答：对于null值，如果写入到数据库，那肯定是null，同时无法使用数据库的默认值。因此null值是没有必要默认就写入数据库的。同理，update也保持一致的做法。
 
 * 为什么要提供`void rollback()`方法，手工来回滚事务？
 
