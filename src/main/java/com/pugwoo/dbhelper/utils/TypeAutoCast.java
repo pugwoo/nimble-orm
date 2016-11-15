@@ -75,6 +75,9 @@ public class TypeAutoCast {
 			if(obj instanceof Boolean) {
 				return (T) obj;
 			}
+			if(obj instanceof Number) {
+				return (T) new Boolean(((Number) obj).intValue() != 0);
+			}
 			return (T) new Boolean(obj.toString());
 		}
 		if(clazz == Float.class || clazz == float.class) {

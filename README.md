@@ -73,7 +73,7 @@ public class StudentDO extends IdableBaseDO {
 
 1. 当数据库字段是NULL，而java POJO的字段是基础类型时，会转换成0。数据库字段不支持enum，推荐使用String来表达。
 
-2. 一般来说，Java中的Boolean字段会对应数据库的tinyint字段。当然dbHelper也支持bit的类型。
+2. 一般来说，Java中的Boolean字段会对应数据库的tinyint(1)字段，和C语言保持一致，对于tinyint(4)，0表示false，非0表示true(包括负数)。当然dbHelper也支持bit的类型。
 
 ## 一些思考和选择
 

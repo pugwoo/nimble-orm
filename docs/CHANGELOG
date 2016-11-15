@@ -1,3 +1,6 @@
+2016年11月15日
+v0.1.2 - [fix] db的tinyint(4)映射到java Boolean全是false的问题。
+
 2016年10月13日
 v0.1.1 - update默认修改为只更新null值
 
