@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS `t_student`;
 CREATE TABLE `t_student` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `deleted` tinyint(4) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL,
   `age` int(11) DEFAULT '0',
   PRIMARY KEY (`id`)

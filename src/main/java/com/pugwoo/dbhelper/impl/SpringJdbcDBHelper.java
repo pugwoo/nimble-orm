@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -435,6 +436,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(fields);
 		
+		preHandleInsert(t, fields);
 		autoSetSoftDeleted(t, fields);
 		
 		sql.append(getTableName(table)).append(" (");
@@ -744,6 +746,25 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(getTableName(table)).append(" ").append(postSql);
 				
 		return namedJdbcExecuteUpdate(sql.toString(), args);
+	}
+	
+	private <T> void preHandleInsert(T t, List<Field> fields) {
+		if(t == null || fields.isEmpty()) {
+			return;
+		}
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.setTimeWhenInsert() && field.getType() == Date.class) { // TODO 还没测试Date子类行不行
+				if(DOInfoReader.getValue(field, t) == null) {
+					DOInfoReader.setValue(field, t, new Date());
+				}
+			}
+			if(column.insertDefault() != null && !column.insertDefault().isEmpty()) {
+				if(DOInfoReader.getValue(field, t) == null) {
+					DOInfoReader.setValue(field, t, column.insertDefault());
+				}
+			}
+		}
 	}
 	
 	/**
