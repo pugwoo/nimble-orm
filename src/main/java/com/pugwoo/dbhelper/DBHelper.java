@@ -189,8 +189,6 @@ public interface DBHelper {
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
 	
-	
-	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。<br>

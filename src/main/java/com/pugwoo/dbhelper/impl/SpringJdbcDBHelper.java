@@ -423,7 +423,9 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		Field autoIncrementField = getAutoIncrementField(fields);
+		Field autoIncrementField = DOInfoReader.getAutoIncrementField(fields);
+		
+		autoSetSoftDeleted(t, fields);
 		
 		sql.append(getTableName(table)).append(" (");
 		List<Object> values = new ArrayList<Object>();
@@ -467,7 +469,10 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		Field autoIncrementField = getAutoIncrementField(fields);
+		
+		autoSetSoftDeleted(t, fields);
+		
+		Field autoIncrementField = DOInfoReader.getAutoIncrementField(fields);
 		String tableName = getTableName(table);
 		
 		sql.append(tableName).append(" (");
@@ -534,6 +539,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		List<Object> values = new ArrayList<Object>();
 		for(int i = 0; i < list.size(); i++) {
+			autoSetSoftDeleted(list.get(i), fields);
 			sql.append("(");
 			sql.append(join("?", fields.size(), ","));
 			sql.append(")");
@@ -731,6 +737,26 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 	
 	/**
+	 * 如果t有默认的软删除字段但没有设置，则自动设置上，避免数据库忘记设置默认值的情况
+	 * @param t
+	 * @param fields
+	 */
+	private <T> void autoSetSoftDeleted(T t, List<Field> fields) {
+		if(t == null) {
+			return;
+		}
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields);
+		if(softDelete == null) {
+			return;
+		}
+		Object delete = DOInfoReader.getValue(softDelete, t);
+		if(delete == null) {
+			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			DOInfoReader.setValue(softDelete, t, softDeleteColumn.softDelete()[0]);
+		}
+	}
+	
+	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 * @param sql
 	 * @param args
@@ -765,17 +791,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		return rows;
 	}
-	
-	private static Field getAutoIncrementField(List<Field> fields) {
-		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
-			if(column.isAutoIncrement()) {
-				return field;
-			}
-		}
-		return null;
-	}
-	
+		
 	/**
 	 * 例如：str=?,times=3,sep=,  返回 ?,?,?
 	 */

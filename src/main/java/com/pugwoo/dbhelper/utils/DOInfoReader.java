@@ -93,6 +93,19 @@ public class DOInfoReader {
 		return keyFields;
 	}
 	
+	public static Field getAutoIncrementField(List<Field> fields) {
+		if(fields == null) {
+			return null;
+		}
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.isAutoIncrement()) {
+				return field;
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * 获得软删除标记字段，最多只能返回1个。
 	 * @param fields
