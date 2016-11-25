@@ -121,7 +121,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(" WHERE ").append(where);
+		sql.append(autoSetSoftDeleted("WHERE " + where, fields));
 		
 		try {
 			LOGGER.debug("ExecSQL:{}", sql);
@@ -162,7 +162,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(" WHERE ").append(getColumnName(keyColumn)).append("=?");
+		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + "=?", fields));
 		
 		try {
 			LOGGER.debug("ExecSQL:{}", sql);
@@ -203,7 +203,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(" WHERE ").append(getColumnName(keyColumn)).append(" in (?)");
+		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + " in (?)", fields));
 		
 		List<T> list = namedParameterJdbcTemplate.query(
 				NamedParameterUtils.trans(sql.toString()),
@@ -243,18 +243,20 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(" WHERE ");
 		
+		StringBuilder whereSql = new StringBuilder();
 		List<Object> values = new ArrayList<Object>();
 		boolean isFirst = true;
 		for(String key : keyMap.keySet()) {
 			if(!isFirst) {
-				sql.append(" AND ");
+				whereSql.append(" AND ");
 			}
 			isFirst = false;
-			sql.append(key).append("=?");
+			whereSql.append(key).append("=?");
 			values.add(keyMap.get(key));
 		}
+		
+		sql.append(autoSetSoftDeleted("WHERE " + whereSql.toString(), fields));
 		
 		// 检查主键不允许为null
 		for(Object value : values) {
@@ -365,15 +367,14 @@ public class SpringJdbcDBHelper implements DBHelper {
 
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		if(postSql != null) {
-			sql.append(" ").append(postSql);
-		}
+		sql.append(autoSetSoftDeleted(postSql, fields));
+		
 		sql.append(limit(offset, limit));
 		
 		LOGGER.debug("ExecSQL:{}", sql);
 		long start = System.currentTimeMillis();
 		List<T> list = null;
-		if(postSql == null) {
+		if(args == null || args.length == 0) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		} else {
@@ -399,12 +400,21 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append("SELECT count(*)");
 		
 		Table table = DOInfoReader.getTable(clazz);
+		List<Field> fields = DOInfoReader.getColumns(clazz);
 		sql.append(" FROM ").append(getTableName(table));
-		if(postSql != null) {
-			sql.append(" ").append(postSql); // XXX 可以优化，查count(*)只需要where子句
+		sql.append(autoSetSoftDeleted(postSql, fields)); // XXX 可以优化，查count(*)只需要where子句
+
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = namedParameterJdbcTemplate.queryForObject(
+				NamedParameterUtils.trans(sql.toString()),
+				NamedParameterUtils.transParam(args),
+				Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
 		}
-				
-		return namedJdbcExecuteUpdate(sql.toString(), args);
+		return rows;
 	}
 	
 	@Override
@@ -736,6 +746,40 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return namedJdbcExecuteUpdate(sql.toString(), args);
 	}
 	
+	/**
+	 * 自动为【最后】where sql字句加上软删除查询字段
+	 * @param whereSql 如果有where条件的，需要带上where关键字；如果是group或空的字符串或null都可以
+	 * @param fields
+	 * @return 无论如何前面会加空格，更安全
+	 */
+	private <T> String autoSetSoftDeleted(String whereSql, List<Field> fields) {
+		if(whereSql == null) {
+			whereSql = "";
+		}
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields);
+		if(softDelete == null) {
+			return " " + whereSql; // 不处理
+		} else {
+			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			String whereKeyword = "WHERE ";
+			String handledSql = whereSql.trim();
+			boolean isStartWithWhere = handledSql.length() >= 6
+					&& handledSql.substring(0, 6).equalsIgnoreCase(whereKeyword);
+			
+			StringBuilder sb = new StringBuilder(" ");
+			sb.append(whereKeyword);
+			sb.append(getColumnName(softDeleteColumn)).append("=");
+			sb.append(softDeleteColumn.softDelete()[0]);
+			
+			if(isStartWithWhere) {
+				sb.append(" AND ").append(handledSql.substring(5)); // 多个空格，没关系
+			} else {
+				sb.append(" ").append(handledSql);
+			}
+			return sb.toString();
+		}
+	}
+		
 	/**
 	 * 如果t有默认的软删除字段但没有设置，则自动设置上，避免数据库忘记设置默认值的情况
 	 * @param t

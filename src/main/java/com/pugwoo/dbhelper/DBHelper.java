@@ -29,7 +29,8 @@ public interface DBHelper {
 	// 几个常用的jdbcTemplate的方法，目的是用dbHelper时可以使用in (?)传入list的参数
 	
 	/**
-	 * jdbcTemplate方式查询对象，clazz不需要Dbhelper的@Table等注解。
+	 * jdbcTemplate方式查询对象，clazz不需要Dbhelper的@Table等注解。<br>
+	 * 【不会自动处理软删除记录】
 	 * @param clazz 一般是Long,String等基本类型
 	 * @param sql 必须是完整的sql
 	 * @param args
@@ -38,7 +39,8 @@ public interface DBHelper {
 	<T> T queryForObject(Class<T> clazz, String sql, Object... args);
 	
 	/**
-	 * jdbcTemplate方式查询对象
+	 * jdbcTemplate方式查询对象<br>
+	 * 【不会自动处理软删除记录】
 	 * @param sql 必须是完整的sql
 	 * @param args
 	 * @return
@@ -46,7 +48,8 @@ public interface DBHelper {
 	SqlRowSet queryForRowSet(String sql, Object... args);
 	
 	/**
-	 * jdbcTemplate方式查询对象
+	 * jdbcTemplate方式查询对象<br>
+	 * 【不会自动处理软删除记录】
 	 * @param sql 必须是完整的sql
 	 * @param args
 	 * @return
@@ -54,7 +57,8 @@ public interface DBHelper {
 	Map<String, Object> queryForMap(String sql, Object... args);
 	
 	/**
-	 * 查询多列的结果
+	 * 查询多列的结果<br>
+	 * 【不会自动处理软删除记录】
 	 * @param sql 必须是完整的sql
 	 * @param args
 	 * @return
@@ -62,7 +66,8 @@ public interface DBHelper {
 	List<Map<String, Object>> queryForList(String sql, Object... args);
 	
 	/**
-	 * 查询多列结果
+	 * 查询多列结果<br>
+	 * 【不会自动处理软删除记录】
 	 * @param clazz
 	 * @param sql
 	 * @param args
@@ -73,14 +78,17 @@ public interface DBHelper {
 	// END
 	
 	/**
-	 * 通过T的主键，将数据查出来并设置到T中
+	 * 通过T的主键，将数据查出来并设置到T中<br>
+	 * 【会自动处理软删除记录】
+	 * 
 	 * @param t 值设置在t中
 	 * @return 存在返回true，否则返回false
 	 */
 	<T> boolean getByKey(T t) throws NullKeyValueException;
 	
 	/**
-	 * 适合于只有一个Key的情况
+	 * 适合于只有一个Key的情况<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param keyValue
 	 * @return 如果不存在则返回null
@@ -88,7 +96,8 @@ public interface DBHelper {
     <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
     
     /**
-     * 通过多个key查询对象
+     * 通过多个key查询对象<br>
+     * 【会自动处理软删除记录】
      * @param clazz
      * @param keyValues
      * @return 返回的值是LinkedHashMap对象，按照keyValues的顺序来，但如果key不存在，那么不会再返回值的map key中
@@ -96,7 +105,8 @@ public interface DBHelper {
     <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues);
 	
 	/**
-	 * 适合于只有一个或多个Key的情况
+	 * 适合于只有一个或多个Key的情况<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param keyMap
 	 * @return 如果不存在则返回null
@@ -104,7 +114,8 @@ public interface DBHelper {
 	<T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) throws NullKeyValueException;
 	
 	/**
-	 * 查询列表，没有查询条件
+	 * 查询列表，没有查询条件<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
@@ -113,7 +124,8 @@ public interface DBHelper {
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize);
 
 	/**
-	 * 查询列表，postSql可以带查询条件
+	 * 查询列表，postSql可以带查询条件<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
@@ -124,14 +136,16 @@ public interface DBHelper {
 			String postSql, Object... args);
 	
 	/**
-	 * 计算总数
+	 * 计算总数<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @return
 	 */
 	<T> int getCount(Class<T> clazz);
 	
 	/**
-	 * 计算总数
+	 * 计算总数<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param postSql
 	 * @param args
@@ -140,7 +154,8 @@ public interface DBHelper {
 	<T> int getCount(Class<T> clazz, String postSql, Object... args);
 	
 	/**
-	 * 查询列表，没有查询条件；不查询总数
+	 * 查询列表，没有查询条件；不查询总数<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
@@ -149,7 +164,8 @@ public interface DBHelper {
 	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize);
 	
 	/**
-	 * 查询列表，postSql可以带查询条件；不查询总数
+	 * 查询列表，postSql可以带查询条件；不查询总数<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
@@ -160,28 +176,32 @@ public interface DBHelper {
 			String postSql, Object... args);
 	
 	/**
-	 * 查询列表，查询所有记录，如果数据量大请慎用
+	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz);
 	
 	/**
-	 * 查询列表，查询所有记录，如果数据量大请慎用
+	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 	
 	/**
-	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。
+	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz);
 	
 	/**
-	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。
+	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
+	 * 【会自动处理软删除记录】
 	 * @param clazz
 	 * @param postSql
 	 * @param args
