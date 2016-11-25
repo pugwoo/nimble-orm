@@ -19,7 +19,6 @@ import com.pugwoo.dbhelper.test.model.StudentDO;
 
 /**
  * 2015年1月13日 11:11:23
- *
  */
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -31,7 +30,7 @@ public class TestDBHelper {
 		
 	@Test
 	@Rollback(false)
-	public void test() {
+	public void testInsert() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("mytestname");
 		studentDO.setAge(12);
@@ -41,6 +40,9 @@ public class TestDBHelper {
 		System.out.println(st.getName());
 		
 		// 测试=?时传的参数是null的情况,会爆异常
+		// 为什么id=?当传入null值时，不自动转换为is null呢？
+		// 【因为】null本身就是一个有歧义的用法，在大多数查询中，都是明确查询有值的。
+		//        自动转换null的话，可能将异常的参数当作正常的情况被处理，将会是一个大坑。
 		// st = dbHelper.getOne(StudentDO.class, "where id=?", null);
 		// System.out.println(st);
 	}
@@ -132,13 +134,13 @@ public class TestDBHelper {
 	
 	@Test
 	@Rollback(false)
-	public void testInsert() {
+	public void testInsert2() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick888");
 		// studentDO.setAge(28); 
 		
 		int row = dbHelper.insert(studentDO); // 如果值为null，则用数据库默认值
-		// int row = dbHelper.insertWithNull(studentDO);
+		// int row = dbHelper.insertWithNull(studentDO); // 强制设置数据库
 		System.out.println("affected rows:" + row);
 		System.out.println(studentDO);
 		

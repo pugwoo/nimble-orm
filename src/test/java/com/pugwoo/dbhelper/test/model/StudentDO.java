@@ -21,7 +21,7 @@ public class StudentDO extends IdableBaseDO {
 	@Column("age")
 	private Integer age;
 	
-//	@Column("num")
+//	@Column("num") // 支持byte[]类型
 	private byte[] num;
 	
 	@Override
