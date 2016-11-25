@@ -17,7 +17,7 @@ import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
  * 
- * 1. 继承的类的信息读取 XXX 待验证，去重的情况怎样处理
+ * 1. 继承的类的信息读取，父类先读取，请保证@Column注解没有重复的字段。
  */
 public class DOInfoReader {
 	
@@ -76,7 +76,7 @@ public class DOInfoReader {
 	 * 获得字段里面的key字段
 	 * @param fields
 	 * @return
-	 * @throws NoKeyColumnAnnotationException
+	 * @throws NoKeyColumnAnnotationException 如果没有key Column，抛出该异常。
 	 */
 	public static List<Field> getKeyColumns(List<Field> fields) 
 	    throws NoKeyColumnAnnotationException {
@@ -91,6 +91,26 @@ public class DOInfoReader {
 			throw new NoKeyColumnAnnotationException();
 		}
 		return keyFields;
+	}
+	
+	/**
+	 * 获得软删除标记字段，最多只能返回1个。
+	 * @param fields
+	 * @return 如果没有则返回null
+	 */
+	public static Field getSoftDeleteColumn(List<Field> fields) {
+		if(fields == null) {
+			return null;
+		}
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.softDelete() != null && column.softDelete().length == 2
+					&& !column.softDelete()[0].trim().isEmpty()
+					&& !column.softDelete()[1].trim().isEmpty()) {
+				return field;
+			}
+		}
+		return null;
 	}
 	
 	/**

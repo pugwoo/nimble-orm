@@ -299,27 +299,32 @@ public interface DBHelper {
 	<T> int update(List<T> list) throws NullKeyValueException;
 	
 	/**
-	 * 删除数据库记录，返回数据库实际修改条数
+	 * 删除数据库记录，返回数据库实际修改条数。
+	 * 该操作【会】自动使用软删除进行删除
+	 * 
 	 * @param t
 	 * @return
 	 */
 	<T> int deleteByKey(T t) throws NullKeyValueException;
 	
 	/**
-	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况
+	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况。
+	 * 该操作【会】自动使用软删除进行删除
+	 * 
 	 * @param clazz
 	 * @param keyValue
 	 * @return
 	 * @throws NullKeyValueException
 	 */
 	<T> int deleteByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
-		
+
 	/**
-	 * 自定义条件删除数据
+	 * 自定义条件删除数据，该操作【不会】自动使用软删除标记，请慎用！
 	 * @param clazz
 	 * @param postSql 必须提供，必须写where
 	 * @param args
 	 * @return
 	 */
 	<T> int delete(Class<T> clazz, String postSql, Object... args);
+	
 }

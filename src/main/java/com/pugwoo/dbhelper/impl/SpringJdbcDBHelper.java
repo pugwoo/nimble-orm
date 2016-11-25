@@ -672,46 +672,43 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	@Override
 	public <T> int deleteByKey(T t) throws NullKeyValueException {
-		StringBuilder sql = new StringBuilder();
-		sql.append("DELETE FROM ");
-		
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
-		
 		if(keyFields.isEmpty()) {
 			throw new NoKeyColumnAnnotationException();
 		}
 		
-		sql.append(getTableName(table)).append(" WHERE ");
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
+		
 		List<Object> keyValues = new ArrayList<Object>();
 		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
-		// 检查key的值是不是null
-		for(Object value : keyValues) {
+		for(Object value : keyValues) { // 检查key的值是不是null
 			if(value == null) {
 				throw new NullKeyValueException();
 			}
 		}
-		sql.append(where);
 		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), keyValues.toArray());  // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
+		StringBuilder sql = new StringBuilder();
+		if(softDelete == null) { // 物理删除
+			sql.append("DELETE FROM ");
+			sql.append(getTableName(table));
+		} else { // 软删除
+			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			sql.append("UPDATE ").append(getTableName(table));
+			sql.append(" SET ").append(getColumnName(softDeleteColumn));
+			sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		}
-		return rows;
+		sql.append(" WHERE ").append(where);
+
+		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
 	}
-	
+		
 	@Override
 	public <T> int deleteByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException {
 		if(keyValue == null) {
 			throw new NullKeyValueException();
 		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("DELETE FROM ");
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
@@ -724,17 +721,22 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
 		
-		sql.append(getTableName(table)).append(" WHERE ");
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
+		
+		StringBuilder sql = new StringBuilder();
+		if(softDelete == null) { // 物理删除
+			sql.append("DELETE FROM ");
+			sql.append(getTableName(table));
+		} else { // 软删除
+			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			sql.append("UPDATE ").append(getTableName(table));
+			sql.append(" SET ").append(getColumnName(softDeleteColumn));
+			sql.append("=").append(softDeleteColumn.softDelete()[1]);
+		}
+		sql.append(" WHERE ");
 		sql.append(getColumnName(keyColumn)).append("=?");
 		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), keyValue);// 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
-		}
-		return rows;
+		return jdbcExecuteUpdate(sql.toString(), keyValue);
 	}
 	
 	@Override
@@ -748,12 +750,39 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		sql.append(getTableName(table)).append(" ").append(postSql);
-		
+				
+		return namedJdbcExecuteUpdate(sql.toString(), args);
+	}
+	
+	/**
+	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
+	 * @param sql
+	 * @param args
+	 * @return
+	 */
+	private int namedJdbcExecuteUpdate(String sql, Object... args) {
 		LOGGER.debug("ExecSQL:{}", sql);
 		long start = System.currentTimeMillis();
 		int rows = namedParameterJdbcTemplate.update(
-				NamedParameterUtils.trans(sql.toString()),
+				NamedParameterUtils.trans(sql),
 				NamedParameterUtils.transParam(args)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
+		}
+		return rows;
+	}
+	
+	/**
+	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式
+	 * @param sql
+	 * @param args
+	 * @return 实际修改的行数
+	 */
+	private int jdbcExecuteUpdate(String sql, Object... args) {
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
@@ -771,7 +800,9 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return null;
 	}
 	
-	// 例如：str=?,times=3,sep=,  返回 ?,?,?
+	/**
+	 * 例如：str=?,times=3,sep=,  返回 ?,?,?
+	 */
     private static String join(String str, int times, String sep) {
     	StringBuilder sb = new StringBuilder();
     	for(int i = 0; i < times; i++) {

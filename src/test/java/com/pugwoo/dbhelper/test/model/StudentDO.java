@@ -9,7 +9,7 @@ import com.pugwoo.dbhelper.annotation.Table;
  * 2015年1月12日 15:20:09 这个是有注解的DO
  */
 @Table("t_student")
-public class StudentDO extends IdableBaseDO {
+public class StudentDO extends IdableSoftDeleteBaseDO {
 		
 	@Column("name")
 	private String name;

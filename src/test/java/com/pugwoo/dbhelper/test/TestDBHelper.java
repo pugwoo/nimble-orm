@@ -27,7 +27,7 @@ public class TestDBHelper {
 	
 	@Autowired
 	private DBHelper dbHelper;
-		
+	
 	@Test
 	@Rollback(false)
 	public void testInsert() {
@@ -177,7 +177,14 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void deleteByKey() {
-		int rows = dbHelper.deleteByKey(StudentDO.class, 47);
-		System.out.println(rows);
+//		int rows = dbHelper.deleteByKey(StudentDO.class, 50);
+//		System.out.println(rows);
+		
+	    // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
+		
+		StudentDO studentDO = new StudentDO();
+		studentDO.setId(60L);
+		System.out.println(dbHelper.deleteByKey(studentDO)); 
 	}
+	
 }
