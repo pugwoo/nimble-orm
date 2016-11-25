@@ -403,18 +403,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 		if(postSql != null) {
 			sql.append(" ").append(postSql); // XXX 可以优化，查count(*)只需要where子句
 		}
-		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = namedParameterJdbcTemplate.queryForObject(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args),
-				Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
-		}
-		return rows;
+				
+		return namedJdbcExecuteUpdate(sql.toString(), args);
 	}
 	
 	@Override
@@ -552,15 +542,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 			}
 			values.addAll(getValue(fields, list.get(i)));
 		}
-		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
-		}
-		return rows;
+				
+		return jdbcExecuteUpdate(sql.toString(), values.toArray());
 	}
 	
 	@Override
@@ -660,14 +643,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		sql.append(where);
 		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
-		}
-		return rows;
+		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
 	}
 	
 	@Override
