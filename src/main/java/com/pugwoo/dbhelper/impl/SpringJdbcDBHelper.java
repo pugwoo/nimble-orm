@@ -482,6 +482,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		
+		preHandleInsert(t, fields);
 		autoSetSoftDeleted(t, fields);
 		
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(fields);
@@ -551,6 +552,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		
 		List<Object> values = new ArrayList<Object>();
 		for(int i = 0; i < list.size(); i++) {
+			preHandleInsert(list.get(i), fields);
 			autoSetSoftDeleted(list.get(i), fields);
 			sql.append("(");
 			sql.append(join("?", fields.size(), ","));
@@ -754,7 +756,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 		for(Field field : fields) {
 			Column column = DOInfoReader.getColumnInfo(field);
-			if(column.setTimeWhenInsert() && field.getType() == Date.class) { // TODO 还没测试Date子类行不行
+			if(column.setTimeWhenInsert() && Date.class.isAssignableFrom(field.getType())) {
 				if(DOInfoReader.getValue(field, t) == null) {
 					DOInfoReader.setValue(field, t, new Date());
 				}
