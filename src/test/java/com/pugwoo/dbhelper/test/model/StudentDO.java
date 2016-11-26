@@ -16,6 +16,9 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 	@Column(value = "create_time", setTimeWhenInsert = true)
 	private Date createTime;
 	
+	@Column(value = "update_time", setTimeWhenUpdate = true)
+	private Date updateTime;
+	
 	@Column("name")
 	private String name;
 	
@@ -66,6 +69,14 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 		this.createTime = createTime;
 	}
 
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+	
 //	public StudentTypeEnum getType() {
 //		return type;
 //	}

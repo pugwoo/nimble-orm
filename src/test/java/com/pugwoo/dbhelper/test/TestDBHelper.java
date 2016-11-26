@@ -30,6 +30,15 @@ public class TestDBHelper {
 	
 	@Test
 	@Rollback(false)
+	public void testUpdate() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setId(1L);
+		studentDO.setName("new name");
+		dbHelper.update(studentDO);
+	}
+	
+	@Test
+	@Rollback(false)
 	public void testInsert() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("mytestname");

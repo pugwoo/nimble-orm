@@ -631,6 +631,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 			throw new NoKeyColumnAnnotationException();
 		}
 		
+		preHandleUpdate(t, notKeyFields);
+		
 		sql.append(getTableName(table)).append(" SET ");
 		List<Object> keyValues = new ArrayList<Object>();
 		String setSql = joinSetAndGetValue(notKeyFields, keyValues, t, withNull);
@@ -764,6 +766,20 @@ public class SpringJdbcDBHelper implements DBHelper {
 			if(column.insertDefault() != null && !column.insertDefault().isEmpty()) {
 				if(DOInfoReader.getValue(field, t) == null) {
 					DOInfoReader.setValue(field, t, column.insertDefault());
+				}
+			}
+		}
+	}
+	
+	private <T> void preHandleUpdate(T t, List<Field> fields) {
+		if(t == null || fields.isEmpty()) {
+			return;
+		}
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+				if(DOInfoReader.getValue(field, t) == null) {
+					DOInfoReader.setValue(field, t, new Date());
 				}
 			}
 		}
