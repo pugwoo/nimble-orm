@@ -30,6 +30,17 @@ public class TestDBHelper {
 	
 	@Test
 	@Rollback(false)
+	public void testInsertOrUpdateFull() {
+		List<StudentDO> old = dbHelper.getAll(StudentDO.class, "where id < 10");
+		List<StudentDO> newlist = dbHelper.getAll(StudentDO.class, "where id > 7 and id < 10");
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("hahahaha");
+		newlist.add(studentDO);
+		dbHelper.insertOrUpdateFull(old, newlist);
+	}
+	
+	@Test
+	@Rollback(false)
 	public void testUpdate() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setId(1L);
