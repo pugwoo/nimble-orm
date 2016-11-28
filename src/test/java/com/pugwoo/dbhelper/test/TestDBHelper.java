@@ -29,13 +29,80 @@ public class TestDBHelper {
 	@Autowired
 	private DBHelper dbHelper;
 	
-	// ============ UPDATE TEST START ======================
-	
-	public StudentDO insertOne(String name) {
+	private StudentDO insertOne(String name) {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName(name);
 		dbHelper.insert(studentDO);
 		return studentDO;
+	}
+	
+	private List<StudentDO> insertBatch(String name, int num) {
+		List<StudentDO> list = new ArrayList<StudentDO>();
+		for(int i = 0; i < num; i++) {
+			StudentDO studentDO = new StudentDO();
+			studentDO.setName(name);
+			dbHelper.insert(studentDO);
+			list.add(studentDO);
+		}
+		return list;
+	}
+	
+	// ============ UPDATE TEST START ======================
+	@Test
+	@Rollback(false)
+	public void testUpdateNull() {
+		StudentDO db = insertOne("nick");
+		db.setAge(null);
+		dbHelper.updateWithNull(db);
+		
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue(db.getAge() == null);
+	
+		db.setAge(3);
+		dbHelper.update(db);
+		db.setAge(null);
+		dbHelper.updateWithNull(db, "where age=?", 3);
+		
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue(db.getAge() == null);
+		
+		List<StudentDO> list = new ArrayList<StudentDO>();
+		list.add(db);
+		db.setName(null);
+		dbHelper.updateWithNull(list);
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue(db.getName() == null);
+	}
+	
+	@Test
+	@Rollback(false)
+	public void testUpdate() {
+		StudentDO db = insertOne("nick");
+		db.setName("nick2");
+		dbHelper.update(db);
+		
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue(db.getName().equals("nick2"));
+		
+		db.setAge(3);
+		dbHelper.update(db);
+		db.setAge(null);
+		dbHelper.update(db);
+		
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue(db.getAge().equals(3));
+		
+		db.setName("nick3");
+		dbHelper.update(db, "where age=?", 3);
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue(db.getName().equals("nick3"));
+		
+		List<StudentDO> list = new ArrayList<StudentDO>();
+		list.add(db);
+		db.setName("nick4");
+		dbHelper.update(list);
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue("nick4".equals(db.getName()));
 	}
 	
 	@Test
@@ -53,27 +120,60 @@ public class TestDBHelper {
 		Assert.assertTrue("nick2".equals(db.getName()));
 	}
 	
+	// ============ UPDATE TEST END ======================
+	
+	// ============ INSERT_UPDATE TEST START =============
+	
 	@Test
 	@Rollback(false)
 	public void testInsertOrUpdateFull() {
-		List<StudentDO> old = dbHelper.getAll(StudentDO.class, "where id < 10");
-		List<StudentDO> newlist = dbHelper.getAll(StudentDO.class, "where id > 7 and id < 10");
+		List<StudentDO> old = insertBatch("nick", 20);
+		Assert.assertTrue(old.size() == 20);
+		
+		List<StudentDO> newlist = 
+				dbHelper.getAll(StudentDO.class, "where id >= ? and id <= ?",
+					old.get(10).getId(), old.get(19).getId());
+		
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("hahahaha");
 		newlist.add(studentDO);
+		
 		dbHelper.insertOrUpdateFull(old, newlist);
+		
+		Assert.assertTrue(studentDO.getId() != null);
+		
+		for(int i = 0; i < 10; i++) {
+			StudentDO s = dbHelper.getByKey(StudentDO.class, old.get(i).getId());
+			Assert.assertTrue(s == null);
+		}
+		
+		for(int i = 10; i < 20; i++) {
+			StudentDO s = dbHelper.getByKey(StudentDO.class, old.get(i).getId());
+			Assert.assertTrue(s != null);
+		}
+		
+		dbHelper.insertOrUpdateFullWithNull(old, newlist);
 	}
 	
-	// ============ UPDATE TEST END ======================
+	// ============ INSERT_UPDATE TEST END ===============
+	
+	// ============ DELETE TEST START ====================
 	
 	@Test
 	@Rollback(false)
-	public void testUpdate() {
-		StudentDO studentDO = new StudentDO();
-		studentDO.setId(1L);
-		studentDO.setName("new name");
-		dbHelper.update(studentDO);
+	public void testDelete() {
+		StudentDO studentDO = insertOne("nick");
+		dbHelper.deleteByKey(studentDO);
+		
+		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
+		
+		studentDO = insertOne("nick");
+		dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
+		
+		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 	}
+	
+	// ============ DELETE TEST END ======================
 	
 	@Test
 	@Rollback(false)
