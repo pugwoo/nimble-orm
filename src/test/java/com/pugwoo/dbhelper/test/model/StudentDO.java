@@ -22,11 +22,11 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 	@Column("name")
 	private String name;
 	
-	// 不支持枚举
+// 不支持枚举
 //	@Column("type")
 //	private StudentTypeEnum type;
 	
-	@Column(value = "age", insertDefault = "3")
+	@Column(value = "age", insertDefault = "0")
 	private Integer age;
 	
 //	@Column("num") // 支持byte[]类型
@@ -77,12 +77,4 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 		this.updateTime = updateTime;
 	}
 	
-//	public StudentTypeEnum getType() {
-//		return type;
-//	}
-//
-//	public void setType(StudentTypeEnum type) {
-//		this.type = type;
-//	}
-
 }

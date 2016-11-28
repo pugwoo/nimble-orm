@@ -144,7 +144,7 @@ public class TestDBHelper {
 	
 	@Test
 	public void testGetByKeyList() {
-		List<Long> ids = new ArrayList<>();
+		List<Long> ids = new ArrayList<Long>();
 		ids.add(50L);
 		ids.add(52L);
 		ids.add(54L);
