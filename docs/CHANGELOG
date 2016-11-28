@@ -1,5 +1,7 @@
 2016年11月25日
 v0.1.3 - [add] @Column软删除标记,softDelete=[0,1]
+         [add] 增加@Column默认值、插入和更新时设置Date
+         [add] 增加全量增删list
 
 2016年11月15日
 v0.1.2 - [fix] db的tinyint(4)映射到java Boolean全是false的问题。
