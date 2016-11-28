@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,16 +31,27 @@ public class TestDBHelper {
 	
 	// ============ UPDATE TEST START ======================
 	
+	public StudentDO insertOne(String name) {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName(name);
+		dbHelper.insert(studentDO);
+		return studentDO;
+	}
+	
 	@Test
 	@Rollback(false)
 	public void testUpdateCustom() {
+		StudentDO db = insertOne("nick");
+		
 		StudentDO studentDO = new StudentDO();
-		studentDO.setId(1L);
-		int rows = dbHelper.updateCustom(studentDO, "name=?", "nick");
-		System.out.println(rows);
+		studentDO.setId(db.getId());
+		
+		int rows = dbHelper.updateCustom(studentDO, "name=?", "nick2");
+		Assert.assertTrue(rows == 1);
+		
+		db = dbHelper.getByKey(StudentDO.class, db.getId());
+		Assert.assertTrue("nick2".equals(db.getName()));
 	}
-	
-	// ============ UPDATE TEST END ======================
 	
 	@Test
 	@Rollback(false)
@@ -51,6 +63,8 @@ public class TestDBHelper {
 		newlist.add(studentDO);
 		dbHelper.insertOrUpdateFull(old, newlist);
 	}
+	
+	// ============ UPDATE TEST END ======================
 	
 	@Test
 	@Rollback(false)
