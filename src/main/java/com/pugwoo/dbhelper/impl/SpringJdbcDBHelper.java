@@ -404,7 +404,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted(postSql, fields)); // XXX 可以优化，查count(*)只需要where子句
+		sql.append(autoSetSoftDeleted(postSql, fields));
 
 		LOGGER.debug("ExecSQL:{}", sql);
 		long start = System.currentTimeMillis();
@@ -763,6 +763,54 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(where);
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
+	}
+	
+	@Override
+	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
+		if(setSql == null || setSql.trim().isEmpty()) {
+			return 0; // 不需要更新
+		}
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		if(keyFields.isEmpty()) {
+			throw new NoKeyColumnAnnotationException();
+		}
+		
+		List<Object> keyValues = new ArrayList<Object>();
+		if(args != null) {
+			for(Object arg : args) {
+				keyValues.add(arg);
+			}
+		}
+		
+		sql.append(getTableName(table)).append(" SET ");
+		sql.append(setSql);
+		// 加上更新时间
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+				sql.append(",").append(getColumnName(column)).append("=?");
+				keyValues.add(new Date());
+			}
+		}
+		
+		sql.append(" WHERE ");
+		int setFieldSize = keyValues.size();
+		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		// 检查key值是否有null的，不允许有null
+		for(int i = setFieldSize; i < keyValues.size(); i++) {
+			if(keyValues.get(i) == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		sql.append(where);
+		
+		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray()); // 不会有in(?)表达式
 	}
 	
 	@Override

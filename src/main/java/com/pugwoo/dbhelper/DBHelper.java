@@ -347,6 +347,16 @@ public interface DBHelper {
 	<T> int update(T t, String postSql, Object... args) throws NullKeyValueException;
 	
 	/**
+	 * 自定义set字句更新，一般用于单个sql进行值更新，例如set reads = reads + 1这种情况。因此不提供CAS功能。
+	 * @param t 必须提供key
+	 * @param setSql 【不】包含set关键字，多个则用逗号隔开，例如a=a+1,c=b
+	 * @param args set子句的参数
+	 * @return
+	 * @throws NullKeyValueException 当t没有带上key时，抛出该异常
+	 */
+	<T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException;
+	
+	/**
 	 * 更新数据库记录，更新包含null的字段，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int updateNotNull(T t)更快
 	 * @param list

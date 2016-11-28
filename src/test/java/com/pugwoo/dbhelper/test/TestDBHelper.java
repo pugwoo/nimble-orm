@@ -28,6 +28,19 @@ public class TestDBHelper {
 	@Autowired
 	private DBHelper dbHelper;
 	
+	// ============ UPDATE TEST START ======================
+	
+	@Test
+	@Rollback(false)
+	public void testUpdateCustom() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setId(1L);
+		int rows = dbHelper.updateCustom(studentDO, "name=?", "nick");
+		System.out.println(rows);
+	}
+	
+	// ============ UPDATE TEST END ======================
+	
 	@Test
 	@Rollback(false)
 	public void testInsertOrUpdateFull() {
