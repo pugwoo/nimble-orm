@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.test.model;
 
+import java.util.Date;
+
 import com.pugwoo.dbhelper.annotation.Column;
 
 /**
@@ -15,6 +17,12 @@ public class IdableSoftDeleteBaseDO {
 	 */
 	@Column(value = "deleted", softDelete = {"0", "1"})
 	private Boolean deleted;
+	
+	@Column(value = "create_time", setTimeWhenInsert = true)
+	private Date createTime;
+	
+	@Column(value = "update_time", setTimeWhenUpdate = true)
+	private Date updateTime;
 
 	public Long getId() {
 		return id;
@@ -22,6 +30,30 @@ public class IdableSoftDeleteBaseDO {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public Boolean getDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(Boolean deleted) {
+		this.deleted = deleted;
+	}
+
+	public Date getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
 	}
 	
 }

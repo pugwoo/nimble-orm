@@ -2,8 +2,6 @@ package com.pugwoo.dbhelper.test.model;
 
 
 
-import java.util.Date;
-
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 
@@ -13,12 +11,6 @@ import com.pugwoo.dbhelper.annotation.Table;
 @Table("t_student")
 public class StudentDO extends IdableSoftDeleteBaseDO {
 		
-	@Column(value = "create_time", setTimeWhenInsert = true)
-	private Date createTime;
-	
-	@Column(value = "update_time", setTimeWhenUpdate = true)
-	private Date updateTime;
-	
 	@Column("name")
 	private String name;
 	
@@ -59,22 +51,6 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 
 	public void setNum(byte[] num) {
 		this.num = num;
-	}
-
-	public Date getCreateTime() {
-		return createTime;
-	}
-
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
-	}
-
-	public Date getUpdateTime() {
-		return updateTime;
-	}
-
-	public void setUpdateTime(Date updateTime) {
-		this.updateTime = updateTime;
 	}
 	
 }
