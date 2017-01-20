@@ -917,15 +917,37 @@ public class SpringJdbcDBHelper implements DBHelper {
 	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous
+			// 不支持缺省条件来删除。如果需要全表删除，请直接运维人员truncate表。
 			throw new InvalidParameterException(); 
 		}
 		
-		StringBuilder sql = new StringBuilder();
-		sql.append("DELETE FROM ");
-		
 		Table table = DOInfoReader.getTable(clazz);
-		sql.append(getTableName(table)).append(" ").append(postSql);
-				
+		List<Field> fields = DOInfoReader.getColumns(clazz);
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
+
+		StringBuilder sql = new StringBuilder();
+		
+		if(softDelete == null) { // 物理删除
+			sql.append("DELETE FROM ");
+			sql.append(getTableName(table));
+		} else { // 软删除
+			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			sql.append("UPDATE ").append(getTableName(table));
+			sql.append(" SET ").append(getColumnName(softDeleteColumn));
+			sql.append("=").append(softDeleteColumn.softDelete()[1]);
+			// 特殊处理@Column setTimeWhenUpdate时间
+			for(Field field : fields) {
+				Column column = DOInfoReader.getColumnInfo(field);
+				if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+					sql.append(",").append(getColumnName(column)).append("='");
+					SimpleDateFormat df = new SimpleDateFormat("yyyyy-MM-dd HH:mm:ss");
+					sql.append(df.format(new Date())).append("'");
+				}
+			}
+		}
+		
+		sql.append(" ").append(postSql);
+
 		return namedJdbcExecuteUpdate(sql.toString(), args);
 	}
 	

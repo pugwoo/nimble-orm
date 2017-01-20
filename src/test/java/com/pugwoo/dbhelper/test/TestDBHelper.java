@@ -173,6 +173,13 @@ public class TestDBHelper {
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 	}
 	
+	// 测试写where条件的自定义删除
+	@Test
+	@Rollback(false)
+	public void testDeleteWhere() {
+		dbHelper.delete(StudentDO.class, "where name=?", "nick2");
+	}
+	
 	// ============ DELETE TEST END ======================
 	
 	@Test

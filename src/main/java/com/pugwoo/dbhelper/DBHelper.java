@@ -396,9 +396,9 @@ public interface DBHelper {
 	<T> int deleteByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
 
 	/**
-	 * 自定义条件删除数据，该操作【不会】自动使用软删除标记，请慎用！
+	 * 自定义条件删除数据，该操作【会】自动使用软删除标记
 	 * @param clazz
-	 * @param postSql 必须提供，必须写where
+	 * @param postSql 必须提供，必须写where，不允许留空
 	 * @param args
 	 * @return
 	 */
