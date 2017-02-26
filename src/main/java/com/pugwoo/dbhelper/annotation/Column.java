@@ -35,6 +35,14 @@ public @interface Column {
 	boolean isAutoIncrement() default false;
 	
 	/**
+	 * 插入时，当字段值未提供时，设置是否自动生成随机32字符，此时字段必须是String类型。<br>
+	 * 这个功能用于随机生成主键。
+	 * 
+	 * @return
+	 */
+	boolean setRandomStringWhenInsert() default false;
+	
+	/**
 	 * 软删除标记，如果注解了该数据，则对应的字段为软删除标记。<br>
 	 * 这里【必须】提供一个数组，包含两个值，第一个值是未删除标记，第二个值是已删除标记。<br>
 	 * <br>

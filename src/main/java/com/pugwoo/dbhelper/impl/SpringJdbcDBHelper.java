@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -995,6 +996,11 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return true;
 	}
 	
+	/**
+	 * 预处理字段值
+	 * @param t
+	 * @param fields
+	 */
 	private <T> void preHandleInsert(T t, List<Field> fields) {
 		if(t == null || fields.isEmpty()) {
 			return;
@@ -1009,6 +1015,12 @@ public class SpringJdbcDBHelper implements DBHelper {
 			if(column.insertDefault() != null && !column.insertDefault().isEmpty()) {
 				if(DOInfoReader.getValue(field, t) == null) {
 					DOInfoReader.setValue(field, t, column.insertDefault());
+				}
+			}
+			if(column.setRandomStringWhenInsert()) {
+				if(DOInfoReader.getValue(field, t) == null) {
+					DOInfoReader.setValue(field, t, 
+							UUID.randomUUID().toString().replace("-", "").substring(0, 32));
 				}
 			}
 		}
