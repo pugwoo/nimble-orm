@@ -19,7 +19,7 @@ public enum StudentTypeEnum {
 	
 	public static StudentTypeEnum getByCode(String code) {
 		for(StudentTypeEnum e : StudentTypeEnum.values()) {
-			if(code == null && code == e.getCode() || code.equals(e.getCode())) {
+			if(code == e.getCode() || code != null && code.equals(e.getCode())) {
 				return e;
 			}
 		}
