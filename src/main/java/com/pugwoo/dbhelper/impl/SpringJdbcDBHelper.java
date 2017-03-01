@@ -18,6 +18,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.pugwoo.dbhelper.DBHelper;
@@ -425,6 +426,18 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return insert(t, false);
 	}
 	
+	@Override @Transactional
+	public int insert(List<?> list) {
+		if(list == null || list.isEmpty()) {
+			return 0;
+		}
+		int sum = 0;
+		for(Object obj : list) {
+			sum += insert(obj, false);
+		}
+		return sum;
+	}
+	
 	@Override
 	public <T> int insertWithNull(T t) {
 		return insert(t, true);
@@ -594,7 +607,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int insertOrUpdate(List<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -608,7 +621,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return rows;
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int insertOrUpdateWithNull(List<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -622,12 +635,12 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return rows;
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int insertOrUpdateFull(List<T> dbList, List<T> newList) {
 		return insertOrUpdateFull(dbList, newList, false);
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int insertOrUpdateFullWithNull(List<T> dbList, List<T> newList) {
 		return insertOrUpdateFull(dbList, newList, true);
 	}
@@ -684,7 +697,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return _update(t, true, postSql, args);
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int updateWithNull(List<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -698,7 +711,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return rows;
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int update(List<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
