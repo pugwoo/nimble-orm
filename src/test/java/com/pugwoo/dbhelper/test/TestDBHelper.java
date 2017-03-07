@@ -319,8 +319,8 @@ public class TestDBHelper {
 		int row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
 		System.out.println("row=" + row);
 		
-		// 这个不会插入
-		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		// 这个不会插入，写不写where都可以
+		row = dbHelper.insertWhereNotExist(studentDO, "where name=?", studentDO.getName());
 		System.out.println("row=" + row);
 		
 		// 这个不会插入
