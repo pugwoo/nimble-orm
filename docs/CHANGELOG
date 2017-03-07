@@ -1,3 +1,9 @@
+TOFIX
+1. 修复软删除where的优先级问题
+
+2017年3月7日
+v0.1.5 - [add] 增加insertWhereNotExist中where条件自动加上软删除标记
+
 2016年11月25日
 v0.1.3 - [add] @Column软删除标记,softDelete=[0,1]
          [add] 增加@Column默认值、插入和更新时设置Date

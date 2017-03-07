@@ -509,7 +509,13 @@ public class SpringJdbcDBHelper implements DBHelper {
 		sql.append(") select ");
 		sql.append(join("?", values.size(), ","));
 		sql.append(" from dual where not exists (select 1 from ");
-		sql.append(tableName).append(" where ").append(whereSql).append(" limit 1)");
+		
+		if(!whereSql.trim().toUpperCase().startsWith("WHERE ")) {
+			whereSql = "where " + whereSql;
+		}
+		whereSql = autoSetSoftDeleted(whereSql, fields);
+		
+		sql.append(tableName).append(" ").append(whereSql).append(" limit 1)");
 		if(args != null) {
 			for(Object arg : args) {
 				values.add(arg);
@@ -1077,7 +1083,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			sb.append(softDeleteColumn.softDelete()[0]);
 			
 			if(isStartWithWhere) {
-				sb.append(" AND ").append(handledSql.substring(5)); // 多个空格，没关系
+				sb.append(" AND ").append(handledSql.substring(5)); // 多个空格，没关系 TODO 这里还没有处理优先级问题
 			} else {
 				sb.append(" ").append(handledSql);
 			}

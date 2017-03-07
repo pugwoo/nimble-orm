@@ -235,7 +235,7 @@ public interface DBHelper {
 	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNullWhereNotExist。
 	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
 	 * @param t
-	 * @param whereSql 不含where关键字，不能包含order/group/limit等后续语句
+	 * @param whereSql 只能是where语句（可含可不含where关键字），不能包含order/group/limit等后续语句
 	 * @param args
 	 * @return
 	 */
@@ -254,7 +254,7 @@ public interface DBHelper {
 	 * 如果包含了自增id，则自增Id会被设置。<br>
 	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
 	 * @param t
-	 * @param whereSql 不含where关键字，不能包含order/group/limit等后续语句
+	 * @param whereSql 只能是where语句（可含可不含where关键字），不能包含order/group/limit等后续语句
 	 * @param args
 	 * @return
 	 */
