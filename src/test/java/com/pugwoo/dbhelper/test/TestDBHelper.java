@@ -259,24 +259,21 @@ public class TestDBHelper {
 	
 	@Test
 	public void testGetByKey() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setId(2L);
+		if(dbHelper.getByKey(studentDO)) {
+			System.out.println(studentDO);
+		} else {
+			System.out.println("not found");
+		}
 		
-		System.out.println(dbHelper.getOne(StudentDO.class));
+		StudentDO student2 = dbHelper.getByKey(StudentDO.class, 2);
+		System.out.println("student2:" + student2);
 		
-//		StudentDO studentDO = new StudentDO();
-//		studentDO.setId(2L);
-//		if(dbHelper.getByKey(studentDO)) {
-//			System.out.println(studentDO);
-//		} else {
-//			System.out.println("not found");
-//		}
-//		
-//		StudentDO student2 = dbHelper.getByKey(StudentDO.class, 2);
-//		System.out.println("student2:" + student2);
-//		
-//		Map<String, Object> keyMap = new HashMap<String, Object>();
-//		keyMap.put("id", 2);
-//		StudentDO student3 = dbHelper.getByKey(StudentDO.class, keyMap);
-//		System.out.println("student3:" + student3);
+		Map<String, Object> keyMap = new HashMap<String, Object>();
+		keyMap.put("id", 2);
+		StudentDO student3 = dbHelper.getByKey(StudentDO.class, keyMap);
+		System.out.println("student3:" + student3);
 	}
 	
 	@Test

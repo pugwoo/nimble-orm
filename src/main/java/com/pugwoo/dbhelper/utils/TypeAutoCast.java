@@ -1,6 +1,8 @@
 package com.pugwoo.dbhelper.utils;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * 2015年8月22日 16:58:48
@@ -8,6 +10,61 @@ import java.math.BigDecimal;
  * @author pugwoo
  */
 public class TypeAutoCast {
+	
+	/**
+	 * 自动转换类型。优先由rs来转换。即 fix数据库tinyint(1)到Java Integer类型的转换问题
+	 * @param rs
+	 * @param columnName
+	 * @param clazz
+	 * @return
+	 */
+	public static Object cast(ResultSet rs, String columnName, Class<?> clazz) throws SQLException{
+		if(rs.getObject(columnName) == null) { // 保证null会返回null值
+			return null;
+		}
+		
+		if(clazz == Integer.class || clazz == int.class) {
+			return rs.getInt(columnName);
+		}
+		if(clazz == Long.class || clazz == long.class) {
+			return rs.getLong(columnName);
+		}
+		if(clazz == Byte.class || clazz == byte.class) {
+			return rs.getByte(columnName);
+		}
+		if(clazz == byte[].class) {
+			return rs.getBytes(columnName);
+		}
+		if(clazz == Short.class || clazz == short.class) {
+			return rs.getShort(columnName);
+		}
+		if(clazz == Boolean.class || clazz == boolean.class) {
+			return rs.getBoolean(columnName);
+		}
+		if(clazz == Float.class || clazz == float.class) {
+			return rs.getFloat(columnName);
+		}
+		if(clazz == Double.class || clazz == double.class) {
+			return rs.getDouble(columnName);
+		}
+		if(clazz == String.class) {
+			return rs.getString(columnName);
+		}
+		if(clazz == BigDecimal.class) {
+			return rs.getBigDecimal(columnName);
+		}
+		if (clazz == java.sql.Date.class) {
+			return rs.getDate(columnName);
+		}
+		if (clazz == java.sql.Time.class) {
+			return rs.getDate(columnName);
+		}
+		if (clazz == java.sql.Timestamp.class) {
+			return rs.getTimestamp(columnName);
+		}
+		
+		return rs.getObject(columnName);
+	}
 	
 	/**
 	 * 自动转换类型
