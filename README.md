@@ -36,7 +36,7 @@ public class StudentDO extends IdableBaseDO {
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>0.1.4</version>
+    <version>0.1.6</version>
 </dependency>
 ```
 
