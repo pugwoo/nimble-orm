@@ -8,7 +8,7 @@ import java.math.BigDecimal;
  * @author pugwoo
  */
 public class TypeAutoCast {
-
+	
 	/**
 	 * 自动转换类型
 	 * @param obj 要转换的对象

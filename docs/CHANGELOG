@@ -1,6 +1,9 @@
 TOFIX
 1. 修复软删除where的优先级问题
 
+2017年3月13日
+v0.1.6 - [fix] 修复数据库tinyint(1)到Java Integer类型的转换问题
+
 2017年3月7日
 v0.1.5 - [add] 增加insertWhereNotExist中where条件自动加上软删除标记
          [add] 增加批量insert方法

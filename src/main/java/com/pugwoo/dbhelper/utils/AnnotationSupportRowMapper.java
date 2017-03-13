@@ -41,7 +41,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			List<Field> fields = DOInfoReader.getColumns(clazz);
 			for (Field field : fields) {
 				Column column = DOInfoReader.getColumnInfo(field);
-				Object value = TypeAutoCast.cast(rs.getObject(column.value()), field.getType());
+				Object value = TypeAutoCast.cast(// fix数据库tinyint(1)到Java Integer类型的转换问题
+						rs.getObject(column.value(), field.getType()), 
+						field.getType());
 				DOInfoReader.setValue(field, obj, value);
 			}
 			return obj;
