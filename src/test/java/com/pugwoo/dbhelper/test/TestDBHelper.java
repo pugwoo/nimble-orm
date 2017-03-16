@@ -14,18 +14,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
-import com.alibaba.druid.support.json.JSONUtils;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.model.StudentDO;
-
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.parser.CCJSqlParserUtil;
-import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
 
 /**
  * 2015年1月13日 11:11:23
@@ -264,23 +255,6 @@ public class TestDBHelper {
 		for(StudentDO studentDO : page1.getData()) {
 			System.out.println(studentDO);
 		}
-	}
-	
-	@Test
-	public void testTmp() throws Exception {
-		String sql = "select user_name,age from t_user where deleted=0 and user_id=? and user_name like '%nick%' and age>20 or age<10 order by age limit 1, 10";
-		Statement statement = CCJSqlParserUtil.parse(sql);
-		
-		Select selectStatement = (Select) statement;
-		PlainSelect plainSelect = (PlainSelect)selectStatement.getSelectBody();
-		System.out.println(plainSelect);
-		
-		Expression expression = CCJSqlParserUtil.parseCondExpression("deleted=?");
-		System.out.println(expression);
-		
-		String sql2 = "where name=3";
-		Expression expression2 = CCJSqlParserUtil.parseExpression(sql2);
-		System.out.println(expression2);
 	}
 	
 	@Test

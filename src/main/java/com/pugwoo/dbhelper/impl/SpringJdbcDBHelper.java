@@ -24,14 +24,18 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
+
+import net.sf.jsqlparser.JSQLParserException;
 
 /**
  * 2015年1月12日 16:41:03 数据库操作封装：增删改查
@@ -1055,22 +1059,15 @@ public class SpringJdbcDBHelper implements DBHelper {
 			return " " + whereSql; // 不处理
 		} else {
 			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
-			String whereKeyword = "WHERE ";
-			String handledSql = whereSql.trim();
-			boolean isStartWithWhere = handledSql.length() >= 6
-					&& handledSql.substring(0, 6).equalsIgnoreCase(whereKeyword);
-			
-			StringBuilder sb = new StringBuilder(" ");
-			sb.append(whereKeyword);
-			sb.append(getColumnName(softDeleteColumn)).append("=");
-			sb.append(softDeleteColumn.softDelete()[0]);
-			
-			if(isStartWithWhere) {
-				sb.append(" AND ").append(handledSql.substring(5)); // TODO 这里还没有处理优先级问题
-			} else {
-				sb.append(" ").append(handledSql);
+			String deletedExpression = getColumnName(softDeleteColumn) + "=" 
+			                        + softDeleteColumn.softDelete()[0];
+			try {
+				return SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
+			} catch (JSQLParserException e) {
+				LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
+						whereSql, deletedExpression, e);
+				throw new BadSQLSyntaxException();
 			}
-			return sb.toString();
 		}
 	}
 		
