@@ -1,6 +1,6 @@
 # nimble-orm
 
-这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成Mysql的增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
+这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成Mysql(其它数据库是否可用未测试过)的增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
 
 1. Hibernate因为比较复杂难以使用好，互联网公司大都没有采用，用得多的是MyBatis。而MyBatis的xml文件中，会出现大量相同的列名。增删一个列或修改一个列名，对于xml文件都是很大的改变。有一种方式是用MyBatis的Generator生成xml，但是这样的xml文件如果修改过，下次生成就会覆盖，很容易出错。因此，这种xml方式维护sql，虽然足够灵活，但也非常繁琐。
 

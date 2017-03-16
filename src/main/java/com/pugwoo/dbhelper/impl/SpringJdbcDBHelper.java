@@ -756,9 +756,9 @@ public class SpringJdbcDBHelper implements DBHelper {
 		if(keyValues.isEmpty()) {
 			return 0; // all field is empty, not need to update
 		}
-		sql.append(setSql).append(" WHERE ");
+		sql.append(setSql);
 		int setFieldSize = keyValues.size();
-		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", keyValues, t);
 		// 检查key值是否有null的，不允许有null
 		for(int i = setFieldSize; i < keyValues.size(); i++) {
 			if(keyValues.get(i) == null) {
@@ -780,7 +780,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			}
 		}
 		
-		sql.append(where);
+		sql.append(autoSetSoftDeleted(where, fields));
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
 	}
@@ -819,16 +819,15 @@ public class SpringJdbcDBHelper implements DBHelper {
 			}
 		}
 		
-		sql.append(" WHERE ");
 		int setFieldSize = keyValues.size();
-		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", keyValues, t);
 		// 检查key值是否有null的，不允许有null
 		for(int i = setFieldSize; i < keyValues.size(); i++) {
 			if(keyValues.get(i) == null) {
 				throw new NullKeyValueException();
 			}
 		}
-		sql.append(where);
+		sql.append(autoSetSoftDeleted(where, fields));
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray()); // 不会有in(?)表达式
 	}
@@ -845,7 +844,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
 		
 		List<Object> keyValues = new ArrayList<Object>();
-		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", keyValues, t);
 		for(Object value : keyValues) { // 检查key的值是不是null
 			if(value == null) {
 				throw new NullKeyValueException();
@@ -871,15 +870,8 @@ public class SpringJdbcDBHelper implements DBHelper {
 				}
 			}
 		}
-		sql.append(" WHERE ").append(where);
+		sql.append(autoSetSoftDeleted(where, fields));
 
-		// 避免软删除2次
-		if(softDelete != null) {
-			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
-			sql.append(" AND ").append(getColumnName(softDeleteColumn));
-			sql.append("=").append(softDeleteColumn.softDelete()[0]);
-		}
-		
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
 	}
 		
@@ -921,15 +913,9 @@ public class SpringJdbcDBHelper implements DBHelper {
 				}
 			}
 		}
-		sql.append(" WHERE ");
-		sql.append(getColumnName(keyColumn)).append("=?");
 		
-		// 避免软删除2次
-		if(softDelete != null) {
-			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
-			sql.append(" AND ").append(getColumnName(softDeleteColumn));
-			sql.append("=").append(softDeleteColumn.softDelete()[0]);
-		}
+		String where = "WHERE " + getColumnName(keyColumn) + "=?";
+		sql.append(autoSetSoftDeleted(where, fields));
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValue);
 	}
@@ -966,7 +952,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			}
 		}
 		
-		sql.append(" ").append(postSql);
+		sql.append(autoSetSoftDeleted(postSql, fields));
 
 		return namedJdbcExecuteUpdate(sql.toString(), args);
 	}
@@ -1015,11 +1001,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		return true;
 	}
 	
-	/**
-	 * 预处理字段值
-	 * @param t
-	 * @param fields
-	 */
+	/**插入前预处理字段值*/
 	private <T> void preHandleInsert(T t, List<Field> fields) {
 		if(t == null || fields.isEmpty()) {
 			return;
@@ -1045,6 +1027,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 		}
 	}
 	
+	/**更新前预处理字段值*/
 	private <T> void preHandleUpdate(T t, List<Field> fields) {
 		if(t == null || fields.isEmpty()) {
 			return;
@@ -1059,7 +1042,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	
 	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段
-	 * @param whereSql 如果有where条件的，需要带上where关键字；如果是group或空的字符串或null都可以
+	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
 	 * @param fields
 	 * @return 无论如何前面会加空格，更安全
 	 */
@@ -1083,7 +1066,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			sb.append(softDeleteColumn.softDelete()[0]);
 			
 			if(isStartWithWhere) {
-				sb.append(" AND ").append(handledSql.substring(5)); // 多个空格，没关系 TODO 这里还没有处理优先级问题
+				sb.append(" AND ").append(handledSql.substring(5)); // TODO 这里还没有处理优先级问题
 			} else {
 				sb.append(" ").append(handledSql);
 			}
@@ -1217,7 +1200,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 	}
 
 	/**
-	 * 拼凑where子句，并把需要的参数写入到values中
+	 * 拼凑where子句，并把需要的参数写入到values中。返回sql【不】包含where关键字
 	 * @param fields
 	 * @param logicOperate 操作符，例如AND
 	 * @param values

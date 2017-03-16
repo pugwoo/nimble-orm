@@ -130,7 +130,7 @@ public interface DBHelper {
 	 * @param clazz
 	 * @param page 从1开始
 	 * @param pageSize
-	 * @param postSql 包含where关键字起的后续SQL语句
+	 * @param postSql 包含where关键字起的后续SQL语句，不能包含limit子句
 	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
