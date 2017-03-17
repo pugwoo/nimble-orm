@@ -21,7 +21,7 @@ public class IdableSoftDeleteBaseDO {
 	@Column(value = "create_time", setTimeWhenInsert = true)
 	private Date createTime;
 	
-	@Column(value = "update_time", setTimeWhenUpdate = true)
+	@Column(value = "update_time", setTimeWhenUpdate = true, setTimeWhenInsert = true)
 	private Date updateTime;
 
 	public Long getId() {

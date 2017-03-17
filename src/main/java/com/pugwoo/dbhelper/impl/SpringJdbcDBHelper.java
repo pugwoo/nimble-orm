@@ -869,7 +869,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 				Column column = DOInfoReader.getColumnInfo(field);
 				if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 					sql.append(",").append(getColumnName(column)).append("='");
-					SimpleDateFormat df = new SimpleDateFormat("yyyyy-MM-dd HH:mm:ss");
+					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					sql.append(df.format(new Date())).append("'");
 				}
 			}
@@ -912,7 +912,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 				Column column = DOInfoReader.getColumnInfo(field);
 				if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 					sql.append(",").append(getColumnName(column)).append("='");
-					SimpleDateFormat df = new SimpleDateFormat("yyyyy-MM-dd HH:mm:ss");
+					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					sql.append(df.format(new Date())).append("'");
 				}
 			}
@@ -950,7 +950,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 				Column column = DOInfoReader.getColumnInfo(field);
 				if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 					sql.append(",").append(getColumnName(column)).append("='");
-					SimpleDateFormat df = new SimpleDateFormat("yyyyy-MM-dd HH:mm:ss");
+					SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					sql.append(df.format(new Date())).append("'");
 				}
 			}

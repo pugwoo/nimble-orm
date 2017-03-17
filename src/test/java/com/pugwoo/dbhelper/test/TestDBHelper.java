@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,9 +30,9 @@ public class TestDBHelper {
 	@Autowired
 	private DBHelper dbHelper;
 	
-	private StudentDO insertOne(String name) {
+	private StudentDO insertOne() {
 		StudentDO studentDO = new StudentDO();
-		studentDO.setName(name);
+		studentDO.setName("nick" + UUID.randomUUID().toString().replace("-", "").substring(0, 16));
 		dbHelper.insert(studentDO);
 		return studentDO;
 	}
@@ -51,7 +52,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testUpdateNull() {
-		StudentDO db = insertOne("nick");
+		StudentDO db = insertOne();
 		db.setAge(null);
 		dbHelper.updateWithNull(db);
 		
@@ -77,7 +78,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testUpdate() {
-		StudentDO db = insertOne("nick");
+		StudentDO db = insertOne();
 		db.setName("nick2");
 		dbHelper.update(db);
 		
@@ -108,7 +109,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testUpdateCustom() {
-		StudentDO db = insertOne("nick");
+		StudentDO db = insertOne();
 		
 		StudentDO studentDO = new StudentDO();
 		studentDO.setId(db.getId());
@@ -162,12 +163,12 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testDelete() {
-		StudentDO studentDO = insertOne("nick");
+		StudentDO studentDO = insertOne();
 		dbHelper.deleteByKey(studentDO);
 		
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 		
-		studentDO = insertOne("nick");
+		studentDO = insertOne();
 		dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
 		
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
@@ -314,31 +315,52 @@ public class TestDBHelper {
 	@Rollback(false)
 	public void testInsertWhereNotExists() {
 		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick99");
+		studentDO.setName("nick" + UUID.randomUUID().toString().replace("-", "").substring(0, 16));
 		
 		int row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
-		System.out.println("row=" + row);
+		Assert.assertTrue(row == 1);
 		
-		// 这个不会插入，写不写where都可以
+		// 这个不会插入，写不写`where`关键字都可以
 		row = dbHelper.insertWhereNotExist(studentDO, "where name=?", studentDO.getName());
-		System.out.println("row=" + row);
+		Assert.assertTrue(row == 0);
 		
 		// 这个不会插入
 		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
-		System.out.println("row=" + row);
+		Assert.assertTrue(row == 0);
+		
+		row = dbHelper.deleteByKey(studentDO);
+		Assert.assertTrue(row == 1);
+		
+		// 删除后再插入
+		studentDO.setId(null);
+		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		Assert.assertTrue(row == 1);
+		
+		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		Assert.assertTrue(row == 0);
 	}
+	
+	/////////////////////////测试删除///////////////////////////
 	
 	@Test
 	@Rollback(false)
 	public void deleteByKey() {
-//		int rows = dbHelper.deleteByKey(StudentDO.class, 50);
-//		System.out.println(rows);
+		StudentDO studentDO = insertOne();
+		
+		int rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
+		Assert.assertTrue(rows == 1);
+		
+		rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
+		Assert.assertTrue(rows == 0);
 		
 	    // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 		
-		StudentDO studentDO = new StudentDO();
-		studentDO.setId(60L);
-		System.out.println(dbHelper.deleteByKey(studentDO)); 
+		studentDO = insertOne();
+		rows = dbHelper.deleteByKey(studentDO);
+		Assert.assertTrue(rows == 1);
+		
+		rows = dbHelper.deleteByKey(studentDO);
+		Assert.assertTrue(rows == 0);
 	}
 	
 }
