@@ -55,13 +55,5 @@ public class SQLUtils {
 		
 		return plainSelect.toString().substring(selectSql.length());
 	}
-	
-	public static void main(String[] args) throws Exception {
-		System.out.println(insertWhereAndExpression("where a=?", "deleted=?"));
-		System.out.println(insertWhereAndExpression("where a=? or b=?", "deleted=?"));
-		System.out.println(insertWhereAndExpression("where a=? or b=? group by age order by id desc limit 1,100",
-				"deleted=?"));
-		System.out.println(insertWhereAndExpression("where a=? or b='limit 1' limit 1", "deleted=?"));
-	}
-	
+		
 }
