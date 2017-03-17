@@ -58,7 +58,7 @@ public interface DBHelper {
 	Map<String, Object> queryForMap(String sql, Object... args);
 	
 	/**
-	 * 查询多列的结果<br>
+	 * jdbcTemplate方式查询对象<br> 查询多列的结果<br>
 	 * 【不会自动处理软删除记录】
 	 * @param sql 必须是完整的sql
 	 * @param args
@@ -67,7 +67,7 @@ public interface DBHelper {
 	List<Map<String, Object>> queryForList(String sql, Object... args);
 	
 	/**
-	 * 查询多列结果<br>
+	 * jdbcTemplate方式查询对象<br> 查询多列结果<br>
 	 * 【不会自动处理软删除记录】
 	 * @param clazz
 	 * @param sql
