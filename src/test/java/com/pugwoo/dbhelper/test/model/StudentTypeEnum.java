@@ -2,6 +2,8 @@ package com.pugwoo.dbhelper.test.model;
 
 /**
  * 学生类型枚举
+ * 
+ * 注意：不支持枚举作为DO的成员变量
  */
 public enum StudentTypeEnum {
 

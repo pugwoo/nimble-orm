@@ -30,27 +30,54 @@ public class TestDBHelper {
 	@Autowired
 	private DBHelper dbHelper;
 	
+	private String getRandomName(String prefix) {
+		return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+	}
+	
 	private StudentDO insertOne() {
 		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick" + UUID.randomUUID().toString().replace("-", "").substring(0, 16));
+		studentDO.setName(getRandomName("nick"));
+		studentDO.setIntro(studentDO.getName().getBytes());
 		dbHelper.insert(studentDO);
 		return studentDO;
 	}
 	
-	private List<StudentDO> insertBatch(String name, int num) {
+	private List<StudentDO> insertBatch(int num) {
 		List<StudentDO> list = new ArrayList<StudentDO>();
 		for(int i = 0; i < num; i++) {
 			StudentDO studentDO = new StudentDO();
-			studentDO.setName(name);
-			dbHelper.insert(studentDO);
+			studentDO.setName(getRandomName("nick"));
 			list.add(studentDO);
 		}
+		
+		int rows = dbHelper.insert(list);
+		Assert.assertTrue(rows == num);
+		
 		return list;
 	}
 	
+	// ============ INSERT TEST ============================
+	
+	@Test
+	public void testInsert() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("mytestname");
+		studentDO.setAge(12);
+		dbHelper.insert(studentDO);
+		
+		StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		Assert.assertTrue(st.getName().equals("mytestname"));
+		
+		studentDO.setId(null);
+		studentDO.setName(null);
+		dbHelper.insertWithNull(studentDO);
+		st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		Assert.assertTrue(st.getName() == null);
+	}
+	
+	
 	// ============ UPDATE TEST START ======================
 	@Test
-	@Rollback(false)
 	public void testUpdateNull() {
 		StudentDO db = insertOne();
 		db.setAge(null);
@@ -128,7 +155,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testInsertOrUpdateFull() {
-		List<StudentDO> old = insertBatch("nick", 20);
+		List<StudentDO> old = insertBatch(20);
 		Assert.assertTrue(old.size() == 20);
 		
 		List<StudentDO> newlist = 
@@ -183,25 +210,6 @@ public class TestDBHelper {
 	
 	// ============ DELETE TEST END ======================
 	
-	@Test
-	@Rollback(false)
-	public void testInsert() {
-		StudentDO studentDO = new StudentDO();
-		studentDO.setName("mytestname");
-		studentDO.setAge(12);
-		dbHelper.insert(studentDO);
-		
-		StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-		System.out.println(st.getName());
-		
-		// 测试=?时传的参数是null的情况,会爆异常
-		// 为什么id=?当传入null值时，不自动转换为is null呢？
-		// 【因为】null本身就是一个有歧义的用法，在大多数查询中，都是明确查询有值的。
-		//        自动转换null的话，可能将异常的参数当作正常的情况被处理，将会是一个大坑。
-		// st = dbHelper.getOne(StudentDO.class, "where id=?", null);
-		// System.out.println(st);
-	}
-	
 	/**
 	 * 测试jdbcTemplate
 	 */
@@ -249,13 +257,33 @@ public class TestDBHelper {
 		
 		System.out.println("===============================");
 		
+
+	}
+	
+	@Test
+	public void testGetPage() {
+		insertBatch(100);
+		
 		// 测试分页获取
 		PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
-		System.out.println("total:" + page1.getTotal());
-		System.out.println("cur page size:" + page1.getData().size());
-		for(StudentDO studentDO : page1.getData()) {
-			System.out.println(studentDO);
-		}
+		Assert.assertTrue(page1.getTotal() >= 100);
+		Assert.assertTrue(page1.getData().size() == 10);
+		
+		page1 = dbHelper.getPage(StudentDO.class, 2, 10);
+		Assert.assertTrue(page1.getTotal() >= 100);
+		Assert.assertTrue(page1.getData().size() == 10);
+		
+		page1 = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
+		Assert.assertTrue(page1.getData().size() == 10);
+		
+		page1 = dbHelper.getPageWithoutCount(StudentDO.class, 2, 10);
+		Assert.assertTrue(page1.getData().size() == 10);
+		
+		int total = dbHelper.getCount(StudentDO.class);
+		Assert.assertTrue(total >= 100);
+		
+		total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
+		Assert.assertTrue(total >= 100);
 	}
 	
 	@Test
@@ -280,11 +308,15 @@ public class TestDBHelper {
 	@Test
 	public void testGetByKeyList() {
 		List<Long> ids = new ArrayList<Long>();
-		ids.add(50L);
-		ids.add(52L);
-		ids.add(54L);
+		ids.add(insertOne().getId());
+		ids.add(insertOne().getId());
+		ids.add(insertOne().getId());
 		Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
-		System.out.println(map);
+		
+		Assert.assertTrue(map.size() == 3);
+		for(int i = 0; i < 3; i++) {
+			Assert.assertTrue(map.get(ids.get(i)).getId().equals(ids.get(i)));
+		}
 	}
 	
 	@Test

@@ -14,15 +14,15 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 	@Column("name")
 	private String name;
 	
-// 不支持枚举
+//  不支持枚举
 //	@Column("type")
 //	private StudentTypeEnum type;
 	
 	@Column(value = "age", insertDefault = "0")
 	private Integer age;
 	
-//	@Column("num") // 支持byte[]类型
-	private byte[] num;
+	@Column("intro") // 支持byte[]类型
+	private byte[] intro;
 	
 	@Override
 	public String toString() {
@@ -45,12 +45,12 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 		this.age = age;
 	}
 
-	public byte[] getNum() {
-		return num;
+	public byte[] getIntro() {
+		return intro;
 	}
 
-	public void setNum(byte[] num) {
-		this.num = num;
+	public void setIntro(byte[] intro) {
+		this.intro = intro;
 	}
-	
+
 }
