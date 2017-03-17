@@ -1062,7 +1062,7 @@ public class SpringJdbcDBHelper implements DBHelper {
 			String deletedExpression = getColumnName(softDeleteColumn) + "=" 
 			                        + softDeleteColumn.softDelete()[0];
 			try {
-				return SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
+				return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
 			} catch (JSQLParserException e) {
 				LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
 						whereSql, deletedExpression, e);
