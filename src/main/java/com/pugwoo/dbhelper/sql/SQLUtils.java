@@ -18,9 +18,9 @@ public class SQLUtils {
 	/**
 	 * 往where sql里面插入AND关系的表达式。
 	 * 
-	 * 例如：whereSql为 where a>3 or a!=2 limit 1
+	 * 例如：whereSql为 where a!=3 or a!=2 limit 1
 	 *      condExpress为 deleted=0
-	 * 那么返回：where deleted=0 and (a>3 or a!=2) limit 1
+	 * 那么返回：where deleted=0 and (a!=3 or a!=2) limit 1
 	 * 
 	 * @param whereSql 从where起的sql子句，如果有where必须带上where关键字。
 	 * @param condExpression 例如a=?  不带where或and关键字。
