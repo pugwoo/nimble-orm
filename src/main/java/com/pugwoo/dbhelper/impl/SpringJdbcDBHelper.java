@@ -15,13 +15,8 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
@@ -29,6 +24,7 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.impl.part.P1_QueryOp;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
@@ -41,70 +37,9 @@ import net.sf.jsqlparser.JSQLParserException;
  * 2015年1月12日 16:41:03 数据库操作封装：增删改查
  * @author pugwoo
  */
-public class SpringJdbcDBHelper implements DBHelper {
+public class SpringJdbcDBHelper extends P1_QueryOp {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
-	
-	private JdbcTemplate jdbcTemplate;
-	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-	private long timeoutWarningValve = 1000;
-
-	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
-	public void setNamedParameterJdbcTemplate(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
-		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
-	}
-	
-	public void setTimeoutWarningValve(long timeMS) {
-		timeoutWarningValve = timeMS;
-	}
-	
-	@Override
-	public void rollback() {
-		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-	}
-	
-	@Override
-	public <T> T queryForObject(Class<T> clazz, String sql, Object... args) {
-		return namedParameterJdbcTemplate.queryForObject(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args),
-				clazz); // 因为有in (?)所以用namedParameterJdbcTemplate
-	}
-	
-	@Override
-	public SqlRowSet queryForRowSet(String sql, Object... args) {
-		SqlRowSet sqlRowSet = namedParameterJdbcTemplate.queryForRowSet(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return sqlRowSet;
-	}
-	
-	@Override
-	public Map<String, Object> queryForMap(String sql, Object... args) {
-		Map<String, Object> map = namedParameterJdbcTemplate.queryForMap(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return map;
-	}
-	
-	@Override
-	public List<Map<String, Object>> queryForList(String sql, Object... args) {
-		List<Map<String, Object>> list = namedParameterJdbcTemplate.queryForList(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return list;
-	}
-	
-	@Override
-	public <T> List<T> queryForList(Class<T> clazz, String sql, Object... args) {
-		List<T> list = namedParameterJdbcTemplate.queryForList(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args),
-				clazz); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return list;
-	}
 	
 	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })

@@ -24,6 +24,9 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 	@Column("intro") // 支持byte[]类型
 	private byte[] intro;
 	
+//	@Column("school_id")
+	private Long schoolId;
+	
 	@Override
 	public String toString() {
 		return "id:" + getId() + ",name:" + name + ",age:" + age;
@@ -53,4 +56,12 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 		this.intro = intro;
 	}
 
+	public Long getSchoolId() {
+		return schoolId;
+	}
+
+	public void setSchoolId(Long schoolId) {
+		this.schoolId = schoolId;
+	}
+	
 }
