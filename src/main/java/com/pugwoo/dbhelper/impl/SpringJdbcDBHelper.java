@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -525,80 +524,6 @@ public class SpringJdbcDBHelper extends P5_DeleteOp {
 		return rows;
 	}
 		
-	/**
-	 * 例如：str=?,times=3,sep=,  返回 ?,?,?
-	 * 
-	 * TODO 迁移到SQLUtils
-	 */
-    private static String join(String str, int times, String sep) {
-    	StringBuilder sb = new StringBuilder();
-    	for(int i = 0; i < times; i++) {
-    		sb.append(str);
-    		if(i < times - 1) {
-    			sb.append(sep);
-    		}
-    	}
-    	return sb.toString();
-    }
-    
-    /**
-     * 拼凑select的field的语句  TODO 迁移到SQLUtils
-     * @param fields
-     * @param sep
-     * @return
-     */
-    private static String join(List<Field> fields, String sep) {
-    	return joinAndGetValue(fields, sep, null, null, false);
-    }
-    
-    private static List<Object> getValue(List<Field> fields, Object obj) {
-    	List<Object> values = new ArrayList<Object>();
-    	for(Field field : fields) {
-    		values.add(DOInfoReader.getValue(field, obj));
-    	}
-    	return values;
-    }
-    
-    /**
-     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
-     * 
-     * TODO 迁移到SQLUtils
-     * 
-     * @param fields
-     * @param sep
-     * @param values
-     * @param obj
-     * @param isWithNullValue 是否把null值放到values中
-     * @return
-     */
-	private static String joinAndGetValue(List<Field> fields, String sep,
-			List<Object> values, Object obj, boolean isWithNullValue) {
-    	StringBuilder sb = new StringBuilder();
-    	for(Field field : fields) {
-    		Column column = DOInfoReader.getColumnInfo(field);
-
-    		boolean isAppendColumn = true;
-    		if(values != null && obj != null) {
-    			Object value = DOInfoReader.getValue(field, obj);
-    			if(isWithNullValue) {
-    				values.add(value);
-    			} else {
-    				if(value == null) {
-    					isAppendColumn = false;
-    				} else {
-    					values.add(value);
-    				}
-    			}
-    		}
-    		
-    		if(isAppendColumn) {
-        		sb.append(getColumnName(column)).append(sep);
-    		}
-    	}
-    	int len = sb.length();
-    	return len == 0 ? "" : sb.toString().substring(0, len - 1);
-	}
-
 	/**
 	 * 拼凑where子句，并把需要的参数写入到values中。返回sql【不】包含where关键字
 	 * 
