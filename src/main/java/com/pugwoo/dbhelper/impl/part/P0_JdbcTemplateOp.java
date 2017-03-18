@@ -3,6 +3,8 @@ package com.pugwoo.dbhelper.impl.part;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -16,10 +18,28 @@ import com.pugwoo.dbhelper.utils.NamedParameterUtils;
  * @author NICK
  */
 public abstract class P0_JdbcTemplateOp implements DBHelper {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(P0_JdbcTemplateOp.class);
 
 	protected JdbcTemplate jdbcTemplate;
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
+	
+	protected void log(StringBuilder sql) {
+		LOGGER.debug("ExecSQL:{}", sql);
+	}
+	
+	protected void logSlow(long cost, StringBuilder sql, List<Object> keyValues) {
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
+		}
+	}
+	
+	protected void logSlow(long cost, StringBuilder sql, Object keyValue) {
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
+		}
+	}
 	
 	@Override
 	public void rollback() {

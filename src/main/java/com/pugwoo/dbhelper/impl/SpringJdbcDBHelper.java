@@ -6,15 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.annotation.Column;
@@ -25,9 +21,7 @@ import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.impl.part.P1_QueryOp;
-import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLUtils;
-import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
@@ -40,324 +34,6 @@ import net.sf.jsqlparser.JSQLParserException;
 public class SpringJdbcDBHelper extends P1_QueryOp {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
-	
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> boolean getByKey(T t) throws NullKeyValueException {
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ");
-		
-		Table table = DOInfoReader.getTable(t.getClass());
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-		List<Object> keyValues = new ArrayList<Object>();
-		if(keyFields == null || keyFields.isEmpty()) {
-			return false;
-		}
-		
-		String where = joinWhereAndGetValue(keyFields, "AND", keyValues, t);
-		// 检查主键不允许为null
-		for(Object value : keyValues) {
-			if(value == null) {
-				throw new NullKeyValueException();
-			}
-		}
-		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted("WHERE " + where, t.getClass()));
-		
-		try {
-			LOGGER.debug("ExecSQL:{}", sql);
-			long start = System.currentTimeMillis();
-			jdbcTemplate.queryForObject(sql.toString(),
-					new AnnotationSupportRowMapper(t.getClass(), t),
-					keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-			long cost = System.currentTimeMillis() - start;
-			if(cost > timeoutWarningValve) {
-				LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
-			}
-			return true;
-		} catch (EmptyResultDataAccessException e) {
-			return false;
-		}
-	}
-	
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException {
-		if(keyValue == null) {
-			throw new NullKeyValueException();
-		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ");
-
-		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
-		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
-
-		if (keyFields.size() != 1) {
-			throw new NotSupportMethodException(
-					"must have only one key column, actually has "
-							+ keyFields.size() + " key columns");
-		}
-		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
-		
-		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + "=?", clazz));
-		
-		try {
-			LOGGER.debug("ExecSQL:{}", sql);
-			long start = System.currentTimeMillis();
-			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
-					new AnnotationSupportRowMapper(clazz),
-					keyValue); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-			long cost = System.currentTimeMillis() - start;
-			if(cost > timeoutWarningValve) {
-				LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
-			}
-			return t;
-		} catch (EmptyResultDataAccessException e) {
-			return null;
-		}
-	}
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues) {
-		if(keyValues == null || keyValues.isEmpty()) {
-			return new HashMap<K, T>();
-		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ");
-		
-		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
-		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
-		
-		if (keyFields.size() != 1) {
-			throw new NotSupportMethodException(
-					"must have only one key column, actually has "
-							+ keyFields.size() + " key columns");
-		}
-		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
-		
-		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + " in (?)", clazz));
-		
-		List<T> list = namedParameterJdbcTemplate.query(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(keyValues),
-				new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		
-		if(list == null || list.isEmpty()) {
-			return new HashMap<K, T>();
-		}
-		
-		Map<K, T> map = new LinkedHashMap<K, T>();
-		for(K key : keyValues) {
-			if(key == null) {continue;}
-			for(T t : list) {
-				Object k = DOInfoReader.getValue(keyFields.get(0), t);
-				if(k != null && key.equals(k)) {
-					map.put(key, t);
-					break;
-				}
-			}
-		}
-		return map;
-	}
-	
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) {
-		if(keyMap == null || keyMap.isEmpty()) {
-			throw new InvalidParameterException("keyMap require at least one key");
-		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ");
-		
-		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
-		
-		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(getTableName(table));
-		
-		StringBuilder whereSql = new StringBuilder();
-		List<Object> values = new ArrayList<Object>();
-		boolean isFirst = true;
-		for(String key : keyMap.keySet()) {
-			if(!isFirst) {
-				whereSql.append(" AND ");
-			}
-			isFirst = false;
-			whereSql.append(key).append("=?");
-			values.add(keyMap.get(key));
-		}
-		
-		sql.append(autoSetSoftDeleted("WHERE " + whereSql.toString(), clazz));
-		
-		// 检查主键不允许为null
-		for(Object value : values) {
-			if(value == null) {
-				throw new NullKeyValueException();
-			}
-		}
-		
-		try {
-			LOGGER.debug("ExecSQL:{}", sql);
-			long start = System.currentTimeMillis();
-			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
-					new AnnotationSupportRowMapper(clazz),
-					values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-			long cost = System.currentTimeMillis() - start;
-			if(cost > timeoutWarningValve) {
-				LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
-			}
-			return t;
-		} catch (EmptyResultDataAccessException e) {
-			return null;
-		}
-	}
-	
-	@Override
-	public <T> int getCount(Class<T> clazz) {
-		return getTotal(clazz, null);
-	}
-	
-	@Override
-	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
-		return getTotal(clazz, postSql, args);
-	}
-	
-    @Override
-	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
-			String postSql, Object... args) {
-		int offset = (page - 1) * pageSize;
-		List<T> data = _getList(clazz, offset, pageSize, postSql, args);
-		// 性能优化，当page=1 且拿到的数据少于pageSzie，则不需要查总数
-		int total = 0;
-		if(page == 1 && data.size() < pageSize) {
-			total = data.size();
-		} else {
-			total = getTotal(clazz, postSql, args);
-		}
-		return new PageData<T>(total, data, pageSize);
-	}
-    
-    @Override
-	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {		
-		return getPage(clazz, page, pageSize, null);
-	}
-    
-    @Override
-    public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
-			String postSql, Object... args) {
-		int offset = (page - 1) * pageSize;
-		List<T> data = _getList(clazz, offset, pageSize, postSql, args);
-		return new PageData<T>(-1, data, pageSize);
-    }
-    
-    @Override
-	public <T> PageData<T> getPageWithoutCount(final Class<T> clazz, int page, int pageSize) {		
-		return getPageWithoutCount(clazz, page, pageSize, null);
-	}
-	
-    @Override
-	public <T> List<T> getAll(final Class<T> clazz) {
-		return _getList(clazz, null, null, null);
-	}
-    
-    @Override
-	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
-		return _getList(clazz, null, null, postSql, args);
-	}
-    
-    @Override
-	public <T> T getOne(Class<T> clazz) {
-    	List<T> list = _getList(clazz, 0, 1, null);
-    	return list == null || list.isEmpty() ? null : list.get(0);
-    }
-	
-    @Override
-    public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
-    	List<T> list = _getList(clazz, 0, 1, postSql, args);
-    	return list == null || list.isEmpty() ? null : list.get(0);
-    }
-
-	/**
-	 * 查询列表
-	 * 
-	 * @param clazz
-	 * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
-	 * @param limit null时不生效
-	 * @param postSql sql的where/group/order等sql语句
-	 * @param args 参数
-	 * @return
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T> List<T> _getList(Class<T> clazz, Integer offset, Integer limit,
-			String postSql, Object... args) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ");
-
-		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
-
-		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted(postSql, clazz));
-		
-		sql.append(limit(offset, limit));
-		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		List<T> list = null;
-		if(args == null || args.length == 0) {
-			list = namedParameterJdbcTemplate.query(sql.toString(),
-					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		} else {
-			list = namedParameterJdbcTemplate.query(
-					NamedParameterUtils.trans(sql.toString()),
-					NamedParameterUtils.transParam(args),
-					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		}
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
-		}
-		return list;
-	}
-	
-	/**
-	 * 查询列表总数
-	 * @param clazz
-	 * @return
-	 */
-	private int getTotal(Class<?> clazz, String postSql, Object... args) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT count(*)");
-		
-		Table table = DOInfoReader.getTable(clazz);
-		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted(postSql, clazz));
-
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = namedParameterJdbcTemplate.queryForObject(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args),
-				Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
-		}
-		return rows;
-	}
 	
 	@Override
 	public <T> int insert(T t) {
@@ -978,6 +654,8 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	}
 	
 	/**
+	 * TODO 迁移到SQLUtils
+	 * 
 	 * 自动为【最后】where sql字句加上软删除查询字段
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
 	 * @param fields
@@ -1062,6 +740,8 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 	/**
 	 * 例如：str=?,times=3,sep=,  返回 ?,?,?
+	 * 
+	 * TODO 迁移到SQLUtils
 	 */
     private static String join(String str, int times, String sep) {
     	StringBuilder sb = new StringBuilder();
@@ -1075,7 +755,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
     }
     
     /**
-     * 拼凑select的field的语句
+     * 拼凑select的field的语句  TODO 迁移到SQLUtils
      * @param fields
      * @param sep
      * @return
@@ -1094,6 +774,9 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
     
     /**
      * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
+     * 
+     * TODO 迁移到SQLUtils
+     * 
      * @param fields
      * @param sep
      * @param values
@@ -1131,6 +814,8 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 
 	/**
 	 * 拼凑where子句，并把需要的参数写入到values中。返回sql【不】包含where关键字
+	 * 
+	 * TODO 迁移到SQLUtils
 	 * @param fields
 	 * @param logicOperate 操作符，例如AND
 	 * @param values
@@ -1176,7 +861,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	}
 	
 	/**
-	 * 拼凑limit字句
+	 * 拼凑limit字句  TODO 移到SQLUtils
 	 * @param offset 可以为null
 	 * @param limit 不能为null
 	 * @return
@@ -1193,10 +878,11 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		return sb.toString();
 	}
 	
+	// TODO 迁移到SQLUtils
 	private static String getTableName(Table table) {
 		return "`" + table.value() + "`";
 	}
-	
+	// TODO 迁移到SQLUtils
 	private static String getColumnName(Column column) {
 		return "`" + column.value() + "`";
 	}

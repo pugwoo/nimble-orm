@@ -106,15 +106,6 @@ public interface DBHelper {
     <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues);
 	
 	/**
-	 * 适合于只有一个或多个Key的情况<br>
-	 * 【会自动处理软删除记录】
-	 * @param clazz
-	 * @param keyMap
-	 * @return 如果不存在则返回null
-	 */
-	<T> T getByKey(Class<?> clazz, Map<String, Object> keyMap) throws NullKeyValueException;
-	
-	/**
 	 * 查询列表，没有查询条件<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz

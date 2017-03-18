@@ -15,6 +15,8 @@ import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
@@ -57,8 +59,8 @@ public class DOInfoReader {
 			throws NoColumnAnnotationException {
 		
 		if(clazz == null) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-			+ " does not have any @Column annotation");
+			throw new NoColumnAnnotationException("class is null"
+			    + " does not have any @Column annotation");
 		}
 		
 		List<Field> cached = class2Fields.get(clazz);
@@ -111,6 +113,18 @@ public class DOInfoReader {
 			throw new NoKeyColumnAnnotationException();
 		}
 		return keyFields;
+	}
+	
+	public static Field getOneKeyColumn(Class<?> clazz) throws NotOnlyOneKeyColumnException {
+		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
+
+		if (keyFields.size() != 1) {
+			throw new NotOnlyOneKeyColumnException(
+					"must have only one key column, actually has "
+							+ keyFields.size() + " key columns");
+		}
+		
+		return keyFields.get(0);
 	}
 	
 	public static Field getAutoIncrementField(Class<?> clazz) {
