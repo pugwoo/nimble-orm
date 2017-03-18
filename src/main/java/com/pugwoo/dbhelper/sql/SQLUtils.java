@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.sql;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -201,6 +202,104 @@ public class SQLUtils {
 	}
 	
 	/**
+	 * 生成update语句
+	 * @param t
+	 * @param values
+	 * @param withNull
+	 * @param postSql
+	 * @return 返回值为null表示不需要更新操作，这个是这个方法特别之处
+	 */
+	public static <T> String getUpdateSQL(T t, List<Object> values,
+			boolean withNull, String postSql) {
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+		
+		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
+		
+		sql.append(getTableName(table)).append(" SET ");
+		
+		List<Object> setValues = new ArrayList<Object>();
+		String setSql = joinSetAndGetValue(notKeyFields, setValues, t, withNull);
+		if(setValues.isEmpty()) {
+			return null; // all field is empty, not need to update
+		}
+		sql.append(setSql);
+		values.addAll(setValues);
+		
+		List<Object> whereValues = new ArrayList<Object>();
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		// 检查key值是否有null的，不允许有null
+		for(Object v : whereValues) {
+			if(v == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		values.addAll(whereValues);
+		
+		// 带上postSql
+		if(postSql != null) {
+			postSql = postSql.trim();
+			if(!postSql.isEmpty()) {
+				if(postSql.startsWith("where")) {
+					postSql = " AND " + postSql.substring(5);
+				}
+				where = where + postSql;
+			}
+		}
+		
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		
+		return sql.toString();
+	}
+	
+	/**
+	 * 获得自定义更新的sql
+	 * @param t
+	 * @param values
+	 * @param setSql
+	 * @return
+	 */
+	public static <T> String getCustomUpdateSQL(T t, List<Object> values, String setSql) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+		
+		sql.append(getTableName(table)).append(" SET ");
+		sql.append(setSql);
+		
+		// 加上更新时间
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+				sql.append(",").append(getColumnName(column)).append("=?");
+				values.add(new Date());
+			}
+		}
+		
+		List<Object> whereValues = new ArrayList<Object>();
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		
+		for(Object value : whereValues) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		
+		values.addAll(whereValues);
+		
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		
+		return sql.toString();
+	}
+	
+	/**
 	 * 往where sql里面插入AND关系的表达式。
 	 * 
 	 * 例如：whereSql为 where a!=3 or a!=2 limit 1
@@ -389,6 +488,29 @@ public class SQLUtils {
     	}
     	return sb.toString();
     }
+    
+	/**
+	 * 拼凑set子句
+	 * @param fields
+	 * @param values
+	 * @param obj
+	 * @param withNull 当为true时，如果field的值为null，也加入
+	 * @return
+	 */
+	private static String joinSetAndGetValue(List<Field> fields,
+			List<Object> values, Object obj, boolean withNull) {
+		StringBuilder sb = new StringBuilder();
+		int fieldSize = fields.size();
+		for(int i = 0; i < fieldSize; i++) {
+			Column column = DOInfoReader.getColumnInfo(fields.get(i));
+			Object value = DOInfoReader.getValue(fields.get(i), obj);
+			if(withNull || value != null) {
+				sb.append(getColumnName(column)).append("=?,");
+				values.add(value);
+			}
+		}
+		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
+	}
     
 	private static String getTableName(Table table) {
 		return "`" + table.value() + "`";

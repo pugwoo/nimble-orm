@@ -99,6 +99,21 @@ public abstract class P0_JdbcTemplateOp implements DBHelper {
 		return list;
 	}
 	
+	/**
+	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式 
+	 * @param sql
+	 * @param args
+	 * @return 实际修改的行数
+	 */
+	protected int jdbcExecuteUpdate(String sql, Object... args) {
+		log(sql);
+		long start = System.currentTimeMillis();
+		int rows = jdbcTemplate.update(sql.toString(), args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, args);
+		return rows;
+	}
+	
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		this.jdbcTemplate = jdbcTemplate;
 	}

@@ -162,10 +162,8 @@ public class DOInfoReader {
 	 * 获得字段里面的非key字段
 	 * @param fields
 	 * @return
-	 * @throws NoKeyColumnAnnotationException
 	 */
 	public static List<Field> getNotKeyColumns(Class<?> clazz) {
-		
 		List<Field> fields = getColumns(clazz);
 		
 		List<Field> keyFields = new ArrayList<Field>();

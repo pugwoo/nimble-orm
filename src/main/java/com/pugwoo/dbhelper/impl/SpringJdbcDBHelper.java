@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper.impl;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -127,154 +126,6 @@ public class SpringJdbcDBHelper extends P5_DeleteOp {
 		
 		// 2. insert or update new list
 		return withNull ? insertOrUpdateWithNull(newList) : insertOrUpdate(newList);
-	}
-	
-	@Override
-	public <T> int update(T t) throws NullKeyValueException {
-		return _update(t, false, null);
-	}
-	
-	@Override
-	public <T> int update(T t, String postSql, Object... args) throws NullKeyValueException {
-		return _update(t, false, postSql, args);
-	}
-	
-	@Override
-	public <T> int updateWithNull(T t) throws NullKeyValueException {
-		return _update(t, true, null);
-	}
-	
-	@Override
-	public <T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException {
-		return _update(t, true, postSql, args);
-	}
-	
-	@Override @Transactional
-	public <T> int updateWithNull(List<T> list) throws NullKeyValueException {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
-		int rows = 0;
-		for(T t : list) {
-			if(t != null) {
-				rows += updateWithNull(t);
-			}
-		}
-		return rows;
-	}
-	
-	@Override @Transactional
-	public <T> int update(List<T> list) throws NullKeyValueException {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
-		int rows = 0;
-		for(T t : list) {
-			if(t != null) {
-				rows += update(t);
-			}
-		}
-		return rows;
-	}
-	
-	private <T> int _update(T t, boolean withNull, String postSql, Object... args) 
-			throws NullKeyValueException {
-		StringBuilder sql = new StringBuilder();
-		sql.append("UPDATE ");
-		
-		Table table = DOInfoReader.getTable(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
-		
-		if(notKeyFields.isEmpty()) {
-			return 0; // log: not need to update
-		}
-		if(keyFields.isEmpty()) {
-			throw new NoKeyColumnAnnotationException();
-		}
-		
-		preHandleUpdate(t, notKeyFields);
-		
-		sql.append(getTableName(table)).append(" SET ");
-		List<Object> keyValues = new ArrayList<Object>();
-		String setSql = joinSetAndGetValue(notKeyFields, keyValues, t, withNull);
-		if(keyValues.isEmpty()) {
-			return 0; // all field is empty, not need to update
-		}
-		sql.append(setSql);
-		int setFieldSize = keyValues.size();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", keyValues, t);
-		// 检查key值是否有null的，不允许有null
-		for(int i = setFieldSize; i < keyValues.size(); i++) {
-			if(keyValues.get(i) == null) {
-				throw new NullKeyValueException();
-			}
-		}
-		
-		// 带上postSql
-		if(postSql != null) {
-			postSql = postSql.trim();
-			if(!postSql.isEmpty()) {
-				if(postSql.startsWith("where")) {
-					postSql = " AND " + postSql.substring(5);
-				}
-				where = where + postSql;
-				if(args != null) {
-					keyValues.addAll(Arrays.asList(args));
-				}
-			}
-		}
-		
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
-		
-		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
-	}
-	
-	@Override
-	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
-		if(setSql == null || setSql.trim().isEmpty()) {
-			return 0; // 不需要更新
-		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("UPDATE ");
-		
-		Table table = DOInfoReader.getTable(t.getClass());
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-		if(keyFields.isEmpty()) {
-			throw new NoKeyColumnAnnotationException();
-		}
-		
-		List<Object> keyValues = new ArrayList<Object>();
-		if(args != null) {
-			for(Object arg : args) {
-				keyValues.add(arg);
-			}
-		}
-		
-		sql.append(getTableName(table)).append(" SET ");
-		sql.append(setSql);
-		// 加上更新时间
-		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
-			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
-				sql.append(",").append(getColumnName(column)).append("=?");
-				keyValues.add(new Date());
-			}
-		}
-		
-		int setFieldSize = keyValues.size();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", keyValues, t);
-		// 检查key值是否有null的，不允许有null
-		for(int i = setFieldSize; i < keyValues.size(); i++) {
-			if(keyValues.get(i) == null) {
-				throw new NullKeyValueException();
-			}
-		}
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
-		
-		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray()); // 不会有in(?)表达式
 	}
 	
 	@Override
@@ -506,23 +357,6 @@ public class SpringJdbcDBHelper extends P5_DeleteOp {
 		}
 		return rows;
 	}
-	
-	/**
-	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式  TODO 移走
-	 * @param sql
-	 * @param args
-	 * @return 实际修改的行数
-	 */
-	private int jdbcExecuteUpdate(String sql, Object... args) {
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
-		}
-		return rows;
-	}
 		
 	/**
 	 * 拼凑where子句，并把需要的参数写入到values中。返回sql【不】包含where关键字
@@ -547,29 +381,6 @@ public class SpringJdbcDBHelper extends P5_DeleteOp {
 			values.add(DOInfoReader.getValue(fields.get(i), obj));
 		}
 		return sb.toString();
-	}
-	
-	/**
-	 * 拼凑set子句
-	 * @param fields
-	 * @param values
-	 * @param obj
-	 * @param withNull 当为true时，如果field的值为null，也加入
-	 * @return
-	 */
-	private static String joinSetAndGetValue(List<Field> fields,
-			List<Object> values, Object obj, boolean withNull) {
-		StringBuilder sb = new StringBuilder();
-		int fieldSize = fields.size();
-		for(int i = 0; i < fieldSize; i++) {
-			Column column = DOInfoReader.getColumnInfo(fields.get(i));
-			Object value = DOInfoReader.getValue(fields.get(i), obj);
-			if(withNull || value != null) {
-				sb.append(getColumnName(column)).append("=?,");
-				values.add(value);
-			}
-		}
-		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
 	
 	// TODO 迁移到SQLUtils

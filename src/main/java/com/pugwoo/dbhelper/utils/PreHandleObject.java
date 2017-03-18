@@ -60,4 +60,19 @@ public class PreHandleObject {
 		}
 	}
 	
+	public static <T> void preHandleUpdate(T t) {
+		if(t == null) {
+			return;
+		}
+		
+		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
+		
+		for(Field field : notKeyFields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+				DOInfoReader.setValue(field, t, new Date());
+			}
+		}
+	}
+	
 }
