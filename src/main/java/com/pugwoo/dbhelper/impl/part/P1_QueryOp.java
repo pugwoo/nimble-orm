@@ -78,11 +78,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			return new HashMap<K, T>();
 		}
 		
-		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-		
 		StringBuilder sql = new StringBuilder();
 		sql.append(SQLUtils.getSelectSQL(clazz));
-		sql.append(SQLUtils.getKeyInWhereSQL(keyField, clazz));
+		sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 		
 		log(sql);
 		long start = System.currentTimeMillis();
@@ -97,6 +95,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			return new HashMap<K, T>();
 		}
 		
+		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
 		Map<K, T> map = new LinkedHashMap<K, T>();
 		for(K key : keyValues) {
 			if(key == null) {continue;}

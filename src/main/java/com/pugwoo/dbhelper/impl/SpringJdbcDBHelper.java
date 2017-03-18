@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +19,7 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotSupportMethodException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
-import com.pugwoo.dbhelper.impl.part.P1_QueryOp;
+import com.pugwoo.dbhelper.impl.part.P5_DeleteOp;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
@@ -31,175 +30,9 @@ import net.sf.jsqlparser.JSQLParserException;
  * 2015年1月12日 16:41:03 数据库操作封装：增删改查
  * @author pugwoo
  */
-public class SpringJdbcDBHelper extends P1_QueryOp {
+public class SpringJdbcDBHelper extends P5_DeleteOp {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
-	
-	@Override
-	public <T> int insert(T t) {
-		return insert(t, false);
-	}
-	
-	@Override @Transactional
-	public int insert(List<?> list) {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
-		int sum = 0;
-		for(Object obj : list) {
-			sum += insert(obj, false);
-		}
-		return sum;
-	}
-	
-	@Override
-	public <T> int insertWithNull(T t) {
-		return insert(t, true);
-	}
-	
-	private <T> int insert(T t, boolean isWithNullValue) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("INSERT INTO ");
-		
-		Table table = DOInfoReader.getTable(t.getClass());
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
-		
-		preHandleInsert(t, fields);
-		autoSetSoftDeleted(t, t.getClass());
-		
-		sql.append(getTableName(table)).append(" (");
-		List<Object> values = new ArrayList<Object>();
-		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
-		sql.append(") VALUES (");
-		sql.append(join("?", values.size(), ","));
-		sql.append(")");
-		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		if(autoIncrementField != null && rows == 1) {
-			Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()",
-					Long.class);
-			DOInfoReader.setValue(autoIncrementField, t, id);
-		}
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
-		}
-		return rows;
-	}
-	
-	@Override
-	public <T> int insertWhereNotExist(T t, String whereSql, Object... args) {
-		return insertWhereNotExist(t, false, whereSql, args);
-	}
-	
-	@Override
-	public <T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args) {
-		return insertWhereNotExist(t, true, whereSql, args);
-	}
-	
-	private <T> int insertWhereNotExist(T t, boolean isWithNullValue, String whereSql, Object... args) {
-		if(whereSql == null || whereSql.isEmpty()) {
-			return insert(t, isWithNullValue);
-		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("INSERT INTO ");
-		
-		Table table = DOInfoReader.getTable(t.getClass());
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		
-		preHandleInsert(t, fields);
-		autoSetSoftDeleted(t, t.getClass());
-		
-		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
-		String tableName = getTableName(table);
-		
-		sql.append(tableName).append(" (");
-		List<Object> values = new ArrayList<Object>();
-		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
-		sql.append(") select ");
-		sql.append(join("?", values.size(), ","));
-		sql.append(" from dual where not exists (select 1 from ");
-		
-		if(!whereSql.trim().toUpperCase().startsWith("WHERE ")) {
-			whereSql = "where " + whereSql;
-		}
-		whereSql = autoSetSoftDeleted(whereSql, t.getClass());
-		
-		sql.append(tableName).append(" ").append(whereSql).append(" limit 1)");
-		if(args != null) {
-			for(Object arg : args) {
-				values.add(arg);
-			}
-		}
-		
-		LOGGER.debug("ExecSQL:{}", sql);
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		if(autoIncrementField != null && rows == 1) {
-			Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()",
-					Long.class);
-			DOInfoReader.setValue(autoIncrementField, t, id);
-		}
-		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, values);
-		}
-		return rows;
-	}
-		
-	@Override
-	public <T> int insertWithNullInOneSQL(List<T> list) {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
-		
-		list.removeAll(Collections.singleton(null));
-		
-		Class<?> clazz = null;
-		for(T t : list) {
-			if(clazz == null) {
-				clazz = t.getClass();
-			} else {
-				if (!clazz.equals(t.getClass())) {
-					throw new InvalidParameterException(
-							"list elements must be same class");
-				}
-			}
-		}
-		
-		if(clazz == null) {
-			return 0;
-		}
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("INSERT INTO ");
-		
-		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
-		
-		sql.append(getTableName(table)).append(" (");
-		sql.append(join(fields, ","));
-		sql.append(") VALUES ");
-		
-		List<Object> values = new ArrayList<Object>();
-		for(int i = 0; i < list.size(); i++) {
-			preHandleInsert(list.get(i), fields);
-			autoSetSoftDeleted(list.get(i), clazz);
-			sql.append("(");
-			sql.append(join("?", fields.size(), ","));
-			sql.append(")");
-			if(i < list.size() - 1) {
-				sql.append(",");
-			}
-			values.addAll(getValue(fields, list.get(i)));
-		}
-				
-		return jdbcExecuteUpdate(sql.toString(), values.toArray());
-	}
 	
 	@Override
 	public <T> int insertOrUpdate(T t) {
@@ -614,32 +447,6 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		return true;
 	}
 	
-	/**插入前预处理字段值*/
-	private <T> void preHandleInsert(T t, List<Field> fields) {
-		if(t == null || fields.isEmpty()) {
-			return;
-		}
-		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
-			if(column.setTimeWhenInsert() && Date.class.isAssignableFrom(field.getType())) {
-				if(DOInfoReader.getValue(field, t) == null) {
-					DOInfoReader.setValue(field, t, new Date());
-				}
-			}
-			if(column.insertDefault() != null && !column.insertDefault().isEmpty()) {
-				if(DOInfoReader.getValue(field, t) == null) {
-					DOInfoReader.setValue(field, t, column.insertDefault());
-				}
-			}
-			if(column.setRandomStringWhenInsert()) {
-				if(DOInfoReader.getValue(field, t) == null) {
-					DOInfoReader.setValue(field, t, 
-							UUID.randomUUID().toString().replace("-", "").substring(0, 32));
-				}
-			}
-		}
-	}
-	
 	/**更新前预处理字段值*/
 	private <T> void preHandleUpdate(T t, List<Field> fields) {
 		if(t == null || fields.isEmpty()) {
@@ -683,26 +490,6 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	}
 		
 	/**
-	 * 如果t有默认的软删除字段但没有设置，则自动设置上，避免数据库忘记设置默认值的情况
-	 * @param t
-	 * @param fields
-	 */
-	private <T> void autoSetSoftDeleted(T t, Class<?> clazz) {
-		if(t == null) {
-			return;
-		}
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
-		if(softDelete == null) {
-			return;
-		}
-		Object delete = DOInfoReader.getValue(softDelete, t);
-		if(delete == null) {
-			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
-			DOInfoReader.setValue(softDelete, t, softDeleteColumn.softDelete()[0]);
-		}
-	}
-	
-	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 * @param sql
 	 * @param args
@@ -722,7 +509,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	}
 	
 	/**
-	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式
+	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式  TODO 移走
 	 * @param sql
 	 * @param args
 	 * @return 实际修改的行数
@@ -858,24 +645,6 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 			}
 		}
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
-	}
-	
-	/**
-	 * 拼凑limit字句  TODO 移到SQLUtils
-	 * @param offset 可以为null
-	 * @param limit 不能为null
-	 * @return
-	 */
-	private static String limit(Integer offset, Integer limit) {
-		StringBuilder sb = new StringBuilder();
-		if (limit != null) {
-			sb.append(" limit ");
-			if(offset != null) {
-				sb.append(offset).append(",");
-			}
-			sb.append(limit);
-		}
-		return sb.toString();
 	}
 	
 	// TODO 迁移到SQLUtils

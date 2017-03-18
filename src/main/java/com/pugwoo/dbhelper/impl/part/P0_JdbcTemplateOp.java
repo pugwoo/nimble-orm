@@ -26,16 +26,28 @@ public abstract class P0_JdbcTemplateOp implements DBHelper {
 	protected long timeoutWarningValve = 1000;
 	
 	protected void log(StringBuilder sql) {
+		log(sql.toString());
+	}
+	
+	protected void log(String sql) {
 		LOGGER.debug("ExecSQL:{}", sql);
 	}
 	
 	protected void logSlow(long cost, StringBuilder sql, List<Object> keyValues) {
+		logSlow(cost, sql.toString(), keyValues);
+	}
+	
+	protected void logSlow(long cost, StringBuilder sql, Object keyValue) {
+		logSlow(cost, sql.toString(), keyValue);
+	}
+	
+	protected void logSlow(long cost, String sql, List<Object> keyValues) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
 		}
 	}
 	
-	protected void logSlow(long cost, StringBuilder sql, Object keyValue) {
+	protected void logSlow(long cost, String sql, Object keyValue) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
 		}

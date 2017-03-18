@@ -113,9 +113,91 @@ public class SQLUtils {
 	 * @param clazz
 	 * @return
 	 */
-	public static String getKeyInWhereSQL(Field keyField, Class<?> clazz) {
+	public static String getKeyInWhereSQL(Class<?> clazz) {
+		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
 		return autoSetSoftDeleted("WHERE " +
 	           getColumnName(DOInfoReader.getColumnInfo(keyField)) + " in (?)", clazz);
+	}
+	
+	/**
+	 * 生成insert语句，将值放到values中。
+	 * @param t
+	 * @param values 必须
+	 * @param isWithNullValue 标记是否将null字段放到insert语句中
+	 * @return
+	 */
+	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
+		List<T> list = new ArrayList<T>();
+		list.add(t);
+		return _getInsertSQL(list, values, isWithNullValue);
+	}
+	
+	/**
+	 * 生成insert语句，将值放到values中。
+	 * @param t
+	 * @param values 必须
+	 * @return
+	 */
+	public static <T> String getInsertSQLWithNull(List<T> tList, List<Object> values) {
+		return _getInsertSQL(tList, values, true);
+	}
+	
+	private static <T> String _getInsertSQL(List<T> tList, List<Object> values,
+			boolean isWithNullValue) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		
+		if(tList.size() > 1) {
+			isWithNullValue = true; // 对于多个值的，只能含null值一起插入
+		}
+		
+		Table table = DOInfoReader.getTable(tList.get(0).getClass());
+		List<Field> fields = DOInfoReader.getColumns(tList.get(0).getClass());
+		
+		sql.append(getTableName(table)).append(" (");
+		List<Object> _values = new ArrayList<Object>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
+		String fieldSql = joinAndGetValue(fields, ",", _values, tList.get(0), isWithNullValue);
+		sql.append(fieldSql);
+		sql.append(") VALUES ");
+		String dotSql = "(" + join("?", _values.size(), ",") + ")";
+		sql.append(dotSql);
+		values.addAll(_values);
+		
+		for(int i = 1; i < tList.size(); i++) {
+			joinAndGetValue(fields, ",", values, tList.get(i), isWithNullValue);
+			sql.append(",").append(dotSql);
+		}
+			
+		return sql.toString();
+	}
+	
+	/**
+	 * 生成insert into (...) select ?,?,? from where not exists (select 1 from where)语句
+	 * @param t
+	 * @param values
+	 * @param whereSql
+	 * @return
+	 */
+	public static <T> String getInsertWhereNotExistSQL(T t, List<Object> values,
+			boolean isWithNullValue, String whereSql) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		
+		sql.append(getTableName(table)).append(" (");
+		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
+		sql.append(") select ");
+		sql.append(join("?", values.size(), ","));
+		sql.append(" from dual where not exists (select 1 from ");
+		
+		if(!whereSql.trim().toUpperCase().startsWith("WHERE ")) {
+			whereSql = "where " + whereSql;
+		}
+		whereSql = autoSetSoftDeleted(whereSql, t.getClass());
+		
+		sql.append(getTableName(table)).append(" ").append(whereSql).append(" limit 1)");
+		
+		return sql.toString();
 	}
 	
 	/**
