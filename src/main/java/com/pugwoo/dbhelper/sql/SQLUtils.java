@@ -14,6 +14,11 @@ import net.sf.jsqlparser.statement.select.Select;
  * 2017年3月16日 23:02:47
  */
 public class SQLUtils {
+	
+//	public static String getSelectSQL(Class<?> clazz) {
+//		
+//	}
+	
 
 	/**
 	 * 往where sql里面插入AND关系的表达式。

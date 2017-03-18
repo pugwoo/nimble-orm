@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,10 @@ import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
 public class DOInfoReader {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DOInfoReader.class);
+	
+	/**缓存fields数据*/
+	private static Map<Class<?>, List<Field>> class2Fields = 
+			new ConcurrentHashMap<Class<?>, List<Field>>();
 	
 	/**
 	 * 获取DO的@Table信息
@@ -49,6 +55,17 @@ public class DOInfoReader {
 	 */
 	public static List<Field> getColumns(Class<?> clazz)
 			throws NoColumnAnnotationException {
+		
+		if(clazz == null) {
+			throw new NoColumnAnnotationException("class " + clazz.getName()
+			+ " does not have any @Column annotation");
+		}
+		
+		List<Field> cached = class2Fields.get(clazz);
+		if(cached != null) {
+			return cached;
+		}
+		
 		List<Class<?>> classLink = new ArrayList<Class<?>>();
 		Class<?> curClass = clazz;
 		while (curClass != null) {
@@ -69,6 +86,8 @@ public class DOInfoReader {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
 					+ " does not have any @Column annotation");
 		}
+		
+		class2Fields.put(clazz, result);
 		return result;
 	}
 	
@@ -78,8 +97,9 @@ public class DOInfoReader {
 	 * @return
 	 * @throws NoKeyColumnAnnotationException 如果没有key Column，抛出该异常。
 	 */
-	public static List<Field> getKeyColumns(List<Field> fields) 
+	public static List<Field> getKeyColumns(Class<?> clazz) 
 	    throws NoKeyColumnAnnotationException {
+		List<Field> fields = getColumns(clazz);
 		List<Field> keyFields = new ArrayList<Field>();
 		for(Field field : fields) {
 			Column column = DOInfoReader.getColumnInfo(field);
@@ -93,10 +113,10 @@ public class DOInfoReader {
 		return keyFields;
 	}
 	
-	public static Field getAutoIncrementField(List<Field> fields) {
-		if(fields == null) {
-			return null;
-		}
+	public static Field getAutoIncrementField(Class<?> clazz) {
+		
+		List<Field> fields = getColumns(clazz);
+		
 		for(Field field : fields) {
 			Column column = DOInfoReader.getColumnInfo(field);
 			if(column.isAutoIncrement()) {
@@ -111,10 +131,9 @@ public class DOInfoReader {
 	 * @param fields
 	 * @return 如果没有则返回null
 	 */
-	public static Field getSoftDeleteColumn(List<Field> fields) {
-		if(fields == null) {
-			return null;
-		}
+	public static Field getSoftDeleteColumn(Class<?> clazz) {
+		List<Field> fields = getColumns(clazz);
+		
 		for(Field field : fields) {
 			Column column = DOInfoReader.getColumnInfo(field);
 			if(column.softDelete() != null && column.softDelete().length == 2
@@ -132,7 +151,10 @@ public class DOInfoReader {
 	 * @return
 	 * @throws NoKeyColumnAnnotationException
 	 */
-	public static List<Field> getNotKeyColumns(List<Field> fields) {
+	public static List<Field> getNotKeyColumns(Class<?> clazz) {
+		
+		List<Field> fields = getColumns(clazz);
+		
 		List<Field> keyFields = new ArrayList<Field>();
 		for(Field field : fields) {
 			Column column = DOInfoReader.getColumnInfo(field);

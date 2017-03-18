@@ -49,7 +49,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		List<Object> keyValues = new ArrayList<Object>();
 		if(keyFields == null || keyFields.isEmpty()) {
 			return false;
@@ -64,7 +64,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		}
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted("WHERE " + where, fields));
+		sql.append(autoSetSoftDeleted("WHERE " + where, t.getClass()));
 		
 		try {
 			LOGGER.debug("ExecSQL:{}", sql);
@@ -94,7 +94,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 
 		if (keyFields.size() != 1) {
 			throw new NotSupportMethodException(
@@ -105,7 +105,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + "=?", fields));
+		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + "=?", clazz));
 		
 		try {
 			LOGGER.debug("ExecSQL:{}", sql);
@@ -135,7 +135,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 		
 		if (keyFields.size() != 1) {
 			throw new NotSupportMethodException(
@@ -146,7 +146,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + " in (?)", fields));
+		sql.append(autoSetSoftDeleted("WHERE " + getColumnName(keyColumn) + " in (?)", clazz));
 		
 		List<T> list = namedParameterJdbcTemplate.query(
 				NamedParameterUtils.trans(sql.toString()),
@@ -199,7 +199,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 			values.add(keyMap.get(key));
 		}
 		
-		sql.append(autoSetSoftDeleted("WHERE " + whereSql.toString(), fields));
+		sql.append(autoSetSoftDeleted("WHERE " + whereSql.toString(), clazz));
 		
 		// 检查主键不允许为null
 		for(Object value : values) {
@@ -310,7 +310,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 
 		sql.append(join(fields, ","));
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted(postSql, fields));
+		sql.append(autoSetSoftDeleted(postSql, clazz));
 		
 		sql.append(limit(offset, limit));
 		
@@ -343,9 +343,8 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		sql.append("SELECT count(*)");
 		
 		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
 		sql.append(" FROM ").append(getTableName(table));
-		sql.append(autoSetSoftDeleted(postSql, fields));
+		sql.append(autoSetSoftDeleted(postSql, clazz));
 
 		LOGGER.debug("ExecSQL:{}", sql);
 		long start = System.currentTimeMillis();
@@ -388,10 +387,10 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		Field autoIncrementField = DOInfoReader.getAutoIncrementField(fields);
+		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
 		
 		preHandleInsert(t, fields);
-		autoSetSoftDeleted(t, fields);
+		autoSetSoftDeleted(t, t.getClass());
 		
 		sql.append(getTableName(table)).append(" (");
 		List<Object> values = new ArrayList<Object>();
@@ -437,9 +436,9 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		
 		preHandleInsert(t, fields);
-		autoSetSoftDeleted(t, fields);
+		autoSetSoftDeleted(t, t.getClass());
 		
-		Field autoIncrementField = DOInfoReader.getAutoIncrementField(fields);
+		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
 		String tableName = getTableName(table);
 		
 		sql.append(tableName).append(" (");
@@ -452,7 +451,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		if(!whereSql.trim().toUpperCase().startsWith("WHERE ")) {
 			whereSql = "where " + whereSql;
 		}
-		whereSql = autoSetSoftDeleted(whereSql, fields);
+		whereSql = autoSetSoftDeleted(whereSql, t.getClass());
 		
 		sql.append(tableName).append(" ").append(whereSql).append(" limit 1)");
 		if(args != null) {
@@ -513,7 +512,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		List<Object> values = new ArrayList<Object>();
 		for(int i = 0; i < list.size(); i++) {
 			preHandleInsert(list.get(i), fields);
-			autoSetSoftDeleted(list.get(i), fields);
+			autoSetSoftDeleted(list.get(i), clazz);
 			sql.append("(");
 			sql.append(join("?", fields.size(), ","));
 			sql.append(")");
@@ -676,9 +675,8 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		sql.append("UPDATE ");
 		
 		Table table = DOInfoReader.getTable(t.getClass());
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
-		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
 		
 		if(notKeyFields.isEmpty()) {
 			return 0; // log: not need to update
@@ -719,7 +717,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 			}
 		}
 		
-		sql.append(autoSetSoftDeleted(where, fields));
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
 	}
@@ -735,7 +733,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		if(keyFields.isEmpty()) {
 			throw new NoKeyColumnAnnotationException();
 		}
@@ -766,7 +764,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 				throw new NullKeyValueException();
 			}
 		}
-		sql.append(autoSetSoftDeleted(where, fields));
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray()); // 不会有in(?)表达式
 	}
@@ -775,12 +773,12 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	public <T> int deleteByKey(T t) throws NullKeyValueException {
 		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		if(keyFields.isEmpty()) {
 			throw new NoKeyColumnAnnotationException();
 		}
 		
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass()); // 支持软删除
 		
 		List<Object> keyValues = new ArrayList<Object>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", keyValues, t);
@@ -809,7 +807,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 				}
 			}
 		}
-		sql.append(autoSetSoftDeleted(where, fields));
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
 
 		return jdbcExecuteUpdate(sql.toString(), keyValues.toArray());
 	}
@@ -822,7 +820,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 		
 		if (keyFields.size() != 1) {
 			throw new NotSupportMethodException(
@@ -831,7 +829,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		}
 		Column keyColumn = DOInfoReader.getColumnInfo(keyFields.get(0));
 		
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 		
 		StringBuilder sql = new StringBuilder();
 		if(softDelete == null) { // 物理删除
@@ -854,7 +852,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		}
 		
 		String where = "WHERE " + getColumnName(keyColumn) + "=?";
-		sql.append(autoSetSoftDeleted(where, fields));
+		sql.append(autoSetSoftDeleted(where, clazz));
 		
 		return jdbcExecuteUpdate(sql.toString(), keyValue);
 	}
@@ -868,7 +866,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields); // 支持软删除
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 
 		StringBuilder sql = new StringBuilder();
 		
@@ -891,7 +889,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 			}
 		}
 		
-		sql.append(autoSetSoftDeleted(postSql, fields));
+		sql.append(autoSetSoftDeleted(postSql, clazz));
 
 		return namedJdbcExecuteUpdate(sql.toString(), args);
 	}
@@ -907,7 +905,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 		if(t1 == null || t2 == null || fields == null) {
 			 return false;
 		}
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t1.getClass());
 		if(keyFields == null || keyFields.isEmpty()) {
 			return false;
 		}
@@ -927,7 +925,7 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 			return false;
 		}
 		
-		List<Field> keyFields = DOInfoReader.getKeyColumns(fields);
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		if(keyFields.isEmpty()) {
 			return false;
 		}
@@ -985,11 +983,11 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	 * @param fields
 	 * @return 无论如何前面会加空格，更安全
 	 */
-	private <T> String autoSetSoftDeleted(String whereSql, List<Field> fields) {
+	private <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
 		if(whereSql == null) {
 			whereSql = "";
 		}
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields);
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 		if(softDelete == null) {
 			return " " + whereSql; // 不处理
 		} else {
@@ -1011,11 +1009,11 @@ public class SpringJdbcDBHelper extends P1_QueryOp {
 	 * @param t
 	 * @param fields
 	 */
-	private <T> void autoSetSoftDeleted(T t, List<Field> fields) {
+	private <T> void autoSetSoftDeleted(T t, Class<?> clazz) {
 		if(t == null) {
 			return;
 		}
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(fields);
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 		if(softDelete == null) {
 			return;
 		}
