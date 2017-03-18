@@ -9,7 +9,7 @@ import com.pugwoo.dbhelper.test.model.StudentDO;
  * @author NICK
  */
 public class StudentVO extends StudentDO {
-
+	
 	@RelatedColumn("school_id")
 	private SchoolDO schoolDO;
 

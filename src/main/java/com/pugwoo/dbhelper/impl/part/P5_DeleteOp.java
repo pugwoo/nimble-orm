@@ -23,7 +23,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		if(softDelete == null) { // 物理删除
 			sql = SQLUtils.getDeleteSQL(t, values);
 		} else { // 软删除
-			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values);
 		}
 

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
@@ -26,12 +27,16 @@ public class DOInfoReader {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DOInfoReader.class);
 	
-	/**缓存fields数据*/
-	private static Map<Class<?>, List<Field>> class2Fields = 
+	/**缓存Column数据*/
+	private static Map<Class<?>, List<Field>> class2Column = 
+			new ConcurrentHashMap<Class<?>, List<Field>>();
+	
+	/**缓存RelatedColumn数据*/
+	private static Map<Class<?>, List<Field>> class2RelatedColumn =
 			new ConcurrentHashMap<Class<?>, List<Field>>();
 	
 	/**
-	 * 获取DO的@Table信息
+	 * 获取DO的@Table信息，如果子类没有，会往父类查找
 	 * 
 	 * @param clazz
 	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
@@ -39,14 +44,36 @@ public class DOInfoReader {
 	 */
 	public static Table getTable(Class<?> clazz)
 			throws NoTableAnnotationException {
-		Table table = clazz.getAnnotation(Table.class);
-		if (table == null) {
-			throw new NoTableAnnotationException("class " + clazz.getName()
-					+ " does not have @Table annotation.");
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			Table table = curClass.getAnnotation(Table.class);
+			if(table != null) {
+				return table;
+			}
+			curClass = curClass.getSuperclass();
 		}
-		return table;
+		
+		throw new NoTableAnnotationException("class " + clazz.getName()
+					+ " does not have @Table annotation.");
 	}
-
+	
+	/**
+	 * 从db字段名拿字段对象
+	 * @param clazz
+	 * @param dbFieldName
+	 * @return 如果不存在返回null
+	 */
+	public static Field getFieldByDBField(Class<?> clazz, String dbFieldName) {
+		List<Field> fields = getColumns(clazz);
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.value().equals(dbFieldName)) {
+				return field;
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先
 	 * 
@@ -62,7 +89,7 @@ public class DOInfoReader {
 			    + " does not have any @Column annotation");
 		}
 		
-		List<Field> cached = class2Fields.get(clazz);
+		List<Field> cached = class2Column.get(clazz);
 		if(cached != null) {
 			return cached;
 		}
@@ -73,7 +100,7 @@ public class DOInfoReader {
 			classLink.add(curClass);
 			curClass = curClass.getSuperclass();
 		}
-		// 父类优先
+		// 父类先拿，不处理重名情况
 		List<Field> result = new ArrayList<Field>();
 		for (int i = classLink.size() - 1; i >= 0; i--) {
 			Field[] fields = classLink.get(i).getDeclaredFields();
@@ -88,7 +115,7 @@ public class DOInfoReader {
 					+ " does not have any @Column annotation");
 		}
 		
-		class2Fields.put(clazz, result);
+		class2Column.put(clazz, result);
 		return result;
 	}
 	
@@ -103,7 +130,7 @@ public class DOInfoReader {
 		List<Field> fields = getColumns(clazz);
 		List<Field> keyFields = new ArrayList<Field>();
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(column.isKey()) {
 				keyFields.add(field);
 			}
@@ -131,7 +158,7 @@ public class DOInfoReader {
 		List<Field> fields = getColumns(clazz);
 		
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(column.isAutoIncrement()) {
 				return field;
 			}
@@ -148,7 +175,7 @@ public class DOInfoReader {
 		List<Field> fields = getColumns(clazz);
 		
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(column.softDelete() != null && column.softDelete().length == 2
 					&& !column.softDelete()[0].trim().isEmpty()
 					&& !column.softDelete()[1].trim().isEmpty()) {
@@ -168,18 +195,51 @@ public class DOInfoReader {
 		
 		List<Field> keyFields = new ArrayList<Field>();
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(!column.isKey()) {
 				keyFields.add(field);
 			}
 		}
 		return keyFields;
 	}
-
-	public static Column getColumnInfo(Field field) {
-		return field.getAnnotation(Column.class);
-	}
 	
+	/**
+	 * 获得所有有@RelatedColumn注解的列，包括继承的父类中的，顺序父类先
+	 * 
+	 * @param clazz
+	 * @return 不会返回null
+	 */
+	public static List<Field> getRelatedColumns(Class<?> clazz) {
+		if(clazz == null) {
+			return new ArrayList<Field>();
+		}
+		
+		List<Field> cached = class2RelatedColumn.get(clazz);
+		if(cached != null) {
+			return cached;
+		}
+		
+		List<Class<?>> classLink = new ArrayList<Class<?>>();
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			classLink.add(curClass);
+			curClass = curClass.getSuperclass();
+		}
+		// 父类优先
+		List<Field> result = new ArrayList<Field>();
+		for (int i = classLink.size() - 1; i >= 0; i--) {
+			Field[] fields = classLink.get(i).getDeclaredFields();
+			for (Field field : fields) {
+				if (field.getAnnotation(RelatedColumn.class) != null) {
+					result.add(field);
+				}
+			}
+		}
+
+		class2RelatedColumn.put(clazz, result);
+		return result;
+	}
+
 	/**
 	 * 优先通过getter获得值，如果没有getter，则直接获取
 	 * 

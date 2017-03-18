@@ -40,7 +40,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			T obj = isUseGivenObj ? t : clazz.newInstance();
 			List<Field> fields = DOInfoReader.getColumns(clazz);
 			for (Field field : fields) {
-				Column column = DOInfoReader.getColumnInfo(field);
+				Column column = field.getAnnotation(Column.class);
 				Object value = TypeAutoCast.cast(
 						TypeAutoCast.cast(rs, column.value(), field.getType()), 
 						field.getType());

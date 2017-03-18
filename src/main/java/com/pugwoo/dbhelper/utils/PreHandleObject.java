@@ -28,7 +28,7 @@ public class PreHandleObject {
 		}
 		
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			
 			if(column.softDelete() != null && column.softDelete().length == 2
 					&& !column.softDelete()[0].trim().isEmpty()
@@ -68,7 +68,7 @@ public class PreHandleObject {
 		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
 		
 		for(Field field : notKeyFields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				DOInfoReader.setValue(field, t, new Date());
 			}

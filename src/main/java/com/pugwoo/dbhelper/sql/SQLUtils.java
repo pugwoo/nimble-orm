@@ -118,7 +118,7 @@ public class SQLUtils {
 	public static String getKeyInWhereSQL(Class<?> clazz) {
 		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
 		return autoSetSoftDeleted("WHERE " +
-	           getColumnName(DOInfoReader.getColumnInfo(keyField)) + " in (?)", clazz);
+	           getColumnName(keyField.getAnnotation(Column.class)) + " in (?)", clazz);
 	}
 	
 	/**
@@ -277,7 +277,7 @@ public class SQLUtils {
 		
 		// 加上更新时间
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column)).append("=?");
 				values.add(new Date());
@@ -336,7 +336,7 @@ public class SQLUtils {
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
-		Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+		Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 		
 		StringBuilder sql = new StringBuilder();
 		
@@ -346,7 +346,7 @@ public class SQLUtils {
 		
 		// 特殊处理@Column setTimeWhenUpdate时间
 		for(Field field : fields) {
-			Column column = DOInfoReader.getColumnInfo(field);
+			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column)).append("='");
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -444,7 +444,7 @@ public class SQLUtils {
 		if(softDelete == null) {
 			return " " + whereSql; // 不处理
 		} else {
-			Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 			String deletedExpression = getColumnName(softDeleteColumn) + "=" 
 			                        + softDeleteColumn.softDelete()[0];
 			try {
@@ -499,7 +499,7 @@ public class SQLUtils {
 		StringBuilder sb = new StringBuilder();
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
-			Column column = DOInfoReader.getColumnInfo(fields.get(i));
+			Column column = fields.get(i).getAnnotation(Column.class);
 			sb.append(getColumnName(column)).append("=?");
 			if(i < fieldSize - 1) {
 				sb.append(" ").append(logicOperate).append(" ");
@@ -519,7 +519,7 @@ public class SQLUtils {
 		StringBuilder sb = new StringBuilder();
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
-			Column column = DOInfoReader.getColumnInfo(fields.get(i));
+			Column column = fields.get(i).getAnnotation(Column.class);
 			sb.append(getColumnName(column)).append("=?");
 			if(i < fieldSize - 1) {
 				sb.append(" ").append(logicOperate).append(" ");
@@ -541,7 +541,7 @@ public class SQLUtils {
 			List<Object> values, Object obj, boolean isWithNullValue) {
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
-    		Column column = DOInfoReader.getColumnInfo(field);
+    		Column column = field.getAnnotation(Column.class);
 
     		boolean isAppendColumn = true;
     		if(values != null && obj != null) {
@@ -592,7 +592,7 @@ public class SQLUtils {
 		StringBuilder sb = new StringBuilder();
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
-			Column column = DOInfoReader.getColumnInfo(fields.get(i));
+			Column column = fields.get(i).getAnnotation(Column.class);
 			Object value = DOInfoReader.getValue(fields.get(i), obj);
 			if(withNull || value != null) {
 				sb.append(getColumnName(column)).append("=?,");

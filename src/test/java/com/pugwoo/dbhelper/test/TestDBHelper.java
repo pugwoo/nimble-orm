@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.model.StudentDO;
+import com.pugwoo.dbhelper.test.vo.StudentVO;
 
 /**
  * 2015年1月13日 11:11:23
@@ -284,6 +285,16 @@ public class TestDBHelper {
 		
 		total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
 		Assert.assertTrue(total >= 100);
+	}
+	
+	@Test
+	public void testTmp() {
+		StudentVO studentVO = new StudentVO();
+		studentVO.setId(1L);
+		
+		dbHelper.getByKey(studentVO);
+		
+		System.out.println(studentVO);
 	}
 	
 	@Test

@@ -24,7 +24,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 	@Column("intro") // 支持byte[]类型
 	private byte[] intro;
 	
-//	@Column("school_id")
+	@Column("school_id")
 	private Long schoolId;
 	
 	@Override

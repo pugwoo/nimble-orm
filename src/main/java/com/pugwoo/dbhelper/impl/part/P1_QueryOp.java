@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
@@ -35,6 +36,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(t.getClass(), t),
 					keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			
+			postHandleRelatedColumn(t);
+			
 			long cost = System.currentTimeMillis() - start;
 			logSlow(cost, sql, keyValues);
 			return true;
@@ -230,6 +234,32 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
 		return rows;
+	}
+	
+	// ======================= 处理 RelatedColumn数据 ========================
+	
+	private <T> void postHandleRelatedColumn(T t) {
+		List<Field> relatedColumns = DOInfoReader.getRelatedColumns(t.getClass());
+		
+		for(Field field : relatedColumns) {
+			RelatedColumn column = field.getAnnotation(RelatedColumn.class);
+			if(column.value() == null || column.value().isEmpty()) {
+				continue;
+			}
+			
+			Field relateField = DOInfoReader.getFieldByDBField(t.getClass(), column.value());
+			if(relateField == null) {
+				continue;
+			}
+			
+			Object value = DOInfoReader.getValue(relateField, t);
+			Object relateValue = getByKey(field.getType(), value);
+			DOInfoReader.setValue(field, t, relateValue);
+		}
+	}
+	
+	private <T> void postHandleRelatedColumn(List<T> tList) {
+		
 	}
 	
 }
