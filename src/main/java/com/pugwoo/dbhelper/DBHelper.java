@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pugwoo.dbhelper.exception.MustProvideconstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 
@@ -396,16 +397,17 @@ public interface DBHelper {
 	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况。
 	 * 该操作【会】自动使用软删除进行删除
 	 * 
-	 * @param clazz
+	 * @param clazz 必须有默认构造方法
 	 * @param keyValue
 	 * @return
 	 * @throws NullKeyValueException
 	 */
-	<T> int deleteByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException;
+	<T> int deleteByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
+	    MustProvideconstructorException;
 
 	/**
 	 * 自定义条件删除数据，该操作【会】自动使用软删除标记
-	 * @param clazz
+	 * @param clazz 必须有默认构造方法
 	 * @param postSql 必须提供，必须写where，不允许留空
 	 * @param args
 	 * @return

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.sql;
 
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -293,6 +294,95 @@ public class SQLUtils {
 		}
 		
 		values.addAll(whereValues);
+		
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		
+		return sql.toString();
+	}
+	
+	/**
+	 * 获得软删除SQL
+	 * @param t
+	 * @param values
+	 * @return
+	 */
+	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
+		String setSql = getColumnName(softDeleteColumn) + "="
+	                    + softDeleteColumn.softDelete()[1];
+		return getCustomUpdateSQL(t, values, setSql);
+	}
+	
+	/**
+	 * 获得自定义删除SQL
+	 * @param clazz
+	 * @param postSql
+	 * @return
+	 */
+	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
+		StringBuilder sql = new StringBuilder();
+		
+		Table table = DOInfoReader.getTable(clazz);
+		
+		sql.append("DELETE FROM ");
+		sql.append(getTableName(table));
+		
+		sql.append(autoSetSoftDeleted(postSql, clazz));
+		
+		return sql.toString();
+	}
+	
+	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql) {
+		
+		Table table = DOInfoReader.getTable(clazz);
+		List<Field> fields = DOInfoReader.getColumns(clazz);
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
+		Column softDeleteColumn = DOInfoReader.getColumnInfo(softDelete);
+		
+		StringBuilder sql = new StringBuilder();
+		
+		sql.append("UPDATE ").append(getTableName(table));
+		sql.append(" SET ").append(getColumnName(softDeleteColumn));
+		sql.append("=").append(softDeleteColumn.softDelete()[1]);
+		
+		// 特殊处理@Column setTimeWhenUpdate时间
+		for(Field field : fields) {
+			Column column = DOInfoReader.getColumnInfo(field);
+			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+				sql.append(",").append(getColumnName(column)).append("='");
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				sql.append(df.format(new Date())).append("'");
+			}
+		}
+		
+		sql.append(autoSetSoftDeleted(postSql, clazz));
+		
+		return sql.toString();
+	}
+	
+	/**
+	 * 获得硬删除SQL
+	 * @param t
+	 * @param values
+	 * @return
+	 */
+	public static <T> String getDeleteSQL(T t, List<Object> values) {
+		
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+		
+		StringBuilder sql = new StringBuilder();
+		
+		sql.append("DELETE FROM ");
+		sql.append(getTableName(table));
+		
+		List<Object> _values = new ArrayList<Object>();
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", _values, t);
+		for(Object value : _values) { // 检查key的值是不是null
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		values.add(_values);
 		
 		sql.append(autoSetSoftDeleted(where, t.getClass()));
 		

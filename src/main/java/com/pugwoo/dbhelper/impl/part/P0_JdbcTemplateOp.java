@@ -11,6 +11,7 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
 /**
@@ -19,7 +20,7 @@ import com.pugwoo.dbhelper.utils.NamedParameterUtils;
  */
 public abstract class P0_JdbcTemplateOp implements DBHelper {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(P0_JdbcTemplateOp.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -111,6 +112,25 @@ public abstract class P0_JdbcTemplateOp implements DBHelper {
 		int rows = jdbcTemplate.update(sql.toString(), args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
+		return rows;
+	}
+	
+	/**
+	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
+	 * @param sql
+	 * @param args
+	 * @return
+	 */
+	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
+		LOGGER.debug("ExecSQL:{}", sql);
+		long start = System.currentTimeMillis();
+		int rows = namedParameterJdbcTemplate.update(
+				NamedParameterUtils.trans(sql),
+				NamedParameterUtils.transParam(args)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
+		long cost = System.currentTimeMillis() - start;
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
+		}
 		return rows;
 	}
 	
