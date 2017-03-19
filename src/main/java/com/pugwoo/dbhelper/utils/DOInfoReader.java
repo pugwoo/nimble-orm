@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,17 @@ public class DOInfoReader {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * 获得泛型的class
+	 * @param field
+	 * @return
+	 */
+	public static Class<?> getGenericFieldType(Field field) {
+        ParameterizedType stringListType = (ParameterizedType) field.getGenericType();
+        Class<?> clazz = (Class<?>) stringListType.getActualTypeArguments()[0];
+        return clazz;
 	}
 	
 	/**

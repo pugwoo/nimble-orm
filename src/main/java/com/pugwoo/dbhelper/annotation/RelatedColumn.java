@@ -21,4 +21,13 @@ public @interface RelatedColumn {
 	 */
 	String value() default "";
 	
+	/**
+	 * 外部关联的表的相关字段，默认是id
+	 */
+	String remoteColumn() default "id";
+	
+	// TODO 规划：支持指定IDBDataService拿数据
+	
+	// TODO 规划：支持插入、更新、删除
+	
 }

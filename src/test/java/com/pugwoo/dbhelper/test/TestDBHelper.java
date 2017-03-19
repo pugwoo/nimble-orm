@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.test.model.CourseDO;
+import com.pugwoo.dbhelper.test.model.SchoolDO;
 import com.pugwoo.dbhelper.test.model.StudentDO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 
@@ -288,13 +290,68 @@ public class TestDBHelper {
 	}
 	
 	@Test
-	public void testTmp() {
-		StudentVO studentVO = new StudentVO();
-		studentVO.setId(1L);
+	public void testRelatedColumn() {
 		
-		dbHelper.getByKey(studentVO);
+		SchoolDO schoolDO = new SchoolDO();
+		schoolDO.setName("sysu");
+		dbHelper.insert(schoolDO);
 		
-		System.out.println(studentVO);
+		StudentDO studentDO = insertOne();
+		studentDO.setSchoolId(schoolDO.getId());
+		dbHelper.update(studentDO);
+		
+		CourseDO courseDO1 = new CourseDO();
+		courseDO1.setName("math");
+		courseDO1.setStudentId(studentDO.getId());
+		dbHelper.insert(courseDO1);
+		
+		CourseDO courseDO2 = new CourseDO();
+		courseDO2.setName("eng");
+		courseDO2.setStudentId(studentDO.getId());
+		dbHelper.insert(courseDO2);
+		
+		StudentDO studentDO2  = insertOne();
+		studentDO2.setSchoolId(schoolDO.getId());
+		dbHelper.update(studentDO2);
+		
+		CourseDO courseDO3 = new CourseDO();
+		courseDO3.setName("math");
+		courseDO3.setStudentId(studentDO2.getId());
+		dbHelper.insert(courseDO3);
+		
+		CourseDO courseDO4 = new CourseDO();
+		courseDO4.setName("chinese");
+		courseDO4.setStudentId(studentDO2.getId());
+		dbHelper.insert(courseDO4);
+		
+		StudentVO studentVO1 = dbHelper.getByKey(StudentVO.class, studentDO.getId());
+		Assert.assertTrue(studentVO1 != null);
+		Assert.assertTrue(studentVO1.getSchoolDO() != null);
+		Assert.assertTrue(studentVO1.getSchoolDO().getId().equals(studentVO1.getSchoolId()));
+		Assert.assertTrue(studentVO1.getCourses() != null);
+		Assert.assertTrue(studentVO1.getCourses().size() == 2);
+		Assert.assertTrue(studentVO1.getCourses().get(0).getId().equals(courseDO1.getId())
+		   || studentVO1.getCourses().get(0).getId().equals(courseDO2.getId()));
+		
+		List<Long> ids = new ArrayList<Long>();
+		ids.add(studentDO.getId());
+		ids.add(studentDO2.getId());
+		List<StudentVO> studentVOs = dbHelper.getAll(StudentVO.class,
+				"where id in (?)", ids);
+		Assert.assertTrue(studentVOs.size() == 2);
+		for(StudentVO sVO : studentVOs) {
+			Assert.assertTrue(sVO != null);
+			Assert.assertTrue(sVO.getSchoolDO() != null);
+			Assert.assertTrue(sVO.getSchoolDO().getId().equals(sVO.getSchoolId()));
+			Assert.assertTrue(sVO.getCourses() != null);
+			Assert.assertTrue(sVO.getCourses().size() == 2);
+			
+			if(sVO.getId().equals(studentDO2.getId())) {
+				Assert.assertTrue(
+						sVO.getCourses().get(0).getId().equals(courseDO3.getId())
+				  || sVO.getCourses().get(1).getId().equals(courseDO4.getId()));
+			}
+		}
 	}
 	
 	@Test

@@ -67,6 +67,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
 					keyValue); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			
+			postHandleRelatedColumn(t);
+			
 			long cost = System.currentTimeMillis() - start;
 			logSlow(cost, sql, keyValue);
 			return t;
@@ -92,6 +95,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				NamedParameterUtils.trans(sql.toString()),
 				NamedParameterUtils.transParam(keyValues),
 				new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
+		
+		postHandleRelatedColumn(list);
+		
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, keyValues);
 		
@@ -210,6 +216,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					NamedParameterUtils.transParam(args),
 					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		}
+		
+		postHandleRelatedColumn(list);
+		
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
 		return list;
@@ -238,28 +247,101 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	// ======================= 处理 RelatedColumn数据 ========================
 	
+	/**单个关联*/
 	private <T> void postHandleRelatedColumn(T t) {
-		List<Field> relatedColumns = DOInfoReader.getRelatedColumns(t.getClass());
-		
-		for(Field field : relatedColumns) {
-			RelatedColumn column = field.getAnnotation(RelatedColumn.class);
-			if(column.value() == null || column.value().isEmpty()) {
-				continue;
-			}
-			
-			Field relateField = DOInfoReader.getFieldByDBField(t.getClass(), column.value());
-			if(relateField == null) {
-				continue;
-			}
-			
-			Object value = DOInfoReader.getValue(relateField, t);
-			Object relateValue = getByKey(field.getType(), value);
-			DOInfoReader.setValue(field, t, relateValue);
+		if(t == null) {
+			return;
 		}
+		
+		List<T> list = new ArrayList<T>();
+		list.add(t);
+		
+		postHandleRelatedColumn(list);
+
 	}
 	
+	/**批量关联，要求批量操作的都是相同的类*/
 	private <T> void postHandleRelatedColumn(List<T> tList) {
+		if(tList == null || tList.isEmpty()) {
+			return;
+		}
 		
+		SQLAssert.allSameClass(tList);
+		Class<?> clazz = tList.get(0).getClass();
+		
+		List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
+		for(Field field : relatedColumns) {
+			
+			RelatedColumn column = field.getAnnotation(RelatedColumn.class);
+			if(column.value() == null || column.value().trim().isEmpty()) {
+				LOGGER.warn("relatedColumn value is empty, field:{}", field);
+				continue;
+			}
+			if(column.remoteColumn() == null || column.remoteColumn().trim().isEmpty()) {
+				LOGGER.warn("remoteColumn value is empty, field:{}", field);
+				continue;
+			}
+			
+			Field relateField = DOInfoReader.getFieldByDBField(clazz, column.value());
+			if(relateField == null) {
+				LOGGER.error("cannot find relateField,db column name:{}", column.value());
+				continue;
+			}
+			
+			// 批量查询数据库，提高效率的关键
+			Class<?> remoteDOClass = null;
+			if(field.getType() == List.class) {
+				remoteDOClass = DOInfoReader.getGenericFieldType(field);
+			} else {
+				remoteDOClass = field.getType();
+			}
+			
+			Field remoteField = DOInfoReader.getFieldByDBField(remoteDOClass,
+					column.remoteColumn());
+			
+			List<Object> values = new ArrayList<Object>();
+			for(T t : tList) {
+				Object value = DOInfoReader.getValue(relateField, t);
+				if(value != null) {
+					values.add(value);
+				}
+			}
+			if(values.isEmpty()) {
+				// 不需要查询数据库，但是对List的，设置空List
+				for(T t : tList) {
+					DOInfoReader.setValue(field, t, new ArrayList<Object>());
+				}
+				continue;
+			}
+			
+			List<?> relateValues = getAll(remoteDOClass,
+					"where " + column.remoteColumn() + " in (?)", values);
+			
+			if(field.getType() == List.class) {
+				for(T t : tList) {
+					List<Object> value = new ArrayList<Object>();
+					for(Object obj : relateValues) {
+						Object o1 = DOInfoReader.getValue(relateField, t);
+						Object o2 = DOInfoReader.getValue(remoteField, obj);
+						if(o1 != null && o2 != null && o1.equals(o2)) {
+							value.add(obj);
+						}
+					}
+					DOInfoReader.setValue(field, t, value);
+				}
+			} else {
+				for(T t : tList) {
+					for(Object obj : relateValues) {
+						Object o1 = DOInfoReader.getValue(relateField, t);
+						Object o2 = DOInfoReader.getValue(remoteField, obj);
+						if(o1 != null && o2 != null && o1.equals(o2)) {
+							DOInfoReader.setValue(field, t, obj);
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 	
 }

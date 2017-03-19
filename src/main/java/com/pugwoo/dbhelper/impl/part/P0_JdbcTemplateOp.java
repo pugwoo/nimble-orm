@@ -20,7 +20,7 @@ import com.pugwoo.dbhelper.utils.NamedParameterUtils;
  */
 public abstract class P0_JdbcTemplateOp implements DBHelper {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
