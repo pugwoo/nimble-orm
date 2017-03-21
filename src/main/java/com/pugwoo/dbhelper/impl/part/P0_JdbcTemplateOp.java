@@ -5,6 +5,9 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -18,13 +21,15 @@ import com.pugwoo.dbhelper.utils.NamedParameterUtils;
  * jdbcTemplate原生操作接口封装
  * @author NICK
  */
-public abstract class P0_JdbcTemplateOp implements DBHelper {
+public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextAware {
 	
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
+	
+	protected ApplicationContext applicationContext;
 	
 	protected void log(StringBuilder sql) {
 		log(sql.toString());
@@ -156,6 +161,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper {
 
 	public long getTimeoutWarningValve() {
 		return timeoutWarningValve;
+	}
+	
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) 
+			throws BeansException {
+		this.applicationContext = applicationContext;
 	}
 
 }

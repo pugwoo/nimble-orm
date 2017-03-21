@@ -1,0 +1,33 @@
+package com.pugwoo.dbhelper.test.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.test.model.CourseDO;
+import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
+
+/**
+ * 通过学生id查询该学生的所有课程，批量接口
+ * @author pugwoo
+ */
+@Service
+public class GetCourseByStudentIdServiceImpl implements IGetCourseByStudentIdDataService {
+
+	@Autowired
+	private DBHelper dbHelper;
+	
+	@Override
+	public List<Object> get(List<Object> values) {
+		/**
+		 * 这里只是演示，实际项目中可以SOA、或调用其它网络服务，或读取本地文件等方式读取数据
+		 */
+		List<CourseDO> list = dbHelper.getAll(CourseDO.class, 
+				"where student_id in (?)", values);
+		return new ArrayList<Object>(list);
+	}
+
+}

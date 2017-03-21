@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import com.pugwoo.dbhelper.annotation.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
@@ -314,8 +315,21 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				continue;
 			}
 			
-			List<?> relateValues = getAll(remoteDOClass,
-					"where " + column.remoteColumn() + " in (?)", values);
+			List<?> relateValues = null;
+			if(column.dataService() != void.class && 
+					IDBHelperDataService.class.isAssignableFrom(column.dataService())) {
+				IDBHelperDataService dataService = (IDBHelperDataService)
+						applicationContext.getBean(column.dataService());
+				if(dataService == null) {
+					LOGGER.error("dataService is null for {}", column.dataService());
+					relateValues = new ArrayList<Object>();
+				} else {
+					relateValues = dataService.get(values);
+				}
+			} else {
+				relateValues = getAll(remoteDOClass,
+						"where " + column.remoteColumn() + " in (?)", values);
+			}
 			
 			if(field.getType() == List.class) {
 				for(T t : tList) {

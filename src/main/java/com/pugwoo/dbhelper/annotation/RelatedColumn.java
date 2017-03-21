@@ -26,8 +26,12 @@ public @interface RelatedColumn {
 	 */
 	String remoteColumn() default "id";
 	
-	// TODO 规划：支持指定IDBDataService拿数据
-	
-	// TODO 规划：支持插入、更新、删除
+	/**
+	 * 要实现的外部接口
+	 * @return
+	 */
+	Class<?> dataService() default void.class;
+
+	// TODO 规划：支持插入、更新、删除级联操作，提供独立casecade接口
 	
 }
