@@ -32,6 +32,4 @@ public @interface RelatedColumn {
 	 */
 	Class<?> dataService() default void.class;
 
-	// TODO 规划：支持插入、更新、删除级联操作，提供独立casecade接口
-	
 }

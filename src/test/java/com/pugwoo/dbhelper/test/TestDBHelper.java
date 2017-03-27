@@ -20,6 +20,7 @@ import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.model.CourseDO;
 import com.pugwoo.dbhelper.test.model.SchoolDO;
 import com.pugwoo.dbhelper.test.model.StudentDO;
+import com.pugwoo.dbhelper.test.model.StudentTrueDeleteDO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 
 /**
@@ -460,6 +461,43 @@ public class TestDBHelper {
 		Assert.assertTrue(rows == 1);
 		
 		rows = dbHelper.deleteByKey(studentDO);
+		Assert.assertTrue(rows == 0);
+	}
+	
+	@Test
+	@Rollback(false)
+	public void testTrueDelete() {
+		StudentTrueDeleteDO studentTrueDeleteDO = new StudentTrueDeleteDO();
+		studentTrueDeleteDO.setName("john");
+		dbHelper.insert(studentTrueDeleteDO);
+		
+		int rows = dbHelper.deleteByKey(StudentTrueDeleteDO.class, studentTrueDeleteDO.getId());
+		Assert.assertTrue(rows == 1);
+		
+		rows = dbHelper.deleteByKey(StudentTrueDeleteDO.class, studentTrueDeleteDO.getId());
+		Assert.assertTrue(rows == 0);
+		
+	    // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
+		
+		studentTrueDeleteDO = new StudentTrueDeleteDO();
+		studentTrueDeleteDO.setName("john");
+		dbHelper.insert(studentTrueDeleteDO);
+		
+		rows = dbHelper.deleteByKey(studentTrueDeleteDO);
+		Assert.assertTrue(rows == 1);
+		
+		rows = dbHelper.deleteByKey(studentTrueDeleteDO);
+		Assert.assertTrue(rows == 0);
+		
+		//
+		studentTrueDeleteDO = new StudentTrueDeleteDO();
+		studentTrueDeleteDO.setName("john");
+		dbHelper.insert(studentTrueDeleteDO);
+		
+		rows = dbHelper.delete(StudentTrueDeleteDO.class, "where name=?", "john");
+		Assert.assertTrue(rows > 0);
+		
+		rows = dbHelper.delete(StudentTrueDeleteDO.class, "where name=?", "john");
 		Assert.assertTrue(rows == 0);
 	}
 	

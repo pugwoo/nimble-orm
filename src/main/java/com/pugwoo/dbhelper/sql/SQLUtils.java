@@ -382,7 +382,7 @@ public class SQLUtils {
 				throw new NullKeyValueException();
 			}
 		}
-		values.add(_values);
+		values.addAll(_values);
 		
 		sql.append(autoSetSoftDeleted(where, t.getClass()));
 		

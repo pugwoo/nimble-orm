@@ -1,3 +1,6 @@
+TODO: 1. 增加关联的插入、更新、删除，接口需要明确有casecade字样。
+      2. 增加默认join的接口
+
 2017年3月18日
 v0.2.0 - [add] 增加关联查询@RelatedColumn
          [del] 删除<T> T getByKey(Class<?> clazz, Map<String, Object> keyMap)接口，原因：容易使用出错
