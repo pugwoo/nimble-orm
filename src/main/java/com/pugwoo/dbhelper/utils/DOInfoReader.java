@@ -133,7 +133,7 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得字段里面的key字段
-	 * @param fields
+	 * @param clazz
 	 * @return
 	 * @throws NoKeyColumnAnnotationException 如果没有key Column，抛出该异常。
 	 */
@@ -180,7 +180,7 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得软删除标记字段，最多只能返回1个。
-	 * @param fields
+	 * @param clazz
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
@@ -199,7 +199,7 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得字段里面的非key字段
-	 * @param fields
+	 * @param clazz
 	 * @return
 	 */
 	public static List<Field> getNotKeyColumns(Class<?> clazz) {

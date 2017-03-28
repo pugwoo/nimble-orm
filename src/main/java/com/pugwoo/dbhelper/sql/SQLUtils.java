@@ -136,7 +136,7 @@ public class SQLUtils {
 	
 	/**
 	 * 生成insert语句，将值放到values中。
-	 * @param t
+	 * @param tList 要插入的元素值
 	 * @param values 必须
 	 * @return
 	 */
@@ -433,7 +433,7 @@ public class SQLUtils {
 	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
-	 * @param fields
+	 * @param clazz 要操作的DO类
 	 * @return 无论如何前面会加空格，更安全
 	 */
 	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
