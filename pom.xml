@@ -56,14 +56,15 @@
 			<version>3.2.14.RELEASE</version>
 			<scope>provided</scope>
 		</dependency>
-
-		<!-- for test -->
+		
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context-support</artifactId>
 			<version>3.2.14.RELEASE</version>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
+
+		<!-- for test -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-test</artifactId>

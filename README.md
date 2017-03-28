@@ -36,7 +36,7 @@ public class StudentDO extends IdableBaseDO {
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>0.1.7</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -59,6 +59,20 @@ public class StudentDO extends IdableBaseDO {
 	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
 	    <property name="timeoutWarningValve" value="1000" /> <!-- 超过1秒的话就告警打log -->
 	</bean>
+```
+
+请确保项目是使用Spring和SpringJDBC并有引入下面两个maven依赖，版本支持2.x、3.x、4.x：
+
+```xml
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+		</dependency>
 ```
 
 ## 关于数据库字段到Java字段的映射关系
