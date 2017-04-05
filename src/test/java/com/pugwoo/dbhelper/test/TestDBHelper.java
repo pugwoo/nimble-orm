@@ -253,6 +253,8 @@ public class TestDBHelper {
 		for(Pair<StudentDO, SchoolDO> pair : list) {
 			System.out.println(pair.getT1() + ";" + pair.getT2());
 		}
+		
+		// TODO 写testCase
 	}
 		
 	@Test
