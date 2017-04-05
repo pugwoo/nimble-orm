@@ -35,6 +35,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		this.isUseGivenObj = true;
 	}
 
+	@Override
 	public T mapRow(ResultSet rs, int index) throws SQLException {
 		try {
 			T obj = isUseGivenObj ? t : clazz.newInstance();

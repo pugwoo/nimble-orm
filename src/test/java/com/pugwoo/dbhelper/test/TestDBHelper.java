@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.model.Pair;
 import com.pugwoo.dbhelper.test.model.CourseDO;
 import com.pugwoo.dbhelper.test.model.SchoolDO;
 import com.pugwoo.dbhelper.test.model.StudentDO;
@@ -192,7 +193,6 @@ public class TestDBHelper {
 	// ============ DELETE TEST START ====================
 	
 	@Test
-	@Rollback(false)
 	public void testDelete() {
 		StudentDO studentDO = insertOne();
 		dbHelper.deleteByKey(studentDO);
@@ -207,7 +207,6 @@ public class TestDBHelper {
 	
 	// 测试写where条件的自定义删除
 	@Test
-	@Rollback(false)
 	public void testDeleteWhere() {
 		dbHelper.delete(StudentDO.class, "where name=?", "nick2");
 	}
@@ -232,6 +231,28 @@ public class TestDBHelper {
 		// 但是这种写法不稳定的，推荐传入List参数值
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
 		System.out.println(list.size());
+	}
+	
+	@Test
+	public void testGetJoin() {
+		SchoolDO schoolDO = new SchoolDO();
+		schoolDO.setName("sysu");
+		dbHelper.insert(schoolDO);
+		
+		StudentDO studentDO = insertOne();
+		studentDO.setSchoolId(schoolDO.getId());
+		dbHelper.update(studentDO);
+		
+		StudentDO studentDO2 = insertOne();
+		studentDO2.setSchoolId(schoolDO.getId());
+		dbHelper.update(studentDO2);
+		
+		List<Pair<StudentDO, SchoolDO>> list = 
+				dbHelper.getAll(StudentDO.class, SchoolDO.class,
+						"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
+		for(Pair<StudentDO, SchoolDO> pair : list) {
+			System.out.println(pair.getT1() + ";" + pair.getT2());
+		}
 	}
 		
 	@Test
@@ -260,8 +281,6 @@ public class TestDBHelper {
 		}
 		
 		System.out.println("===============================");
-		
-
 	}
 	
 	@Test

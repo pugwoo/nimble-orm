@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.pugwoo.dbhelper.model.Pair;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import com.pugwoo.dbhelper.annotation.IDBHelperDataService;
@@ -17,6 +18,7 @@ import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
+import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper4Pair;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
@@ -173,7 +175,36 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
 		return _getList(clazz, null, null, postSql, args);
 	}
-    
+
+    @SuppressWarnings({ "unchecked", "rawtypes" }) @Override
+    public <T1, T2> List<Pair<T1, T2>> getAll(Class<T1> clazzT1, Class<T2> clazzT2,
+    		String postSql, Object... args) {
+		StringBuilder sql = new StringBuilder();
+		sql.append(SQLUtils.getSelectSQL(clazzT1, clazzT2));
+		sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazzT1, clazzT2));
+		
+		log(sql);
+		long start = System.currentTimeMillis();
+		List<Pair<T1, T2>> list = null;
+		if(args == null || args.length == 0) {
+			list = namedParameterJdbcTemplate.query(sql.toString(),
+					new AnnotationSupportRowMapper4Pair(clazzT1, clazzT2)); 
+			       // 因为有in (?)所以用namedParameterJdbcTemplate
+		} else {
+			list = namedParameterJdbcTemplate.query(
+					NamedParameterUtils.trans(sql.toString()),
+					NamedParameterUtils.transParam(args),
+					new AnnotationSupportRowMapper4Pair(clazzT1, clazzT2)); 
+			       // 因为有in (?)所以用namedParameterJdbcTemplate
+		}
+		
+		postHandleRelatedColumn(list);
+		
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, args);
+		return list;
+    }
+
     @Override
 	public <T> T getOne(Class<T> clazz) {
     	List<T> list = _getList(clazz, 0, 1, null);
@@ -253,17 +284,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		if(t == null) {
 			return;
 		}
-		
 		List<T> list = new ArrayList<T>();
 		list.add(t);
 		
 		postHandleRelatedColumn(list);
-
 	}
 	
 	/**批量关联，要求批量操作的都是相同的类*/
+	@SuppressWarnings("rawtypes")
 	private <T> void postHandleRelatedColumn(List<T> tList) {
 		if(tList == null || tList.isEmpty()) {
+			return;
+		}
+		
+		if(tList.get(0) instanceof Pair<?, ?>) { // 处理join的数据结果
+			List<Object> list1 = new ArrayList<Object>();
+			List<Object> list2 = new ArrayList<Object>();
+			for(T pair : tList) {
+				list1.add((Object)((Pair) pair).getT1());
+				list2.add((Object)((Pair) pair).getT2());
+			}
+			postHandleRelatedColumn(list1);
+			postHandleRelatedColumn(list2);
 			return;
 		}
 		

@@ -1,27 +1,25 @@
 package com.pugwoo.dbhelper.sql;
 
-import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
-
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * SQL解析工具类
@@ -50,6 +48,31 @@ public class SQLUtils {
 		
 		return sql.toString();
 	}
+
+    /**
+     * select 字段 from t_table t1, t_table2 t2, 不包含where子句及以后的语句
+     * @param clazzT1
+     * @param classT2
+     * @return
+     */
+	public static String getSelectSQL(Class<?> clazzT1, Class<?> classT2) {
+        Table table1 = DOInfoReader.getTable(clazzT1);
+        List<Field> fields1 = DOInfoReader.getColumns(clazzT1);
+
+        Table table2 = DOInfoReader.getTable(classT2);
+        List<Field> fields2 = DOInfoReader.getColumns(classT2);
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ");
+
+        sql.append(join(fields1, ",", "t1."));
+        sql.append(",");
+        sql.append(join(fields2, ",", "t2."));
+        sql.append(" FROM ").append(getTableName(table1)).append(" t1,");
+        sql.append(getTableName(table2)).append(" t2");
+
+        return sql.toString();
+    }
 	
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
@@ -443,17 +466,55 @@ public class SQLUtils {
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 		if(softDelete == null) {
 			return " " + whereSql; // 不处理
-		} else {
-			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
-			String deletedExpression = getColumnName(softDeleteColumn) + "=" 
-			                        + softDeleteColumn.softDelete()[0];
-			try {
-				return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
-			} catch (JSQLParserException e) {
-				LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
-						whereSql, deletedExpression, e);
-				throw new BadSQLSyntaxException();
+		}
+		
+		Column softDeleteColumn = softDelete.getAnnotation(Column.class);
+		String deletedExpression = getColumnName(softDeleteColumn) + "=" 
+		                        + softDeleteColumn.softDelete()[0];
+		try {
+			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
+		} catch (JSQLParserException e) {
+			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
+					whereSql, deletedExpression, e);
+			throw new BadSQLSyntaxException();
+		}
+	}
+	
+	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazzT1, Class<?> clazzT2) {
+		if(whereSql == null) {
+			whereSql = "";
+		}
+		
+		Field softDeleteT1 = DOInfoReader.getSoftDeleteColumn(clazzT1);
+		Field softDeleteT2 = DOInfoReader.getSoftDeleteColumn(clazzT2);
+		
+		if(softDeleteT1 == null && softDeleteT2 == null) {
+			return " " + whereSql; // 不处理
+		}
+		
+		StringBuilder deletedExpression = new StringBuilder();
+		if(softDeleteT1 != null) {
+			Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
+			deletedExpression.append("t1.").append(
+					getColumnName(softDeleteColumn) + "=" 
+                    + softDeleteColumn.softDelete()[0]);
+		}
+		if(softDeleteT2 != null) {
+			if(softDeleteT1 != null) {
+				deletedExpression.append(" AND ");
 			}
+			Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
+			deletedExpression.append("t2.").append(
+					getColumnName(softDeleteColumn) + "=" 
+                    + softDeleteColumn.softDelete()[0]);
+		}
+
+		try {
+			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression.toString());
+		} catch (JSQLParserException e) {
+			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
+					whereSql, deletedExpression, e);
+			throw new BadSQLSyntaxException();
 		}
 	}
 	
@@ -474,15 +535,26 @@ public class SQLUtils {
 		}
 		return sb.toString();
 	}
-	
+
     /**
      * 拼凑select的field的语句
      * @param fields
      * @param sep
      * @return
      */
-    private static String join(List<Field> fields, String sep) {
-    	return joinAndGetValue(fields, sep, null, null, false);
+	private static String join(List<Field> fields, String sep) {
+	    return join(fields, sep, null);
+    }
+	
+    /**
+     * 拼凑select的field的语句
+     * @param fields
+     * @param sep
+     * @param fieldPrefix
+     * @return
+     */
+    private static String join(List<Field> fields, String sep, String fieldPrefix) {
+    	return joinAndGetValue(fields, sep, fieldPrefix, null, null, false);
     }
 	
 	/**
@@ -527,7 +599,7 @@ public class SQLUtils {
 		}
 		return sb.toString();
 	}
-    
+
     /**
      * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
      * @param fields
@@ -537,8 +609,25 @@ public class SQLUtils {
      * @param isWithNullValue 是否把null值放到values中
      * @return
      */
-	private static String joinAndGetValue(List<Field> fields, String sep,
+    private static String joinAndGetValue(List<Field> fields, String sep,
+                List<Object> values, Object obj, boolean isWithNullValue) {
+	    return joinAndGetValue(fields, sep, null, values, obj, isWithNullValue);
+    }
+    
+    /**
+     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
+     * @param fields
+     * @param sep
+     * @param fieldPrefix
+     * @param values
+     * @param obj
+     * @param isWithNullValue 是否把null值放到values中
+     * @return
+     */
+	private static String joinAndGetValue(List<Field> fields, String sep, String fieldPrefix,
 			List<Object> values, Object obj, boolean isWithNullValue) {
+        fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
+
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
     		Column column = field.getAnnotation(Column.class);
@@ -558,7 +647,7 @@ public class SQLUtils {
     		}
     		
     		if(isAppendColumn) {
-        		sb.append(getColumnName(column)).append(sep);
+        		sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
     		}
     	}
     	int len = sb.length();
