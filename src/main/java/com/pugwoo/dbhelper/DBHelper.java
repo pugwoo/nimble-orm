@@ -30,6 +30,7 @@ public interface DBHelper {
 	void setTimeoutWarningValve(long timeMS);
 	
 	// 几个常用的jdbcTemplate的方法，目的是用dbHelper时可以使用in (?)传入list的参数
+	// ===============JDBCTemplate native method START =======================
 	
 	/**
 	 * jdbcTemplate方式查询对象，clazz不需要Dbhelper的@Table等注解。<br>
@@ -78,7 +79,9 @@ public interface DBHelper {
 	 */
 	<T> List<T> queryForList(Class<T> clazz, String sql, Object... args);
 	
-	// END
+	// ===============JDBCTemplate native method END =======================
+	
+	// ===============Query methods START ==================================
 	
 	/**
 	 * 通过T的主键，将数据查出来并设置到T中<br>
@@ -135,14 +138,14 @@ public interface DBHelper {
      * @param classT2
      * @param page
      * @param pageSize
-     * @param postSql
+     * @param postSql 必须以where开头，带上join条件
      * @param args
      * @param <T1>
      * @param <T2>
      * @return
      */
-	//<T1, T2> PageData<Pair<T1, T2>> getPage(Class<T1> clazzT1, Class<T2> classT2,
-     //               int page, int pageSize, String postSql, Object... args);
+	<T1, T2> PageData<Pair<T1, T2>> getPage(Class<T1> clazzT1, Class<T2> clazzT2,
+                    int page, int pageSize, String postSql, Object... args);
 	
 	/**
 	 * 计算总数<br>
@@ -161,6 +164,16 @@ public interface DBHelper {
 	 * @return
 	 */
 	<T> int getCount(Class<T> clazz, String postSql, Object... args);
+	
+	/**
+	 * 计算总数，join方式
+	 * @param clazzT1
+	 * @param classT2
+	 * @param postSql 必须以where开头，带上join条件
+	 * @param args
+	 * @return
+	 */
+	<T1, T2> int getCount(Class<T1> clazzT1, Class<T2> clazzT2, String postSql, Object... args);
 	
 	/**
 	 * 查询列表，没有查询条件；不查询总数<br>
@@ -185,6 +198,18 @@ public interface DBHelper {
 			String postSql, Object... args);
 	
 	/**
+	 * join方式查询列表
+	 * @param clazzT1
+	 * @param classT2
+	 * @param page 从1开始
+	 * @param pageSize
+	 * @param postSql 必须以where开头，带上join条件
+	 * @param args
+	 * @return
+	 */
+	<T1, T2> PageData<Pair<T1, T2>> getPageWithoutCount(Class<T1> clazzT1, Class<T2> clazzT2,
+            int page, int pageSize, String postSql, Object... args);	
+	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz
@@ -201,10 +226,10 @@ public interface DBHelper {
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 
     /**
-     * 支持默认join的方式获取数据，表1和表2的别名分别是t1和t2
+     * 支持默认join的方式获取数据，表1和表2的别名分别是t1和t2,在postSql(包含where关键字)中必须指定join的条件
      * @param clazzT1
      * @param classT2
-     * @param postSql
+     * @param postSql 必须以where开头，带上join条件
      * @param args
      * @param <T1>
      * @param <T2>
@@ -230,6 +255,19 @@ public interface DBHelper {
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
+	
+	/**
+	 * join方式查询一条记录
+	 * @param clazzT1
+	 * @param classT2
+	 * @param postSql 必须以where开头，带上join条件
+	 * @param args
+	 * @return
+	 */
+    <T1, T2> Pair<T1, T2> getOne(Class<T1> clazzT1, Class<T2> classT2,
+            String postSql, Object... args);
+	
+	// ===============Query methods END ==================================
 	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>

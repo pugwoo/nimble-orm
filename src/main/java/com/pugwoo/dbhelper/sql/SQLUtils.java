@@ -75,7 +75,7 @@ public class SQLUtils {
     }
 	
 	/**
-	 * select 字段 from t_table, 不包含where子句及以后的语句
+	 * select count(*) from t_table, 不包含where子句及以后的语句
 	 * @param clazz
 	 * @return
 	 */
@@ -85,6 +85,24 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT count(*)");
 		sql.append(" FROM ").append(getTableName(table));
+		
+		return sql.toString();
+	}
+	
+	/**
+	 * select count(*) from t_table1 t1, t_table2 t2 不包含where子句及以后的语句
+	 * @param clazzT1
+	 * @param clazzT2
+	 * @return
+	 */
+	public static String getSelectCountSQL(Class<?> clazzT1, Class<?> clazzT2) {
+		Table table1 = DOInfoReader.getTable(clazzT1);
+		Table table2 = DOInfoReader.getTable(clazzT2);
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT count(*)");
+		sql.append(" FROM ").append(getTableName(table1)).append(" t1,");
+		sql.append(getTableName(table2)).append(" t2");
 		
 		return sql.toString();
 	}

@@ -1,5 +1,5 @@
-TODO: 1. 增加关联的插入、更新、删除，接口需要明确有casecade字样。
-      2. 增加默认join的接口
+2017年4月6日
+v0.2.1 - [add] 增加inner join查询的接口
 
 2017年3月18日
 v0.2.0 - [add] 增加关联查询@RelatedColumn

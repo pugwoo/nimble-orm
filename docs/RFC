@@ -1,0 +1,15 @@
+1. 关于Join的查询方式接口形式
+
+由于Join所关联的表和字段是相对文档的，所以合适在VO上表达：
+
+@Join(type = "inner join", condition = "t1.school_id=t2.id")
+public class StudentSchoolVO {
+
+    @Join(alias = "t1")
+    private StudentDO student;
+
+    @Join(alias = "t2")
+    private SchoolDO school;
+}
+
+然后查询接口和原DO/VO查询方式一样。
