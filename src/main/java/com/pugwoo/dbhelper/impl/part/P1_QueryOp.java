@@ -128,8 +128,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			String postSql, Object... args) {
 		int offset = (page - 1) * pageSize;
 		List<T> data = _getList(clazz, offset, pageSize, postSql, args);
-		// 性能优化，当page=1 且拿到的数据少于pageSzie，则不需要查总数
-		int total = 0;
+		// 性能优化，当page=1 且拿到的数据少于pageSize，则不需要查总数
+		int total;
 		if(page == 1 && data.size() < pageSize) {
 			total = data.size();
 		} else {
@@ -148,8 +148,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     		int page, int pageSize, String postSql, Object... args) {
     	int offset = (page - 1) * pageSize;
     	List<Pair<T1, T2>> data = _getList(clazzT1, clazzT2, offset, pageSize, postSql, args);
-		// 性能优化，当page=1 且拿到的数据少于pageSzie，则不需要查总数
-		int total = 0;
+		// 性能优化，当page=1 且拿到的数据少于pageSize，则不需要查总数
+		int total;
 		if(page == 1 && data.size() < pageSize) {
 			total = data.size();
 		} else {
@@ -250,7 +250,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		log(sql);
 		long start = System.currentTimeMillis();
-		List<T> list = null;
+		List<T> list;
 		if(args == null || args.length == 0) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
@@ -323,7 +323,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		log(sql);
 		long start = System.currentTimeMillis();
-		List<Pair<T1, T2>> list = null;
+		List<Pair<T1, T2>> list;
 		if(args == null || args.length == 0) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper4Pair(clazzT1, clazzT2)); 
@@ -400,8 +400,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			List<Object> list1 = new ArrayList<Object>();
 			List<Object> list2 = new ArrayList<Object>();
 			for(T pair : tList) {
-				list1.add((Object)((Pair) pair).getT1());
-				list2.add((Object)((Pair) pair).getT2());
+				list1.add(((Pair) pair).getT1());
+				list2.add(((Pair) pair).getT2());
 			}
 			postHandleRelatedColumn(list1);
 			postHandleRelatedColumn(list2);
@@ -415,11 +415,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		for(Field field : relatedColumns) {
 			
 			RelatedColumn column = field.getAnnotation(RelatedColumn.class);
-			if(column.value() == null || column.value().trim().isEmpty()) {
+			if(column.value().trim().isEmpty()) {
 				LOGGER.warn("relatedColumn value is empty, field:{}", field);
 				continue;
 			}
-			if(column.remoteColumn() == null || column.remoteColumn().trim().isEmpty()) {
+			if(column.remoteColumn().trim().isEmpty()) {
 				LOGGER.warn("remoteColumn value is empty, field:{}", field);
 				continue;
 			}
@@ -431,7 +431,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			}
 			
 			// 批量查询数据库，提高效率的关键
-			Class<?> remoteDOClass = null;
+			Class<?> remoteDOClass;
 			if(field.getType() == List.class) {
 				remoteDOClass = DOInfoReader.getGenericFieldType(field);
 			} else {
@@ -456,7 +456,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				continue;
 			}
 			
-			List<?> relateValues = null;
+			List<?> relateValues;
 			if(column.dataService() != void.class && 
 					IDBHelperDataService.class.isAssignableFrom(column.dataService())) {
 				IDBHelperDataService dataService = (IDBHelperDataService)

@@ -135,7 +135,7 @@ public interface DBHelper {
     /**
      * 支持join的方式查询数据，两个表的别名分别是t1和t2
      * @param clazzT1
-     * @param classT2
+     * @param clazzT2
      * @param page
      * @param pageSize
      * @param postSql 必须以where开头，带上join条件
@@ -168,7 +168,7 @@ public interface DBHelper {
 	/**
 	 * 计算总数，join方式
 	 * @param clazzT1
-	 * @param classT2
+	 * @param clazzT2
 	 * @param postSql 必须以where开头，带上join条件
 	 * @param args
 	 * @return
@@ -200,7 +200,7 @@ public interface DBHelper {
 	/**
 	 * join方式查询列表
 	 * @param clazzT1
-	 * @param classT2
+	 * @param clazzT2
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @param postSql 必须以where开头，带上join条件
