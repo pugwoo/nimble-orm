@@ -2,7 +2,7 @@
 
 这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成Mysql(其它数据库是否可用未测试过)的增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
 
-1. Hibernate因为比较复杂难以使用好，互联网公司大都没有采用，用得多的是MyBatis。而MyBatis的xml文件中，会出现大量相同的列名。增删一个列或修改一个列名，对于xml文件都是很大的改变。有一种方式是用MyBatis的Generator生成xml，但是这样的xml文件如果修改过，下次生成就会覆盖，很容易出错。因此，这种xml方式维护sql，虽然足够灵活，但也非常繁琐。
+1. Hibernate因为比较复杂难以使用好，互联网公司大都没有采用，用得多的是MyBatis。而MyBatis的xml文件中，会出现大量相同的列名。增删一个列或修改一个列名，对于xml文件都是很大的变动。有一种方式是用MyBatis的Generator生成xml，但是这样的xml文件如果修改过，下次生成就会覆盖，很容易出错。因此，这种xml方式维护sql，虽然足够灵活，但也非常繁琐。
 
 2. MyBatis对null值的处理不够灵活。例如只想更新非null值，或只插入非null值，MyBatis的写法会出现很多判断语句，大量的重复列名出现。
 
@@ -12,13 +12,14 @@
 
 ## Get Started 示例
 
-把代码下载后，可以以Maven项目方式导入到Eclipse中，数据库链接配置在`src/test/resources/jdbc.properties`中，数据库测试建表语句在`create-table.sql`中。建好数据库和表之后，就可以执行`TestDBHelper.java`中的例子。
+把代码下载后，可以以Maven项目方式导入到IDE中，数据库链接配置在`src/test/resources/jdbc.properties`中，数据库测试建表语句在`create-table.sql`中。建好数据库和表之后，就可以执行`TestDBHelper.java`中的例子。
 
 在Java DAO层，一般一个DO对象和一张数据库表是一一对应的。你只需要为DO对象加上一些注解，主要注解哪个表和哪些列，就可以方便地使用DBHelper进行增删改查了。
 
 ```java
+// 这个一个标准的POJO，除了注解，没有引入任何nimble-orm的东西，不要求继承或实现任何东西。
 @Table("t_student")
-public class StudentDO extends IdableBaseDO {
+public class StudentDO extends IdableBaseDO { // 这里用不用继承都是可以的，用继承可以框定一些规范
 		
 	@Column("name")
 	private String name;
@@ -26,7 +27,7 @@ public class StudentDO extends IdableBaseDO {
 	@Column("age")
 	private Integer age;
 	
-	// getters / setters
+	// 标准的 getters / setters，如果提供，nimble-orm就会用；如果没提供，就会直接反射设置字段值
 }
 ```
 
@@ -36,11 +37,11 @@ public class StudentDO extends IdableBaseDO {
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
-同时nimble-orm是基于jdbcTemplate的，需要拿到配置好的jdbcTemplate和namedJdbcTemplate:
+同时nimble-orm是基于jdbcTemplate的，nimble-orm需要拿到配置好的jdbcTemplate和namedJdbcTemplate，dataSource请自行提供，不作限制:
 
 ```xml
 	<!-- 配置JdbcTemplate -->
@@ -75,9 +76,56 @@ public class StudentDO extends IdableBaseDO {
 		</dependency>
 ```
 
+## 一些高级好玩特性介绍（部分）
+
+**数据库用到软删除标记，每次都要写where deleted=0 ?**
+
+在nimble-orm中，你只需要为软删除字段注解上：
+
+```java
+  /**软删除标记，false未删除，true已删除*/
+  @Column(value = "deleted", softDelete = {"0", "1"})
+  private Boolean deleted;
+```
+
+然后增删改查，nimble-orm的接口都会自动处理好软删除的事。例如调用dbHelper.delete方法，会自动update软删除位为1，不会真的删除；例如调用dbHelper.getPage时，会自动给where条件加上deleted=0条件，不会把软删除的查出来。除了DO注解外，你完全不需要在代码中出现deleted字样。
+
+**兑奖记录表，每个手机号只出现一次**
+
+如果你在写一个兑奖逻辑，先查询数据表A里面有没有手机号，如果没有则插入一条并发奖。伪代码：
+
+```java
+boolean haveGot = db.getByPhone(phone); // 查询手机号是否存在
+if(!haveGot) {
+   db.insertPhone(phone); // 插入手机号
+   sendGift(); // 发奖
+}
+```
+
+这样的逻辑在高并发下会有问题，表现为数据库有多条相同手机号的记录并发了多次奖。有一种解决方式是给phone字段加上唯一索引，使得插入时如果已经存在就插入不进去。但是这种方式并不推荐，应用的逻辑正确性不应该依赖于数据库的索引，理论上我们认为索引仅用于性能优化，不应该同时保证业务逻辑正确性。
+
+如果没有数据库的唯一所以，同时又是分布式系统，要使用线程同步来实现也不容易。可以使用Redis的CAS功能来实现高并发，但引入redis并要求redis保存该持久化数据，也不太好。
+
+nimble-orm推荐的做法是，使用mysql的insert select from where not exists 的写法，保证插入数据库有且只有一条：
+
+```java
+int row = dbHelper.insertWhereNotExist(XXXDO.class, "where phone=?", phone);
+if(row > 0) {
+   sendGift(); // 发奖
+}
+```
+
+**关联查询**
+
+TODO 先请参考test中 @RelatedColumn 用法。
+
+**Join查询**
+
+TODO 先请参考test中 @JoinTable 用法。
+
 ## 关于数据库字段到Java字段的映射关系
 
-强烈建议java POJO不要使用基础类型(如int long)，同时引用类型也不要设置默认值。因为：
+强烈建议java POJO不要使用基础类型(如int long)，同时引用类型也不要设置默认值。该建议同样适用于MyBatis，因为：
 
 1. 无法表达数据库NULL数值。
 
@@ -87,7 +135,7 @@ public class StudentDO extends IdableBaseDO {
 
 1. 当数据库字段是NULL，而java POJO的字段是基础类型时，会转换成0。数据库字段不支持enum，推荐使用String来表达。
 
-2. 一般来说，Java中的Boolean字段会对应数据库的tinyint(1)字段，和C语言保持一致，对于tinyint(4)，0表示false，非0表示true(包括负数)。当然dbHelper也支持bit的类型。
+2. 一般来说，Java中的Boolean字段会对应数据库的tinyint(1)字段，和C语言保持一致，对于tinyint(4)，0表示false，非0表示true(包括负数)。当然dbHelper也支持mysql bit的类型。
 
 ## 一些思考和选择
 
@@ -109,12 +157,12 @@ public class StudentDO extends IdableBaseDO {
 
 ## 注意事项
 
-* 如果参数需要传入的是Object...（例如getAll之类的方法），那么当需要传入若干参数时，强烈使用List来传。因为如果使用Object[]来传，Object...本身就是Object[]类型，当只有单个Object[]的时候，就只会取Object[]的第一个参数作为参数，这样就有错误，而且是语义错误，很隐蔽。有一种hack的方式，但不推荐，在传入Object[]参数后面，再加上一个任意类型的参数，让Java不要认为参数是Object...。
+* 如果需要传入的参数是Object...（例如getAll之类的方法），那么当单个参数需要传入多个值时，强烈使用List来传。因为如果使用Object[]来传，Object...本身就是Object[]类型，当只有单个Object[]的时候，就只会取Object[]的第一个参数作为参数，这样就有错误，而且是语义错误，很隐蔽。有一种hack的方式，但不推荐，在传入Object[]参数后面，再加上一个任意类型的参数，让Java不要认为参数是Object...。
 
-* 参数列表中不能出现null，否则会报org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'
+* 参数列表中不能出现null，否则会报`org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'`
 
 ## 未来规划
 
 1. 拦截器设计。
 
-2. Join方式设计。
+2. Join方式设计。(0.3.0+ 已实现)
