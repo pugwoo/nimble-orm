@@ -109,11 +109,29 @@ public class SQLUtils {
 	 * @return
 	 */
 	public static String getSelectCountSQL(Class<?> clazz) {
-		Table table = DOInfoReader.getTable(clazz);
-		
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT count(*)");
-		sql.append(" FROM ").append(getTableName(table));
+		
+		// 处理join方式clazz
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if(joinTable != null) {
+			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
+			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
+	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
+	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
+	        
+	        sql.append(" FROM ").append(getTableName(table1)).append(" t1 ");
+	        sql.append(joinTable.joinType()).append(" ");
+	        sql.append(getTableName(table2)).append(" t2");
+	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
+	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
+	        }
+	        sql.append(" on ").append(joinTable.on().trim());
+	        
+		} else {
+			Table table = DOInfoReader.getTable(clazz);
+			sql.append(" FROM ").append(getTableName(table));
+		}
 		
 		return sql.toString();
 	}

@@ -250,6 +250,12 @@ public class TestDBHelper {
 			System.out.println(vo.getSchoolDO());
 			System.out.println("-------------");
 		}
+		
+		int total = dbHelper.getCount(StudentSchoolJoinVO.class);
+		System.out.println(total);
+		
+		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name=?", "nick2");
+		System.out.println(total);
 	}
 	
 	@Test
