@@ -1,25 +1,29 @@
 package com.pugwoo.dbhelper.sql;
 
+import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * SQL解析工具类
@@ -37,14 +41,39 @@ public class SQLUtils {
 	 * @return
 	 */
 	public static String getSelectSQL(Class<?> clazz) {
-		Table table = DOInfoReader.getTable(clazz);
-		List<Field> fields = DOInfoReader.getColumns(clazz);
-		
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 		
-		sql.append(join(fields, ","));
-		sql.append(" FROM ").append(getTableName(table));
+		// 处理join方式clazz
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if(joinTable != null) {
+			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
+			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
+			
+	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
+	        List<Field> fields1 = DOInfoReader.getColumns(leftTableField.getType());
+			
+	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
+	        List<Field> fields2 = DOInfoReader.getColumns(rightTableField.getType());
+	        
+	        sql.append(join(fields1, ",", "t1."));
+	        sql.append(",");
+	        sql.append(join(fields2, ",", "t2."));
+	        sql.append(" FROM ").append(getTableName(table1)).append(" t1 ");
+	        sql.append(joinTable.joinType()).append(" ");
+	        sql.append(getTableName(table2)).append(" t2");
+	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
+	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
+	        }
+	        sql.append(" on ").append(joinTable.on().trim());
+	        
+		} else {
+			Table table = DOInfoReader.getTable(clazz);
+			List<Field> fields = DOInfoReader.getColumns(clazz);
+			
+			sql.append(join(fields, ","));
+			sql.append(" FROM ").append(getTableName(table));
+		}
 		
 		return sql.toString();
 	}
@@ -481,14 +510,48 @@ public class SQLUtils {
 		if(whereSql == null) {
 			whereSql = "";
 		}
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
-		if(softDelete == null) {
-			return " " + whereSql; // 不处理
+		String deletedExpression = "";
+		
+		// 处理join方式clazz
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if(joinTable != null) {
+			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
+			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
+			
+			Field softDeleteT1 = DOInfoReader.getSoftDeleteColumn(leftTableField.getType());
+			Field softDeleteT2 = DOInfoReader.getSoftDeleteColumn(rightTableField.getType());
+			
+			if(softDeleteT1 == null && softDeleteT2 == null) {
+				return " " + whereSql; // 不处理
+			}
+			
+			StringBuilder deletedExpressionSb = new StringBuilder();
+			if(softDeleteT1 != null) {
+				Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
+				deletedExpressionSb.append("t1.").append(
+			        getColumnName(softDeleteColumn) + "=" + softDeleteColumn.softDelete()[0]);
+			}
+			if(softDeleteT2 != null) {
+				if(softDeleteT1 != null) {
+					deletedExpressionSb.append(" AND ");
+				}
+				Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
+				deletedExpressionSb.append("t2.").append(
+				    getColumnName(softDeleteColumn) + "=" + softDeleteColumn.softDelete()[0]);
+			}
+			
+			deletedExpression = deletedExpressionSb.toString();		
+		} else {
+			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
+			if(softDelete == null) {
+				return " " + whereSql; // 不处理
+			}
+			
+			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
+			deletedExpression = getColumnName(softDeleteColumn) + "=" 
+			                        + softDeleteColumn.softDelete()[0];
 		}
 		
-		Column softDeleteColumn = softDelete.getAnnotation(Column.class);
-		String deletedExpression = getColumnName(softDeleteColumn) + "=" 
-		                        + softDeleteColumn.softDelete()[0];
 		try {
 			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
 		} catch (JSQLParserException e) {

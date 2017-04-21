@@ -22,6 +22,7 @@ import com.pugwoo.dbhelper.test.model.CourseDO;
 import com.pugwoo.dbhelper.test.model.SchoolDO;
 import com.pugwoo.dbhelper.test.model.StudentDO;
 import com.pugwoo.dbhelper.test.model.StudentTrueDeleteDO;
+import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 
 /**
@@ -231,6 +232,24 @@ public class TestDBHelper {
 		// 但是这种写法不稳定的，推荐传入List参数值
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
 		System.out.println(list.size());
+	}
+	
+	@Test
+	public void testGetJoin2() {
+		PageData<StudentSchoolJoinVO> pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
+		for(StudentSchoolJoinVO vo : pageData.getData()) {
+			System.out.println(vo.getStudentDO());
+			System.out.println(vo.getSchoolDO());
+			System.out.println("-------------");
+		}
+		
+		PageData<StudentSchoolJoinVO> pageData2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
+				"where t1.name=?", "nick2");
+		for(StudentSchoolJoinVO vo : pageData2.getData()) {
+			System.out.println(vo.getStudentDO());
+			System.out.println(vo.getSchoolDO());
+			System.out.println("-------------");
+		}
 	}
 	
 	@Test

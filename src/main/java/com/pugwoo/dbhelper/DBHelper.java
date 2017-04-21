@@ -113,7 +113,7 @@ public interface DBHelper {
 	/**
 	 * 查询列表，没有查询条件<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @return 返回的data不会是null
@@ -123,7 +123,7 @@ public interface DBHelper {
 	/**
 	 * 查询列表，postSql可以带查询条件<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @param postSql 包含where关键字起的后续SQL语句，不能包含limit子句

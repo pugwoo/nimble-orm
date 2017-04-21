@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.utils;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -12,9 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.JoinLeftTable;
+import com.pugwoo.dbhelper.annotation.JoinRightTable;
+import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
@@ -59,6 +64,26 @@ public class DOInfoReader {
 	}
 	
 	/**
+	 * 获得clazz上注解的JoinTable，如果没有则返回null
+	 * @param clazz
+	 * @return 如果没有则返回null
+	 */
+	public static JoinTable getJoinTable(Class<?> clazz) {
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			JoinTable joinTable = curClass.getAnnotation(JoinTable.class);
+			if(joinTable != null) {
+				return joinTable;
+			}
+			curClass = curClass.getSuperclass();
+		}
+		
+		return null;
+	}
+	
+	
+	
+	/**
 	 * 从db字段名拿字段对象
 	 * @param clazz
 	 * @param dbFieldName
@@ -97,8 +122,7 @@ public class DOInfoReader {
 			throws NoColumnAnnotationException {
 		
 		if(clazz == null) {
-			throw new NoColumnAnnotationException("class is null"
-			    + " does not have any @Column annotation");
+			throw new NoColumnAnnotationException("class is null");
 		}
 		
 		List<Field> cached = class2Column.get(clazz);
@@ -106,29 +130,48 @@ public class DOInfoReader {
 			return cached;
 		}
 		
-		List<Class<?>> classLink = new ArrayList<Class<?>>();
-		Class<?> curClass = clazz;
-		while (curClass != null) {
-			classLink.add(curClass);
-			curClass = curClass.getSuperclass();
-		}
-		// 父类先拿，不处理重名情况
-		List<Field> result = new ArrayList<Field>();
-		for (int i = classLink.size() - 1; i >= 0; i--) {
-			Field[] fields = classLink.get(i).getDeclaredFields();
-			for (Field field : fields) {
-				if (field.getAnnotation(Column.class) != null) {
-					result.add(field);
-				}
-			}
-		}
+		List<Field> result = _getAnnotationColumns(clazz, Column.class);
 		if (result.isEmpty()) {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column annotation");
+					+ " does not have any @Column fields");
 		}
 		
 		class2Column.put(clazz, result);
 		return result;
+	}
+	
+	/**
+	 * 获得注解了@JoinLeftTable的字段，如果没有注解，抛出NoJoinTableMemberException
+	 * @param clazz
+	 * @return
+	 */
+	public static Field getJoinLeftTable(Class<?> clazz) {
+		if(clazz == null) {
+			throw new NoJoinTableMemberException("clazz is null");
+		}
+		List<Field> result = _getAnnotationColumns(clazz, JoinLeftTable.class);
+		if(result == null || result.isEmpty()) {
+			throw new NoJoinTableMemberException("class " + clazz.getName()
+			    + " does not have @JoinLeftTable field");
+		}
+		return result.get(0);
+	}
+	
+	/**
+	 * 获得注解了@JoinRightTable的字段，如果没有注解，抛出NoJoinTableMemberException
+	 * @param clazz
+	 * @return
+	 */
+	public static Field getJoinRightTable(Class<?> clazz) {
+		if(clazz == null) {
+			throw new NoJoinTableMemberException("clazz is null");
+		}
+		List<Field> result = _getAnnotationColumns(clazz, JoinRightTable.class);
+		if(result == null || result.isEmpty()) {
+			throw new NoJoinTableMemberException("class " + clazz.getName()
+			    + " does not have @JoinRightTable field");
+		}
+		return result.get(0);
 	}
 	
 	/**
@@ -322,6 +365,39 @@ public class DOInfoReader {
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * 获得clazz类的有annotationClazz注解的字段field（包括clazz类及其父类，父类优先，不处理重名）。
+	 * @param clazz
+	 * @param annoClazz
+	 * @return
+	 */
+	private static List<Field> _getAnnotationColumns(Class<?> clazz, 
+			Class<? extends Annotation> annoClazz) {
+		if(clazz == null) {
+			return new ArrayList<Field>();
+		}
+		
+		List<Class<?>> classLink = new ArrayList<Class<?>>();
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			classLink.add(curClass);
+			curClass = curClass.getSuperclass();
+		}
+		
+		// 父类先拿，不处理重名情况
+		List<Field> result = new ArrayList<Field>();
+		for (int i = classLink.size() - 1; i >= 0; i--) {
+			Field[] fields = classLink.get(i).getDeclaredFields();
+			for (Field field : fields) {
+				if (field.getAnnotation(annoClazz) != null) {
+					result.add(field);
+				}
+			}
+		}
+		
+		return result;
 	}
 	
 	private static String firstLetterUpperCase(String str) {

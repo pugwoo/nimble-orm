@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.JoinTable;
 
 /**
  * 2015年1月13日 17:48:30<br>
@@ -24,34 +25,76 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private Class<T> clazz;
 	private boolean isUseGivenObj = false;
 	private T t;
+	
+	private boolean isJoinVO = false;
+	private Field leftJoinField;
+	private Field rightJoinField;
 
 	public AnnotationSupportRowMapper(Class<T> clazz) {
-		this.clazz = clazz;
+		handleClazz(clazz);
 	}
 	
 	public AnnotationSupportRowMapper(Class<T> clazz, T t) {
-		this.clazz = clazz;
+		handleClazz(clazz);
 		this.t = t;
 		this.isUseGivenObj = true;
+	}
+	
+	private void handleClazz(Class<T> clazz) {
+		this.clazz = clazz;
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if(joinTable != null) {
+			isJoinVO = true;
+			leftJoinField = DOInfoReader.getJoinLeftTable(clazz);
+			rightJoinField = DOInfoReader.getJoinRightTable(clazz);
+		}
 	}
 
 	@Override
 	public T mapRow(ResultSet rs, int index) throws SQLException {
 		try {
 			T obj = isUseGivenObj ? t : clazz.newInstance();
-			List<Field> fields = DOInfoReader.getColumns(clazz);
-			for (Field field : fields) {
-				Column column = field.getAnnotation(Column.class);
-				Object value = TypeAutoCast.cast(
-						TypeAutoCast.cast(rs, column.value(), field.getType()), 
-						field.getType());
-				DOInfoReader.setValue(field, obj, value);
+			
+			if(isJoinVO) {
+				Object t1 = leftJoinField.getType().newInstance();
+				Object t2 = rightJoinField.getType().newInstance();
+				
+				List<Field> fieldsT1 = DOInfoReader.getColumns(leftJoinField.getType());
+				for (Field field : fieldsT1) {
+					Column column = field.getAnnotation(Column.class);
+					Object value = TypeAutoCast.cast(
+							TypeAutoCast.cast(rs, "t1." + column.value(), field.getType()), 
+							field.getType());
+					DOInfoReader.setValue(field, t1, value);
+				}
+				
+				List<Field> fieldsT2 = DOInfoReader.getColumns(rightJoinField.getType());
+				for (Field field : fieldsT2) {
+					Column column = field.getAnnotation(Column.class);
+					Object value = TypeAutoCast.cast(
+							TypeAutoCast.cast(rs, "t2." + column.value(), field.getType()), 
+							field.getType());
+					DOInfoReader.setValue(field, t2, value);
+				}
+				
+				DOInfoReader.setValue(leftJoinField, obj, t1);
+				DOInfoReader.setValue(rightJoinField, obj, t2);
+				
+			} else {
+				List<Field> fields = DOInfoReader.getColumns(clazz);
+				for (Field field : fields) {
+					Column column = field.getAnnotation(Column.class);
+					Object value = TypeAutoCast.cast(
+							TypeAutoCast.cast(rs, column.value(), field.getType()), 
+							field.getType());
+					DOInfoReader.setValue(field, obj, value);
+				}
 			}
+			
 			return obj;
 		} catch (Exception e) {
 			LOGGER.error("mapRow exception", e);
 			return null;
 		}
 	}
-
 }
