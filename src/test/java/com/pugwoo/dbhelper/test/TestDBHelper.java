@@ -234,30 +234,6 @@ public class TestDBHelper {
 	}
 	
 	@Test
-	public void testGetJoin2() {
-		PageData<StudentSchoolJoinVO> pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
-		for(StudentSchoolJoinVO vo : pageData.getData()) {
-			System.out.println(vo.getStudentDO());
-			System.out.println(vo.getSchoolDO());
-			System.out.println("-------------");
-		}
-		
-		PageData<StudentSchoolJoinVO> pageData2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
-				"where t1.name=?", "nick2");
-		for(StudentSchoolJoinVO vo : pageData2.getData()) {
-			System.out.println(vo.getStudentDO());
-			System.out.println(vo.getSchoolDO());
-			System.out.println("-------------");
-		}
-		
-		int total = dbHelper.getCount(StudentSchoolJoinVO.class);
-		System.out.println(total);
-		
-		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name=?", "nick2");
-		System.out.println(total);
-	}
-	
-	@Test
 	public void testGetJoin() {
 		SchoolDO schoolDO = new SchoolDO();
 		schoolDO.setName("sysu");
@@ -271,7 +247,23 @@ public class TestDBHelper {
 		studentDO2.setSchoolId(schoolDO.getId());
 		dbHelper.update(studentDO2);
 		
-
+		PageData<StudentSchoolJoinVO> pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
+		Assert.assertTrue(pageData.getData().size() > 0);
+		for(StudentSchoolJoinVO vo : pageData.getData()) {
+			Assert.assertTrue(vo.getStudentDO() != null);
+		}
+		
+		pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
+				"where t1.name like ?", "nick%");
+		Assert.assertTrue(pageData.getData().size() > 0);
+		for(StudentSchoolJoinVO vo : pageData.getData()) {
+			Assert.assertTrue(vo.getStudentDO() != null);
+		}
+		
+		int total = dbHelper.getCount(StudentSchoolJoinVO.class);
+		Assert.assertTrue(total > 0);
+		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name=?", "nick2");
+		Assert.assertTrue(total > 0);
 	}
 		
 	@Test
