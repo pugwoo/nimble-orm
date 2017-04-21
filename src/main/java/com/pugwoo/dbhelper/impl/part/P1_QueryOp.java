@@ -10,15 +10,14 @@ import java.util.Map;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import com.pugwoo.dbhelper.annotation.IDBHelperDataService;
+import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.model.Pair;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
-import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper4Pair;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
@@ -152,12 +151,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
 		return getTotal(clazz, postSql, args);
 	}
-	
-	@Override
-	public <T1, T2> int getCount(Class<T1> clazzT1, Class<T2> clazzT2, String postSql, Object... args) {
-		return getTotal(clazzT1, clazzT2, postSql, args);
-	}
-    
+	 
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
@@ -172,14 +166,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
     
     @Override
-    public <T1, T2> PageData<Pair<T1, T2>> getPageWithoutCount(Class<T1> clazzT1, Class<T2> clazzT2,
-    		int page, int pageSize, String postSql, Object... args) {
-    	int offset = (page - 1) * pageSize;
-    	List<Pair<T1, T2>> data = _getList(clazzT1, clazzT2, offset, pageSize, postSql, args);
-		return new PageData<Pair<T1, T2>>(-1, data, pageSize);
-    }
-	
-    @Override
 	public <T> List<T> getAll(final Class<T> clazz) {
 		return _getList(clazz, null, null, null);
 	}
@@ -190,12 +176,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 
     @Override
-    public <T1, T2> List<Pair<T1, T2>> getAll(Class<T1> clazzT1, Class<T2> clazzT2,
-    		String postSql, Object... args) {
-		return _getList(clazzT1, clazzT2, null, null, postSql, args);
-    }
-
-    @Override
 	public <T> T getOne(Class<T> clazz) {
     	List<T> list = _getList(clazz, 0, 1, null);
     	return list == null || list.isEmpty() ? null : list.get(0);
@@ -204,13 +184,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
     	List<T> list = _getList(clazz, 0, 1, postSql, args);
-    	return list == null || list.isEmpty() ? null : list.get(0);
-    }
-    
-    @Override
-    public <T1, T2> Pair<T1, T2> getOne(Class<T1> clazzT1, Class<T2> classT2,
-    		String postSql, Object... args) {
-    	List<Pair<T1, T2>> list = _getList(clazzT1, classT2, 0, 1, postSql, args);
     	return list == null || list.isEmpty() ? null : list.get(0);
     }
     
@@ -282,85 +255,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return rows;
 	}
 	
-
-    // ============= 处理Join方式查询 ==========================
-    
-	/**
-	 * join方式查询列表，表1和表2的别名约定为t1和t2。产生的sql类似：
-	 * 
-	 * select t1.*, t2.* from t_table1 t1, t_table2 t2 where t1.id=t2.parent_id and ... limit ..
-	 * 
-	 * @param clazzT1
-	 * @param clazzT2
-	 * @param offset
-	 * @param limit
-	 * @param postSql 必须提供，where开头，必须带上join的关联条件
-	 * @param args
-	 * @return
-	 */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private <T1, T2> List<Pair<T1, T2>> _getList(Class<T1> clazzT1, Class<T2> clazzT2,
-    		Integer offset, Integer limit, String postSql, Object... args) {
-		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectSQL(clazzT1, clazzT2));
-		sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazzT1, clazzT2));
-		sql.append(SQLUtils.genLimitSQL(offset, limit));
-		
-		log(sql);
-		long start = System.currentTimeMillis();
-		List<Pair<T1, T2>> list;
-		if(args == null || args.length == 0) {
-			list = namedParameterJdbcTemplate.query(sql.toString(),
-					new AnnotationSupportRowMapper4Pair(clazzT1, clazzT2)); 
-			       // 因为有in (?)所以用namedParameterJdbcTemplate
-		} else {
-			list = namedParameterJdbcTemplate.query(
-					NamedParameterUtils.trans(sql.toString()),
-					NamedParameterUtils.transParam(args),
-					new AnnotationSupportRowMapper4Pair(clazzT1, clazzT2)); 
-			       // 因为有in (?)所以用namedParameterJdbcTemplate
-		}
-		
-		postHandleRelatedColumn(list);
-		
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args);
-		return list;
-    }
-    
-	/**
-	 * join方式查询列表总数，产生语句类似：
-	 * 
-	 * select count(*) from t_table1 t1, t_table2 t2 where t1.id=t2.parent_id and ...
-	 * 
-	 * @param clazzT1
-	 * @param clazzT2
-	 * @param postSql 必须提供，where开头，必须带上join的关联条件
-	 * @return
-	 */
-	private int getTotal(Class<?> clazzT1, Class<?> clazzT2, String postSql, Object... args) {
-		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectCountSQL(clazzT1, clazzT2));
-		sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazzT1, clazzT2));
-
-		log(sql);
-		long start = System.currentTimeMillis();
-		int rows;
-		if(args == null || args.length == 0) {
-			rows = namedParameterJdbcTemplate.queryForObject(sql.toString(),
-				   new HashMap<String, Object>(), Integer.class);
-			       // 因为有in (?)所以用namedParameterJdbcTemplate
-		} else {
-			rows = namedParameterJdbcTemplate.queryForObject(
-					NamedParameterUtils.trans(sql.toString()),
-					NamedParameterUtils.transParam(args),
-					Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-		}
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args);
-		return rows;
-	}
-	
 	// ======================= 处理 RelatedColumn数据 ========================
 	
 	/**单个关联*/
@@ -375,19 +269,29 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 	
 	/**批量关联，要求批量操作的都是相同的类*/
-	@SuppressWarnings("rawtypes")
 	private <T> void postHandleRelatedColumn(List<T> tList) {
 		if(tList == null || tList.isEmpty()) {
 			return;
 		}
 		
-		if(tList.get(0) instanceof Pair<?, ?>) { // 处理join的数据结果
+		JoinTable joinTable = DOInfoReader.getJoinTable(tList.get(0).getClass());
+		if(joinTable != null) { // 处理join的方式
 			List<Object> list1 = new ArrayList<Object>();
 			List<Object> list2 = new ArrayList<Object>();
-			for(T pair : tList) {
-				list1.add(((Pair) pair).getT1());
-				list2.add(((Pair) pair).getT2());
+			
+			Field joinLeftTableFiled = DOInfoReader.getJoinLeftTable(tList.get(0).getClass());
+			Field joinRightTableFiled = DOInfoReader.getJoinRightTable(tList.get(0).getClass());
+			for(T t : tList) {
+				Object obj1 = DOInfoReader.getValue(joinLeftTableFiled, t);
+				if(obj1 != null) {
+					list1.add(obj1);
+				}
+				Object obj2 = DOInfoReader.getValue(joinRightTableFiled, t);
+				if(obj2 != null) {
+					list2.add(obj2);
+				}
 			}
+			
 			postHandleRelatedColumn(list1);
 			postHandleRelatedColumn(list2);
 			return;

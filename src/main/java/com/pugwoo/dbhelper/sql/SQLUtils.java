@@ -78,31 +78,6 @@ public class SQLUtils {
 		return sql.toString();
 	}
 
-    /**
-     * select 字段 from t_table t1, t_table2 t2, 不包含where子句及以后的语句
-     * @param clazzT1
-     * @param classT2
-     * @return
-     */
-	public static String getSelectSQL(Class<?> clazzT1, Class<?> classT2) {
-        Table table1 = DOInfoReader.getTable(clazzT1);
-        List<Field> fields1 = DOInfoReader.getColumns(clazzT1);
-
-        Table table2 = DOInfoReader.getTable(classT2);
-        List<Field> fields2 = DOInfoReader.getColumns(classT2);
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ");
-
-        sql.append(join(fields1, ",", "t1."));
-        sql.append(",");
-        sql.append(join(fields2, ",", "t2."));
-        sql.append(" FROM ").append(getTableName(table1)).append(" t1,");
-        sql.append(getTableName(table2)).append(" t2");
-
-        return sql.toString();
-    }
-	
 	/**
 	 * select count(*) from t_table, 不包含where子句及以后的语句
 	 * @param clazz
@@ -132,24 +107,6 @@ public class SQLUtils {
 			Table table = DOInfoReader.getTable(clazz);
 			sql.append(" FROM ").append(getTableName(table));
 		}
-		
-		return sql.toString();
-	}
-	
-	/**
-	 * select count(*) from t_table1 t1, t_table2 t2 不包含where子句及以后的语句
-	 * @param clazzT1
-	 * @param clazzT2
-	 * @return
-	 */
-	public static String getSelectCountSQL(Class<?> clazzT1, Class<?> clazzT2) {
-		Table table1 = DOInfoReader.getTable(clazzT1);
-		Table table2 = DOInfoReader.getTable(clazzT2);
-		
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT count(*)");
-		sql.append(" FROM ").append(getTableName(table1)).append(" t1,");
-		sql.append(getTableName(table2)).append(" t2");
 		
 		return sql.toString();
 	}
@@ -572,44 +529,6 @@ public class SQLUtils {
 		
 		try {
 			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
-		} catch (JSQLParserException e) {
-			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
-					whereSql, deletedExpression, e);
-			throw new BadSQLSyntaxException();
-		}
-	}
-	
-	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazzT1, Class<?> clazzT2) {
-		if(whereSql == null) {
-			whereSql = "";
-		}
-		
-		Field softDeleteT1 = DOInfoReader.getSoftDeleteColumn(clazzT1);
-		Field softDeleteT2 = DOInfoReader.getSoftDeleteColumn(clazzT2);
-		
-		if(softDeleteT1 == null && softDeleteT2 == null) {
-			return " " + whereSql; // 不处理
-		}
-		
-		StringBuilder deletedExpression = new StringBuilder();
-		if(softDeleteT1 != null) {
-			Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
-			deletedExpression.append("t1.").append(
-					getColumnName(softDeleteColumn) + "=" 
-                    + softDeleteColumn.softDelete()[0]);
-		}
-		if(softDeleteT2 != null) {
-			if(softDeleteT1 != null) {
-				deletedExpression.append(" AND ");
-			}
-			Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
-			deletedExpression.append("t2.").append(
-					getColumnName(softDeleteColumn) + "=" 
-                    + softDeleteColumn.softDelete()[0]);
-		}
-
-		try {
-			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression.toString());
 		} catch (JSQLParserException e) {
 			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
 					whereSql, deletedExpression, e);

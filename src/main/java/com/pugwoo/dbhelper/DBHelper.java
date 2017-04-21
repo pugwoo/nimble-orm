@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper;
 import java.util.List;
 import java.util.Map;
 
-import com.pugwoo.dbhelper.model.Pair;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,7 +134,7 @@ public interface DBHelper {
 	/**
 	 * 计算总数<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @return
 	 */
 	<T> int getCount(Class<T> clazz);
@@ -143,7 +142,7 @@ public interface DBHelper {
 	/**
 	 * 计算总数<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @param postSql
 	 * @param args
 	 * @return
@@ -151,19 +150,9 @@ public interface DBHelper {
 	<T> int getCount(Class<T> clazz, String postSql, Object... args);
 	
 	/**
-	 * 计算总数，join方式
-	 * @param clazzT1
-	 * @param clazzT2
-	 * @param postSql 必须以where开头，带上join条件
-	 * @param args
-	 * @return
-	 */
-	<T1, T2> int getCount(Class<T1> clazzT1, Class<T2> clazzT2, String postSql, Object... args);
-	
-	/**
 	 * 查询列表，没有查询条件；不查询总数<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @return 返回的data不会是null
@@ -173,7 +162,7 @@ public interface DBHelper {
 	/**
 	 * 查询列表，postSql可以带查询条件；不查询总数<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @param page 从1开始
 	 * @param pageSize
 	 * @param postSql 包含where关键字起的后续SQL语句
@@ -183,21 +172,9 @@ public interface DBHelper {
 			String postSql, Object... args);
 	
 	/**
-	 * join方式查询列表
-	 * @param clazzT1
-	 * @param clazzT2
-	 * @param page 从1开始
-	 * @param pageSize
-	 * @param postSql 必须以where开头，带上join条件
-	 * @param args
-	 * @return
-	 */
-	<T1, T2> PageData<Pair<T1, T2>> getPageWithoutCount(Class<T1> clazzT1, Class<T2> clazzT2,
-            int page, int pageSize, String postSql, Object... args);	
-	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz);
@@ -205,28 +182,15 @@ public interface DBHelper {
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 
-    /**
-     * 支持默认join的方式获取数据，表1和表2的别名分别是t1和t2,在postSql(包含where关键字)中必须指定join的条件
-     * @param clazzT1
-     * @param classT2
-     * @param postSql 必须以where开头，带上join条件
-     * @param args
-     * @param <T1>
-     * @param <T2>
-     * @return
-     */
-    <T1, T2> List<Pair<T1, T2>> getAll(Class<T1> clazzT1, Class<T2> classT2,
-                                       String postSql, Object... args);
-
 	/**
 	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz);
@@ -234,23 +198,12 @@ public interface DBHelper {
 	/**
 	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
 	 * 【会自动处理软删除记录】
-	 * @param clazz
+	 * @param clazz 【-支持@JoinTable-】
 	 * @param postSql
 	 * @param args
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
-	
-	/**
-	 * join方式查询一条记录
-	 * @param clazzT1
-	 * @param classT2
-	 * @param postSql 必须以where开头，带上join条件
-	 * @param args
-	 * @return
-	 */
-    <T1, T2> Pair<T1, T2> getOne(Class<T1> clazzT1, Class<T2> classT2,
-            String postSql, Object... args);
 	
 	// ===============Query methods END ==================================
 	

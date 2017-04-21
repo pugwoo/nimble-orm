@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.model.Pair;
 import com.pugwoo.dbhelper.test.model.CourseDO;
 import com.pugwoo.dbhelper.test.model.SchoolDO;
 import com.pugwoo.dbhelper.test.model.StudentDO;
@@ -272,22 +271,7 @@ public class TestDBHelper {
 		studentDO2.setSchoolId(schoolDO.getId());
 		dbHelper.update(studentDO2);
 		
-		List<Pair<StudentDO, SchoolDO>> list = 
-				dbHelper.getAll(StudentDO.class, SchoolDO.class,
-						"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
-		for(Pair<StudentDO, SchoolDO> pair : list) {
-			System.out.println(pair.getT1() + ";" + pair.getT2());
-		}
-		
-		Assert.assertTrue(list.size() >= 2);
-		
-		int total = dbHelper.getCount(StudentDO.class, SchoolDO.class, 
-				"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
-		Assert.assertTrue(total >= 2);
-		
-		Pair<StudentDO, SchoolDO> pair = dbHelper.getOne(StudentDO.class, SchoolDO.class,  
-				"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
-		Assert.assertTrue(pair != null && pair.getT1() != null && pair.getT2() != null);
+
 	}
 		
 	@Test
