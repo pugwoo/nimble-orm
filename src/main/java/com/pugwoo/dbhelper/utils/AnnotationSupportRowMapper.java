@@ -59,26 +59,36 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				Object t1 = leftJoinField.getType().newInstance();
 				Object t2 = rightJoinField.getType().newInstance();
 				
+				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
+				
+				boolean isT1AllNull = true;
 				List<Field> fieldsT1 = DOInfoReader.getColumns(leftJoinField.getType());
 				for (Field field : fieldsT1) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
 							TypeAutoCast.cast(rs, "t1." + column.value(), field.getType()), 
 							field.getType());
+					if(value != null) {
+						isT1AllNull = false;
+					}
 					DOInfoReader.setValue(field, t1, value);
 				}
 				
+				boolean isT2AllNull = true;
 				List<Field> fieldsT2 = DOInfoReader.getColumns(rightJoinField.getType());
 				for (Field field : fieldsT2) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
 							TypeAutoCast.cast(rs, "t2." + column.value(), field.getType()), 
 							field.getType());
+					if(value != null) {
+						isT2AllNull = false;
+					}
 					DOInfoReader.setValue(field, t2, value);
 				}
 				
-				DOInfoReader.setValue(leftJoinField, obj, t1);
-				DOInfoReader.setValue(rightJoinField, obj, t2);
+				DOInfoReader.setValue(leftJoinField, obj, isT1AllNull ? null : t1);
+				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
 				
 			} else {
 				List<Field> fields = DOInfoReader.getColumns(clazz);

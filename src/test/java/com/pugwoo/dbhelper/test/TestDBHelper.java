@@ -251,6 +251,7 @@ public class TestDBHelper {
 		Assert.assertTrue(pageData.getData().size() > 0);
 		for(StudentSchoolJoinVO vo : pageData.getData()) {
 			Assert.assertTrue(vo.getStudentDO() != null);
+//			System.out.println(vo.getSchoolDO());
 		}
 		
 		pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
