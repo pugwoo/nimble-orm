@@ -10,6 +10,16 @@
 
 4. 实现的这个小工具nimble-orm没有完全取代MyBatis的打算，但对于大多数增删改查，可以很简单地完成。特别的，我觉得分布式系统的强一致性，非常合适由MySQL来保证。因此，使用类似update where, insert select where这样的CAS乐观锁写法的SQL，特别常用。
 
+# 使用nimble-orm的优势
+
+1. **为互联网频繁的表变动而生。** 表名、字段名，仅在代码中出现一次。修改表名只需要改一处地方，修改字段名，仅需改字段注解一次及where子句中涉及的字段名。增加字段只需增加一个表成员。修改量相比MyBatis大大减少。
+
+2. **实用主义者，注重简单实用的接口。** 分页接口、软删除标记位全面支持、数据库乐观锁CAS写法、事务手动回滚、支持SOA远程方式的跨数据库关联查询等。定义完DO之后，无需增加额外配置，调用接口即可。
+
+3. **贫血模型，纯粹的POJO。**  不需要继承指定类或实现接口，纯粹的POJO，适合于各种序列化场景。喜欢Spring就会喜欢nimble-orm。
+
+4. **没有潜规则约定，一切注解配置，老项目迁移成本极低。** 不会约定类成员变量和表字段名的关系，全部需要通过配置指定，老项目不规则的表名字段名，不会影响新代码的命名。强制指定配置，这种“麻烦”会收获到后续代码运维上的很多便利。欠下的技术债总是要还的，何不一开始就描述清楚点？而xml或其它文件格式写sql，导致几个文件来回切换的编码，一个修改另外一个忘记修改就出错的情况，不再需要了，代码内聚，让阅读和维护更简单。
+
 ## Get Started 示例
 
 把代码下载后，可以以Maven项目方式导入到IDE中，数据库链接配置在`src/test/resources/jdbc.properties`中，数据库测试建表语句在`create-table.sql`中。建好数据库和表之后，就可以执行`TestDBHelper.java`中的例子。
@@ -19,7 +29,22 @@
 ```java
 // 这个一个标准的POJO，除了注解，没有引入任何nimble-orm的东西，不要求继承或实现任何东西。
 @Table("t_student")
-public class StudentDO extends IdableBaseDO { // 这里用不用继承都是可以的，用继承可以框定一些规范
+public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承都是可以的，用继承可以框定一些规范（在业务系统中，有些每个表都有的公共字段可以放在父类中）
+
+/** IdableSoftDeleteBaseDO也是单纯的POJO，无需继承或实现任何东西。其内容是：
+  @Column(value = "id", isKey = true, isAutoIncrement = true)
+  private Long id;
+  
+  // 软删除标记为，0 未删除，1已删除
+  @Column(value = "deleted", softDelete = {"0", "1"})
+  private Boolean deleted;
+  
+  @Column(value = "create_time", setTimeWhenInsert = true)
+  private Date createTime;
+  
+  @Column(value = "update_time", setTimeWhenUpdate = true, setTimeWhenInsert = true)
+  private Date updateTime;
+*/
 		
 	@Column("name")
 	private String name;
@@ -117,11 +142,41 @@ if(row > 0) {
 
 **关联查询**
 
-TODO 先请参考test中 @RelatedColumn 用法。
+假设一个场景，StudentDO学生表，有表字段school_id，外键关联SchoolDO表。如果没有类似@OneToOne之类的关联查询，那么需要手动写代码查两次：先查StudentDO拿到school_id，再通过school_id去查SchoolDO表，拿到之后设置到studentDO中。
+
+这个动作可以通过注解让nimble-orm来做，由于我们约定DO是和数据库表一一对应，所以这个关联的类应该叫StudentVO，它继承自StudentDO：
+
+```java
+public class StudentVO extends StudentDO {
+  
+  @RelatedColumn(value = "school_id", remoteColumn = "id")
+  private SchoolDO schoolDO;
+
+}
+```
+
+这样就可以了，查询时接口都一模一样，只是把StudentDO.class的地方换成StudentVO.class即可。
 
 **Join查询**
 
-TODO 先请参考test中 @JoinTable 用法。
+其实和关联查询相似，但有些表有where查询条件时，必须得用join来查询。nimble-orm采用一种巧妙的方式，在不新增接口的情况下，满足了这个需求，目前只支持2个表关联，更多的表关联应该尽量避免。
+
+同样的，定义个VO，使用查询接口一模一样：
+
+```java
+@JoinTable(joinType = JoinTypeEnum.LEFT_JOIN, on = "t1.school_id=t2.id")
+public class StudentSchoolJoinVO {
+
+  @JoinLeftTable
+  private StudentDO studentDO;
+  
+  @JoinRightTable
+  private SchoolDO schoolDO;
+  
+｝
+```
+
+上面定义的StudentSchoolJoinVO即表达了`select t1.*,t2.* from t_student t1 left join t_school t2 on t1.school_id=t2.id where t1.deleted=0 and (t2.deleted=0 or t2.deleted is null)`的基本语句。
 
 ## 关于数据库字段到Java字段的映射关系
 
