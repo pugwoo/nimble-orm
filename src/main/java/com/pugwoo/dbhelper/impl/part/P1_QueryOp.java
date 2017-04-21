@@ -143,21 +143,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return getPage(clazz, page, pageSize, null);
 	}
     
-    @Override
-    public <T1, T2> PageData<Pair<T1, T2>> getPage(Class<T1> clazzT1, Class<T2> clazzT2,
-    		int page, int pageSize, String postSql, Object... args) {
-    	int offset = (page - 1) * pageSize;
-    	List<Pair<T1, T2>> data = _getList(clazzT1, clazzT2, offset, pageSize, postSql, args);
-		// 性能优化，当page=1 且拿到的数据少于pageSize，则不需要查总数
-		int total;
-		if(page == 1 && data.size() < pageSize) {
-			total = data.size();
-		} else {
-			total = getTotal(clazzT1, clazzT2, postSql, args);
-		}
-		return new PageData<Pair<T1, T2>>(total, data, pageSize);
-    }
-    
 	@Override
 	public <T> int getCount(Class<T> clazz) {
 		return getTotal(clazz, null);

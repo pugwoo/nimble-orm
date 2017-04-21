@@ -132,21 +132,6 @@ public interface DBHelper {
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args);
 
-    /**
-     * 支持join的方式查询数据，两个表的别名分别是t1和t2
-     * @param clazzT1
-     * @param clazzT2
-     * @param page
-     * @param pageSize
-     * @param postSql 必须以where开头，带上join条件
-     * @param args
-     * @param <T1>
-     * @param <T2>
-     * @return
-     */
-	<T1, T2> PageData<Pair<T1, T2>> getPage(Class<T1> clazzT1, Class<T2> clazzT2,
-                    int page, int pageSize, String postSql, Object... args);
-	
 	/**
 	 * 计算总数<br>
 	 * 【会自动处理软删除记录】

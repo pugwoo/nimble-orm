@@ -275,20 +275,9 @@ public class TestDBHelper {
 		
 		Assert.assertTrue(list.size() >= 2);
 		
-		PageData<Pair<StudentDO, SchoolDO>> pageData = 
-				dbHelper.getPage(StudentDO.class, SchoolDO.class, 1, 10, 
-				"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
-		Assert.assertTrue(pageData.getData().size() >= 2);
-		Assert.assertTrue(pageData.getTotal() >= 2);
-		
 		int total = dbHelper.getCount(StudentDO.class, SchoolDO.class, 
 				"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
 		Assert.assertTrue(total >= 2);
-		
-		
-		pageData = dbHelper.getPageWithoutCount(StudentDO.class, SchoolDO.class, 1, 10, 
-				"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
-		Assert.assertTrue(pageData.getData().size() >= 2);
 		
 		Pair<StudentDO, SchoolDO> pair = dbHelper.getOne(StudentDO.class, SchoolDO.class,  
 				"where t1.school_id=t2.id and t2.name like ?", "%sysu%");
