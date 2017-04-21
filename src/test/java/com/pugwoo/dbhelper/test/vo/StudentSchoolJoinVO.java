@@ -3,10 +3,11 @@ package com.pugwoo.dbhelper.test.vo;
 import com.pugwoo.dbhelper.annotation.JoinLeftTable;
 import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
+import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.test.model.SchoolDO;
 import com.pugwoo.dbhelper.test.model.StudentDO;
 
-@JoinTable(joinType = "join", on = "t1.school_id=t2.id")
+@JoinTable(joinType = JoinTypeEnum.LEFT_JOIN, on = "t1.school_id=t2.id")
 public class StudentSchoolJoinVO {
 
 	@JoinLeftTable

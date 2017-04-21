@@ -60,7 +60,7 @@ public class SQLUtils {
 	        sql.append(",");
 	        sql.append(join(fields2, ",", "t2."));
 	        sql.append(" FROM ").append(getTableName(table1)).append(" t1 ");
-	        sql.append(joinTable.joinType()).append(" ");
+	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(table2)).append(" t2");
 	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
@@ -96,7 +96,7 @@ public class SQLUtils {
 	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
 	        
 	        sql.append(" FROM ").append(getTableName(table1)).append(" t1 ");
-	        sql.append(joinTable.joinType()).append(" ");
+	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(table2)).append(" t2");
 	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
