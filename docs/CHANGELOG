@@ -1,5 +1,5 @@
 2017年4月6日
-v0.2.1 - [add] 增加inner join查询的接口
+v0.3.0 - [add] 增加join查询的接口
 
 2017年3月18日
 v0.2.0 - [add] 增加关联查询@RelatedColumn

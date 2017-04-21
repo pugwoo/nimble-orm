@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
@@ -503,16 +504,31 @@ public class SQLUtils {
 			StringBuilder deletedExpressionSb = new StringBuilder();
 			if(softDeleteT1 != null) {
 				Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
-				deletedExpressionSb.append("t1.").append(
-			        getColumnName(softDeleteColumn) + "=" + softDeleteColumn.softDelete()[0]);
+				String columnName = getColumnName(softDeleteColumn);
+				if(joinTable.joinType() == JoinTypeEnum.RIGHT_JOIN) {
+					deletedExpressionSb.append("(t1.").append(
+						columnName + "=" + softDeleteColumn.softDelete()[0])
+					   .append(" or t1.").append(columnName).append(" is null)");
+				} else {
+					deletedExpressionSb.append("t1.").append(
+							columnName + "=" + softDeleteColumn.softDelete()[0]);
+				}
 			}
+			
 			if(softDeleteT2 != null) {
 				if(softDeleteT1 != null) {
 					deletedExpressionSb.append(" AND ");
 				}
 				Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
-				deletedExpressionSb.append("t2.").append(
-				    getColumnName(softDeleteColumn) + "=" + softDeleteColumn.softDelete()[0]);
+				String columnName = getColumnName(softDeleteColumn);
+				if(joinTable.joinType() == JoinTypeEnum.LEFT_JOIN) {
+					deletedExpressionSb.append("(t2.").append(
+							columnName + "=" + softDeleteColumn.softDelete()[0])
+					    .append(" or t2.").append(columnName).append(" is null)");
+				} else {
+					deletedExpressionSb.append("t2.").append(
+							columnName + "=" + softDeleteColumn.softDelete()[0]);
+				}
 			}
 			
 			deletedExpression = deletedExpressionSb.toString();		
