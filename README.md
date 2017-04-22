@@ -221,3 +221,5 @@ public class StudentSchoolJoinVO {
 1. 拦截器设计。
 
 2. Join方式设计。(0.3.0+ 已实现)
+
+## QQ群：178709063 欢迎使用
