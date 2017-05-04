@@ -35,15 +35,19 @@ import net.sf.jsqlparser.statement.select.Select;
 public class SQLUtils {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SQLUtils.class);
-
+	
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
 	 * @param clazz
+	 * @param withSQL_CALC_FOUND_ROWS 查询是否带上SQL_CALC_FOUND_ROWS，当配合select FOUND_ROWS();时需要为true
 	 * @return
 	 */
-	public static String getSelectSQL(Class<?> clazz) {
+	public static String getSelectSQL(Class<?> clazz, boolean withSQL_CALC_FOUND_ROWS) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
+		if(withSQL_CALC_FOUND_ROWS) {
+			sql.append("SQL_CALC_FOUND_ROWS ");
+		}
 		
 		// 处理join方式clazz
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
