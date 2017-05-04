@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 2015年8月24日 18:37:48
@@ -58,6 +59,18 @@ public class NamedParameterUtils {
 						param = p;
 					}
 				}
+				
+				// 转换后，对于param是空的List或Set，则将入一个null值
+				if(param instanceof List<?>) {
+					if(((List<?>) param).isEmpty()) {
+						((List<?>) param).add(null);
+					}
+				} else if (param instanceof Set<?>) {
+					if(((Set<?>) param).isEmpty()) {
+						((Set<?>) param).add(null);
+					}
+				}
+				
 				map.put("param" + (currParamIndex++), param);
 			}
 		}

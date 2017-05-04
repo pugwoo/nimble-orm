@@ -31,7 +31,7 @@ import com.pugwoo.dbhelper.test.vo.StudentVO;
 @RunWith(SpringJUnit4ClassRunner.class)
 @Transactional
 public class TestDBHelper {
-	
+		
 	@Autowired
 	private DBHelper dbHelper;
 	
