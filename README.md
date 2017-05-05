@@ -149,6 +149,8 @@ if(row > 0) {
 ```java
 public class StudentVO extends StudentDO {
   
+  // 关联查询时，请务必确保关联字段在Java是相同类型，否则java的equals方法会判断为不相等。
+  // 为了解决这种情况，dbhelper采用一种折中方案，当类型不同时，都转化成string进行判断，同时给出WARN日志
   @RelatedColumn(value = "school_id", remoteColumn = "id")
   private SchoolDO schoolDO;
 

@@ -9,7 +9,11 @@ import java.lang.annotation.Target;
  * 2017年3月17日 22:15:11
  * @author pugwoo
  *
- * 关联的列，通常用于表数据关联(非join形式)
+ * 关联的列，通常用于表数据关联(非join形式)。
+ * 
+ * 注意，关联查询时，请务必确保关联字段在Java是相同类型，否则java的equals方法会判断为不相等。
+ * 
+ * 为了解决这种情况，dbhelper采用一种折中方案，当类型不同时，都转化成string进行判断，同时给出WARN日志
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
