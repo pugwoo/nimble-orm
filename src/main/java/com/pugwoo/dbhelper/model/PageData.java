@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,6 +27,7 @@ public class PageData<T> implements Serializable {
 	private List<T> data;
 
 	public PageData() {
+		this.data = new ArrayList<T>();
 	}
 
 	public PageData(int total, List<T> data, int pageSize) {
