@@ -371,8 +371,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					for(Object obj : relateValues) {
 						Object o1 = DOInfoReader.getValue(relateField, t);
 						Object o2 = DOInfoReader.getValue(remoteField, obj);
-						if(o1 != null && o2 != null && o1.equals(o2)) {
-							value.add(obj);
+						if(o1 != null && o2 != null) {
+							if(o1.getClass().equals(o2.getClass())) {
+								if(o1.equals(o2)) {
+									value.add(obj);
+								}
+							} else {
+								LOGGER.warn("@RelatedColumn fields relate:{},remote:{} is different classes. Use String compare.",
+										relateField, remoteField);
+								if(o1.toString().equals(o2.toString())) {
+									value.add(obj);
+								}
+							}
 						}
 					}
 					DOInfoReader.setValue(field, t, value);
@@ -382,9 +392,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					for(Object obj : relateValues) {
 						Object o1 = DOInfoReader.getValue(relateField, t);
 						Object o2 = DOInfoReader.getValue(remoteField, obj);
-						if(o1 != null && o2 != null && o1.equals(o2)) {
-							DOInfoReader.setValue(field, t, obj);
-							break;
+						if(o1 != null && o2 != null) {
+							if(o1.getClass().equals(o2.getClass())) {
+								if(o1.equals(o2)) {
+									DOInfoReader.setValue(field, t, obj);
+									break;
+								}
+							} else {
+								LOGGER.warn("@RelatedColumn fields relate:{},remote:{} is different classes. Use String compare.",
+										relateField, remoteField);
+								if(o1.toString().equals(o2.toString())) {
+									DOInfoReader.setValue(field, t, obj);
+									break;
+								}
+							}
 						}
 					}
 				}
