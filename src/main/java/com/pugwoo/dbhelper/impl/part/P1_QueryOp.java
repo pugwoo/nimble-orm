@@ -126,16 +126,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
 		int offset = (page - 1) * pageSize;
-		List<T> data = _getList(clazz, true, offset, pageSize, postSql, args);
-		// 性能优化，当page=1 且拿到的数据少于pageSize，则不需要查总数
-		int total;
-		if(page == 1 && data.size() < pageSize) {
-			total = data.size();
-		} else {
-			total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
-			// total = getTotal(clazz, postSql, args);
-		}
-		return new PageData<T>(total, data, pageSize);
+		return _getPage(clazz, true, offset, pageSize, postSql, args);
 	}
     
     @Override
@@ -150,16 +141,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	@Override
 	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
-		_getList(clazz, true, 0, 1, postSql, args);
-		return jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
+		return _getPage(clazz, true, 0, 1, postSql, args).getTotal();
 	}
 	 
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
 		int offset = (page - 1) * pageSize;
-		List<T> data = _getList(clazz, false, offset, pageSize, postSql, args);
-		return new PageData<T>(-1, data, pageSize);
+		return _getPage(clazz, false, offset, pageSize, postSql, args);
     }
     
     @Override
@@ -169,23 +158,23 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     
     @Override
 	public <T> List<T> getAll(final Class<T> clazz) {
-		return _getList(clazz, false, null, null, null);
+		return _getPage(clazz, false, null, null, null).getData();
 	}
     
     @Override
 	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
-		return _getList(clazz, false, null, null, postSql, args);
+		return _getPage(clazz, false, null, null, postSql, args).getData();
 	}
 
     @Override
 	public <T> T getOne(Class<T> clazz) {
-    	List<T> list = _getList(clazz, false, 0, 1, null);
+    	List<T> list = _getPage(clazz, false, 0, 1, null).getData();
     	return list == null || list.isEmpty() ? null : list.get(0);
     }
 	
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
-    	List<T> list = _getList(clazz, false, 0, 1, postSql, args);
+    	List<T> list = _getPage(clazz, false, 0, 1, postSql, args).getData();
     	return list == null || list.isEmpty() ? null : list.get(0);
     }
     
@@ -193,7 +182,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	 * 查询列表
 	 * 
 	 * @param clazz
-	 * @param withSQL_CALC_FOUND_ROWS 查询是否带上SQL_CALC_FOUND_ROWS，当配合select FOUND_ROWS();时需要为true
+	 * @param withCount 是否计算总数，将使用SQL_CALC_FOUND_ROWS配合select FOUND_ROWS();来查询
 	 * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
 	 * @param limit null时不生效
 	 * @param postSql sql的where/group/order等sql语句
@@ -201,12 +190,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T> List<T> _getList(Class<T> clazz, boolean withSQL_CALC_FOUND_ROWS,
+	private <T> PageData<T> _getPage(Class<T> clazz, boolean withCount,
 			Integer offset, Integer limit,
 			String postSql, Object... args) {
 		
 		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectSQL(clazz, withSQL_CALC_FOUND_ROWS));
+		sql.append(SQLUtils.getSelectSQL(clazz, withCount));
 		sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
 		sql.append(SQLUtils.genLimitSQL(offset, limit));
 		
@@ -223,41 +212,49 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		}
 		
+		int total = -1; // -1 表示没有查询总数，未知
+		if(withCount) {
+			// 性能优化，当page=1 且拿到的数据少于limit，则不需要查总数
+			if(limit != null && list.size() < limit) {
+				total = list.size();
+			} else {
+				// 注意：必须在查询完列表之后马上查询总数
+				total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
+			}
+		}
+		
 		postHandleRelatedColumn(list);
 		
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
-		return list;
+		
+		PageData<T> pageData = new PageData<T>();
+		pageData.setData(list);
+		pageData.setTotal(total);
+		if(limit != null) {
+			pageData.setPageSize(limit);
+		}
+		
+		return pageData;
 	}
 	
 	/**
 	 * 查询列表总数。
-	 * 0.3.1+版本起，带条件的count不使用count(*)计算总数，而改用FOUND_ROWS()，目的是统一group by等复杂子句的总数计算方式。
+	 * 0.3.1+版本起，带条件的count不使用count(*)计算总数，
+	 * 而改用FOUND_ROWS()，目的是统一group by等复杂子句的总数计算方式。
 	 * @param clazz
 	 * @return
 	 */
 	private int getTotal(Class<?> clazz) {
 		StringBuilder sql = new StringBuilder();
 		sql.append(SQLUtils.getSelectCountSQL(clazz));
-//		sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
 		sql.append(SQLUtils.autoSetSoftDeleted("", clazz));
 
 		log(sql);
 		long start = System.currentTimeMillis();
-		int rows;
-//		if(args == null || args.length == 0) {
-			rows = namedParameterJdbcTemplate.queryForObject(sql.toString(),
-					new HashMap<String, Object>(), Integer.class); 
-			       // 因为有in (?)所以用namedParameterJdbcTemplate
-//		} else {
-//			rows = namedParameterJdbcTemplate.queryForObject(
-//					NamedParameterUtils.trans(sql.toString()),
-//					NamedParameterUtils.transParam(args),
-//					Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-//		}
+		int rows = jdbcTemplate.queryForObject(sql.toString(), Integer.class); 
 		
 		long cost = System.currentTimeMillis() - start;
-//		logSlow(cost, sql, args);
 		logSlow(cost, sql, null);
 		return rows;
 	}
