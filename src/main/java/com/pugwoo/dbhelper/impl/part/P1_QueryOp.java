@@ -214,13 +214,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		int total = -1; // -1 表示没有查询总数，未知
 		if(withCount) {
-			// 性能优化，当page=1 且拿到的数据少于limit，则不需要查总数
-			if(limit != null && list.size() < limit) {
-				total = list.size();
-			} else {
-				// 注意：必须在查询完列表之后马上查询总数
-				total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
-			}
+			// 注意：必须在查询完列表之后马上查询总数
+			total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
 		}
 		
 		postHandleRelatedColumn(list);
