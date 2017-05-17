@@ -35,7 +35,7 @@ public @interface RelatedColumn {
 	 * extraWhere值为where开始(如果有where条件，必须带where关键字)的sql子句，不支持传递参数，
 	 * 可以写order by和limit等子句。例如：
 	 * where star=1 limit 5 或
-	 * limit 5
+	 * order by id limit 5 等写法
 	 * 
 	 * 当使用dataService时，该字段无效。
 	 * @return
