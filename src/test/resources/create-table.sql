@@ -32,5 +32,6 @@ CREATE TABLE `t_course` (
   `update_time` datetime DEFAULT NULL,
   `student_id` int(11) DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL COMMENT '课程名称',
+  `is_main` tinyint(4) DEFAULT '0' COMMENT '是否主课程',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8

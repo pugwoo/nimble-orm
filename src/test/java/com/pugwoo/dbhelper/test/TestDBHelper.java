@@ -17,10 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.test.model.CourseDO;
-import com.pugwoo.dbhelper.test.model.SchoolDO;
-import com.pugwoo.dbhelper.test.model.StudentDO;
-import com.pugwoo.dbhelper.test.model.StudentTrueDeleteDO;
+import com.pugwoo.dbhelper.test.entity.CourseDO;
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 
@@ -335,6 +335,7 @@ public class TestDBHelper {
 		CourseDO courseDO1 = new CourseDO();
 		courseDO1.setName("math");
 		courseDO1.setStudentId(studentDO.getId());
+		courseDO1.setIsMain(true); // math是主课程
 		dbHelper.insert(courseDO1);
 		
 		CourseDO courseDO2 = new CourseDO();
@@ -349,6 +350,7 @@ public class TestDBHelper {
 		CourseDO courseDO3 = new CourseDO();
 		courseDO3.setName("math");
 		courseDO3.setStudentId(studentDO2.getId());
+		courseDO3.setIsMain(true); // math是主课程
 		dbHelper.insert(courseDO3);
 		
 		CourseDO courseDO4 = new CourseDO();
@@ -364,6 +366,8 @@ public class TestDBHelper {
 		Assert.assertTrue(studentVO1.getCourses().size() == 2);
 		Assert.assertTrue(studentVO1.getCourses().get(0).getId().equals(courseDO1.getId())
 		   || studentVO1.getCourses().get(0).getId().equals(courseDO2.getId()));
+		Assert.assertTrue(studentVO1.getMainCourses().size() == 1 && 
+				studentVO1.getMainCourses().get(0).getName().equals("math")); // math是主课程
 		
 		List<Long> ids = new ArrayList<Long>();
 		ids.add(studentDO.getId());
@@ -377,6 +381,8 @@ public class TestDBHelper {
 			Assert.assertTrue(sVO.getSchoolDO().getId().equals(sVO.getSchoolId()));
 			Assert.assertTrue(sVO.getCourses() != null);
 			Assert.assertTrue(sVO.getCourses().size() == 2);
+			Assert.assertTrue(sVO.getMainCourses().size() == 1 && 
+					studentVO1.getMainCourses().get(0).getName().equals("math")); // math是主课程
 			
 			if(sVO.getId().equals(studentDO2.getId())) {
 				Assert.assertTrue(

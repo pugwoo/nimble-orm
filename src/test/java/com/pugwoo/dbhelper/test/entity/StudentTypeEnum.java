@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.model;
+package com.pugwoo.dbhelper.test.entity;
 
 /**
  * 学生类型枚举

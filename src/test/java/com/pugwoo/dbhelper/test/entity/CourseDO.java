@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.model;
+package com.pugwoo.dbhelper.test.entity;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
@@ -11,6 +11,10 @@ public class CourseDO extends IdableSoftDeleteBaseDO {
 	
 	@Column("name")
 	private String name;
+	
+	// 是否主课程
+	@Column("is_main")
+	private Boolean isMain;
 
 	public Long getStudentId() {
 		return studentId;
@@ -26,6 +30,14 @@ public class CourseDO extends IdableSoftDeleteBaseDO {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Boolean getIsMain() {
+		return isMain;
+	}
+
+	public void setIsMain(Boolean isMain) {
+		this.isMain = isMain;
 	}
 	
 }

@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.test.model.CourseDO;
+import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
 
 /**

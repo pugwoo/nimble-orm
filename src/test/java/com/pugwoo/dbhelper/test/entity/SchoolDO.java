@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.model;
+package com.pugwoo.dbhelper.test.entity;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
