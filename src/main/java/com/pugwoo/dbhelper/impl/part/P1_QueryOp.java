@@ -21,6 +21,8 @@ import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
+import net.sf.jsqlparser.JSQLParserException;
+
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	@Override
@@ -360,8 +362,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					relateValues = dataService.get(values);
 				}
 			} else {
-				relateValues = getAll(remoteDOClass,
-						"where " + column.remoteColumn() + " in (?)", values);
+				String inExpr = column.remoteColumn() + " in (?)";
+				if(column.extraWhere() == null || column.extraWhere().trim().isEmpty()) {
+					relateValues = getAll(remoteDOClass, "where " + inExpr, values);
+				} else {
+					String where;
+					try {
+						where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
+						relateValues = getAll(remoteDOClass, where, values);
+					} catch (JSQLParserException e) {
+						LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere",
+								column.extraWhere());
+						relateValues = getAll(remoteDOClass, "where " + inExpr, values);
+					}
+				}
 			}
 			
 			if(field.getType() == List.class) {

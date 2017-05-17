@@ -20,15 +20,26 @@ import java.lang.annotation.Target;
 public @interface RelatedColumn {
 
 	/**
-	 * 关联的列名，默认是通过关联的DO的id值去拿。
+	 * 必须，关联的列名，默认是通过关联的DO的id值去拿。
 	 * @return
 	 */
 	String value() default "";
 	
 	/**
-	 * 外部关联的表的相关字段，默认是id
+	 * 必须，外部关联的表的相关字段，默认是id
 	 */
 	String remoteColumn() default "id";
+	
+	/**
+	 * 当使用remoteColumn关联查询时，可以额外指定查询条件，
+	 * extraWhere值为where开始(含where关键字)的sql子句，不支持传递参数，
+	 * 可以写order by和limit等子句。例如：
+	 * where star=1 limit 5
+	 * 
+	 * 当使用dataService时，该字段无效。
+	 * @return
+	 */
+	String extraWhere() default "";
 	
 	/**
 	 * 外部查询数据接口，该接口必须继承实现IDBHelperDataService
