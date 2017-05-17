@@ -263,7 +263,7 @@ public class TestDBHelper {
 		
 		int total = dbHelper.getCount(StudentSchoolJoinVO.class);
 		Assert.assertTrue(total > 0);
-		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name=?", "nick2");
+		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
 		Assert.assertTrue(total > 0);
 	}
 		
