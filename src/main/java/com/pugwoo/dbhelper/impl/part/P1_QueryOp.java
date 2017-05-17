@@ -328,6 +328,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			
 			Field remoteField = DOInfoReader.getFieldByDBField(remoteDOClass,
 					column.remoteColumn());
+			if(remoteField == null) {
+				LOGGER.error("cannot find remoteField,db column name:{}", column.remoteColumn());
+				continue;
+			}
 			
 			List<Object> values = new ArrayList<Object>();
 			for(T t : tList) {
