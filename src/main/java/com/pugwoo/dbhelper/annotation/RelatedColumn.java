@@ -31,7 +31,7 @@ public @interface RelatedColumn {
 	String remoteColumn() default "id";
 	
 	/**
-	 * 要实现的外部接口
+	 * 外部查询数据接口，该接口必须继承实现IDBHelperDataService
 	 * @return
 	 */
 	Class<?> dataService() default void.class;
