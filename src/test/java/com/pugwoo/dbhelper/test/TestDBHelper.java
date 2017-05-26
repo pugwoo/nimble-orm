@@ -368,6 +368,7 @@ public class TestDBHelper {
 		   || studentVO1.getCourses().get(0).getId().equals(courseDO2.getId()));
 		Assert.assertTrue(studentVO1.getMainCourses().size() == 1 && 
 				studentVO1.getMainCourses().get(0).getName().equals("math")); // math是主课程
+		Assert.assertTrue(studentVO1.getNameWithHi().equals(studentVO1.getName() + "hi")); // 测试计算列
 		
 		List<Long> ids = new ArrayList<Long>();
 		ids.add(studentDO.getId());
@@ -389,6 +390,8 @@ public class TestDBHelper {
 						sVO.getCourses().get(0).getId().equals(courseDO3.getId())
 				  || sVO.getCourses().get(1).getId().equals(courseDO4.getId()));
 			}
+			
+			Assert.assertTrue(sVO.getNameWithHi().equals(sVO.getName() + "hi")); // 测试计算列
 		}
 	}
 	

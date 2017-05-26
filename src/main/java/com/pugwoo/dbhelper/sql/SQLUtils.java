@@ -14,6 +14,7 @@ import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
@@ -592,7 +593,7 @@ public class SQLUtils {
      * @return
      */
     private static String join(List<Field> fields, String sep, String fieldPrefix) {
-    	return joinAndGetValue(fields, sep, fieldPrefix, null, null, false);
+    	return joinAndGetValueForSelect(fields, sep, fieldPrefix);
     }
 	
 	/**
@@ -649,44 +650,73 @@ public class SQLUtils {
      */
     private static String joinAndGetValue(List<Field> fields, String sep,
                 List<Object> values, Object obj, boolean isWithNullValue) {
-	    return joinAndGetValue(fields, sep, null, values, obj, isWithNullValue);
+	    return joinAndGetValueForInsert(fields, sep, null, values, obj, isWithNullValue);
     }
     
     /**
-     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
+     * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
      * @param fields
      * @param sep
      * @param fieldPrefix
-     * @param values
-     * @param obj
-     * @param isWithNullValue 是否把null值放到values中
      * @return
      */
-	private static String joinAndGetValue(List<Field> fields, String sep, String fieldPrefix,
-			List<Object> values, Object obj, boolean isWithNullValue) {
+	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix) {
         fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
 
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
     		Column column = field.getAnnotation(Column.class);
-
-    		boolean isAppendColumn = true;
-    		if(values != null && obj != null) {
-    			Object value = DOInfoReader.getValue(field, obj);
-    			if(isWithNullValue) {
-    				values.add(value);
-    			} else {
-    				if(value == null) {
-    					isAppendColumn = false;
-    				} else {
-    					values.add(value);
-    				}
-    			}
-    		}
     		
-    		if(isAppendColumn) {
-        		sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
+    		String computed = column.computed().trim();
+    		if(!computed.isEmpty()) {
+    			sb.append(computed).append(" AS ");
+    		} else {
+    			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
     		}
+        	sb.append(getColumnName(column)).append(sep);
+    	}
+    	int len = sb.length();
+    	return len == 0 ? "" : sb.toString().substring(0, len - 1);
+	}
+    
+    /**
+     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中。会排除掉computed的@Column字段
+     * 
+     * @param fields
+     * @param sep
+     * @param fieldPrefix
+     * @param values 不应该为null
+     * @param obj 不应该为null
+     * @param isWithNullValue 是否把null值放到values中
+     * @return
+     */
+	private static String joinAndGetValueForInsert(List<Field> fields, String sep, String fieldPrefix,
+			List<Object> values, Object obj, boolean isWithNullValue) {
+		if(values == null || obj == null) {
+			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
+		}
+		
+        fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
+
+    	StringBuilder sb = new StringBuilder();
+    	for(Field field : fields) {
+    		Column column = field.getAnnotation(Column.class);
+    		if(!(column.computed().trim().isEmpty())) {
+    			continue; // insert不加入computed字段
+    		}
+
+			Object value = DOInfoReader.getValue(field, obj);
+			if(isWithNullValue) {
+				values.add(value);
+			} else {
+				if(value == null) {
+					continue; // 不加入该column
+				} else {
+					values.add(value);
+				}
+			}
+    		
+        	sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
     	}
     	int len = sb.length();
     	return len == 0 ? "" : sb.toString().substring(0, len - 1);

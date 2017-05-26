@@ -21,6 +21,12 @@ public @interface Column {
 	String value();
 	
 	/**
+	 * 计算列。注意：计算列的别名为value属性的值，不需要再写上as 别名。
+	 * @return
+	 */
+	String computed() default "";
+	
+	/**
 	 * 是否主键
 	 * 
 	 * @return

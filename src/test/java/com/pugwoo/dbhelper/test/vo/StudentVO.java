@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.vo;
 
 import java.util.List;
 
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
@@ -24,6 +25,10 @@ public class StudentVO extends StudentDO {
 	
 	@RelatedColumn(value = "id", remoteColumn = "student_id", extraWhere = "where is_main=1")
 	private List<CourseDO> mainCourses;
+	
+	// 计算列示例，生成的select字段为：CONCAT(name,'hi') AS nameWithHi
+	@Column(value = "nameWithHi", computed = "CONCAT(name,'hi')")
+	private String nameWithHi;
 
 	public SchoolDO getSchoolDO() {
 		return schoolDO;
@@ -47,6 +52,14 @@ public class StudentVO extends StudentDO {
 
 	public void setMainCourses(List<CourseDO> mainCourses) {
 		this.mainCourses = mainCourses;
+	}
+
+	public String getNameWithHi() {
+		return nameWithHi;
+	}
+
+	public void setNameWithHi(String nameWithHi) {
+		this.nameWithHi = nameWithHi;
 	}
 	
 }
