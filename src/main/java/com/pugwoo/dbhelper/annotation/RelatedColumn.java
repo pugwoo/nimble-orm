@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 public @interface RelatedColumn {
 
 	/**
-	 * 必须，关联的列名，默认是通过关联的DO的id值去拿。
+	 * 必须，关联的列名。对应于主表中@Column注解的value值
 	 * @return
 	 */
 	String value() default "";
