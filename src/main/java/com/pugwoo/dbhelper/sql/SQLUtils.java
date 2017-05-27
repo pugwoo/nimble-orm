@@ -685,7 +685,7 @@ public class SQLUtils {
     		
     		String computed = column.computed().trim();
     		if(!computed.isEmpty()) {
-    			sb.append(computed).append(" AS ");
+    			sb.append("(").append(computed).append(") AS ");
     		} else {
     			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
     		}
