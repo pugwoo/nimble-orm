@@ -76,7 +76,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			values.addAll(Arrays.asList(args));
 		}
 		
-		return jdbcExecuteUpdate(sql, values.toArray());
+		return namedJdbcExecuteUpdate(sql, values.toArray());
 	}
 	
 	@Override
@@ -93,6 +93,16 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql);
 		
 		return jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+	}
+	
+	@Override
+	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
+		if(setSql == null || setSql.trim().isEmpty()) {
+			return 0; // 不需要更新
+		}
+		
+		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql);
+		return namedJdbcExecuteUpdate(sql, args);
 	}
 	
 }

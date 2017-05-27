@@ -125,7 +125,7 @@ public interface DBHelper {
 	 * @param clazz 【-支持@JoinTable-】
 	 * @param page 从1开始
 	 * @param pageSize
-	 * @param postSql 包含where关键字起的后续SQL语句，不能包含limit子句
+	 * @param postSql 包含where关键字起的后续SQL语句，【不能】包含limit子句
 	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
@@ -232,7 +232,7 @@ public interface DBHelper {
 	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNullWhereNotExist。
 	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
 	 * @param t
-	 * @param whereSql 只能是where语句（可含可不含where关键字），不能包含order/group/limit等后续语句
+	 * @param whereSql 只能是where语句（可含可不含where关键字），【不能】包含order/group/limit等后续语句
 	 * @param args
 	 * @return
 	 */
@@ -359,14 +359,24 @@ public interface DBHelper {
 	<T> int update(T t, String postSql, Object... args) throws NullKeyValueException;
 	
 	/**
-	 * 自定义set字句更新，一般用于单个sql进行值更新，例如set reads = reads + 1这种情况。因此不提供CAS功能。
+	 * 自定义set字句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。因此不提供CAS功能。
 	 * @param t 必须提供key
-	 * @param setSql 【不】包含set关键字，多个则用逗号隔开，例如a=a+1,c=b
+	 * @param setSql 可包含set关键字也可不包含，多个则用逗号隔开，【不能】包含where子句，例如a=a+1,c=b 或 set a=a+1,c=b
 	 * @param args set子句的参数
 	 * @return
 	 * @throws NullKeyValueException 当t没有带上key时，抛出该异常
 	 */
 	<T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException;
+	
+	/**
+	 * 自定义更新多行记录，会自动去掉已软删除的行
+	 * @param clazz
+	 * @param setSql update sql中的set sql子句，可以包括set关键字也可以不包括
+	 * @param whereSql update sql中的where sql子句，可以包括where关键字也可以不包括
+	 * @param args
+	 * @return
+	 */
+	<T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args);
 	
 	/**
 	 * 更新数据库记录，更新包含null的字段，返回数据库实际修改条数。
@@ -413,7 +423,7 @@ public interface DBHelper {
 	/**
 	 * 自定义条件删除数据，该操作【会】自动使用软删除标记
 	 * @param clazz 必须有默认构造方法
-	 * @param postSql 必须提供，必须写where，不允许留空
+	 * @param postSql 必须提供，必须写where，【不允许】留空
 	 * @param args
 	 * @return
 	 */

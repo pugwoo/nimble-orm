@@ -153,6 +153,20 @@ public class TestDBHelper {
 		Assert.assertTrue("nick2".equals(db.getName()));
 	}
 	
+	@Test
+	@Rollback(false)
+	public void testUpdateAll() {
+		insertBatch(101);
+		String newName = "nick" + UUID.randomUUID().toString().replace("-", "");
+		
+		int rows = dbHelper.updateAll(StudentDO.class,
+				"set name=?", "where name like ?", newName, "nick%");
+		Assert.assertTrue(rows > 0);
+		
+		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where name=?", newName);
+		Assert.assertTrue(list.size() == rows);
+	}
+	
 	// ============ UPDATE TEST END ======================
 	
 	// ============ INSERT_UPDATE TEST START =============

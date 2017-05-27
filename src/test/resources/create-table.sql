@@ -5,7 +5,7 @@ CREATE TABLE `t_student` (
   `deleted` tinyint(4) DEFAULT NULL,
   `create_time` datetime DEFAULT NULL,
   `update_time` datetime DEFAULT NULL,
-  `name` varchar(32) DEFAULT 'DEFAULT',
+  `name` varchar(128) DEFAULT 'DEFAULT',
   `age` tinyint(1) DEFAULT NULL,
   `intro` blob,
   `school_id` int(11) DEFAULT NULL,

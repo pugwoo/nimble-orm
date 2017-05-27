@@ -320,6 +320,41 @@ public class SQLUtils {
 	}
 	
 	/**
+	 * 获得批量更新sql
+	 * @param clazz
+	 * @param setSql
+	 * @param whereSql
+	 * @return
+	 */
+	public static <T> String getUpdateAllSQL(Class<T> clazz, String setSql, String whereSql) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		
+		Table table = DOInfoReader.getTable(clazz);
+		List<Field> fields = DOInfoReader.getColumns(clazz);
+		
+		sql.append(getTableName(table)).append(" ");
+		
+		if(setSql.trim().toLowerCase().startsWith("set ")) {
+			sql.append(setSql);
+		} else {
+			sql.append("SET ").append(setSql);
+		}
+		
+		// 加上更新时间
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+				sql.append(",").append(getColumnName(column))
+				   .append("=").append(getDateString(new Date()));
+			}
+		}
+		
+		sql.append(autoSetSoftDeleted(whereSql, clazz));
+		return sql.toString();
+	}
+
+	/**
 	 * 获得自定义更新的sql
 	 * @param t
 	 * @param values
@@ -334,15 +369,20 @@ public class SQLUtils {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
-		sql.append(getTableName(table)).append(" SET ");
-		sql.append(setSql);
+		sql.append(getTableName(table)).append(" ");
+		
+		if(setSql.trim().toLowerCase().startsWith("set ")) {
+			sql.append(setSql);
+		} else {
+			sql.append("SET ").append(setSql);
+		}
 		
 		// 加上更新时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
-				sql.append(",").append(getColumnName(column)).append("=?");
-				values.add(new Date());
+				sql.append(",").append(getColumnName(column))
+				   .append("=").append(getDateString(new Date()));
 			}
 		}
 		
@@ -354,7 +394,6 @@ public class SQLUtils {
 				throw new NullKeyValueException();
 			}
 		}
-		
 		values.addAll(whereValues);
 		
 		sql.append(autoSetSoftDeleted(where, t.getClass()));
@@ -781,6 +820,16 @@ public class SQLUtils {
 
 	private static String getColumnName(Column column) {
 		return "`" + column.value() + "`";
+	}
+	
+	/**
+	 * 输出类似：'2017-05-25 11:22:33'
+	 * @param date
+	 * @return
+	 */
+	private static String getDateString(Date date) {
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		return "'" + df.format(date) + "'";
 	}
 
 }
