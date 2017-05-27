@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.JoinLeftTable;
+import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
@@ -56,18 +58,22 @@ public class SQLUtils {
 			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
 			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
 			
+			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
+			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
+			
 	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
 	        List<Field> fields1 = DOInfoReader.getColumns(leftTableField.getType());
 			
 	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
 	        List<Field> fields2 = DOInfoReader.getColumns(rightTableField.getType());
 	        
-	        sql.append(join(fields1, ",", "t1."));
+	        sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
 	        sql.append(",");
-	        sql.append(join(fields2, ",", "t2."));
-	        sql.append(" FROM ").append(getTableName(table1)).append(" t1 ");
+	        sql.append(join(fields2, ",", joinRightTable.alias() + "."));
+	        sql.append(" FROM ").append(getTableName(table1))
+	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(table2)).append(" t2");
+	        sql.append(getTableName(table2)).append(" ").append(joinRightTable.alias());
 	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
 	        }
@@ -78,7 +84,7 @@ public class SQLUtils {
 			List<Field> fields = DOInfoReader.getColumns(clazz);
 			
 			sql.append(join(fields, ","));
-			sql.append(" FROM ").append(getTableName(table));
+			sql.append(" FROM ").append(getTableName(table)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -98,12 +104,17 @@ public class SQLUtils {
 		if(joinTable != null) {
 			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
 			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
+			
+			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
+			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
+			
 	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
 	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
 	        
-	        sql.append(" FROM ").append(getTableName(table1)).append(" t1 ");
+	        sql.append(" FROM ").append(getTableName(table1))
+	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(table2)).append(" t2");
+	        sql.append(getTableName(table2)).append(" ").append(joinRightTable.alias());
 	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
 	        }
@@ -499,6 +510,9 @@ public class SQLUtils {
 			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
 			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
 			
+			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
+			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
+			
 			Field softDeleteT1 = DOInfoReader.getSoftDeleteColumn(leftTableField.getType());
 			Field softDeleteT2 = DOInfoReader.getSoftDeleteColumn(rightTableField.getType());
 			
@@ -511,11 +525,12 @@ public class SQLUtils {
 				Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
 				String columnName = getColumnName(softDeleteColumn);
 				if(joinTable.joinType() == JoinTypeEnum.RIGHT_JOIN) {
-					deletedExpressionSb.append("(t1.").append(
+					deletedExpressionSb.append("(").append(joinLeftTable.alias()).append(".").append(
 						columnName + "=" + softDeleteColumn.softDelete()[0])
-					   .append(" or t1.").append(columnName).append(" is null)");
+					   .append(" or ").append(joinLeftTable.alias()).append(".")
+					   .append(columnName).append(" is null)");
 				} else {
-					deletedExpressionSb.append("t1.").append(
+					deletedExpressionSb.append(joinLeftTable.alias()).append(".").append(
 							columnName + "=" + softDeleteColumn.softDelete()[0]);
 				}
 			}
@@ -527,11 +542,12 @@ public class SQLUtils {
 				Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
 				String columnName = getColumnName(softDeleteColumn);
 				if(joinTable.joinType() == JoinTypeEnum.LEFT_JOIN) {
-					deletedExpressionSb.append("(t2.").append(
+					deletedExpressionSb.append("(").append(joinRightTable.alias()).append(".").append(
 							columnName + "=" + softDeleteColumn.softDelete()[0])
-					    .append(" or t2.").append(columnName).append(" is null)");
+					    .append(" or ").append(joinRightTable.alias()).append(".")
+					    .append(columnName).append(" is null)");
 				} else {
-					deletedExpressionSb.append("t2.").append(
+					deletedExpressionSb.append(joinRightTable.alias()).append(".").append(
 							columnName + "=" + softDeleteColumn.softDelete()[0]);
 				}
 			}

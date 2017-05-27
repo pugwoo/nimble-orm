@@ -6,11 +6,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * join的左表注解，被注解的字段类型必须有@Table注解。左表的别名约定为t1
+ * join的左表注解，被注解的字段类型必须有@Table注解。左表的别名默认为t1
  * @author pugwoo
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JoinLeftTable {
 
+	/**
+	 * 表别名
+	 * @return
+	 */
+	String alias() default "t1";
+	
 }

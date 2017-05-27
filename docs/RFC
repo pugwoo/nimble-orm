@@ -5,10 +5,10 @@
 @Join(type = "inner join", condition = "t1.school_id=t2.id")
 public class StudentSchoolVO {
 
-    @Join(alias = "t1")
+    @JoinLeftTable(alias = "t1")
     private StudentDO student;
 
-    @Join(alias = "t2")
+    @JoinRightTable(alias = "t2")
     private SchoolDO school;
 }
 

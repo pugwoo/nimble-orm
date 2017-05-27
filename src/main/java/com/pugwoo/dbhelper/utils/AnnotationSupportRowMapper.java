@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.JoinLeftTable;
+import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 
 /**
@@ -59,6 +61,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				Object t1 = leftJoinField.getType().newInstance();
 				Object t2 = rightJoinField.getType().newInstance();
 				
+				JoinLeftTable joinLeftTable = leftJoinField.getAnnotation(JoinLeftTable.class);
+				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
+				
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
 				
 				boolean isT1AllNull = true;
@@ -66,8 +71,8 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				for (Field field : fieldsT1) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
-							TypeAutoCast.cast(rs, "t1." + column.value(), field.getType()), 
-							field.getType());
+						TypeAutoCast.cast(rs, joinLeftTable.alias() + "." + column.value(), field.getType()), 
+						field.getType());
 					if(value != null) {
 						isT1AllNull = false;
 					}
@@ -79,8 +84,8 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				for (Field field : fieldsT2) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
-							TypeAutoCast.cast(rs, "t2." + column.value(), field.getType()), 
-							field.getType());
+						TypeAutoCast.cast(rs, joinRightTable.alias() + "." + column.value(), field.getType()), 
+						field.getType());
 					if(value != null) {
 						isT2AllNull = false;
 					}
