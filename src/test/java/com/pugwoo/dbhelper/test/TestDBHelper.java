@@ -230,6 +230,7 @@ public class TestDBHelper {
 	/**
 	 * 测试jdbcTemplate
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testJdbcTemplate() {
 		Integer count = dbHelper.queryForObject(
@@ -440,6 +441,18 @@ public class TestDBHelper {
 		for(int i = 0; i < 3; i++) {
 			Assert.assertTrue(map.get(ids.get(i)).getId().equals(ids.get(i)));
 		}
+	}
+	
+	@Test
+	public void testExists() {
+		StudentDO studentDO = insertOne();
+		Assert.assertTrue(dbHelper.isExist(StudentDO.class, null));
+		Assert.assertTrue(dbHelper.isExist(StudentDO.class, "where id=?", studentDO.getId()));
+		Assert.assertTrue(dbHelper.isExistAtLeast(1, StudentDO.class,
+				"where id=?", studentDO.getId()));
+		
+		Assert.assertFalse(dbHelper.isExistAtLeast(2, StudentDO.class,
+				"where id=?", studentDO.getId()));
 	}
 	
 	@Test

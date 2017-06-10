@@ -29,6 +29,7 @@ public interface DBHelper {
 	void setTimeoutWarningValve(long timeMS);
 	
 	// 几个常用的jdbcTemplate的方法，目的是用dbHelper时可以使用in (?)传入list的参数
+	// 但这些方法都不提供自动处理软删除记录功能，建议尽量不用
 	// ===============JDBCTemplate native method START =======================
 	
 	/**
@@ -39,6 +40,7 @@ public interface DBHelper {
 	 * @param args
 	 * @return
 	 */
+	@Deprecated
 	<T> T queryForObject(Class<T> clazz, String sql, Object... args);
 	
 	/**
@@ -48,6 +50,7 @@ public interface DBHelper {
 	 * @param args
 	 * @return
 	 */
+	@Deprecated
 	SqlRowSet queryForRowSet(String sql, Object... args);
 	
 	/**
@@ -57,6 +60,7 @@ public interface DBHelper {
 	 * @param args
 	 * @return
 	 */
+	@Deprecated
 	Map<String, Object> queryForMap(String sql, Object... args);
 	
 	/**
@@ -66,6 +70,7 @@ public interface DBHelper {
 	 * @param args
 	 * @return
 	 */
+	@Deprecated
 	List<Map<String, Object>> queryForList(String sql, Object... args);
 	
 	/**
@@ -76,6 +81,7 @@ public interface DBHelper {
 	 * @param args
 	 * @return
 	 */
+	@Deprecated
 	<T> List<T> queryForList(Class<T> clazz, String sql, Object... args);
 	
 	// ===============JDBCTemplate native method END =======================
@@ -204,6 +210,26 @@ public interface DBHelper {
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
+	
+	/**
+	 * 是否出现至少一条记录
+	 * @param clazz
+	 * @param postSql 不能有limit子句
+	 * @param args
+	 * @return
+	 */
+	<T> boolean isExist(Class<T> clazz, String postSql, Object... args);
+	
+	/**
+	 * 是否出现至少N条记录(含N条)
+	 * @param atLeastCounts 至少有N条记录（isExist方法等级于atLeastCounts=1）
+	 * @param clazz
+	 * @param postSql 不能有limit子句
+	 * @param args
+	 * @return
+	 */
+	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
+			String postSql, Object... args);
 	
 	// ===============Query methods END ==================================
 	

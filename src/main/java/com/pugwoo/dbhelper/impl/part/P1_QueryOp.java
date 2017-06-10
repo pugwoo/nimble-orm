@@ -256,6 +256,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return rows;
 	}
 	
+	@Override
+	public <T> boolean isExist(Class<T> clazz, String postSql, Object... args) {
+		return getOne(clazz, postSql, args) != null;
+	}
+	
+	@Override
+	public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
+			String postSql, Object... args) {
+		if(atLeastCounts == 1) {
+			return isExist(clazz, postSql, args);
+		}
+		return getCount(clazz, postSql, args) >= atLeastCounts;
+	}
+	
 	// ======================= 处理 RelatedColumn数据 ========================
 	
 	/**单个关联*/

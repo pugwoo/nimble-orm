@@ -89,7 +89,7 @@ public class SQLUtils {
 		
 		return sql.toString();
 	}
-
+	
 	/**
 	 * select count(*) from t_table, 不包含where子句及以后的语句
 	 * @param clazz
