@@ -15,15 +15,15 @@ import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
  */
 public class StudentVO extends StudentDO {
 	
-	@RelatedColumn(value = "school_id", remoteColumn = "id")
+	@RelatedColumn(localColumn = "school_id", remoteColumn = "id")
 	private SchoolDO schoolDO;
 	
-	// @RelatedColumn(value = "id", remoteColumn = "student_id")
-	@RelatedColumn(value = "id", remoteColumn = "student_id", /*一定要写remoteColumn*/
+	// @RelatedColumn(localColumn = "id", remoteColumn = "student_id")
+	@RelatedColumn(localColumn = "id", remoteColumn = "student_id", /*一定要写remoteColumn*/
 			dataService = IGetCourseByStudentIdDataService.class)
 	private List<CourseDO> courses;
 	
-	@RelatedColumn(value = "id", remoteColumn = "student_id", extraWhere = "where is_main=1")
+	@RelatedColumn(localColumn = "id", remoteColumn = "student_id", extraWhere = "where is_main=1")
 	private List<CourseDO> mainCourses;
 	
 	// 计算列示例，生成的select字段为：CONCAT(name,'hi') AS nameWithHi

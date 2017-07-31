@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.exception.MustProvideconstructorException;
@@ -27,65 +26,7 @@ public interface DBHelper {
 	 * @param timeMS 毫秒
 	 */
 	void setTimeoutWarningValve(long timeMS);
-	
-	// 几个常用的jdbcTemplate的方法，目的是用dbHelper时可以使用in (?)传入list的参数
-	// 但这些方法都不提供自动处理软删除记录功能，建议尽量不用
-	// ===============JDBCTemplate native method START =======================
-	
-	/**
-	 * jdbcTemplate方式查询对象，clazz不需要Dbhelper的@Table等注解。<br>
-	 * 【不会自动处理软删除记录】
-	 * @param clazz 一般是Long,String等基本类型
-	 * @param sql 必须是完整的sql
-	 * @param args
-	 * @return
-	 */
-	@Deprecated
-	<T> T queryForObject(Class<T> clazz, String sql, Object... args);
-	
-	/**
-	 * jdbcTemplate方式查询对象<br>
-	 * 【不会自动处理软删除记录】
-	 * @param sql 必须是完整的sql
-	 * @param args
-	 * @return
-	 */
-	@Deprecated
-	SqlRowSet queryForRowSet(String sql, Object... args);
-	
-	/**
-	 * jdbcTemplate方式查询对象<br>
-	 * 【不会自动处理软删除记录】
-	 * @param sql 必须是完整的sql
-	 * @param args
-	 * @return
-	 */
-	@Deprecated
-	Map<String, Object> queryForMap(String sql, Object... args);
-	
-	/**
-	 * jdbcTemplate方式查询对象<br> 查询多列的结果<br>
-	 * 【不会自动处理软删除记录】
-	 * @param sql 必须是完整的sql
-	 * @param args
-	 * @return
-	 */
-	@Deprecated
-	List<Map<String, Object>> queryForList(String sql, Object... args);
-	
-	/**
-	 * jdbcTemplate方式查询对象<br> 查询多列结果<br>
-	 * 【不会自动处理软删除记录】
-	 * @param clazz
-	 * @param sql
-	 * @param args
-	 * @return
-	 */
-	@Deprecated
-	<T> List<T> queryForList(Class<T> clazz, String sql, Object... args);
-	
-	// ===============JDBCTemplate native method END =======================
-	
+
 	// ===============Query methods START ==================================
 	
 	/**

@@ -319,7 +319,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		for(Field field : relatedColumns) {
 			
 			RelatedColumn column = field.getAnnotation(RelatedColumn.class);
-			if(column.value().trim().isEmpty()) {
+			if(column.localColumn().trim().isEmpty()) {
 				LOGGER.warn("relatedColumn value is empty, field:{}", field);
 				continue;
 			}
@@ -328,9 +328,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				continue;
 			}
 			
-			Field relateField = DOInfoReader.getFieldByDBField(clazz, column.value());
+			Field relateField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
 			if(relateField == null) {
-				LOGGER.error("cannot find relateField,db column name:{}", column.value());
+				LOGGER.error("cannot find relateField,db column name:{}", column.localColumn());
 				continue;
 			}
 			

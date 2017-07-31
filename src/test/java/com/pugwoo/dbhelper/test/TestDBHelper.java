@@ -226,21 +226,7 @@ public class TestDBHelper {
 	}
 	
 	// ============ DELETE TEST END ======================
-	
-	/**
-	 * 测试jdbcTemplate
-	 */
-	@SuppressWarnings("deprecation")
-	@Test
-	public void testJdbcTemplate() {
-		Integer count = dbHelper.queryForObject(
-				Integer.class, "select count(*) from t_student where id<?", 50);
-		System.out.println("count:" + count);
 		
-		Map<String, Object> map = dbHelper.queryForMap("select * from t_student limit 1");
-		System.out.println(map);
-	}
-	
 	@Test
 	public void testGetByArray() {
 		// 但是这种写法不稳定的，推荐传入List参数值

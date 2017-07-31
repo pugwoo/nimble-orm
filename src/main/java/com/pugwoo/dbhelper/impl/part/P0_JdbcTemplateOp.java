@@ -1,7 +1,6 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +9,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.pugwoo.dbhelper.DBHelper;
@@ -63,48 +61,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	}
-	
-	@Override
-	public <T> T queryForObject(Class<T> clazz, String sql, Object... args) {
-		return namedParameterJdbcTemplate.queryForObject(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args),
-				clazz); // 因为有in (?)所以用namedParameterJdbcTemplate
-	}
-	
-	@Override
-	public SqlRowSet queryForRowSet(String sql, Object... args) {
-		SqlRowSet sqlRowSet = namedParameterJdbcTemplate.queryForRowSet(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return sqlRowSet;
-	}
-	
-	@Override
-	public Map<String, Object> queryForMap(String sql, Object... args) {
-		Map<String, Object> map = namedParameterJdbcTemplate.queryForMap(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return map;
-	}
-	
-	@Override
-	public List<Map<String, Object>> queryForList(String sql, Object... args) {
-		List<Map<String, Object>> list = namedParameterJdbcTemplate.queryForList(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args)); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return list;
-	}
-	
-	@Override
-	public <T> List<T> queryForList(Class<T> clazz, String sql, Object... args) {
-		List<T> list = namedParameterJdbcTemplate.queryForList(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(args),
-				clazz); // 因为有in (?)所以用namedParameterJdbcTemplate
-		return list;
-	}
-	
+
 	/**
 	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式 
 	 * @param sql
