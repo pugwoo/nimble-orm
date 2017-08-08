@@ -1,6 +1,7 @@
 2017年7月31日
 v0.4.0 - [del] 删除掉DBHelper中对JDBCTemplate native封装的方法(queryForObject等4个)
        - [improve] 优化@RelatedColumn注解语义准确性，value修改为localColumn和remoteColumn必填
+       - [test] 使用HikariCP代替druid
 
 2017年6月10日
 v0.3.7 - [add] 增加isExist和isExistAtLeast两个方法
