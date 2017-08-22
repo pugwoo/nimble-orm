@@ -218,6 +218,8 @@ public class StudentSchoolJoinVO {
 
 * 参数列表中不能出现null，否则会报`org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'`
 
+* 目前发现HikariCP数据库连接池在高并发时，getPage获取分页总数时，会有返回1的异常数据。使用tomcat-jdbc或duird则没有问题。因此不推荐使用HikariCP，它在实现高性能的同时肯定突破了某些规范。
+
 ## 未来规划
 
 1. 拦截器设计。
