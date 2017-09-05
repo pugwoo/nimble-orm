@@ -27,6 +27,28 @@ import net.sf.jsqlparser.JSQLParserException;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
+	private void doBeforeInterceptor(Object t, StringBuilder sql, Object[] args) {
+		for (DBHelperInterceptor interceptor : interceptors) {
+			boolean isContinue = interceptor.beforeSelect(t.getClass(), sql.toString(), args);
+			if (!isContinue) {
+				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+			}
+		}
+	}
+	
+	private <T> T doAfterInteceptorForOne(T t) {
+		for (int i = interceptors.size() - 1; i >= 0; i--) {
+			DBHelperInterceptor interceptor = interceptors.get(i);
+			List<T> list = new ArrayList<T>();
+			if (t != null) {
+				list.add(t);
+			}
+			List<T> result = interceptor.afterSelect(t.getClass(), list, 1);
+			t = result == null || result.isEmpty() ? null : result.get(0);
+		}
+		return t;
+	}
+	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> boolean getByKey(T t) throws NullKeyValueException {
 		StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false));
@@ -36,13 +58,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		try {
 			log(sql);
-			
-			for (DBHelperInterceptor interceptor : interceptors) {
-				boolean isContinue = interceptor.beforeSelect(t.getClass(), sql.toString(), keyValues.toArray());
-				if (!isContinue) {
-					throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
-				}
-			}
+			doBeforeInterceptor(t, sql, keyValues.toArray());
 			
 			long start = System.currentTimeMillis();
 			jdbcTemplate.queryForObject(sql.toString(),
@@ -52,30 +68,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			postHandleRelatedColumn(t);
 			logSlow(System.currentTimeMillis() - start, sql, keyValues);
 			
-			for (int i = interceptors.size() - 1; i >= 0; i--) {
-				DBHelperInterceptor interceptor = interceptors.get(i);
-				List<T> list = new ArrayList<T>();
-				if (t != null) {
-					list.add(t);
-				}
-				List<T> result = interceptor.afterSelect(t.getClass(), list, 1);
-				t = result == null || result.isEmpty() ? null : result.get(0);
-			}
-			
+			t = doAfterInteceptorForOne(t);
 			return t != null;
 		} catch (EmptyResultDataAccessException e) {
-			
 			t = null;
-			for (int i = interceptors.size() - 1; i >= 0; i--) {
-				DBHelperInterceptor interceptor = interceptors.get(i);
-				List<T> list = new ArrayList<T>();
-				if (t != null) {
-					list.add(t);
-				}
-				List<T> result = interceptor.afterSelect(t.getClass(), list, 1);
-				t = result == null || result.isEmpty() ? null : result.get(0);
-			}
-			
+			t = doAfterInteceptorForOne(t);
 			return t != null;
 		}
 	}
@@ -110,8 +107,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		}
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
+	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues) {
 		if(keyValues == null || keyValues.isEmpty()) {
 			return new HashMap<K, T>();
