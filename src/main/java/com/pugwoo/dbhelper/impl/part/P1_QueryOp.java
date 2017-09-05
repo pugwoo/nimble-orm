@@ -9,9 +9,11 @@ import java.util.Map;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
@@ -25,34 +27,60 @@ import net.sf.jsqlparser.JSQLParserException;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> boolean getByKey(T t) throws NullKeyValueException {
-		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectSQL(t.getClass(), false));
+		StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false));
 		
 		List<Object> keyValues = new ArrayList<Object>();
 		sql.append(SQLUtils.getKeysWhereSQL(t, keyValues));
 		
 		try {
 			log(sql);
+			
+			for (DBHelperInterceptor interceptor : interceptors) {
+				boolean isContinue = interceptor.beforeSelect(t.getClass(), sql.toString(), keyValues.toArray());
+				if (!isContinue) {
+					throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				}
+			}
+			
 			long start = System.currentTimeMillis();
 			jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(t.getClass(), t),
 					keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 			
 			postHandleRelatedColumn(t);
+			logSlow(System.currentTimeMillis() - start, sql, keyValues);
 			
-			long cost = System.currentTimeMillis() - start;
-			logSlow(cost, sql, keyValues);
-			return true;
+			for (int i = interceptors.size() - 1; i >= 0; i--) {
+				DBHelperInterceptor interceptor = interceptors.get(i);
+				List<T> list = new ArrayList<T>();
+				if (t != null) {
+					list.add(t);
+				}
+				List<T> result = interceptor.afterSelect(t.getClass(), list, 1);
+				t = result == null || result.isEmpty() ? null : result.get(0);
+			}
+			
+			return t != null;
 		} catch (EmptyResultDataAccessException e) {
-			return false;
+			
+			t = null;
+			for (int i = interceptors.size() - 1; i >= 0; i--) {
+				DBHelperInterceptor interceptor = interceptors.get(i);
+				List<T> list = new ArrayList<T>();
+				if (t != null) {
+					list.add(t);
+				}
+				List<T> result = interceptor.afterSelect(t.getClass(), list, 1);
+				t = result == null || result.isEmpty() ? null : result.get(0);
+			}
+			
+			return t != null;
 		}
 	}
 	
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException,
 	    NotOnlyOneKeyColumnException {
 		

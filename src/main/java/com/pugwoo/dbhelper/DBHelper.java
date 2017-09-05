@@ -26,6 +26,12 @@ public interface DBHelper {
 	 * @param timeMS 毫秒
 	 */
 	void setTimeoutWarningValve(long timeMS);
+	
+	/**
+	 * 数据库拦截器
+	 * @param interceptors
+	 */
+	void setInterceptors(List<DBHelperInterceptor> interceptors);
 
 	// ===============Query methods START ==================================
 	

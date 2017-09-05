@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.impl.part;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
@@ -28,6 +30,8 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected long timeoutWarningValve = 1000;
 	
 	protected ApplicationContext applicationContext;
+	
+	protected List<DBHelperInterceptor> interceptors = new ArrayList<DBHelperInterceptor>();
 	
 	protected void log(StringBuilder sql) {
 		log(sql.toString());
@@ -124,6 +128,18 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	public void setApplicationContext(ApplicationContext applicationContext) 
 			throws BeansException {
 		this.applicationContext = applicationContext;
+	}
+	
+	@Override
+	public void setInterceptors(List<DBHelperInterceptor> interceptors) {
+		if(interceptors != null) {
+			// 移除为null的值
+			for(DBHelperInterceptor interceptor : interceptors) {
+				if(interceptor != null) {
+					this.interceptors.add(interceptor);
+				}
+			}
+		}
 	}
 
 }

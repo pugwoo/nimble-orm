@@ -194,6 +194,10 @@ public class StudentSchoolJoinVO {
 
 2. 一般来说，Java中的Boolean字段会对应数据库的tinyint(1)字段，和C语言保持一致，对于tinyint(4)，0表示false，非0表示true(包括负数)。当然dbHelper也支持mysql bit的类型。
 
+## 其它技巧和说明
+
+1. 对于用distinct查询数据库某些列的枚举值，可以使用group by代替，性能是等价的，推荐给group by字段加索引。
+
 ## 一些思考和选择
 
 * 为什么insert和update默认只插入非null的值，而单独提供一个insertWithNull和updateWithNull的方法呢?
