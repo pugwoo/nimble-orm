@@ -37,19 +37,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 	
 	/**t为null表示没有记录，因此等价于空list*/
-	private <T> T doAfterInteceptorForOne(Class<?> clazz, T t) {
+	private <T> T doAfterInteceptorForOne(Class<?> clazz, T t, StringBuilder sql, Object[] args) {
 		List<T> list = new ArrayList<T>();
 		if (t != null) {
 			list.add(t);
 		}
-		list = doAfterInteceptorForList(clazz, list, 1);
+		list = doAfterInteceptorForList(clazz, list, 1, sql, args);
 		return list == null || list.isEmpty() ? null : list.get(0);
 	}
 	
-	private <T> List<T> doAfterInteceptorForList(Class<?> clazz, List<T> list, int total) {
+	private <T> List<T> doAfterInteceptorForList(Class<?> clazz, List<T> list, int total,
+			StringBuilder sql, Object[] args) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			DBHelperInterceptor interceptor = interceptors.get(i);
-			list = interceptor.afterSelect(clazz, list, total);
+			list = interceptor.afterSelect(clazz, list, total, sql.toString(), args);
 		}
 		return list;
 	}
@@ -75,11 +76,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			postHandleRelatedColumn(t);
 			logSlow(System.currentTimeMillis() - start, sql, keyValues);
 			
-			t = doAfterInteceptorForOne(clazz, t);
+			t = doAfterInteceptorForOne(clazz, t, sql, keyValues.toArray());
 			return t != null;
 		} catch (EmptyResultDataAccessException e) {
 			t = null;
-			t = doAfterInteceptorForOne(clazz, t);
+			t = doAfterInteceptorForOne(clazz, t, sql, keyValues.toArray());
 			return t != null;
 		}
 	}
@@ -111,11 +112,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			long cost = System.currentTimeMillis() - start;
 			logSlow(cost, sql, keyValue);
 			
-			t = doAfterInteceptorForOne(clazz, t);
+			t = doAfterInteceptorForOne(clazz, t, sql, new Object[]{keyValue});
 			return t;
 		} catch (EmptyResultDataAccessException e) {
 			T t = null;
-			t = doAfterInteceptorForOne(clazz, t);
+			t = doAfterInteceptorForOne(clazz, t, sql, new Object[]{keyValue});
 			return t;
 		}
 	}
@@ -142,7 +143,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, keyValues);
 		
-		list = doAfterInteceptorForList(clazz, list, list.size());
+		list = doAfterInteceptorForList(clazz, list, list.size(), sql, keyValues.toArray());
 		
 		// 转换to map
 		if(list == null || list.isEmpty()) {
@@ -265,7 +266,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
 		
-		doAfterInteceptorForList(clazz, list, total);
+		doAfterInteceptorForList(clazz, list, total, sql, args);
 		
 		PageData<T> pageData = new PageData<T>();
 		pageData.setData(list);

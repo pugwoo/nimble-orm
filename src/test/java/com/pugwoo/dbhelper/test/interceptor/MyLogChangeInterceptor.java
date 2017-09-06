@@ -13,7 +13,8 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 
 	@Override
-	public <T> List<T> afterSelect(Class<?> clazz, List<T> result, int count) {
+	public <T> List<T> afterSelect(Class<?> clazz, List<T> result, int count,
+			String sql, Object[] args) {
 		System.out.println("in interceptor, class=" + clazz + ",result size:" + result.size()
 		   + ",count:" + count);
 		return result;
