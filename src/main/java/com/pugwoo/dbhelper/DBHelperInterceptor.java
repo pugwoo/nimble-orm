@@ -15,7 +15,7 @@ import java.util.List;
 public class DBHelperInterceptor {
 
 	/**
-	 * select查询之前调用
+	 * select前执行
 	 * @param clazz 查询的对象
 	 * @param sql 查询的完整sql
 	 * @param args 查询的完整参数。理论上，拦截器就有可能修改args里面的object的值的，请小心。
@@ -26,7 +26,7 @@ public class DBHelperInterceptor {
 	}
 	
 	/**
-	 * 查询结果后处理
+	 * select后执行
 	 * @param clazz 查询的对象 
 	 * @param result 查询结果值，对于返回值是一个的，也放入该list中。对于没有的，这里会传入空list。
 	 * @param count 当查询总数或有分页总数时，该数有值。该值为-1时，表示未知总数。
@@ -40,4 +40,24 @@ public class DBHelperInterceptor {
 		return result;
 	}
 	
+	/**
+	 * insert前执行
+	 * @param clazz 查询的对象
+	 * @param list 插入的对象列表。理论上，可以修改list中的元素，请小心。
+	 * @return
+	 */
+	public boolean beforeInsert(Class<?> clazz, List<Object> list) {
+		return true;
+	}
+	
+	/**
+	 * insert后执行
+	 * @param clazz 查询的对象
+	 * @param list 插入的对象列表，对于有自增id的值，返回的list已经设置上了主键。
+	 * @param affectedRows 实际影响的数据库条数
+	 */
+	public void afterInsert(Class<?> clazz, List<Object> list, int affectedRows) {
+	}
+	
+	// 对于更新拦截器，提供两种类型：1. 只知道现在要更新的对象的值。2. 还知道现在数据库里面的值，多一次查询。
 }
