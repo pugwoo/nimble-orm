@@ -36,22 +36,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		}
 	}
 	
-	private <T> T doAfterInteceptorForOne(T t) {
+	/**t为null表示没有记录，因此等价于空list*/
+	private <T> T doAfterInteceptorForOne(Class<?> clazz, T t) {
+		List<T> list = new ArrayList<T>();
+		if (t != null) {
+			list.add(t);
+		}
+		list = doAfterInteceptorForList(clazz, list, 1);
+		return list == null || list.isEmpty() ? null : list.get(0);
+	}
+	
+	private <T> List<T> doAfterInteceptorForList(Class<?> clazz, List<T> list, int total) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			DBHelperInterceptor interceptor = interceptors.get(i);
-			List<T> list = new ArrayList<T>();
-			if (t != null) {
-				list.add(t);
-			}
-			List<T> result = interceptor.afterSelect(t.getClass(), list, 1);
-			t = result == null || result.isEmpty() ? null : result.get(0);
+			list = interceptor.afterSelect(clazz, list, total);
 		}
-		return t;
+		return list;
 	}
 	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> boolean getByKey(T t) throws NullKeyValueException {
 		if(t == null) {return false;}
+		Class<?> clazz = t.getClass();
 		StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false));
 		
 		List<Object> keyValues = new ArrayList<Object>();
@@ -69,11 +75,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			postHandleRelatedColumn(t);
 			logSlow(System.currentTimeMillis() - start, sql, keyValues);
 			
-			t = doAfterInteceptorForOne(t);
+			t = doAfterInteceptorForOne(clazz, t);
 			return t != null;
 		} catch (EmptyResultDataAccessException e) {
 			t = null;
-			t = doAfterInteceptorForOne(t);
+			t = doAfterInteceptorForOne(clazz, t);
 			return t != null;
 		}
 	}
@@ -104,11 +110,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			
 			long cost = System.currentTimeMillis() - start;
 			logSlow(cost, sql, keyValue);
-			t = doAfterInteceptorForOne(t);
+			
+			t = doAfterInteceptorForOne(clazz, t);
 			return t;
 		} catch (EmptyResultDataAccessException e) {
 			T t = null;
-			t = doAfterInteceptorForOne(t);
+			t = doAfterInteceptorForOne(clazz, t);
 			return t;
 		}
 	}
@@ -124,6 +131,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 		
 		log(sql);
+		doBeforeInterceptor(clazz, sql, keyValues.toArray());
 		long start = System.currentTimeMillis();
 		List<T> list = namedParameterJdbcTemplate.query(
 				NamedParameterUtils.trans(sql.toString()),
@@ -131,14 +139,15 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		
 		postHandleRelatedColumn(list);
-		
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, keyValues);
 		
+		list = doAfterInteceptorForList(clazz, list, list.size());
+		
+		// 转换to map
 		if(list == null || list.isEmpty()) {
 			return new HashMap<K, T>();
 		}
-		
 		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
 		Map<K, T> map = new LinkedHashMap<K, T>();
 		for(K key : keyValues) {
@@ -232,6 +241,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.genLimitSQL(offset, limit));
 		
 		log(sql);
+		doBeforeInterceptor(clazz, sql, args);
+		
 		long start = System.currentTimeMillis();
 		List<T> list;
 		if(args == null || args.length == 0) {
@@ -245,8 +256,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		}
 		
 		int total = -1; // -1 表示没有查询总数，未知
-		if(withCount) {
-			// 注意：必须在查询完列表之后马上查询总数
+		if(withCount) { // 注意：必须在查询完列表之后马上查询总数
 			total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
 		}
 		
@@ -254,6 +264,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
+		
+		doAfterInteceptorForList(clazz, list, total);
 		
 		PageData<T> pageData = new PageData<T>();
 		pageData.setData(list);
