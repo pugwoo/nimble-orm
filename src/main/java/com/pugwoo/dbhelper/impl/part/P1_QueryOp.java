@@ -27,9 +27,9 @@ import net.sf.jsqlparser.JSQLParserException;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
-	private void doBeforeInterceptor(Object t, StringBuilder sql, Object[] args) {
+	private void doBeforeInterceptor(Class<?> clazz, StringBuilder sql, Object[] args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeSelect(t.getClass(), sql.toString(), args);
+			boolean isContinue = interceptor.beforeSelect(clazz, sql.toString(), args);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -51,6 +51,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> boolean getByKey(T t) throws NullKeyValueException {
+		if(t == null) {return false;}
 		StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false));
 		
 		List<Object> keyValues = new ArrayList<Object>();
@@ -58,7 +59,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		try {
 			log(sql);
-			doBeforeInterceptor(t, sql, keyValues.toArray());
+			doBeforeInterceptor(t.getClass(), sql, keyValues.toArray());
 			
 			long start = System.currentTimeMillis();
 			jdbcTemplate.queryForObject(sql.toString(),
@@ -92,6 +93,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		try {
 			log(sql);
+			
+			doBeforeInterceptor(clazz, sql, new Object[]{keyValue});
 			long start = System.currentTimeMillis();
 			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
@@ -101,9 +104,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			
 			long cost = System.currentTimeMillis() - start;
 			logSlow(cost, sql, keyValue);
+			t = doAfterInteceptorForOne(t);
 			return t;
 		} catch (EmptyResultDataAccessException e) {
-			return null;
+			T t = null;
+			t = doAfterInteceptorForOne(t);
+			return t;
 		}
 	}
 	
