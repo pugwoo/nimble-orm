@@ -43,10 +43,10 @@ public class DBHelperInterceptor {
 	/**
 	 * insert前执行
 	 * @param clazz 查询的对象
-	 * @param list 插入的对象列表。理论上，可以修改list中的元素，请小心。
+	 * @param list 插入的对象列表。理论上，可以修改list中的元素，请小心；但删除list元素则不一定会影响insert。
 	 * @return
 	 */
-	public boolean beforeInsert(Class<?> clazz, List<Object> list) {
+	public <T> boolean beforeInsert(Class<?> clazz, List<T> list) {
 		return true;
 	}
 	
@@ -56,7 +56,7 @@ public class DBHelperInterceptor {
 	 * @param list 插入的对象列表，对于有自增id的值，返回的list已经设置上了主键。
 	 * @param affectedRows 实际影响的数据库条数
 	 */
-	public void afterInsert(Class<?> clazz, List<Object> list, int affectedRows) {
+	public <T> void afterInsert(Class<?> clazz, List<T> list, int affectedRows) {
 	}
 	
 	// 对于更新拦截器，提供两种类型：1. 只知道现在要更新的对象的值。2. 还知道现在数据库里面的值，多一次查询。

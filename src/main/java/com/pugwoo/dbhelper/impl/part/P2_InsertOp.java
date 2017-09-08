@@ -7,12 +7,50 @@ import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
+	
+	private void doBeforeInterceptor(Class<?> clazz, Object t) {
+		for (DBHelperInterceptor interceptor : interceptors) {
+			List<Object> list = new ArrayList<Object>();
+			list.add(t);
+			boolean isContinue = interceptor.beforeInsert(clazz, list);
+			if (!isContinue) {
+				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+			}
+		}
+	}
+	
+	private <T> void doBeforeInterceptorForList(Class<?> clazz, List<T> list) {
+		for (DBHelperInterceptor interceptor : interceptors) {
+			boolean isContinue = interceptor.beforeInsert(clazz, list);
+			if (!isContinue) {
+				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+			}
+		}
+	}
+	
+	private void doAfterInteceptorForOne(Class<?> clazz, Object t, int rows) {
+		for (int i = interceptors.size() - 1; i >= 0; i--) {
+			DBHelperInterceptor interceptor = interceptors.get(i);
+			List<Object> list = new ArrayList<Object>();
+			list.add(t);
+			interceptor.afterInsert(clazz, list, rows);
+		}
+	}
+	
+	private <T> void doAfterInteceptorForList(Class<?> clazz, List<T> list, int rows) {
+		for (int i = interceptors.size() - 1; i >= 0; i--) {
+			DBHelperInterceptor interceptor = interceptors.get(i);
+			interceptor.afterInsert(clazz, list, rows);
+		}
+	}
 
 	@Override
 	public <T> int insert(T t) {
@@ -43,6 +81,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
 		
 		log(sql);
+		doBeforeInterceptor(t.getClass(), t);
+		
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
@@ -53,6 +93,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
+		
+		doAfterInteceptorForOne(t.getClass(), t, rows);
 		return rows;
 	}
 	
@@ -83,6 +125,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		
 		log(sql);
+		doBeforeInterceptor(t.getClass(), t);
+		
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
@@ -93,6 +137,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
+		
+		doAfterInteceptorForOne(t.getClass(), t, rows);
 		return rows;
 	}
 		
@@ -111,8 +157,17 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		List<Object> values = new ArrayList<Object>();
 		String sql = SQLUtils.getInsertSQLWithNull(list, values);
-				
-		return jdbcExecuteUpdate(sql.toString(), values.toArray());
+		
+		log(sql);
+		doBeforeInterceptorForList(list.get(0).getClass(), list);
+		
+		long start = System.currentTimeMillis();
+		int rows = jdbcExecuteUpdate(sql.toString(), values.toArray());
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, values);
+		
+		doAfterInteceptorForList(list.get(0).getClass(), list, rows);
+		return rows;
 	}
 	
 }
