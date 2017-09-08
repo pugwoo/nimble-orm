@@ -27,34 +27,6 @@ import net.sf.jsqlparser.JSQLParserException;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
-	private void doBeforeInterceptor(Class<?> clazz, StringBuilder sql, Object[] args) {
-		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeSelect(clazz, sql.toString(), args);
-			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
-			}
-		}
-	}
-	
-	/**t为null表示没有记录，因此等价于空list*/
-	private <T> T doAfterInteceptorForOne(Class<?> clazz, T t, StringBuilder sql, Object[] args) {
-		List<T> list = new ArrayList<T>();
-		if (t != null) {
-			list.add(t);
-		}
-		list = doAfterInteceptorForList(clazz, list, 1, sql, args);
-		return list == null || list.isEmpty() ? null : list.get(0);
-	}
-	
-	private <T> List<T> doAfterInteceptorForList(Class<?> clazz, List<T> list, int total,
-			StringBuilder sql, Object[] args) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			DBHelperInterceptor interceptor = interceptors.get(i);
-			list = interceptor.afterSelect(clazz, list, total, sql.toString(), args);
-		}
-		return list;
-	}
-	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> boolean getByKey(T t) throws NullKeyValueException {
 		if(t == null) {return false;}
@@ -311,6 +283,36 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			return isExist(clazz, postSql, args);
 		}
 		return getCount(clazz, postSql, args) >= atLeastCounts;
+	}
+	
+	//////////////////// 拦截器封装方法
+	
+	private void doBeforeInterceptor(Class<?> clazz, StringBuilder sql, Object[] args) {
+		for (DBHelperInterceptor interceptor : interceptors) {
+			boolean isContinue = interceptor.beforeSelect(clazz, sql.toString(), args);
+			if (!isContinue) {
+				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+			}
+		}
+	}
+	
+	/**t为null表示没有记录，因此等价于空list*/
+	private <T> T doAfterInteceptorForOne(Class<?> clazz, T t, StringBuilder sql, Object[] args) {
+		List<T> list = new ArrayList<T>();
+		if (t != null) {
+			list.add(t);
+		}
+		list = doAfterInteceptorForList(clazz, list, 1, sql, args);
+		return list == null || list.isEmpty() ? null : list.get(0);
+	}
+	
+	private <T> List<T> doAfterInteceptorForList(Class<?> clazz, List<T> list, int total,
+			StringBuilder sql, Object[] args) {
+		for (int i = interceptors.size() - 1; i >= 0; i--) {
+			DBHelperInterceptor interceptor = interceptors.get(i);
+			list = interceptor.afterSelect(clazz, list, total, sql.toString(), args);
+		}
+		return list;
 	}
 	
 	// ======================= 处理 RelatedColumn数据 ========================
