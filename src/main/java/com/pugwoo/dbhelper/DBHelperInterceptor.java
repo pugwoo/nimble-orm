@@ -59,5 +59,37 @@ public class DBHelperInterceptor {
 	public <T> void afterInsert(Class<?> clazz, List<T> list, int affectedRows) {
 	}
 	
-	// 对于更新拦截器，提供两种类型：1. 只知道现在要更新的对象的值。2. 还知道现在数据库里面的值，多一次查询。
+	// 对于更新拦截器，只提供当前要更新的值。由于更新提供了setSql和customSetSql,所以提供了多个接口来拦截。
+	// 这意味着，拦截器提供了2个
+
+    public <T> boolean beforeUpdate(Class<?> clazz, List<T> list) {
+    	return true;
+    }
+    
+    public <T> boolean beforeUpdate(Class<?> clazz, String sql, Object[] args) {
+    	return true;
+    }
+    
+    public <T> void afterUpdate(Class<?> clazz, List<T> list, int affectedRows) {
+    }
+    
+    public <T> void afterUpdate(Class<?> clazz, String sql, Object[] args, int affectedRows) {
+    }
+    
+    // 删除相关的
+    
+    public <T> boolean beforeDelete(Class<?> clazz, List<T> list) {
+    	return true;
+    }
+    
+    public <T> boolean beforeDelete(Class<?> clazz, String sql, Object[] args) {
+    	return true;
+    }
+    
+    public <T> void afterDelete(Class<?> clazz, List<T> list, int affectedRows) {
+    }
+    
+    public <T> void afterDelete(Class<?> clazz, String sql, Object[] args, int affectedRows) {
+    }
+    
 }
