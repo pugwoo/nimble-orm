@@ -99,17 +99,38 @@ public class DBHelperInterceptor {
     
     // 删除相关的
     
+    /**
+     * delete前执行，包括软删除和物理删除
+     * @param clazz
+     * @param t
+     * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
+     */
     public <T> boolean beforeDelete(Class<?> clazz, T t) {
     	return true;
     }
     
+    /**
+     * delete前执行，包括软删除和物理删除
+     * @param clazz
+     * @param sql
+     * @param args
+     * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
+     */
     public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql, Object[] args) {
     	return true;
     }
     
+    /**
+     * delete后执行
+     * @param affectedRows 实际修改数据库条数
+     */
     public <T> void afterDelete(Class<?> clazz, T t, int affectedRows) {
     }
     
+    /**
+     * delete后执行
+     * @param affectedRows 实际修改数据库条数
+     */
     public <T> void afterDeleteCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
     }
     

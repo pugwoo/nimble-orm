@@ -61,6 +61,17 @@ public class TestDBHelperInterceptor {
 		
 		dbHelper.updateCustom(studentDO, "age=age+1");
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
+	}
+	
+	@Test
+	public void testDelete() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("nick");
+		studentDO.setAge(29);
+		dbHelper.insert(studentDO);
+		Long id = studentDO.getId();
 		
+		dbHelper.deleteByKey(StudentDO.class, id);
+		dbHelper.delete(StudentDO.class, "where id > ?", 100);
 	}
 }
