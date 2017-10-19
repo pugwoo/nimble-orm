@@ -16,12 +16,12 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	protected void doInterceptBeforeUpdate(Class<?> clazz, Object t) {
+	private void doInterceptBeforeUpdate(Class<?> clazz, Object t) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
 		doInterceptBeforeUpdate(clazz, list);
 	}
-	protected <T> void doInterceptBeforeUpdate(Class<?> clazz, List<T> list) {
+	private <T> void doInterceptBeforeUpdate(Class<?> clazz, List<T> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdate(clazz, list);
 			if (!isContinue) {
@@ -29,7 +29,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 	}
-	protected void doInterceptBeforeUpdate(Class<?> clazz, String sql, Object[] args) {
+	private void doInterceptBeforeUpdate(Class<?> clazz, String sql, Object[] args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdateCustom(clazz, sql, args);
 			if (!isContinue) {
@@ -38,17 +38,17 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	protected void doInterceptAfterUpdate(Class<?> clazz, Object t, int rows) {
+	private void doInterceptAfterUpdate(Class<?> clazz, Object t, int rows) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
 		doInterceptAfterUpdate(clazz, list, rows);
 	}
-	protected <T> void doInterceptAfterUpdate(Class<?> clazz, List<T> list, int rows) {
+	private <T> void doInterceptAfterUpdate(Class<?> clazz, List<T> list, int rows) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			interceptors.get(i).afterUpdate(clazz, list, rows);
 		}
 	}
-	protected void doInterceptAfterUpdate(Class<?> clazz, String sql, Object[] args, int rows) {
+	private void doInterceptAfterUpdate(Class<?> clazz, String sql, Object[] args, int rows) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			interceptors.get(i).afterUpdateCustom(clazz, sql, args, rows);
 		}

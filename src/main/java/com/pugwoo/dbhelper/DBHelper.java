@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pugwoo.dbhelper.exception.MustProvideconstructorException;
+import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 
@@ -391,7 +391,7 @@ public interface DBHelper {
 	 * @throws NullKeyValueException
 	 */
 	<T> int deleteByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
-	    MustProvideconstructorException;
+	    MustProvideConstructorException;
 
 	/**
 	 * 自定义条件删除数据，该操作【会】自动使用软删除标记
