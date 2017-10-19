@@ -6,12 +6,54 @@ import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 public abstract class P3_UpdateOp extends P2_InsertOp {
+	
+	/////////////// 拦截器
+	private void doInterceptBeforeUpdate(Class<?> clazz, Object t) {
+		List<Object> list = new ArrayList<Object>();
+		list.add(t);
+		doInterceptBeforeUpdate(clazz, list);
+	}
+	private <T> void doInterceptBeforeUpdate(Class<?> clazz, List<T> list) {
+		for (DBHelperInterceptor interceptor : interceptors) {
+			boolean isContinue = interceptor.beforeUpdate(clazz, list);
+			if (!isContinue) {
+				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+			}
+		}
+	}
+	private void doInterceptBeforeUpdate(Class<?> clazz, String sql, Object[] args) {
+		for (DBHelperInterceptor interceptor : interceptors) {
+			boolean isContinue = interceptor.beforeUpdateCustom(clazz, sql, args);
+			if (!isContinue) {
+				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+			}
+		}
+	}
+	
+	private void doInterceptAfterUpdate(Class<?> clazz, Object t, int rows) {
+		List<Object> list = new ArrayList<Object>();
+		list.add(t);
+		doInterceptAfterUpdate(clazz, list, rows);
+	}
+	private <T> void doInterceptAfterUpdate(Class<?> clazz, List<T> list, int rows) {
+		for (int i = interceptors.size() - 1; i >= 0; i--) {
+			interceptors.get(i).afterUpdate(clazz, list, rows);
+		}
+	}
+	private void doInterceptAfterUpdate(Class<?> clazz, String sql, Object[] args, int rows) {
+		for (int i = interceptors.size() - 1; i >= 0; i--) {
+			interceptors.get(i).afterUpdateCustom(clazz, sql, args, rows);
+		}
+	}
+	//////////////
 
 	@Override
 	public <T> int update(T t) throws NullKeyValueException {
@@ -38,12 +80,16 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
+		
+		doInterceptBeforeUpdate(list.get(0).getClass(), list);
 		int rows = 0;
 		for(T t : list) {
 			if(t != null) {
 				rows += updateWithNull(t);
 			}
 		}
+		doInterceptAfterUpdate(list.get(0).getClass(), list, rows);
+		
 		return rows;
 	}
 	
@@ -52,12 +98,16 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
+		
+		doInterceptBeforeUpdate(list.get(0).getClass(), list);
 		int rows = 0;
 		for(T t : list) {
 			if(t != null) {
 				rows += update(t);
 			}
 		}
+		doInterceptAfterUpdate(list.get(0).getClass(), list, rows);
+		
 		return rows;
 	}
 	
@@ -70,13 +120,17 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		PreHandleObject.preHandleUpdate(t);
 		
+		doInterceptBeforeUpdate(t.getClass(), t);
 		List<Object> values = new ArrayList<Object>();
 		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
 		
-		return namedJdbcExecuteUpdate(sql, values.toArray());
+		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		doInterceptAfterUpdate(t.getClass(), t, rows);
+		
+		return rows;
 	}
 	
 	@Override
@@ -89,10 +143,13 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
+		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
 		
-		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql);
+		doInterceptBeforeUpdate(t.getClass(), sql, values.toArray());
+		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+		doInterceptAfterUpdate(t.getClass(), sql, values.toArray(), rows);
 		
-		return jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+		return rows;
 	}
 	
 	@Override
@@ -102,7 +159,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		
 		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql);
-		return namedJdbcExecuteUpdate(sql, args);
+		
+		doInterceptBeforeUpdate(clazz, sql, args);
+		int rows = namedJdbcExecuteUpdate(sql, args);
+		doInterceptAfterUpdate(clazz, sql, args, rows);
+		
+		return rows;
 	}
 	
 }

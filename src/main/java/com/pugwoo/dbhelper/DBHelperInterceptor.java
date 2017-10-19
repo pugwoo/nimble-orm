@@ -54,7 +54,7 @@ public class DBHelperInterceptor {
 	 * insert后执行
 	 * @param clazz 查询的对象
 	 * @param list 插入的对象列表，对于有自增id的值，返回的list已经设置上了主键。
-	 * @param affectedRows 实际影响的数据库条数
+	 * @param affectedRows 实际影响的数据库条数。注意list可能有值而affectedRows数据小于list个数，说明有的没有插入到数据库
 	 */
 	public <T> void afterInsert(Class<?> clazz, List<T> list, int affectedRows) {
 	}
@@ -66,14 +66,14 @@ public class DBHelperInterceptor {
     	return true;
     }
     
-    public <T> boolean beforeUpdate(Class<?> clazz, String sql, Object[] args) {
+    public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql, Object[] args) {
     	return true;
     }
     
     public <T> void afterUpdate(Class<?> clazz, List<T> list, int affectedRows) {
     }
     
-    public <T> void afterUpdate(Class<?> clazz, String sql, Object[] args, int affectedRows) {
+    public <T> void afterUpdateCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
     }
     
     // 删除相关的
@@ -82,14 +82,14 @@ public class DBHelperInterceptor {
     	return true;
     }
     
-    public <T> boolean beforeDelete(Class<?> clazz, String sql, Object[] args) {
+    public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql, Object[] args) {
     	return true;
     }
     
     public <T> void afterDelete(Class<?> clazz, List<T> list, int affectedRows) {
     }
     
-    public <T> void afterDelete(Class<?> clazz, String sql, Object[] args, int affectedRows) {
+    public <T> void afterDeleteCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
     }
     
 }
