@@ -16,18 +16,14 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
-	private void doBeforeInterceptor(Class<?> clazz, Object t) {
-		for (DBHelperInterceptor interceptor : interceptors) {
-			List<Object> list = new ArrayList<Object>();
-			list.add(t);
-			boolean isContinue = interceptor.beforeInsert(clazz, list);
-			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
-			}
-		}
+	//////// 拦截器
+	protected void doInterceptBeforeInsert(Class<?> clazz, Object t) {
+		List<Object> list = new ArrayList<Object>();
+		list.add(t);
+		doInterceptBeforeInsert(clazz, list);
 	}
 	
-	private <T> void doBeforeInterceptorForList(Class<?> clazz, List<T> list) {
+	protected <T> void doInterceptBeforeInsert(Class<?> clazz, List<T> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeInsert(clazz, list);
 			if (!isContinue) {
@@ -36,21 +32,20 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 	}
 	
-	private void doAfterInteceptorForOne(Class<?> clazz, Object t, int rows) {
+	protected void doInterceptAfterInsert(Class<?> clazz, Object t, int rows) {
+		List<Object> list = new ArrayList<Object>();
+		list.add(t);
+		doInterceptAfterInsert(clazz, list, rows);
+	}
+	
+	protected <T> void doInterceptAfterInsert(Class<?> clazz, List<T> list, int rows) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			DBHelperInterceptor interceptor = interceptors.get(i);
-			List<Object> list = new ArrayList<Object>();
-			list.add(t);
 			interceptor.afterInsert(clazz, list, rows);
 		}
 	}
 	
-	private <T> void doAfterInteceptorForList(Class<?> clazz, List<T> list, int rows) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			DBHelperInterceptor interceptor = interceptors.get(i);
-			interceptor.afterInsert(clazz, list, rows);
-		}
-	}
+	////////////
 
 	@Override
 	public <T> int insert(T t) {
@@ -81,7 +76,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
 		
 		log(sql);
-		doBeforeInterceptor(t.getClass(), t);
+		doInterceptBeforeInsert(t.getClass(), t);
 		
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
@@ -94,7 +89,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
 		
-		doAfterInteceptorForOne(t.getClass(), t, rows);
+		doInterceptAfterInsert(t.getClass(), t, rows);
 		return rows;
 	}
 	
@@ -125,7 +120,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		
 		log(sql);
-		doBeforeInterceptor(t.getClass(), t);
+		doInterceptBeforeInsert(t.getClass(), t);
 		
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
@@ -138,7 +133,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
 		
-		doAfterInteceptorForOne(t.getClass(), t, rows);
+		doInterceptAfterInsert(t.getClass(), t, rows);
 		return rows;
 	}
 		
@@ -159,14 +154,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		String sql = SQLUtils.getInsertSQLWithNull(list, values);
 		
 		log(sql);
-		doBeforeInterceptorForList(list.get(0).getClass(), list);
+		doInterceptBeforeInsert(list.get(0).getClass(), list);
 		
 		long start = System.currentTimeMillis();
 		int rows = jdbcExecuteUpdate(sql.toString(), values.toArray());
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
 		
-		doAfterInteceptorForList(list.get(0).getClass(), list, rows);
+		doInterceptAfterInsert(list.get(0).getClass(), list, rows);
 		return rows;
 	}
 	
