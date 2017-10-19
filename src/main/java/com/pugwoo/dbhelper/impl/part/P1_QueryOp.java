@@ -38,7 +38,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		try {
 			log(sql);
-			doBeforeInterceptor(t.getClass(), sql, keyValues.toArray());
+			doInterceptBeforeQuery(t.getClass(), sql, keyValues.toArray());
 			
 			long start = System.currentTimeMillis();
 			jdbcTemplate.queryForObject(sql.toString(),
@@ -48,11 +48,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			postHandleRelatedColumn(t);
 			logSlow(System.currentTimeMillis() - start, sql, keyValues);
 			
-			t = doAfterInteceptorForOne(clazz, t, sql, keyValues.toArray());
+			t = doInterceptAfterQuery(clazz, t, sql, keyValues.toArray());
 			return t != null;
 		} catch (EmptyResultDataAccessException e) {
 			t = null;
-			t = doAfterInteceptorForOne(clazz, t, sql, keyValues.toArray());
+			t = doInterceptAfterQuery(clazz, t, sql, keyValues.toArray());
 			return t != null;
 		}
 	}
@@ -73,7 +73,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		try {
 			log(sql);
 			
-			doBeforeInterceptor(clazz, sql, new Object[]{keyValue});
+			doInterceptBeforeQuery(clazz, sql, new Object[]{keyValue});
 			long start = System.currentTimeMillis();
 			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
@@ -84,11 +84,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			long cost = System.currentTimeMillis() - start;
 			logSlow(cost, sql, keyValue);
 			
-			t = doAfterInteceptorForOne(clazz, t, sql, new Object[]{keyValue});
+			t = doInterceptAfterQuery(clazz, t, sql, new Object[]{keyValue});
 			return t;
 		} catch (EmptyResultDataAccessException e) {
 			T t = null;
-			t = doAfterInteceptorForOne(clazz, t, sql, new Object[]{keyValue});
+			t = doInterceptAfterQuery(clazz, t, sql, new Object[]{keyValue});
 			return t;
 		}
 	}
@@ -104,7 +104,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 		
 		log(sql);
-		doBeforeInterceptor(clazz, sql, keyValues.toArray());
+		doInterceptBeforeQuery(clazz, sql, keyValues.toArray());
 		long start = System.currentTimeMillis();
 		List<T> list = namedParameterJdbcTemplate.query(
 				NamedParameterUtils.trans(sql.toString()),
@@ -115,7 +115,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, keyValues);
 		
-		list = doAfterInteceptorForList(clazz, list, list.size(), sql, keyValues.toArray());
+		list = doInteceptAfterQuery(clazz, list, list.size(), sql, keyValues.toArray());
 		
 		// 转换to map
 		if(list == null || list.isEmpty()) {
@@ -214,7 +214,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.genLimitSQL(offset, limit));
 		
 		log(sql);
-		doBeforeInterceptor(clazz, sql, args);
+		doInterceptBeforeQuery(clazz, sql, args);
 		
 		long start = System.currentTimeMillis();
 		List<T> list;
@@ -238,7 +238,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, args);
 		
-		doAfterInteceptorForList(clazz, list, total, sql, args);
+		doInteceptAfterQuery(clazz, list, total, sql, args);
 		
 		PageData<T> pageData = new PageData<T>();
 		pageData.setData(list);
@@ -287,7 +287,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	//////////////////// 拦截器封装方法
 	
-	private void doBeforeInterceptor(Class<?> clazz, StringBuilder sql, Object[] args) {
+	private void doInterceptBeforeQuery(Class<?> clazz, StringBuilder sql, Object[] args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeSelect(clazz, sql.toString(), args);
 			if (!isContinue) {
@@ -297,16 +297,16 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 	
 	/**t为null表示没有记录，因此等价于空list*/
-	private <T> T doAfterInteceptorForOne(Class<?> clazz, T t, StringBuilder sql, Object[] args) {
+	private <T> T doInterceptAfterQuery(Class<?> clazz, T t, StringBuilder sql, Object[] args) {
 		List<T> list = new ArrayList<T>();
 		if (t != null) {
 			list.add(t);
 		}
-		list = doAfterInteceptorForList(clazz, list, 1, sql, args);
+		list = doInteceptAfterQuery(clazz, list, 1, sql, args);
 		return list == null || list.isEmpty() ? null : list.get(0);
 	}
 	
-	private <T> List<T> doAfterInteceptorForList(Class<?> clazz, List<T> list, int total,
+	private <T> List<T> doInteceptAfterQuery(Class<?> clazz, List<T> list, int total,
 			StringBuilder sql, Object[] args) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			DBHelperInterceptor interceptor = interceptors.get(i);
