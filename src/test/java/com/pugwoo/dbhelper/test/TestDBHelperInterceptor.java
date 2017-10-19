@@ -13,7 +13,7 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc-interceptor.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
 @Transactional
-public class TestDBHelperWithInterceptor {
+public class TestDBHelperInterceptor {
 
 	@Autowired
 	private DBHelper dbHelper;
@@ -22,8 +22,10 @@ public class TestDBHelperWithInterceptor {
 	public void test() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setId(123L);
-		boolean result = dbHelper.getByKey(studentDO);
-		System.out.println("succ:" + result);
+		dbHelper.getByKey(studentDO);
 		System.out.println(studentDO);
+		
+		dbHelper.getByKey(StudentDO.class, 123);
+		dbHelper.getAll(StudentDO.class);
 	}
 }

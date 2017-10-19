@@ -19,5 +19,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 		   + ",count:" + count);
 		return result;
 	}
+	
+	
 
 }
