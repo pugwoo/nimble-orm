@@ -56,6 +56,11 @@
 	    <property name="jdbcTemplate" ref="jdbcTemplate" />
 	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
 	    <property name="timeoutWarningValve" value="1000" /> <!-- 超过1秒的话就告警 -->
+	    <property name="interceptors">
+	        <list>
+	            <bean class="com.pugwoo.dbhelper.test.interceptor.MyLogChangeInterceptor"></bean>
+	        </list>
+	    </property>
 	</bean>
 	
 </beans>
