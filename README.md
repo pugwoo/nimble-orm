@@ -62,7 +62,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -180,6 +180,10 @@ public class StudentSchoolJoinVO {
 
 上面定义的StudentSchoolJoinVO即表达了`select t1.*,t2.* from t_student t1 left join t_school t2 on t1.school_id=t2.id where t1.deleted=0 and (t2.deleted=0 or t2.deleted is null)`的基本语句。
 
+**拦截器**
+
+通过拦截器，可以截获所有dbhelper对数据库的增删改查操作，可以在拦截器的统一切面中，对系统的所有操作进行记录，方便安全审计。需要注意的是，拦截器对所有的操作生效，牵一发而动全身，需要仔细编码和测试，特别避免在拦截器中使用带相同拦截器的dbhelper而导致数据库操作死循环。
+
 ## 关于数据库字段到Java字段的映射关系
 
 强烈建议java POJO不要使用基础类型(如int long)，同时引用类型也不要设置默认值。该建议同样适用于MyBatis，因为：
@@ -226,7 +230,7 @@ public class StudentSchoolJoinVO {
 
 ## 未来规划
 
-1. 拦截器设计。
+1. 拦截器设计。(0.5.0+ 已实现)
 
 2. Join方式设计。(0.3.0+ 已实现)
 
