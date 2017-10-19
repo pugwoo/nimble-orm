@@ -44,7 +44,7 @@ public class DBHelperInterceptor {
 	 * insert前执行
 	 * @param clazz 查询的对象
 	 * @param list 插入的对象列表。理论上，可以修改list中的元素，请小心；但删除list元素则不一定会影响insert。
-	 * @return
+	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
 	public <T> boolean beforeInsert(Class<?> clazz, List<T> list) {
 		return true;
@@ -62,17 +62,38 @@ public class DBHelperInterceptor {
 	// 对于更新拦截器，只提供当前要更新的值。由于更新提供了setSql和customSetSql,所以提供了多个接口来拦截。
 	// 这意味着，拦截器提供了2个
 
+	/**
+	 * update前执行
+	 * @param clazz 更新的类
+	 * @param t 更新的实例
+	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
+	 */
     public <T> boolean beforeUpdate(Class<?> clazz, T t) {
     	return true;
     }
     
+    /**
+     * update前执行
+     * @param clazz 更新的类
+     * @param sql 自定义更新的update sql，完整的sql
+     * @param args sql的参数
+     * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
+     */
     public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql, Object[] args) {
     	return true;
     }
     
+    /**
+     * update后执行
+     * @param affectedRows 实际修改数据库条数
+     */
     public <T> void afterUpdate(Class<?> clazz, T t, int affectedRows) {
     }
     
+    /**
+     * update后执行
+     * @param affectedRows 实际修改数据库条数
+     */
     public <T> void afterUpdateCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
     }
     
