@@ -308,7 +308,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	private <T> List<T> doInteceptAfterQuery(Class<?> clazz, List<T> list, int total,
 			StringBuilder sql, Object[] args) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			list = interceptors.get(i).afterSelect(clazz, list, total, sql.toString(), args);
+			list = interceptors.get(i).afterSelect(clazz, sql.toString(), args, list, total);
 		}
 		return list;
 	}

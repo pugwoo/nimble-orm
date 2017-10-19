@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.wooutils.collect.ListUtils;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc-interceptor.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -19,13 +20,21 @@ public class TestDBHelperInterceptor {
 	private DBHelper dbHelper;
 	
 	@Test
-	public void test() {
+	public void testQuery() {
 		StudentDO studentDO = new StudentDO();
-		studentDO.setId(123L);
-		dbHelper.getByKey(studentDO);
-		System.out.println(studentDO);
+		studentDO.setName("nick");
+		studentDO.setAge(29);
+		dbHelper.insert(studentDO);
+		Long id = studentDO.getId();
 		
-		dbHelper.getByKey(StudentDO.class, 123);
+		studentDO = new StudentDO();
+		studentDO.setId(id);
+		dbHelper.getByKey(studentDO);
+		dbHelper.getByKey(StudentDO.class, id);
+		dbHelper.getByKeyList(StudentDO.class, ListUtils.newArrayList(id));
+		
 		dbHelper.getAll(StudentDO.class);
+		dbHelper.getPage(StudentDO.class, 1, 10);
+		dbHelper.getOne(StudentDO.class);
 	}
 }

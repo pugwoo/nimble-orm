@@ -43,7 +43,7 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.25</version>
 		</dependency>
-
+        <!-- SQL parser -->
 		<dependency>
 			<groupId>com.github.jsqlparser</groupId>
 			<artifactId>jsqlparser</artifactId>
@@ -104,6 +104,19 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<!-- json for test -->
+		<dependency>
+			<groupId>com.pugwoo</groupId>
+			<artifactId>woo-utils</artifactId>
+			<version>0.1.17</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

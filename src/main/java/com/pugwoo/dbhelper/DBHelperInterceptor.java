@@ -28,15 +28,15 @@ public class DBHelperInterceptor {
 	/**
 	 * select后执行
 	 * @param clazz 查询的对象 
-	 * @param result 查询结果值，对于返回值是一个的，也放入该list中。对于没有的，这里会传入空list。
-	 * @param count 当查询总数或有分页总数时，该数有值。该值为-1时，表示未知总数。
 	 * @param sql 查询的完整sql
 	 * @param args 查询的完整参数
+	 * @param result 查询结果值，对于返回值是一个的，也放入该list中。对于没有的，这里会传入空list。
+	 * @param count 当查询总数或有分页总数时，该数有值。该值为-1时，表示未知总数。
 	 * @return DBHelper会使用返回值作为新的查询结果值，因此，没修改时请务必将result返回。
 	 *         对于机密的数据，请直接设置result的对象属性为null。
 	 */
-	public <T> List<T> afterSelect(Class<?> clazz, List<T> result, int count,
-			String sql, Object args[]) {
+	public <T> List<T> afterSelect(Class<?> clazz, String sql, Object args[],
+			List<T> result, int count) {
 		return result;
 	}
 	
