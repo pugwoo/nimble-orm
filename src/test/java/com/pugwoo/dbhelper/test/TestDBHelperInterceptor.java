@@ -37,4 +37,30 @@ public class TestDBHelperInterceptor {
 		dbHelper.getPage(StudentDO.class, 1, 10);
 		dbHelper.getOne(StudentDO.class);
 	}
+	
+	@Test
+	public void testInsertUpdate() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("nick");
+		studentDO.setAge(29);
+		dbHelper.insert(studentDO);
+		Long id = studentDO.getId();
+		
+		studentDO = new StudentDO();
+		studentDO.setName("nick");
+		studentDO.setAge(29);
+		dbHelper.insertWhereNotExist(studentDO, "where id=?", id);
+		
+		studentDO = new StudentDO();
+		studentDO.setId(id);
+		studentDO.setName("karen");
+		dbHelper.update(studentDO);
+		
+		studentDO.setName("karennick");
+		dbHelper.update(studentDO, "where name=?", "karen");
+		
+		dbHelper.updateCustom(studentDO, "age=age+1");
+		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
+		
+	}
 }

@@ -62,7 +62,7 @@ public class DBHelperInterceptor {
 	// 对于更新拦截器，只提供当前要更新的值。由于更新提供了setSql和customSetSql,所以提供了多个接口来拦截。
 	// 这意味着，拦截器提供了2个
 
-    public <T> boolean beforeUpdate(Class<?> clazz, List<T> list) {
+    public <T> boolean beforeUpdate(Class<?> clazz, T t) {
     	return true;
     }
     
@@ -70,7 +70,7 @@ public class DBHelperInterceptor {
     	return true;
     }
     
-    public <T> void afterUpdate(Class<?> clazz, List<T> list, int affectedRows) {
+    public <T> void afterUpdate(Class<?> clazz, T t, int affectedRows) {
     }
     
     public <T> void afterUpdateCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
@@ -78,7 +78,7 @@ public class DBHelperInterceptor {
     
     // 删除相关的
     
-    public <T> boolean beforeDelete(Class<?> clazz, List<T> list) {
+    public <T> boolean beforeDelete(Class<?> clazz, T t) {
     	return true;
     }
     
@@ -86,7 +86,7 @@ public class DBHelperInterceptor {
     	return true;
     }
     
-    public <T> void afterDelete(Class<?> clazz, List<T> list, int affectedRows) {
+    public <T> void afterDelete(Class<?> clazz, T t, int affectedRows) {
     }
     
     public <T> void afterDeleteCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {

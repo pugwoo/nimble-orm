@@ -16,14 +16,9 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected void doInterceptBeforeDelete(Class<?> clazz, Object t) {
-		List<Object> list = new ArrayList<Object>();
-		list.add(t);
-		doInterceptBeforeDelete(clazz, list);
-	}
-	protected <T> void doInterceptBeforeDelete(Class<?> clazz, List<T> list) {
+	protected <T> void doInterceptBeforeDelete(Class<?> clazz, Object t) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeDelete(clazz, list);
+			boolean isContinue = interceptor.beforeDelete(clazz, t);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -38,14 +33,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 	
-	protected void doInterceptAfterDelete(Class<?> clazz, Object t, int rows) {
-		List<Object> list = new ArrayList<Object>();
-		list.add(t);
-		doInterceptAfterDelete(clazz, list, rows);
-	}
-	protected <T> void doInterceptAfterDelete(Class<?> clazz, List<T> list, int rows) {
+	protected <T> void doInterceptAfterDelete(Class<?> clazz, Object t, int rows) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterDelete(clazz, list, rows);
+			interceptors.get(i).afterDelete(clazz, t, rows);
 		}
 	}
 	protected void doInterceptAfterDelete(Class<?> clazz, String sql, Object[] args, int rows) {

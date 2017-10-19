@@ -16,14 +16,9 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private void doInterceptBeforeUpdate(Class<?> clazz, Object t) {
-		List<Object> list = new ArrayList<Object>();
-		list.add(t);
-		doInterceptBeforeUpdate(clazz, list);
-	}
-	private <T> void doInterceptBeforeUpdate(Class<?> clazz, List<T> list) {
+	private <T> void doInterceptBeforeUpdate(Class<?> clazz, Object t) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdate(clazz, list);
+			boolean isContinue = interceptor.beforeUpdate(clazz, t);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -38,14 +33,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	private void doInterceptAfterUpdate(Class<?> clazz, Object t, int rows) {
-		List<Object> list = new ArrayList<Object>();
-		list.add(t);
-		doInterceptAfterUpdate(clazz, list, rows);
-	}
-	private <T> void doInterceptAfterUpdate(Class<?> clazz, List<T> list, int rows) {
+	private <T> void doInterceptAfterUpdate(Class<?> clazz, Object t, int rows) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterUpdate(clazz, list, rows);
+			interceptors.get(i).afterUpdate(clazz, t, rows);
 		}
 	}
 	private void doInterceptAfterUpdate(Class<?> clazz, String sql, Object[] args, int rows) {
@@ -81,15 +71,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0;
 		}
 		
-		doInterceptBeforeUpdate(list.get(0).getClass(), list);
 		int rows = 0;
 		for(T t : list) {
 			if(t != null) {
 				rows += updateWithNull(t);
 			}
 		}
-		doInterceptAfterUpdate(list.get(0).getClass(), list, rows);
-		
 		return rows;
 	}
 	
@@ -99,15 +86,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0;
 		}
 		
-		doInterceptBeforeUpdate(list.get(0).getClass(), list);
 		int rows = 0;
 		for(T t : list) {
 			if(t != null) {
 				rows += update(t);
 			}
 		}
-		doInterceptAfterUpdate(list.get(0).getClass(), list, rows);
-		
 		return rows;
 	}
 	
