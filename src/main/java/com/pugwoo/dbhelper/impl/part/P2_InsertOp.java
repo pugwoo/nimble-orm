@@ -17,12 +17,12 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	//////// 拦截器
-	private void doInterceptBeforeInsert(Class<?> clazz, Object t) {
+	protected void doInterceptBeforeInsert(Class<?> clazz, Object t) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
 		doInterceptBeforeInsert(clazz, list);
 	}
-	private <T> void doInterceptBeforeInsert(Class<?> clazz, List<T> list) {
+	protected <T> void doInterceptBeforeInsert(Class<?> clazz, List<T> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeInsert(clazz, list);
 			if (!isContinue) {
@@ -31,17 +31,16 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 	}
 	
-	private void doInterceptAfterInsert(Class<?> clazz, Object t, int rows) {
+	protected void doInterceptAfterInsert(Class<?> clazz, Object t, int rows) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
 		doInterceptAfterInsert(clazz, list, rows);
 	}
-	private <T> void doInterceptAfterInsert(Class<?> clazz, List<T> list, int rows) {
+	protected <T> void doInterceptAfterInsert(Class<?> clazz, List<T> list, int rows) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			interceptors.get(i).afterInsert(clazz, list, rows);
 		}
 	}
-	
 	////////////
 
 	@Override
