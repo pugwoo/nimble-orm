@@ -400,9 +400,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				}
 			}
 			if(values.isEmpty()) {
-				// 不需要查询数据库，但是对List的，设置空List
-				for(T t : tList) {
-					DOInfoReader.setValue(field, t, new ArrayList<Object>());
+				// 不需要查询数据库，但是对List的，设置空List，确保list不会是null
+				if(field.getType() == List.class) {
+					for(T t : tList) {
+						DOInfoReader.setValue(field, t, new ArrayList<Object>());
+					}
 				}
 				continue;
 			}
