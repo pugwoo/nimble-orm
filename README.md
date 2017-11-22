@@ -234,6 +234,6 @@ public class StudentSchoolJoinVO {
 
 2. Join方式设计。(0.3.0+ 已实现)
 
-3. 分表支持
+3. union,unionAll支持。
 
 ## QQ群：178709063 欢迎使用
