@@ -35,9 +35,8 @@ public @interface RelatedColumn {
 	/**
 	 * 当使用remoteColumn关联查询时，可以额外指定查询条件，
 	 * extraWhere值为where开始(如果有where条件，必须带where关键字)的sql子句，不支持传递参数，
-	 * 可以写order by和limit等子句。例如：
-	 * where star=1 limit 5 或
-	 * order by id limit 5 等写法
+	 * 可以写order by，例如order by create_time。
+	 * 不建议使用limit，因为在@RelatedColumn批量获取多个值时，由于limit的存在，会导致有些值关联不上，造成错误。
 	 * 
 	 * 重要：【当使用dataService时，该字段无效。】
 	 * @return
