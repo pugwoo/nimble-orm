@@ -117,3 +117,39 @@ DO的@Column注解需要修改，此外表名经常被用在查询条件中，�
 4. 增加字段: 由于新字段并不会在代码被使用，所以新增字段是最简单的，常常也是最常见的，只需要DO类加上字段(含getter/setter)并注解上@Column即可。
 
 5. 删除字段: 类似修改字段名，除了@Column字段删除掉，还需要IDE正则搜索字段在其它where子句被使用的地方。
+
+## 3. 树型结构的表达
+
+有好些数据结构是树型的。例如商品的类目，每个类目下面有子类目，子类目下面也有子类目，理论上可以有无限多层。例如文件夹，文件夹里有文件和文件夹，也是可以无限多层的。又例如微商的邀请链，每个人可以邀请别人加入，别人又可以继续邀请他人加入。
+
+下面就以商品类目为例，表达无穷多层的树型数据表结构不难：
+
+```sql
+-- t_category
+id int, -- id主键
+name varchar(128), -- 类目名称
+parent_id int, -- 指向父类目id，如果为null，则表示根目录
+```
+
+对于树形表的修改：增删改，即按照树节点指针的方式，修改其parent_id即可。对于读取来说，有两种情况：
+
+1. 从某一个类目开始，一路查询其parent_id，把该类目的所有父类目全部查询出来。
+2. 从某一个类目开始，一路查询其子类目，子类目的子类目，将所有子类目查找出来。
+
+上面两种情况，如果手动使用代码和sql来查询的话，需要写while循环，特别是第2种情况中的一对多查询，代码会非常复杂且查询次数随着层数呈指数增长O(2^n)。如果使用dbhelper，那么while循环不需要自己写了，查询次数也可以降低到层数的线性次数O(n)。
+
+对于情况1，定义CategoryVO extends CategoryDO:
+
+```java
+   @RelatedColumn(localColumn = "parent_id", remoteColum = "id")
+   private CategoryVO parentCategoryVO;
+```
+
+对于情况2，定义CategoryVO extends CategoryDO:
+
+```java
+   @RelatedColumn(localColumn = "id", remoteColum = "parent_id")
+   private List<CategoryVO> subCategoryVOs;
+```
+
+然后使用dbhelper的getOne或getAll或getPage接口都可以，是不是超级简单性能又好？
