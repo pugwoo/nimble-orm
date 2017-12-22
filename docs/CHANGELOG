@@ -1,3 +1,10 @@
+2017年12月22日
+v0.5.1 - [fix] 当update对象时，如果软删除标记为是null，则自动设置为软删除的未删除状态
+       - [improve] 查询相关代码优化
+
+2017年10月9日
+v0.5.0 - [add] 增加拦截器
+
 2017年7月31日
 v0.4.0 - [del] 删除掉DBHelper中对JDBCTemplate native封装的方法(queryForObject等4个)
        - [improve] 优化@RelatedColumn注解语义准确性，value修改为localColumn和remoteColumn必填

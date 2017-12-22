@@ -69,8 +69,18 @@ public class PreHandleObject {
 		
 		for(Field field : notKeyFields) {
 			Column column = field.getAnnotation(Column.class);
+			
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				DOInfoReader.setValue(field, t, new Date());
+			}
+			
+			if(column.softDelete() != null && column.softDelete().length == 2
+					&& !column.softDelete()[0].trim().isEmpty()
+					&& !column.softDelete()[1].trim().isEmpty()) {
+				Object delete = DOInfoReader.getValue(field, t);
+				if(delete == null) {
+					DOInfoReader.setValue(field, t, column.softDelete()[0]);
+				}
 			}
 		}
 	}
