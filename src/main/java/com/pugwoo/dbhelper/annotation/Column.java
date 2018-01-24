@@ -78,8 +78,8 @@ public @interface Column {
 	/**
 	 * 当设置为true时，无论改值是不是null都会更新时会自动设置Date，
 	 * （这是因为，从数据库全量查出来的updateTime是有值的，只能强制设置Date）
-	 * 对应的类型必须是java.util.Date及其子类
-	 * 
+	 * 对应的类型必须是java.util.Date及其子类。
+	 * 特别的，软删除时，会设置该值为删除时的时间。
 	 * @return
 	 */
 	boolean setTimeWhenUpdate() default false;
