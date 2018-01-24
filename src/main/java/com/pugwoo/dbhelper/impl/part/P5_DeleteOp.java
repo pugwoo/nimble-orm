@@ -50,6 +50,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 		
 		List<Object> values = new ArrayList<Object>();
+
+		doInterceptBeforeDelete(t.getClass(), t);
+		
 		String sql = null;
 		
 		if(softDelete == null) { // 物理删除
@@ -58,8 +61,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values);
 		}
-
-		doInterceptBeforeDelete(t.getClass(), t);
+		
 		int rows = jdbcExecuteUpdate(sql, values.toArray());
 		doInterceptAfterDelete(t.getClass(), t, rows);
 		

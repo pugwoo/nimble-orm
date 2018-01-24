@@ -69,10 +69,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		PreHandleObject.preHandleInsert(t);
 		
 		List<Object> values = new ArrayList<Object>();
-		String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
 		
-		log(sql);
 		doInterceptBeforeInsert(t.getClass(), t);
+		
+		String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
+		log(sql);
 		
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
@@ -107,6 +108,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		PreHandleObject.preHandleInsert(t);
 		
 		List<Object> values = new ArrayList<Object>();
+		
+		doInterceptBeforeInsert(t.getClass(), t);
+		
 		String sql = SQLUtils.getInsertWhereNotExistSQL(t, values, isWithNullValue, whereSql);
 		
 		if(args != null) {
@@ -116,7 +120,6 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		
 		log(sql);
-		doInterceptBeforeInsert(t.getClass(), t);
 		
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
@@ -147,10 +150,12 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		
 		List<Object> values = new ArrayList<Object>();
+		
+		doInterceptBeforeInsert(list.get(0).getClass(), list);
+		
 		String sql = SQLUtils.getInsertSQLWithNull(list, values);
 		
 		log(sql);
-		doInterceptBeforeInsert(list.get(0).getClass(), list);
 		
 		long start = System.currentTimeMillis();
 		int rows = jdbcExecuteUpdate(sql.toString(), values.toArray());

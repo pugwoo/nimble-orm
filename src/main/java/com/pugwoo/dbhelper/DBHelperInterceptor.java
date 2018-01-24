@@ -18,7 +18,7 @@ public class DBHelperInterceptor {
 	 * select前执行
 	 * @param clazz 查询的对象
 	 * @param sql 查询的完整sql
-	 * @param args 查询的完整参数。理论上，拦截器就有可能修改args里面的object的值的，请小心。
+	 * @param args 查询的完整参数。理论上，拦截器就有可能修改args里面的object的值的，请小心。不建议修改args的值。
 	 * @return 返回true，则查询继续; 返回false将终止查询并抛出NotAllowQueryException
 	 */
 	public boolean beforeSelect(Class<?> clazz, String sql, Object[] args) {
@@ -43,7 +43,7 @@ public class DBHelperInterceptor {
 	/**
 	 * insert前执行
 	 * @param clazz 查询的对象
-	 * @param list 插入的对象列表。理论上，可以修改list中的元素，请小心；但删除list元素则不一定会影响insert。
+	 * @param list 插入的对象列表。可以修改list中的元素，请小心操作；但删除list元素则不一定会影响insert。
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
 	public <T> boolean beforeInsert(Class<?> clazz, List<T> list) {
@@ -76,7 +76,7 @@ public class DBHelperInterceptor {
      * update前执行
      * @param clazz 更新的类
      * @param sql 自定义更新的update sql，完整的sql
-     * @param args sql的参数
+     * @param args sql的参数,理论上可以修改到args的值，请小心操作。
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
     public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql, Object[] args) {
@@ -113,7 +113,7 @@ public class DBHelperInterceptor {
      * delete前执行，包括软删除和物理删除
      * @param clazz
      * @param sql
-     * @param args
+     * @param args sql的参数,理论上可以修改到args的值，请小心操作。
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
     public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql, Object[] args) {
