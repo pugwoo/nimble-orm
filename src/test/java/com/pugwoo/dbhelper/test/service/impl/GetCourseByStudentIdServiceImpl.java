@@ -21,7 +21,14 @@ public class GetCourseByStudentIdServiceImpl implements IGetCourseByStudentIdDat
 	private DBHelper dbHelper;
 	
 	@Override
-	public List<Object> get(List<Object> values) {
+	public List<Object> get(List<Object> values,
+			Class<?> localClass, String localColumn,
+			Class<?> remoteClass, String remoteColumn) {
+		
+		System.out.println("localClass:" + localClass.getName()
+		    + ",localColumn:" + localColumn + ",remoteClass:"
+		    + remoteClass.getName() + ",remoteColumn:" + remoteColumn);
+		
 		/**
 		 * 这里只是演示，实际项目中可以SOA、或调用其它网络服务，或读取本地文件等方式读取数据
 		 */

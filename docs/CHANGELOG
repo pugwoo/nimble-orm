@@ -1,3 +1,9 @@
+2018年2月24日
+v0.6.0 - [add] IDBHelperDataService接口方法带上
+               Class<?> localClass, String localColumn,
+			   Class<?> remoteClass, String remoteColumn四个参数，方便该接口支持更多功能
+       
+
 2018年1月24日
 v0.5.2 - [improve] 允许拦截器在insert/update/delete对象前对对象进行修改
 

@@ -418,7 +418,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					LOGGER.error("dataService is null for {}", column.dataService());
 					relateValues = new ArrayList<Object>();
 				} else {
-					relateValues = dataService.get(values);
+					relateValues = dataService.get(values,
+							clazz, column.localColumn(), 
+							remoteDOClass, column.remoteColumn());
 				}
 			} else {
 				String inExpr = column.remoteColumn() + " in (?)";
