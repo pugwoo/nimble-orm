@@ -6,8 +6,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +30,6 @@ import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 public class DOInfoReader {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DOInfoReader.class);
-	
-	/**缓存Column数据*/
-	private static Map<Class<?>, List<Field>> class2Column = 
-			new ConcurrentHashMap<Class<?>, List<Field>>();
-	
-	/**缓存RelatedColumn数据*/
-	private static Map<Class<?>, List<Field>> class2RelatedColumn =
-			new ConcurrentHashMap<Class<?>, List<Field>>();
 	
 	/**
 	 * 获取DO的@Table信息，如果子类没有，会往父类查找
@@ -80,8 +70,6 @@ public class DOInfoReader {
 		
 		return null;
 	}
-	
-	
 	
 	/**
 	 * 从db字段名拿字段对象
@@ -124,19 +112,13 @@ public class DOInfoReader {
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
-		
-		List<Field> cached = class2Column.get(clazz);
-		if(cached != null) {
-			return cached;
-		}
-		
+			
 		List<Field> result = _getAnnotationColumns(clazz, Column.class);
 		if (result.isEmpty()) {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
 					+ " does not have any @Column fields");
 		}
 		
-		class2Column.put(clazz, result);
 		return result;
 	}
 	
@@ -269,11 +251,6 @@ public class DOInfoReader {
 			return new ArrayList<Field>();
 		}
 		
-		List<Field> cached = class2RelatedColumn.get(clazz);
-		if(cached != null) {
-			return cached;
-		}
-		
 		List<Class<?>> classLink = new ArrayList<Class<?>>();
 		Class<?> curClass = clazz;
 		while (curClass != null) {
@@ -291,7 +268,6 @@ public class DOInfoReader {
 			}
 		}
 
-		class2RelatedColumn.put(clazz, result);
 		return result;
 	}
 
