@@ -67,7 +67,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
 				
 				boolean isT1AllNull = true;
-				List<Field> fieldsT1 = DOInfoReader.getColumns(leftJoinField.getType());
+				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType());
 				for (Field field : fieldsT1) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
@@ -80,7 +80,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				}
 				
 				boolean isT2AllNull = true;
-				List<Field> fieldsT2 = DOInfoReader.getColumns(rightJoinField.getType());
+				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType());
 				for (Field field : fieldsT2) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
@@ -96,7 +96,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
 				
 			} else {
-				List<Field> fields = DOInfoReader.getColumns(clazz);
+				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(

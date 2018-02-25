@@ -21,6 +21,7 @@ import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
+import com.pugwoo.dbhelper.test.vo.StudentCalVO;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 
@@ -320,6 +321,15 @@ public class TestDBHelper {
 		
 		total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
 		Assert.assertTrue(total >= 100);
+	}
+	
+	@Test
+	public void testExcludeInheritedColumn() {
+		StudentDO studentDO = insertOne();
+		StudentCalVO db = dbHelper.getByKey(StudentCalVO.class, studentDO.getId());
+		Assert.assertTrue(db != null);
+		Assert.assertTrue(db.getId() == null);
+		Assert.assertTrue(db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi"));
 	}
 	
 	@Test
