@@ -62,10 +62,10 @@ public class SQLUtils {
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 			
 	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
-	        List<Field> fields1 = DOInfoReader.getColumns(leftTableField.getType());
+	        List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType());
 			
 	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
-	        List<Field> fields2 = DOInfoReader.getColumns(rightTableField.getType());
+	        List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType());
 	        
 	        sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
 	        sql.append(",");
@@ -81,7 +81,7 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			List<Field> fields = DOInfoReader.getColumns(clazz);
+			List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
 			
 			sql.append(join(fields, ","));
 			sql.append(" FROM ").append(getTableName(table)).append(" ").append(table.alias());

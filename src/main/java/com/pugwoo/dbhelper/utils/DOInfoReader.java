@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.ExcludeInheritedColumn;
 import com.pugwoo.dbhelper.annotation.JoinLeftTable;
 import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
@@ -108,12 +109,32 @@ public class DOInfoReader {
 	 */
 	public static List<Field> getColumns(Class<?> clazz)
 			throws NoColumnAnnotationException {
-		
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
 			
 		List<Field> result = _getAnnotationColumns(clazz, Column.class);
+		if (result.isEmpty()) {
+			throw new NoColumnAnnotationException("class " + clazz.getName()
+					+ " does not have any @Column fields");
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
+	 * 该方法只用于select读操作。
+	 * @param clazz
+	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
+	 * @return 不会返回null
+	 */
+	public static List<Field> getColumnsForSelect(Class<?> clazz) {
+		if(clazz == null) {
+			throw new NoColumnAnnotationException("class is null");
+		}
+		
+		List<Field> result = _getFieldsForSelect(clazz);
 		if (result.isEmpty()) {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
 					+ " does not have any @Column fields");
@@ -343,6 +364,25 @@ public class DOInfoReader {
 		return true;
 	}
 	
+	private static List<Field> _getFieldsForSelect(Class<?> clazz) {
+		if(clazz == null) {
+			return new ArrayList<Field>();
+		}
+		
+		List<Class<?>> classLink = new ArrayList<Class<?>>();
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			classLink.add(curClass);
+			ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
+			if(eic != null) {
+				break;
+			}
+			curClass = curClass.getSuperclass();
+		}
+		
+		return _getFields(classLink, Column.class);
+	}
+	
 	/**
 	 * 获得clazz类的有annotationClazz注解的字段field（包括clazz类及其父类，父类优先，不处理重名）。
 	 * @param clazz
@@ -362,17 +402,24 @@ public class DOInfoReader {
 			curClass = curClass.getSuperclass();
 		}
 		
-		// 父类先拿，不处理重名情况
+		return _getFields(classLink, annoClazz);
+	}
+	
+	private static List<Field> _getFields(List<Class<?>> classLink,
+			Class<? extends Annotation> annoClazz) {
 		List<Field> result = new ArrayList<Field>();
+		if(classLink == null || classLink.isEmpty()) {
+			return result;
+		}
+		// 父类先拿，不处理重名情况
 		for (int i = classLink.size() - 1; i >= 0; i--) {
 			Field[] fields = classLink.get(i).getDeclaredFields();
 			for (Field field : fields) {
-				if (field.getAnnotation(annoClazz) != null) {
+				if (annoClazz != null && field.getAnnotation(annoClazz) != null) {
 					result.add(field);
 				}
 			}
 		}
-		
 		return result;
 	}
 	
