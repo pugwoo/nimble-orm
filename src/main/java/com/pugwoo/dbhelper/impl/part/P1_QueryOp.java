@@ -459,7 +459,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 							}
 						}
 					}
-					DOInfoReader.setValue(field, t, value);
+					if(value.isEmpty()) { // 没有匹配数据时，当原字段有值，则不修改原来的值
+						if(DOInfoReader.getValue(field, t) == null) {
+							DOInfoReader.setValue(field, t, value);
+						}
+					} else {
+						DOInfoReader.setValue(field, t, value);
+					}
 				}
 			} else {
 				for(T t : tList) {

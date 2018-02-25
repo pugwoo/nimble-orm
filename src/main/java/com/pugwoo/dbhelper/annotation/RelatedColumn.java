@@ -12,7 +12,10 @@ import java.lang.annotation.Target;
  * 关联的列，通常用于表数据关联(非join形式)。
  * 
  * 注意，关联查询时，请务必确保关联字段在Java是相同类型，否则java的equals方法会判断为不相等。
- * 为了解决这种情况，dbhelper采用一种折中方案，当类型不同时，都转化成string进行判断，同时给出WARN日志
+ * 为了解决这种情况，dbhelper采用一种折中方案，当类型不同时，都转化成string进行判断，同时给出WARN日志。
+ * 
+ * 注意：当RelatedColumn没有数据时，且原字段值不为null，则不会修改该字段的值，相当于是一个默认值的功能。
+ * 
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
