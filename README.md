@@ -228,6 +228,8 @@ public class StudentSchoolJoinVO {
 
 * 目前发现HikariCP数据库连接池在高并发时，getPage获取分页总数时，会有返回1的异常数据。使用tomcat-jdbc或duird则没有问题。因此不推荐使用HikariCP，它在实现高性能的同时肯定突破了某些规范。
 
+* 在JoinTable的关联类中的计算列`@Column`，其value和computed值都要自行带上join表的别名，例如t1。
+
 ## 未来规划
 
 1. 拦截器设计。(0.5.0+ 已实现)
