@@ -70,8 +70,14 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType());
 				for (Field field : fieldsT1) {
 					Column column = field.getAnnotation(Column.class);
+					String columnName;
+					if(!column.computed().trim().isEmpty()) {
+						columnName = column.value(); // 计算列用用户自行制定别名
+					} else {
+						columnName = joinLeftTable.alias() + "." + column.value();
+					}
 					Object value = TypeAutoCast.cast(
-						TypeAutoCast.cast(rs, joinLeftTable.alias() + "." + column.value(), field.getType()), 
+						TypeAutoCast.cast(rs, columnName, field.getType()), 
 						field.getType());
 					if(value != null) {
 						isT1AllNull = false;
@@ -83,8 +89,14 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType());
 				for (Field field : fieldsT2) {
 					Column column = field.getAnnotation(Column.class);
+					String columnName;
+					if(!column.computed().trim().isEmpty()) {
+						columnName = column.value(); // 计算列用用户自行制定别名
+					} else {
+						columnName = joinRightTable.alias() + "." + column.value();
+					}
 					Object value = TypeAutoCast.cast(
-						TypeAutoCast.cast(rs, joinRightTable.alias() + "." + column.value(), field.getType()), 
+						TypeAutoCast.cast(rs, columnName, field.getType()), 
 						field.getType());
 					if(value != null) {
 						isT2AllNull = false;
