@@ -12,6 +12,7 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
  */
 public class SchoolWithInnerClassVO extends SchoolDO {
 
+	// 重点说明：内部类必须是public，否则dbhelper访问不到
 	public static class StudentVO extends StudentDO {
 		
 		@RelatedColumn(localColumn = "id", remoteColumn = "student_id")

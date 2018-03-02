@@ -230,6 +230,8 @@ public class StudentSchoolJoinVO {
 
 * 在JoinTable的关联类中的计算列`@Column`，其value和computed值都要自行带上join表的别名，例如t1。
 
+* 对于内部类是由@RelatedColumn注解的@Table及其子类的，需要修饰为`public static class`，否则dbhelper访问不到，将导致数据转换成对象失败，从而返回null对象。详见测试代码中`SchoolWithInnerClassVO.java`例子。
+
 ## 未来规划
 
 1. 拦截器设计。(0.5.0+ 已实现)
