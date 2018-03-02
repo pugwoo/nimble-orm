@@ -405,9 +405,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				continue;
 			}
 			
-			Field relateField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
-			if(relateField == null) {
-				LOGGER.error("cannot find relateField,db column name:{}", column.localColumn());
+			Field localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
+			if(localField == null) {
+				LOGGER.error("cannot find localField,db column name:{}", column.localColumn());
 				continue;
 			}
 			
@@ -428,7 +428,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			
 			List<Object> values = new ArrayList<Object>();
 			for(T t : tList) {
-				Object value = DOInfoReader.getValue(relateField, t);
+				Object value = DOInfoReader.getValue(localField, t);
 				if(value != null) {
 					values.add(value);
 				}
@@ -477,7 +477,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				for(T t : tList) {
 					List<Object> value = new ArrayList<Object>();
 					for(Object obj : relateValues) {
-						Object o1 = DOInfoReader.getValue(relateField, t);
+						Object o1 = DOInfoReader.getValue(localField, t);
 						Object o2 = DOInfoReader.getValue(remoteField, obj);
 						if(o1 != null && o2 != null) {
 							if(o1.getClass().equals(o2.getClass())) {
@@ -485,8 +485,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 									value.add(obj);
 								}
 							} else {
-								LOGGER.warn("@RelatedColumn fields relate:{},remote:{} is different classes. Use String compare.",
-										relateField, remoteField);
+								LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
+										localField, remoteField);
 								if(o1.toString().equals(o2.toString())) {
 									value.add(obj);
 								}
@@ -504,7 +504,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			} else {
 				for(T t : tList) {
 					for(Object obj : relateValues) {
-						Object o1 = DOInfoReader.getValue(relateField, t);
+						Object o1 = DOInfoReader.getValue(localField, t);
 						Object o2 = DOInfoReader.getValue(remoteField, obj);
 						if(o1 != null && o2 != null) {
 							if(o1.getClass().equals(o2.getClass())) {
@@ -513,8 +513,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 									break;
 								}
 							} else {
-								LOGGER.warn("@RelatedColumn fields relate:{},remote:{} is different classes. Use String compare.",
-										relateField, remoteField);
+								LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
+										localField, remoteField);
 								if(o1.toString().equals(o2.toString())) {
 									DOInfoReader.setValue(field, t, obj);
 									break;
