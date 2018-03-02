@@ -199,7 +199,7 @@ public interface DBHelper {
 	
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
-	 * @param t
+	 * @param list
 	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties);
