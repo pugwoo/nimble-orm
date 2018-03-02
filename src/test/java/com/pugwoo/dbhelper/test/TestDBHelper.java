@@ -24,6 +24,7 @@ import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
 import com.pugwoo.dbhelper.test.vo.StudentCalVO;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
+import com.pugwoo.dbhelper.test.vo.StudentVOForHandleRelatedColumnOnly;
 
 /**
  * 2015年1月13日 11:11:23
@@ -369,6 +370,7 @@ public class TestDBHelper {
 		courseDO4.setStudentId(studentDO2.getId());
 		dbHelper.insert(courseDO4);
 		
+		
 		StudentVO studentVO1 = dbHelper.getByKey(StudentVO.class, studentDO.getId());
 		Assert.assertTrue(studentVO1 != null);
 		Assert.assertTrue(studentVO1.getSchoolDO() != null);
@@ -376,11 +378,40 @@ public class TestDBHelper {
 		Assert.assertTrue(studentVO1.getCourses() != null);
 		Assert.assertTrue(studentVO1.getCourses().size() == 2);
 		Assert.assertTrue(studentVO1.getCourses().get(0).getId().equals(courseDO1.getId())
-		   || studentVO1.getCourses().get(0).getId().equals(courseDO2.getId()));
-		Assert.assertTrue(studentVO1.getMainCourses().size() == 1 && 
+				|| studentVO1.getCourses().get(0).getId().equals(courseDO2.getId()));
+		Assert.assertTrue(studentVO1.getMainCourses().size() == 1 &&
 				studentVO1.getMainCourses().get(0).getName().equals("math")); // math是主课程
 		Assert.assertTrue(studentVO1.getNameWithHi().equals(studentVO1.getName() + "hi")); // 测试计算列
 		
+		// == handleRelatedColumn test
+		StudentVOForHandleRelatedColumnOnly studentVO2 = new StudentVOForHandleRelatedColumnOnly();
+		studentVO2.setId(studentDO.getId());
+		studentVO2.setSchoolId(studentDO.getSchoolId());
+		dbHelper.handleRelatedColumn(studentVO2);
+		Assert.assertTrue(studentVO2 != null);
+		Assert.assertTrue(studentVO2.getSchoolDO() != null);
+		Assert.assertTrue(studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId()));
+		Assert.assertTrue(studentVO2.getCourses() != null);
+		Assert.assertTrue(studentVO2.getCourses().size() == 2);
+		Assert.assertTrue(studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
+				|| studentVO2.getCourses().get(0).getId().equals(courseDO2.getId()));
+		Assert.assertTrue(studentVO2.getMainCourses().size() == 1 &&
+				studentVO2.getMainCourses().get(0).getName().equals("math")); // math是主课程
+		
+		studentVO2 = new StudentVOForHandleRelatedColumnOnly();
+		studentVO2.setId(studentDO.getId());
+		studentVO2.setSchoolId(studentDO.getSchoolId());
+		dbHelper.handleRelatedColumn(studentVO2, "courses", "schoolDO"); // 指定要的RelatedColumn
+		Assert.assertTrue(studentVO2 != null);
+		Assert.assertTrue(studentVO2.getSchoolDO() != null);
+		Assert.assertTrue(studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId()));
+		Assert.assertTrue(studentVO2.getCourses() != null);
+		Assert.assertTrue(studentVO2.getCourses().size() == 2);
+		Assert.assertTrue(studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
+				|| studentVO2.getCourses().get(0).getId().equals(courseDO2.getId()));
+		Assert.assertTrue(studentVO2.getMainCourses() == null);
+		
+
 		List<Long> ids = new ArrayList<Long>();
 		ids.add(studentDO.getId());
 		ids.add(studentDO2.getId());
