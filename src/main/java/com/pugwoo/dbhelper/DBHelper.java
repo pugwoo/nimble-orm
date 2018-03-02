@@ -178,6 +178,32 @@ public interface DBHelper {
 	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
 			String postSql, Object... args);
 	
+	/**
+	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了
+	 * @param t
+	 */
+	<T> void handleRelatedColumn(T t);
+	
+	/**
+	 * 单独抽离出处理RelatedColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
+	 * @param list
+	 */
+	<T> void handleRelatedColumn(List<T> list);
+	
+	/**
+	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了
+	 * @param t
+	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
+	 */
+	<T> void handleRelatedColumn(T t, String... relatedColumnProperties);
+	
+	/**
+	 * 单独抽离出处理RelatedColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
+	 * @param t
+	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
+	 */
+	<T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties);
+	
 	// ===============Query methods END ==================================
 	
 	/**

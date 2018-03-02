@@ -315,19 +315,39 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	// ======================= 处理 RelatedColumn数据 ========================
 	
+	@Override
+	public <T> void handleRelatedColumn(T t) {
+		postHandleRelatedColumn(t);
+	}
+	
+	@Override
+	public <T> void handleRelatedColumn(T t, String... relatedColumnProperties) {
+		postHandleRelatedColumn(t, relatedColumnProperties);
+	}
+	
+	@Override
+	public <T> void handleRelatedColumn(List<T> list) {
+		postHandleRelatedColumn(list);
+	}
+	
+	@Override
+	public <T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties) {
+		postHandleRelatedColumn(list, relatedColumnProperties);
+	}
+	
 	/**单个关联*/
-	private <T> void postHandleRelatedColumn(T t) {
+	private <T> void postHandleRelatedColumn(T t, String... relatedColumnProperties) {
 		if(t == null) {
 			return;
 		}
 		List<T> list = new ArrayList<T>();
 		list.add(t);
 		
-		postHandleRelatedColumn(list);
+		postHandleRelatedColumn(list, relatedColumnProperties);
 	}
 	
 	/**批量关联，要求批量操作的都是相同的类*/
-	private <T> void postHandleRelatedColumn(List<T> tList) {
+	private <T> void postHandleRelatedColumn(List<T> tList, String... relatedColumnProperties) {
 		if(tList == null || tList.isEmpty()) {
 			return;
 		}
@@ -360,6 +380,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
 		for(Field field : relatedColumns) {
+			
+			// 只处理指定的field
+			if(relatedColumnProperties != null && relatedColumnProperties.length > 0) {
+				boolean isContain = false;
+				for(String property : relatedColumnProperties) {
+					if(property != null && property.equals(field.getName())) {
+						isContain = true;
+						break;
+					}
+				}
+				if(!isContain) {
+					continue;
+				}
+			}
 			
 			RelatedColumn column = field.getAnnotation(RelatedColumn.class);
 			if(column.localColumn().trim().isEmpty()) {

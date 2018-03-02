@@ -1,6 +1,6 @@
 2018年3月1日
 v0.6.1 - [fix] 修改JoinTable中计算列的字段映射问题
-
+       - [add] 新增单独处理RelatedColumn的方法: handleRelatedColumn
 
 2018年2月24日
 v0.6.0 - [add] IDBHelperDataService接口方法带上
