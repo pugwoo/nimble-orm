@@ -21,6 +21,7 @@ import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
+import com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO;
 import com.pugwoo.dbhelper.test.vo.StudentCalVO;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
@@ -370,6 +371,7 @@ public class TestDBHelper {
 		courseDO4.setStudentId(studentDO2.getId());
 		dbHelper.insert(courseDO4);
 		
+		/////////////////// 下面是查询 ///////////////////
 		
 		StudentVO studentVO1 = dbHelper.getByKey(StudentVO.class, studentDO.getId());
 		Assert.assertTrue(studentVO1 != null);
@@ -411,6 +413,7 @@ public class TestDBHelper {
 				|| studentVO2.getCourses().get(0).getId().equals(courseDO2.getId()));
 		Assert.assertTrue(studentVO2.getMainCourses() == null);
 		
+		// END
 
 		List<Long> ids = new ArrayList<Long>();
 		ids.add(studentDO.getId());
@@ -434,6 +437,14 @@ public class TestDBHelper {
 			}
 			
 			Assert.assertTrue(sVO.getNameWithHi().equals(sVO.getName() + "hi")); // 测试计算列
+		}
+		
+		// 测试innerClass
+		SchoolWithInnerClassVO schoolVO = dbHelper.getByKey(SchoolWithInnerClassVO.class, schoolDO.getId());
+		Assert.assertTrue(schoolVO != null && schoolVO.getId().equals(schoolDO.getId()));
+		Assert.assertTrue(schoolVO.getStudents().size() == 2);
+		for(com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO.StudentVO s : schoolVO.getStudents()) {
+			Assert.assertTrue(s != null && s.getId() != null && s.getCourses().size() == 2);
 		}
 	}
 	
