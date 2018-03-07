@@ -17,9 +17,17 @@ public interface DBHelper {
 	
 	/**
 	 * 手动回滚@Transactional的事务。
-	 * 对于已知需要回滚的动作，我更推荐主动调用让其回滚，而非抛出RuntimeException
+	 * 对于已知需要回滚的动作，我更推荐主动调用让其回滚，而非抛出RuntimeException。
+	 * 当前如果没有事务而调用该方法，将抛出org.springframework.transaction.NoTransactionException
 	 */
 	void rollback();
+	
+	/**
+	 * 当前事务提交后执行
+	 * @param runnable
+	 * @return 当提交成功返回true，提交失败返回false；如果当前不在事务中时，返回false
+	 */
+	boolean executeAfterCommit(Runnable runnable);
 	
 	/**
 	 * 设置SQL执行超时的WARN log，超时时间为1秒

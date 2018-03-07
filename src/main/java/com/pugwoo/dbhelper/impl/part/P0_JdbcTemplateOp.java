@@ -11,6 +11,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
@@ -64,6 +66,37 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	@Override
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+	}
+	
+	@Override
+	public boolean executeAfterCommit(final Runnable runnable) {
+		if(runnable == null) return false;
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) return false;
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void suspend() {
+			}
+			@Override
+			public void resume() {
+			}
+			@Override
+			public void flush() {
+			}
+			@Override
+			public void beforeCompletion() {
+			}
+			@Override
+			public void beforeCommit(boolean readOnly) {
+			}
+			@Override
+			public void afterCompletion(int status) {
+			}
+			@Override
+			public void afterCommit() {
+				runnable.run();
+			}
+		});
+		return true;
 	}
 
 	/**
