@@ -33,14 +33,30 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	private <T> void doInterceptAfterUpdate(Class<?> clazz, Object t, int rows) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterUpdate(clazz, t, rows);
+	private <T> void doInterceptAfterUpdate(final Class<?> clazz, final Object t, final int rows) {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				for (int i = interceptors.size() - 1; i >= 0; i--) {
+					interceptors.get(i).afterUpdate(clazz, t, rows);
+				}
+			}
+		};
+		if(!executeAfterCommit(runnable)) {
+			runnable.run();
 		}
 	}
-	private void doInterceptAfterUpdate(Class<?> clazz, String sql, Object[] args, int rows) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterUpdateCustom(clazz, sql, args, rows);
+	private void doInterceptAfterUpdate(final Class<?> clazz, final String sql, final Object[] args, final int rows) {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				for (int i = interceptors.size() - 1; i >= 0; i--) {
+					interceptors.get(i).afterUpdateCustom(clazz, sql, args, rows);
+				}
+			}
+		};
+		if(!executeAfterCommit(runnable)) {
+			runnable.run();
 		}
 	}
 	//////////////

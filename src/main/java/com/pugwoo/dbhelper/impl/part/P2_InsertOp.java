@@ -36,9 +36,18 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsert(clazz, list, rows);
 	}
-	private <T> void doInterceptAfterInsert(Class<?> clazz, List<T> list, int rows) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterInsert(clazz, list, rows);
+	private <T> void doInterceptAfterInsert(final Class<?> clazz,
+			final List<T> list, final int rows) {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				for (int i = interceptors.size() - 1; i >= 0; i--) {
+					interceptors.get(i).afterInsert(clazz, list, rows);
+				}
+			}
+		};
+		if(!executeAfterCommit(runnable)) {
+			runnable.run();
 		}
 	}
 	////////////

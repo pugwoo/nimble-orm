@@ -33,14 +33,29 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 	
-	protected <T> void doInterceptAfterDelete(Class<?> clazz, Object t, int rows) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterDelete(clazz, t, rows);
+	protected <T> void doInterceptAfterDelete(final Class<?> clazz, final Object t, final int rows) {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				for (int i = interceptors.size() - 1; i >= 0; i--) {
+					interceptors.get(i).afterDelete(clazz, t, rows);
+				}
+			}
+		};
+		if(!executeAfterCommit(runnable)) {
+			runnable.run();
 		}
 	}
-	protected void doInterceptAfterDelete(Class<?> clazz, String sql, Object[] args, int rows) {
-		for (int i = interceptors.size() - 1; i >= 0; i--) {
-			interceptors.get(i).afterDeleteCustom(clazz, sql, args, rows);
+	protected void doInterceptAfterDelete(final Class<?> clazz, final String sql, final Object[] args, final int rows) {
+		Runnable runnable = new Runnable() {
+			public void run() {
+				for (int i = interceptors.size() - 1; i >= 0; i--) {
+					interceptors.get(i).afterDeleteCustom(clazz, sql, args, rows);
+				}
+			}
+		};
+		if(!executeAfterCommit(runnable)) {
+			runnable.run();
 		}
 	}
 	///////////
