@@ -58,7 +58,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> T getByKey(Class<?> clazz, Object keyValue) throws NullKeyValueException,
+	public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
 	    NotOnlyOneKeyColumnException {
 		
 		if(keyValue == null) {
@@ -94,7 +94,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T, K> Map<K, T> getByKeyList(Class<?> clazz, List<K> keyValues) {
+	public <T, K> Map<K, T> getByKeyList(Class<T> clazz, List<K> keyValues) {
 		if(keyValues == null || keyValues.isEmpty()) {
 			return new HashMap<K, T>();
 		}

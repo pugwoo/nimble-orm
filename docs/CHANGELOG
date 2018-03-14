@@ -1,3 +1,6 @@
+2018年3月14日
+v0.6.3 - [improve] dbhelper两个getByKey接口参数类型由Class<?>改成Class<T>
+
 2018年3月7日
 v0.6.2 - [add] 增加dbHelper的executeAfterCommit方法，用于实现事务提交后执行指定代码
        - [improve] 新增修改删除的拦截器after*方法，如果当前有事务，则安排在事务提交后再执行
