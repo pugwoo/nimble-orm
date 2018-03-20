@@ -608,7 +608,7 @@ public class SQLUtils {
 		} catch (JSQLParserException e) {
 			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
 					whereSql, deletedExpression, e);
-			throw new BadSQLSyntaxException();
+			throw new BadSQLSyntaxException(e);
 		}
 	}
 	

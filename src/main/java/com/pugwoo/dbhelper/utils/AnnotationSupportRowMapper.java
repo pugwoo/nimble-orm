@@ -13,6 +13,7 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinLeftTable;
 import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
+import com.pugwoo.dbhelper.exception.RowMapperFailException;
 
 /**
  * 2015年1月13日 17:48:30<br>
@@ -121,7 +122,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			return obj;
 		} catch (Exception e) {
 			LOGGER.error("mapRow exception", e);
-			return null;
+			throw new RowMapperFailException(e);
 		}
 	}
 }

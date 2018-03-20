@@ -1,3 +1,6 @@
+2018年3月20日
+v0.6.4 - [improve] 对于RowMapper中映射出错的，抛出RowMapperFailException
+
 2018年3月14日
 v0.6.3 - [improve] dbhelper两个getByKey接口参数类型由Class<?>改成Class<T>
 

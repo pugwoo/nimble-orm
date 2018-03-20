@@ -11,4 +11,8 @@ public class BadSQLSyntaxException extends RuntimeException {
 	public BadSQLSyntaxException(String errmsg) {
 		super(errmsg);
 	}
+	
+	public BadSQLSyntaxException(Throwable e) {
+		super(e);
+	}
 }

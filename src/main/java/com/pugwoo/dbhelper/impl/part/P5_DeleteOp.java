@@ -107,7 +107,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请直接运维人员truncate表。
-			throw new InvalidParameterException(); 
+			throw new InvalidParameterException("delete postSql is blank. it's very dangerous"); 
 		}
 		
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
