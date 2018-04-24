@@ -3,7 +3,7 @@ package com.pugwoo.dbhelper.test.interceptor;
 import java.util.List;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.wooutils.json.JSON;
+import com.pugwoo.dbhelper.json.JSON;
 
 public class MyLogChangeInterceptor extends DBHelperInterceptor {
 

@@ -78,7 +78,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 						columnName = joinLeftTable.alias() + "." + column.value();
 					}
 					Object value = TypeAutoCast.cast(
-						TypeAutoCast.cast(rs, columnName, field.getType()), 
+						TypeAutoCast.getFromRS(rs, columnName, field.getType()), 
 						field.getType());
 					if(value != null) {
 						isT1AllNull = false;
@@ -97,7 +97,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 						columnName = joinRightTable.alias() + "." + column.value();
 					}
 					Object value = TypeAutoCast.cast(
-						TypeAutoCast.cast(rs, columnName, field.getType()), 
+						TypeAutoCast.getFromRS(rs, columnName, field.getType()), 
 						field.getType());
 					if(value != null) {
 						isT2AllNull = false;
@@ -113,7 +113,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
-							TypeAutoCast.cast(rs, column.value(), field.getType()), 
+							TypeAutoCast.getFromRS(rs, column.value(), field.getType()), 
 							field.getType());
 					DOInfoReader.setValue(field, obj, value);
 				}

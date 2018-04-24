@@ -1,5 +1,8 @@
 package com.pugwoo.dbhelper.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.wooutils.collect.ListUtils;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc-interceptor.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -31,7 +33,9 @@ public class TestDBHelperInterceptor {
 		studentDO.setId(id);
 		dbHelper.getByKey(studentDO);
 		dbHelper.getByKey(StudentDO.class, id);
-		dbHelper.getByKeyList(StudentDO.class, ListUtils.newArrayList(id));
+		List<Long> keys = new ArrayList<Long>();
+		keys.add(id);
+		dbHelper.getByKeyList(StudentDO.class, keys);
 		
 		dbHelper.getAll(StudentDO.class);
 		dbHelper.getPage(StudentDO.class, 1, 10);

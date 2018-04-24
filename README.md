@@ -240,4 +240,6 @@ public class StudentSchoolJoinVO {
 
 3. union,unionAll支持。
 
+4. json支持。
+
 ## QQ群：178709063 欢迎使用

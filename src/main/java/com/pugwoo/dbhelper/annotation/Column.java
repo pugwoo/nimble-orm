@@ -21,6 +21,12 @@ public @interface Column {
 	String value();
 	
 	/**
+	 * 标记该列是否转成json字符串存入数据库，此时数据库列的类型必须可以存放字符串
+	 * @return
+	 */
+	boolean isJSON() default false;
+	
+	/**
 	 * 计算列。注意：计算列的别名为value属性的值，不需要再写上as 别名。
 	 * @return
 	 */

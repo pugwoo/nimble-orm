@@ -18,7 +18,7 @@ public class TypeAutoCast {
 	 * @param clazz
 	 * @return
 	 */
-	public static Object cast(ResultSet rs, String columnName, Class<?> clazz) throws SQLException{
+	public static Object getFromRS(ResultSet rs, String columnName, Class<?> clazz) throws SQLException{
 		if(rs.getObject(columnName) == null) { // 保证null会返回null值
 			return null;
 		}
