@@ -20,6 +20,7 @@ public class MyObjectMapper extends ObjectMapper {
 		setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")); // 设置日期格式
 		configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false); //属性不存在的兼容处理
 		configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false); // 对于没有任何getter的bean序列化不抛异常
+		configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true); // 对枚举中不存在的值，设置为null
 		
 		getSerializerProvider().setNullKeySerializer(new NullKeySerializer()); // 当map含有null key时，转成空字符串
 		
@@ -33,6 +34,7 @@ public class MyObjectMapper extends ObjectMapper {
 		SimpleModule module = new SimpleModule("DateDeserializerModule",
 		      new Version(1, 0, 0, "", "", ""));
 		module.addDeserializer(Date.class, deserializer);
+		
 		registerModule(module);
 	}
 	
