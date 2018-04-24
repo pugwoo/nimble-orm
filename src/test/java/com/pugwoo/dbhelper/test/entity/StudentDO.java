@@ -2,6 +2,8 @@ package com.pugwoo.dbhelper.test.entity;
 
 
 
+import java.util.List;
+
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 
@@ -26,6 +28,12 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 	
 	@Column("school_id")
 	private Long schoolId;
+	
+	@Column(value = "school_snapshot", isJSON = true)
+	private SchoolDO schoolSnapshot;
+	
+	@Column(value = "course_snapshot", isJSON = true)
+	private List<CourseDO> courseSnapshot;
 	
 	@Override
 	public String toString() {
@@ -62,6 +70,22 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 
 	public void setSchoolId(Long schoolId) {
 		this.schoolId = schoolId;
+	}
+
+	public SchoolDO getSchoolSnapshot() {
+		return schoolSnapshot;
+	}
+
+	public void setSchoolSnapshot(SchoolDO schoolSnapshot) {
+		this.schoolSnapshot = schoolSnapshot;
+	}
+
+	public List<CourseDO> getCourseSnapshot() {
+		return courseSnapshot;
+	}
+
+	public void setCourseSnapshot(List<CourseDO> courseSnapshot) {
+		this.courseSnapshot = courseSnapshot;
 	}
 	
 }
