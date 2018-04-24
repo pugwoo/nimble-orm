@@ -20,6 +20,7 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
+import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 
 import net.sf.jsqlparser.JSQLParserException;
@@ -670,7 +671,11 @@ public class SQLUtils {
 			if(i < fieldSize - 1) {
 				sb.append(" ").append(logicOperate).append(" ");
 			}
-			values.add(DOInfoReader.getValue(fields.get(i), obj));
+			Object val = DOInfoReader.getValue(fields.get(i), obj);
+			if(val != null && column.isJSON()) {
+				val = JSON.toJson(val);
+			}
+			values.add(val);
 		}
 		return sb.toString();
 	}
@@ -761,6 +766,9 @@ public class SQLUtils {
     		}
 
 			Object value = DOInfoReader.getValue(field, obj);
+			if(value != null && column.isJSON()) {
+				value = JSON.toJson(value);
+			}
 			if(isWithNullValue) {
 				values.add(value);
 			} else {
@@ -806,6 +814,9 @@ public class SQLUtils {
 		for(int i = 0; i < fieldSize; i++) {
 			Column column = fields.get(i).getAnnotation(Column.class);
 			Object value = DOInfoReader.getValue(fields.get(i), obj);
+			if(value != null && column.isJSON()) {
+				value = JSON.toJson(value);
+			}
 			if(withNull || value != null) {
 				sb.append(getColumnName(column)).append("=?,");
 				values.add(value);

@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.exception.RowMapperFailException;
 import com.pugwoo.dbhelper.json.MyObjectMapper;
 
 /**
@@ -45,6 +44,9 @@ public class TypeAutoCast {
 		Column column = field.getAnnotation(Column.class);
 		if(column != null && column.isJSON()) { // 优先处理标记为json的列
 			String valStr = rs.getString(columnName);
+			if(valStr.trim().isEmpty()) {
+				return null;
+			}
 			String typeName = field.getGenericType().toString();
 			try {
 				if(!typeName.contains("<")) {
@@ -55,7 +57,7 @@ public class TypeAutoCast {
 				}
 			} catch(Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, typeName, e);
-				throw new RowMapperFailException(e);
+				return valStr; // 作为string返回，交由上一级处理
 			}
 		}
 		
