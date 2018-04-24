@@ -34,7 +34,7 @@ import com.pugwoo.dbhelper.test.vo.StudentVOForHandleRelatedColumnOnly;
 @RunWith(SpringJUnit4ClassRunner.class)
 @Transactional
 public class TestDBHelper {
-		
+	
 	@Autowired
 	private DBHelper dbHelper;
 	
@@ -62,6 +62,46 @@ public class TestDBHelper {
 		Assert.assertTrue(rows == num);
 		
 		return list;
+	}
+	
+	// ============ JSON test ============================
+	
+	@Test
+	public void testJSON() {
+		StudentDO studentDO = new StudentDO();
+		SchoolDO schoolDO = new SchoolDO();
+		schoolDO.setName("SYSU");
+		
+		studentDO.setSchoolSnapshot(schoolDO);
+		
+		List<CourseDO> courses = new ArrayList<CourseDO>();
+		studentDO.setCourseSnapshot(courses);
+		
+		CourseDO course1 = new CourseDO();
+		course1.setName("math");
+		courses.add(course1);
+		
+		CourseDO course2 = new CourseDO();
+		course2.setName("eng");
+		courses.add(course2);
+		
+		dbHelper.insert(studentDO);
+		
+		StudentDO studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		Assert.assertTrue(studentDB.getSchoolSnapshot() != null);
+		Assert.assertTrue(studentDB.getSchoolSnapshot().getName().equals("SYSU"));
+		
+		Assert.assertTrue(studentDB.getCourseSnapshot() != null);
+		Assert.assertTrue(studentDB.getCourseSnapshot().size() == 2);
+		Assert.assertTrue(studentDB.getCourseSnapshot().get(0).getName().equals("math"));
+		Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("eng"));
+		
+		studentDO.getCourseSnapshot().get(1).setName("english");
+		dbHelper.update(studentDO);
+		
+		studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("english"));
+		
 	}
 	
 	// ============ Transaction TEST =======================
