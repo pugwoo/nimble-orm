@@ -85,6 +85,8 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 				dbList != null && !dbList.isEmpty() ? dbList.get(0).getClass()
 						: newList.get(0).getClass());
 		
+		int rows = 0;
+		
 		// 1. dbList中有key的，但是newList中没有的，删除掉
 		for(T t1 : dbList) {
 			if(isWithKey(t1, fields)) {
@@ -96,13 +98,14 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 					}
 				}
 				if(!isNewExists) {
-					deleteByKey(t1);
+					rows += deleteByKey(t1);
 				}
 			}
 		}
 		
 		// 2. insert or update new list
-		return withNull ? insertOrUpdateWithNull(newList) : insertOrUpdate(newList);
+		return (withNull ? insertOrUpdateWithNull(newList) : insertOrUpdate(newList))
+				+ rows;
 	}
 	
 	/**
