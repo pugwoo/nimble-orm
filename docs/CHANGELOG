@@ -1,3 +1,6 @@
+2018年5月3日
+v0.7.2 - [add] DBHelper增加delete(List)方法
+
 2018年4月24日
 v0.7.1 - [fix] 修复insertOrUpdateFull方法返回数据库修改条数没有算上删除条数的问题
 v0.7.0 - [add] 增加Column注解对JSON的支持

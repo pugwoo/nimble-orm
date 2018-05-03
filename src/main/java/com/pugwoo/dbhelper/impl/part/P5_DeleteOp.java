@@ -82,6 +82,16 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		return rows;
 	}
+	
+	@Override
+	public <T> int deleteByKey(List<T> list) throws NullKeyValueException {
+		if(list == null || list.isEmpty()) return 0;
+		int rows = 0;
+		for(T t : list) {
+			rows += deleteByKey(t);
+		}
+		return rows;
+	}
 		
 	@Override
 	public <T> int deleteByKey(Class<T> clazz, Object keyValue) 

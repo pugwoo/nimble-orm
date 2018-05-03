@@ -416,6 +416,16 @@ public interface DBHelper {
 	<T> int deleteByKey(T t) throws NullKeyValueException;
 	
 	/**
+	 * 删除数据库记录，返回数据库实际修改条数。
+	 * 该操作【会】自动使用软删除进行删除
+	 * 
+	 * @param t
+	 * @return
+	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
+	 */
+	<T> int deleteByKey(List<T> list) throws NullKeyValueException;
+	
+	/**
 	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况。
 	 * 该操作【会】自动使用软删除进行删除
 	 * 
