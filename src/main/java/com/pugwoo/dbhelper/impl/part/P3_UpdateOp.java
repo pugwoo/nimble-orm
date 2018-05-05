@@ -128,6 +128,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		
 		doInterceptAfterUpdate(t.getClass(), t, rows);
 		
 		return rows;
@@ -146,7 +147,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
 		
 		doInterceptBeforeUpdate(t.getClass(), sql, values.toArray());
+		
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+		
 		doInterceptAfterUpdate(t.getClass(), sql, values.toArray(), rows);
 		
 		return rows;
@@ -161,7 +164,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql);
 		
 		doInterceptBeforeUpdate(clazz, sql, args);
+		
 		int rows = namedJdbcExecuteUpdate(sql, args);
+		
 		doInterceptAfterUpdate(clazz, sql, args, rows);
 		
 		return rows;

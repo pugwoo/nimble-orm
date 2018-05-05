@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Map;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.annotation.IDBHelperDataService;
+import com.pugwoo.dbhelper.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
@@ -46,7 +47,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 			
 			postHandleRelatedColumn(t);
-			logSlow(System.currentTimeMillis() - start, sql, keyValues);
+			logSlow(System.currentTimeMillis() - start, sql.toString(), keyValues);
 			
 			t = doInterceptAfterQuery(clazz, t, sql, keyValues.toArray());
 			return t != null;
@@ -82,7 +83,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			postHandleRelatedColumn(t);
 			
 			long cost = System.currentTimeMillis() - start;
-			logSlow(cost, sql, keyValue);
+			
+			List<Object> args = new ArrayList<Object>();
+			args.add(keyValue);
+			logSlow(cost, sql.toString(), args);
 			
 			t = doInterceptAfterQuery(clazz, t, sql, new Object[]{keyValue});
 			return t;
@@ -113,7 +117,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		postHandleRelatedColumn(list);
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, keyValues);
+		logSlow(cost, sql.toString(), (List<Object>) keyValues);
 		
 		list = doInteceptAfterQuery(clazz, list, list.size(), sql, keyValues.toArray());
 		
@@ -236,7 +240,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		postHandleRelatedColumn(list);
 		
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args);
+		logSlow(cost, sql.toString(), args == null ? new ArrayList<Object>() : Arrays.asList(args));
 		
 		doInteceptAfterQuery(clazz, list, total, sql, args);
 		
@@ -267,7 +271,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		int rows = jdbcTemplate.queryForObject(sql.toString(), Integer.class); 
 		
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, null);
+		logSlow(cost, sql.toString(), null);
 		return rows;
 	}
 	

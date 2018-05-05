@@ -78,6 +78,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray());
+
 		doInterceptAfterDelete(t.getClass(), t, rows);
 		
 		return rows;
@@ -130,7 +131,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 
 		doInterceptBeforeDelete(clazz, sql, args);
+		
 		int rows = namedJdbcExecuteUpdate(sql, args);
+		
 		doInterceptAfterDelete(clazz, sql, args, rows);
 		
 		return rows;

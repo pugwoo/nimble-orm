@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.annotation;
+package com.pugwoo.dbhelper;
 
 import java.util.List;
 

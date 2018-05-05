@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
@@ -35,6 +37,8 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	protected List<DBHelperInterceptor> interceptors = new ArrayList<DBHelperInterceptor>();
 	
+	private IDBHelperSlowSqlCallback slowSqlCallback;
+	
 	protected void log(StringBuilder sql) {
 		log(sql.toString());
 	}
@@ -43,26 +47,20 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		LOGGER.debug("ExecSQL:{}", sql);
 	}
 	
-	protected void logSlow(long cost, StringBuilder sql, List<Object> keyValues) {
-		logSlow(cost, sql.toString(), keyValues);
-	}
-	
-	protected void logSlow(long cost, StringBuilder sql, Object keyValue) {
-		logSlow(cost, sql.toString(), keyValue);
-	}
-	
 	protected void logSlow(long cost, String sql, List<Object> keyValues) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
+			try {
+				if(slowSqlCallback != null) {
+					slowSqlCallback.callback(cost, sql, keyValues);
+				}
+			} catch (Throwable e) {
+				LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{},cost:{}ms,params:{}",
+						sql, cost, keyValues, e);
+			}
 		}
 	}
-	
-	protected void logSlow(long cost, String sql, Object keyValue) {
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValue);
-		}
-	}
-	
+
 	@Override
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -110,7 +108,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql.toString(), args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args);
+		logSlow(cost, sql, args == null ? new ArrayList<Object>() : Arrays.asList(args));
 		return rows;
 	}
 	
@@ -121,15 +119,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * @return
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
-		LOGGER.debug("ExecSQL:{}", sql);
+		log(sql);
 		long start = System.currentTimeMillis();
 		int rows = namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql),
 				NamedParameterUtils.transParam(args)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, args);
-		}
+		logSlow(cost, sql, args == null ? new ArrayList<Object>() : Arrays.asList(args));
 		return rows;
 	}
 	
@@ -173,6 +169,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				}
 			}
 		}
+	}
+	
+	@Override
+	public void setTimeoutWarningCallback(IDBHelperSlowSqlCallback callback) {
+		this.slowSqlCallback = callback;
 	}
 
 }

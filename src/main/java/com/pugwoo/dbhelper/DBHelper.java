@@ -30,10 +30,16 @@ public interface DBHelper {
 	boolean executeAfterCommit(Runnable runnable);
 	
 	/**
-	 * 设置SQL执行超时的WARN log，超时时间为1秒
+	 * 设置SQL执行超时的WARN log，超时时间默认为1秒
 	 * @param timeMS 毫秒
 	 */
 	void setTimeoutWarningValve(long timeMS);
+	
+	/**
+	 * 设置SQL执行超时回调，可用于自行实现将慢sql存放到db
+	 * @param runnable
+	 */
+	void setTimeoutWarningCallback(IDBHelperSlowSqlCallback callback);
 	
 	/**
 	 * 数据库拦截器

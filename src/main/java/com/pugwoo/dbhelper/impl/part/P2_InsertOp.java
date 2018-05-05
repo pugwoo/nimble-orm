@@ -164,12 +164,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		String sql = SQLUtils.getInsertSQLWithNull(list, values);
 		
-		log(sql);
-		
-		long start = System.currentTimeMillis();
 		int rows = jdbcExecuteUpdate(sql.toString(), values.toArray());
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, values);
 		
 		doInterceptAfterInsert(list.get(0).getClass(), list, rows);
 		return rows;
