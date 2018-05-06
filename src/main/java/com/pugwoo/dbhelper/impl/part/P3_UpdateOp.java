@@ -192,14 +192,16 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
 			values = new ArrayList<Object>();
+			values.addAll(customsParams);
 			if(args != null) {
 				values.addAll(Arrays.asList(args));
 			}
-			values.addAll(customsParams);
-			StringBuilder sbSet = new StringBuilder(setSql);
+			
+			StringBuilder sbSet = new StringBuilder();
 			for(String s : customsSets) {
-				sbSet.append(",").append(s);
+				sbSet.append(s).append(",");
 			}
+			sbSet.append(setSql.toLowerCase().startsWith("set ") ? setSql.substring(4) : setSql);
 			
 			sql = SQLUtils.getUpdateAllSQL(clazz, sbSet.toString(), whereSql);
 		}

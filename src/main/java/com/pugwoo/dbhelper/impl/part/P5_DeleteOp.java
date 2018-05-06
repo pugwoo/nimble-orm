@@ -143,7 +143,11 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		doInterceptBeforeDelete(clazz, sql, customsSets, customsParams, args);
 		
 		if(softDelete != null && !customsSets.isEmpty()) { // 仅软删除有效，处理自定义加入set，需要重新生成sql
+			values = new ArrayList<Object>();
 			values.addAll(customsParams);
+			if(args != null) {
+				values.addAll(Arrays.asList(args));
+			}
 			sql = SQLUtils.getCustomSoftDeleteSQL(clazz, customsSets, postSql);
 		}
 		

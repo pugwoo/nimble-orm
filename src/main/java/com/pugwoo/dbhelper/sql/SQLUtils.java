@@ -433,7 +433,8 @@ public class SQLUtils {
 		return sql.toString();
 	}
 	
-	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, List<String> customsSets, String postSql) {
+	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz,
+			List<String> customsSets, String postSql) {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
