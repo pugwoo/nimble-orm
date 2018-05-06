@@ -1,3 +1,7 @@
+2018年5月6日
+v0.7.4 - [add] DBHelperInterceptor拦截器beforeUpdateCustom和beforeDeleteCustom增加自定义set扩展
+       - [improve] RelatedColumn关联查询参数查询时去重
+
 2018年5月5日
 v0.7.3 - [add] DBHelper增加setTimeoutWarningCallback方法
        - [improve] 将IDBHelperDataService从com.pugwoo.dbhelper.annotaion移到com.pugwoo.dbheper

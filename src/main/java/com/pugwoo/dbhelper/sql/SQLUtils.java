@@ -433,7 +433,7 @@ public class SQLUtils {
 		return sql.toString();
 	}
 	
-	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql) {
+	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, List<String> customsSets, String postSql) {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
@@ -453,6 +453,12 @@ public class SQLUtils {
 				sql.append(",").append(getColumnName(column)).append("='");
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				sql.append(df.format(new Date())).append("'");
+			}
+		}
+		
+		if(customsSets != null) {
+			for(String set : customsSets) {
+				sql.append(",").append(set);
 			}
 		}
 		

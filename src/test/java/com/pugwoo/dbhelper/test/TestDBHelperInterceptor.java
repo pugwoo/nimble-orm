@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,5 +78,16 @@ public class TestDBHelperInterceptor {
 		
 		dbHelper.deleteByKey(StudentDO.class, id);
 		dbHelper.delete(StudentDO.class, "where id > ?", 100);
+	}
+	
+	@Test @Rollback(false)
+	public void testCustomsUpdateDelete() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("nick");
+		studentDO.setAge(29);
+		dbHelper.insert(studentDO);
+		
+		dbHelper.updateCustom(studentDO, "age=age+1");
+		dbHelper.delete(StudentDO.class, "where 1=1");
 	}
 }

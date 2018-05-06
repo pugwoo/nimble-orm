@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
@@ -24,9 +25,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			}
 		}
 	}
-	protected void doInterceptBeforeDelete(Class<?> clazz, String sql, Object[] args) {
+	protected void doInterceptBeforeDelete(Class<?> clazz, String sql,
+			List<String> customsSets, List<Object> customsParams, Object[] args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeDeleteCustom(clazz, sql, args);
+			boolean isContinue = interceptor.beforeDeleteCustom(clazz, sql, customsSets, customsParams, args);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -121,20 +123,33 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			throw new InvalidParameterException("delete postSql is blank. it's very dangerous"); 
 		}
 		
+		List<Object> values = new ArrayList<Object>();
+		if(args != null) {
+			values.addAll(Arrays.asList(args));
+		}
+		
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 
 		String sql = null;
 		if(softDelete == null) { // 物理删除
 			sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
 		} else { // 软删除
-			sql = SQLUtils.getCustomSoftDeleteSQL(clazz, postSql);
+			sql = SQLUtils.getCustomSoftDeleteSQL(clazz, null, postSql);
 		}
 
-		doInterceptBeforeDelete(clazz, sql, args);
+		List<String> customsSets = new ArrayList<String>();
+		List<Object> customsParams = new ArrayList<Object>();
 		
-		int rows = namedJdbcExecuteUpdate(sql, args);
+		doInterceptBeforeDelete(clazz, sql, customsSets, customsParams, args);
 		
-		doInterceptAfterDelete(clazz, sql, args, rows);
+		if(softDelete != null && !customsSets.isEmpty()) { // 仅软删除有效，处理自定义加入set，需要重新生成sql
+			values.addAll(customsParams);
+			sql = SQLUtils.getCustomSoftDeleteSQL(clazz, customsSets, postSql);
+		}
+		
+		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		
+		doInterceptAfterDelete(clazz, sql, values.toArray(), rows);
 		
 		return rows;
 	}

@@ -24,9 +24,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 	}
-	private void doInterceptBeforeUpdate(Class<?> clazz, String sql, Object[] args) {
+	private void doInterceptBeforeUpdate(Class<?> clazz, String sql,
+			List<String> customsSets, List<Object> customsParams, Object[] args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdateCustom(clazz, sql, args);
+			boolean isContinue = interceptor.beforeUpdateCustom(clazz, sql, customsSets, customsParams, args);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -146,7 +147,24 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
 		
-		doInterceptBeforeUpdate(t.getClass(), sql, values.toArray());
+		List<String> customsSets = new ArrayList<String>();
+		List<Object> customsParams = new ArrayList<Object>();
+		
+		doInterceptBeforeUpdate(t.getClass(), sql, customsSets, customsParams, values.toArray());
+		
+		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
+			values = new ArrayList<Object>();
+			if(args != null) {
+				values.addAll(Arrays.asList(args));
+			}
+			values.addAll(customsParams);
+			StringBuilder sbSet = new StringBuilder(setSql);
+			for(String s : customsSets) {
+				sbSet.append(",").append(s);
+			}
+			
+			sql = SQLUtils.getCustomUpdateSQL(t, values, sbSet.toString());
+		}
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 		
@@ -161,13 +179,34 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0; // 不需要更新
 		}
 		
+		List<Object> values = new ArrayList<Object>();
+		if(args != null) {
+			values.addAll(Arrays.asList(args));
+		}
 		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql);
 		
-		doInterceptBeforeUpdate(clazz, sql, args);
+		List<String> customsSets = new ArrayList<String>();
+		List<Object> customsParams = new ArrayList<Object>();
 		
-		int rows = namedJdbcExecuteUpdate(sql, args);
+		doInterceptBeforeUpdate(clazz, sql, customsSets, customsParams, args);
 		
-		doInterceptAfterUpdate(clazz, sql, args, rows);
+		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
+			values = new ArrayList<Object>();
+			if(args != null) {
+				values.addAll(Arrays.asList(args));
+			}
+			values.addAll(customsParams);
+			StringBuilder sbSet = new StringBuilder(setSql);
+			for(String s : customsSets) {
+				sbSet.append(",").append(s);
+			}
+			
+			sql = SQLUtils.getUpdateAllSQL(clazz, sbSet.toString(), whereSql);
+		}
+		
+		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		
+		doInterceptAfterUpdate(clazz, sql, values.toArray(), rows);
 		
 		return rows;
 	}

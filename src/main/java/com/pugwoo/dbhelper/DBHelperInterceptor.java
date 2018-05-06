@@ -77,9 +77,13 @@ public class DBHelperInterceptor {
      * @param clazz 更新的类
      * @param sql 自定义更新的update sql，完整的sql
      * @param args sql的参数,理论上可以修改到args的值，请小心操作。
+     * @param customsSets 允许拦截器自行增加若干set语句，每个语句一个，不需要带set关键字，例如a=?
+     * @param customsParams 允许拦截器自行添加若干set语句，这里是对应的参数
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql, Object[] args) {
+    public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql,
+    		List<String> customsSets, List<Object> customsParams,
+    		Object[] args) {
     	return true;
     }
     
@@ -113,10 +117,14 @@ public class DBHelperInterceptor {
      * delete前执行，包括软删除和物理删除
      * @param clazz
      * @param sql
+     * @param customsSets 仅对于软删除可用，允许拦截器自行增加若干set语句，每个语句一个，不需要带set关键字，例如a=?
+     * @param customsParams 仅对于软删除可用，允许拦截器自行添加若干set语句，这里是对应的参数
      * @param args sql的参数,理论上可以修改到args的值，请小心操作。
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql, Object[] args) {
+    public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql,
+    		List<String> customsSets, List<Object> customsParams,
+    		Object[] args) {
     	return true;
     }
     
