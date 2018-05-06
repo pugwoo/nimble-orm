@@ -4,9 +4,11 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -430,13 +432,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 				continue;
 			}
 			
-			List<Object> values = new ArrayList<Object>();
+			Set<Object> values = new HashSet<Object>(); // 用于去重
 			for(T t : tList) {
 				Object value = DOInfoReader.getValue(localField, t);
 				if(value != null) {
 					values.add(value);
 				}
 			}
+			
 			if(values.isEmpty()) {
 				// 不需要查询数据库，但是对List的，设置空List，确保list不会是null
 				if(field.getType() == List.class) {
@@ -456,7 +459,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 					LOGGER.error("dataService is null for {}", column.dataService());
 					relateValues = new ArrayList<Object>();
 				} else {
-					relateValues = dataService.get(values,
+					relateValues = dataService.get(new ArrayList<Object>(values),
 							clazz, column.localColumn(), 
 							remoteDOClass, column.remoteColumn());
 				}
