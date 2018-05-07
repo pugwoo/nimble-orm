@@ -75,6 +75,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		if(softDelete == null) { // 物理删除
 			sql = SQLUtils.getDeleteSQL(t, values);
 		} else { // 软删除
+			// 对于软删除，当有拦截器时，可能使用者会修改数据以记录删除时间或删除人信息等，此时要先update该条数据
+			if(interceptors != null && !interceptors.isEmpty()) {
+				update(t);
+			}
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values);
 		}
