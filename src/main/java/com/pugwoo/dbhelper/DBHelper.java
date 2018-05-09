@@ -373,6 +373,7 @@ public interface DBHelper {
 	
 	/**
 	 * 自定义set字句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。因此不提供CAS功能。
+	 * 【拦截器特别说明】当使用到拦截器更新拦截时，应尽量使用该方法，因为修改的值不明确。
 	 * @param t 必须提供key
 	 * @param setSql 可包含set关键字也可不包含，多个则用逗号隔开，【不能】包含where子句，例如a=a+1,c=b 或 set a=a+1,c=b
 	 * @param args set子句的参数
@@ -382,7 +383,8 @@ public interface DBHelper {
 	<T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException;
 	
 	/**
-	 * 自定义更新多行记录，会自动去掉已软删除的行
+	 * 自定义更新多行记录，会自动去掉已软删除的行。
+	 * 【拦截器特别说明】当使用到拦截器更新拦截时，应尽量使用该方法，因为修改的行不明确。
 	 * @param clazz
 	 * @param setSql update sql中的set sql子句，可以包括set关键字也可以不包括
 	 * @param whereSql update sql中的where sql子句，可以包括where关键字也可以不包括
@@ -444,7 +446,8 @@ public interface DBHelper {
 	    MustProvideConstructorException;
 
 	/**
-	 * 自定义条件删除数据，该操作【会】自动使用软删除标记
+	 * 自定义条件删除数据，该操作【会】自动使用软删除标记。
+	 * 【拦截器特别说明】当使用到拦截器更新拦截时，应尽量使用该方法，因为修改的行不明确。
 	 * @param clazz 必须有默认构造方法
 	 * @param postSql 必须提供，必须写where，【不允许】留空
 	 * @param args
