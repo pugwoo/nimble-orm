@@ -581,7 +581,7 @@ public class TestDBHelper {
 			stu.setAge(i);
 			students.add(stu);
 		}
-		row = dbHelper.insertWithNullInOneSQL(students);
+		row = dbHelper.insert(students);
 		System.out.println("affected rows:" + row);
 	}
 	

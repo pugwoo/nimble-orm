@@ -279,16 +279,7 @@ public interface DBHelper {
 	 * @return
 	 */
 	<T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args);
-	
-	/**
-	 * 插入几条数据，通过拼凑成一条sql插入
-	 *【重要】批量插入不支持回设自增id。批量插入会把所有属性都插入，不支持只插入非null的值。
-	 * (说明:这个方法之前叫insertInOneSQL)
-	 * @param list
-	 * @return 返回影响的行数
-	 */
-	<T> int insertWithNullInOneSQL(List<T> list);
-	
+
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。只有非null的值会更新或插入。
 	 * @param t

@@ -2,14 +2,12 @@ package com.pugwoo.dbhelper.impl.part;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
-import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
@@ -144,30 +142,5 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		doInterceptAfterInsert(t.getClass(), t, rows);
 		return rows;
 	}
-		
-	@Override
-	public <T> int insertWithNullInOneSQL(List<T> list) {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
-		list.removeAll(Collections.singleton(null));
-		
-		SQLAssert.allSameClass(list);
-		
-		for(T t : list) {
-			PreHandleObject.preHandleInsert(t);
-		}
-		
-		List<Object> values = new ArrayList<Object>();
-		
-		doInterceptBeforeInsert(list.get(0).getClass(), list);
-		
-		String sql = SQLUtils.getInsertSQLWithNull(list, values);
-		
-		int rows = jdbcExecuteUpdate(sql.toString(), values.toArray());
-		
-		doInterceptAfterInsert(list.get(0).getClass(), list, rows);
-		return rows;
-	}
-	
+
 }
