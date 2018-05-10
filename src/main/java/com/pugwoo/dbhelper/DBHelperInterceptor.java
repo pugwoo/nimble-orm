@@ -66,9 +66,12 @@ public class DBHelperInterceptor {
 	 * update前执行
 	 * @param clazz 更新的类
 	 * @param t 更新的实例
+	 * @param setSql 如果使用了updateCustom方法，传入的setSql将传入。否则该值为null
+	 * @param setSqlArgs 如果使用了updateCustom方法，传入的args将传入，否则该值为null。
+	 *        注意，修改此值会修改实际被设置的值，谨慎!
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-    public <T> boolean beforeUpdate(Class<?> clazz, T t) {
+    public <T> boolean beforeUpdate(Class<?> clazz, T t, String setSql, Object[] setSqlArgs) {
     	return true;
     }
     
@@ -91,14 +94,7 @@ public class DBHelperInterceptor {
      * update后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public <T> void afterUpdate(Class<?> clazz, T t, int affectedRows) {
-    }
-    
-    /**
-     * update后执行
-     * @param affectedRows 实际修改数据库条数
-     */
-    public <T> void afterUpdateCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
+    public <T> void afterUpdate(Class<?> clazz, List<T> tList, int affectedRows) {
     }
     
     // 删除相关的

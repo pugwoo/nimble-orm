@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.impl.part;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -7,8 +8,10 @@ import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
@@ -16,9 +19,9 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private <T> void doInterceptBeforeUpdate(Class<?> clazz, Object t) {
+	private <T> void doInterceptBeforeUpdate(Class<?> clazz, Object t, String setSql, Object[] setSqlArgs) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdate(clazz, t);
+			boolean isContinue = interceptor.beforeUpdate(clazz, t, setSql, setSqlArgs);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -34,12 +37,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	private <T> void doInterceptAfterUpdate(final Class<?> clazz, final Object t, final int rows) {
+	private <T> void doInterceptAfterUpdate(final Class<T> clazz, final List<T> tList, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterUpdate(clazz, t, rows);
+					interceptors.get(i).afterUpdate(clazz, tList, rows);
 				}
 			}
 		};
@@ -47,19 +50,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			runnable.run();
 		}
 	}
-	private void doInterceptAfterUpdate(final Class<?> clazz, final String sql, final Object[] args, final int rows) {
-		Runnable runnable = new Runnable() {
-			@Override
-			public void run() {
-				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterUpdateCustom(clazz, sql, args, rows);
-				}
-			}
-		};
-		if(!executeAfterCommit(runnable)) {
-			runnable.run();
-		}
-	}
+
 	//////////////
 
 	@Override
@@ -112,6 +103,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return rows;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private <T> int _update(T t, boolean withNull, String postSql, Object... args) 
 			throws NullKeyValueException {
 		
@@ -121,7 +113,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		PreHandleObject.preHandleUpdate(t);
 		
-		doInterceptBeforeUpdate(t.getClass(), t);
+		doInterceptBeforeUpdate(t.getClass(), t, null, null);
 		List<Object> values = new ArrayList<Object>();
 		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
 		if(args != null) {
@@ -130,11 +122,14 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 		
-		doInterceptAfterUpdate(t.getClass(), t, rows);
+		List<T> tList = new ArrayList<T>();
+		tList.add(t);
+		doInterceptAfterUpdate((Class<T>)t.getClass(), tList, rows);
 		
 		return rows;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
 		if(setSql == null || setSql.trim().isEmpty()) {
@@ -150,7 +145,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		List<String> customsSets = new ArrayList<String>();
 		List<Object> customsParams = new ArrayList<Object>();
 		
-		doInterceptBeforeUpdate(t.getClass(), sql, customsSets, customsParams, values.toArray());
+		doInterceptBeforeUpdate(t.getClass(), t, setSql, args);
 		
 		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
 			values = new ArrayList<Object>();
@@ -168,12 +163,15 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 		
-		doInterceptAfterUpdate(t.getClass(), sql, values.toArray(), rows);
+		List<T> tList = new ArrayList<T>();
+		tList.add(t);
+		doInterceptAfterUpdate((Class<T>)t.getClass(), tList, rows);
 		
 		return rows;
 	}
 	
-	@Override
+	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
+	@Override @Transactional
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
 		if(setSql == null || setSql.trim().isEmpty()) {
 			return 0; // 不需要更新
@@ -183,7 +181,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
-		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql);
+		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
 		
 		List<String> customsSets = new ArrayList<String>();
 		List<Object> customsParams = new ArrayList<Object>();
@@ -203,13 +201,52 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 			sbSet.append(setSql.toLowerCase().startsWith("set ") ? setSql.substring(4) : setSql);
 			
-			sql = SQLUtils.getUpdateAllSQL(clazz, sbSet.toString(), whereSql);
+			setSql = sbSet.toString();
+		} else {
+			if(args != null) {
+				values.addAll(Arrays.asList(args));
+			}
 		}
 		
-		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
-		
-		doInterceptAfterUpdate(clazz, sql, values.toArray(), rows);
-		
+		int rows = 0;
+		if(interceptors != null && !interceptors.isEmpty()) { // 查询出修改的所有列
+			jdbcTemplate.execute("SET @uids := NULL");
+			List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
+			StringBuilder selectUids = new StringBuilder("(SELECT @uids := CONCAT_WS(',',");
+			for(Field key : keyFields) {
+				selectUids.append("`" + key.getAnnotation(Column.class).value() + "`").append(",");
+			}
+			selectUids.append("@uids))");
+			sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, selectUids.toString());
+			rows = namedJdbcExecuteUpdate(sql, values.toArray());
+			String ids = jdbcTemplate.queryForObject("SELECT @uids", String.class);
+			if(ids != null && !ids.trim().isEmpty()) {
+				String strs[] = ids.split(",");
+				int size = strs.length / keyFields.size();
+				List<T> result = new ArrayList<T>();
+				for(int i = 0; i < size; i++) {
+					T t = null;
+					try {
+						t = clazz.newInstance();
+					} catch (Exception e) {
+						LOGGER.error("newInstance class {} fail", clazz, e);
+					}
+					if(t == null) {continue;}
+					for(int j = 0; j < keyFields.size(); j++) {
+						DOInfoReader.setValue(keyFields.get(j), t, strs[i * keyFields.size() + j]);
+					}
+					boolean succ = getByKey(t);
+					if(!succ) {
+						LOGGER.error("getByKey fail for t:{}", JSON.toJson(t));
+					}
+					result.add(t);
+				}
+				doInterceptAfterUpdate(clazz, result, rows);
+			}
+		} else {
+			sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
+		    rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		}
 		return rows;
 	}
 	

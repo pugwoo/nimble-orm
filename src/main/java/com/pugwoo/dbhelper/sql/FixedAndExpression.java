@@ -35,7 +35,7 @@ public class FixedAndExpression extends AndExpression {
 			sb.append(getRightExpression());
 		}
 		
-		return sb.toString();
+		return sb.toString().trim().isEmpty() ? " " : "("+sb.toString()+")";
 	}
 	
 }

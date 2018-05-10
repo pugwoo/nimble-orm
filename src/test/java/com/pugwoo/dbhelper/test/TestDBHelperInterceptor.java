@@ -22,7 +22,7 @@ public class TestDBHelperInterceptor {
 	@Autowired
 	private DBHelper dbHelper;
 	
-	@Test
+	@Test @Rollback(false)
 	public void testQuery() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -43,7 +43,7 @@ public class TestDBHelperInterceptor {
 		dbHelper.getOne(StudentDO.class);
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testInsertUpdate() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -68,7 +68,7 @@ public class TestDBHelperInterceptor {
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testDelete() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");

@@ -66,7 +66,7 @@ public class TestDBHelper {
 	
 	// ============ JSON test ============================
 	
-	@Test
+	@Test @Rollback(false)
 	public void testJSON() {
 		StudentDO studentDO = new StudentDO();
 		SchoolDO schoolDO = new SchoolDO();
@@ -131,7 +131,7 @@ public class TestDBHelper {
 	
 	// ============ INSERT TEST ============================
 	
-	@Test
+	@Test @Rollback(false)
 	public void testInsert() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("mytestname");
@@ -150,7 +150,7 @@ public class TestDBHelper {
 	
 	
 	// ============ UPDATE TEST START ======================
-	@Test
+	@Test @Rollback(false)
 	public void testUpdateNull() {
 		StudentDO db = insertOne();
 		db.setAge(null);
@@ -274,7 +274,7 @@ public class TestDBHelper {
 	
 	// ============ DELETE TEST START ====================
 	
-	@Test
+	@Test @Rollback(false)
 	public void testDelete() {
 		StudentDO studentDO = insertOne();
 		dbHelper.deleteByKey(studentDO);
@@ -288,21 +288,21 @@ public class TestDBHelper {
 	}
 	
 	// 测试写where条件的自定义删除
-	@Test
+	@Test @Rollback(false)
 	public void testDeleteWhere() {
 		dbHelper.delete(StudentDO.class, "where name=?", "nick2");
 	}
 	
 	// ============ DELETE TEST END ======================
 		
-	@Test
+	@Test @Rollback(false)
 	public void testGetByArray() {
 		// 但是这种写法不稳定的，推荐传入List参数值
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
 		System.out.println(list.size());
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testGetJoin() {
 		SchoolDO schoolDO = new SchoolDO();
 		schoolDO.setName("sysu");
@@ -336,7 +336,7 @@ public class TestDBHelper {
 		Assert.assertTrue(total > 0);
 	}
 		
-	@Test
+	@Test @Rollback(false)
 	public void testGetList() {
 		// 测试获取全部
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class);
@@ -364,7 +364,7 @@ public class TestDBHelper {
 		System.out.println("===============================");
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testGetPage() {
 		insertBatch(100);
 		
@@ -390,7 +390,7 @@ public class TestDBHelper {
 		Assert.assertTrue(total >= 100);
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testExcludeInheritedColumn() {
 		StudentDO studentDO = insertOne();
 		StudentCalVO db = dbHelper.getByKey(StudentCalVO.class, studentDO.getId());
@@ -399,7 +399,7 @@ public class TestDBHelper {
 		Assert.assertTrue(db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi"));
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testRelatedColumn() {
 		
 		SchoolDO schoolDO = new SchoolDO();
@@ -513,7 +513,7 @@ public class TestDBHelper {
 		}
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testGetByKey() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setId(2L);
@@ -532,7 +532,7 @@ public class TestDBHelper {
 		System.out.println("student3:" + student3);
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testGetByKeyList() {
 		List<Long> ids = new ArrayList<Long>();
 		ids.add(insertOne().getId());
@@ -549,7 +549,7 @@ public class TestDBHelper {
 		Assert.assertTrue(allKey.size() >= 3);
 	}
 	
-	@Test
+	@Test @Rollback(false)
 	public void testExists() {
 		StudentDO studentDO = insertOne();
 		Assert.assertTrue(dbHelper.isExist(StudentDO.class, null));

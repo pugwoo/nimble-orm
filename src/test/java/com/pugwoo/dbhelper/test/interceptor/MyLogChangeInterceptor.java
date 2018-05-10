@@ -37,7 +37,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 	
 	@Override
-    public <T> boolean beforeUpdate(Class<?> clazz, T t) {
+    public <T> boolean beforeUpdate(Class<?> clazz, T t, String setSql, Object[] setSqlArgs) {
 		System.out.println(">U> " + clazz.getSimpleName() +
 				"\n    data:" + JSON.toJson(t));
     	return true;
@@ -55,17 +55,11 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
     
 	@Override
-    public <T> void afterUpdate(Class<?> clazz, T t, int affectedRows) {
+    public <T> void afterUpdate(Class<?> clazz, List<T> tList, int affectedRows) {
 		System.out.println("<U< " + clazz.getSimpleName() + ",affectedRows:" + affectedRows +
-				"\n    data:" + JSON.toJson(t));
+				"\n    data:" + JSON.toJson(tList));
     }
-    
-	@Override
-    public <T> void afterUpdateCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
-		System.out.println("<U< " + clazz.getSimpleName() + ",sql:" + sql
-				+ "\n    args:" + JSON.toJson(args) + "\n     affectedRows:" + affectedRows);
-    }
-    
+
 	@Override
     public <T> boolean beforeDelete(Class<?> clazz, T t) {
 		System.out.println(">D> " + clazz.getSimpleName() +

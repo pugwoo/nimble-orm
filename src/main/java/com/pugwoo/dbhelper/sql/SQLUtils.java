@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -328,7 +329,8 @@ public class SQLUtils {
 	 * @param whereSql
 	 * @return
 	 */
-	public static <T> String getUpdateAllSQL(Class<T> clazz, String setSql, String whereSql) {
+	public static <T> String getUpdateAllSQL(Class<T> clazz, String setSql, String whereSql,
+			String extraWhereSql) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
@@ -352,7 +354,7 @@ public class SQLUtils {
 			}
 		}
 		
-		sql.append(autoSetSoftDeleted(whereSql, clazz));
+		sql.append(autoSetSoftDeleted(whereSql, clazz, extraWhereSql));
 		return sql.toString();
 	}
 
@@ -498,13 +500,13 @@ public class SQLUtils {
 		
 		return sql.toString();
 	}
-	
+
 	/**
 	 * 往where sql里面插入AND关系的表达式。
 	 * 
 	 * 例如：whereSql为 where a!=3 or a!=2 limit 1
 	 *      condExpress为 deleted=0
-	 * 那么返回：where deleted=0 and (a!=3 or a!=2) limit 1
+	 * 那么返回：where (deleted=0 and (a!=3 or a!=2)) limit 1
 	 * 
 	 * @param whereSql 从where起的sql子句，如果有where必须带上where关键字。
 	 * @param condExpression 例如a=?  不带where或and关键字。
@@ -526,29 +528,45 @@ public class SQLUtils {
 			return "WHERE " + condExpression + " " + whereSql;
 		}
 		
+		// 为解决JSqlParse对复杂的condExpression不支持的问题，这里用替换的形式来达到目的
+	    String magic = "A" + UUID.randomUUID().toString().replace("-", "");
 		
 		String selectSql = "select * from dual "; // 辅助where sql解析用
 		Statement statement = CCJSqlParserUtil.parse(selectSql + whereSql);
 		Select selectStatement = (Select) statement;
 		PlainSelect plainSelect = (PlainSelect)selectStatement.getSelectBody();
 		
-		Expression ce = CCJSqlParserUtil.parseCondExpression(condExpression);
+		Expression ce = CCJSqlParserUtil.parseCondExpression(magic);
 		Expression oldWhere = plainSelect.getWhere();
 		Expression newWhere = new FixedAndExpression(ce, oldWhere);
 		plainSelect.setWhere(newWhere);
 		
-		return plainSelect.toString().substring(selectSql.length());
+		String result = plainSelect.toString().substring(selectSql.length());
+		return result.replace(magic, condExpression);
+	}
+
+	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
+		return autoSetSoftDeleted(whereSql, clazz, "");
 	}
 	
 	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
 	 * @param clazz 要操作的DO类
+	 * @param extraWhere 附带的where语句，会加进去，不能带where关键字，仅能是where的条件字句
 	 * @return 无论如何前面会加空格，更安全
 	 */
-	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
+	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz, String extraWhere) {
 		if(whereSql == null) {
 			whereSql = "";
+		}
+		if(extraWhere == null) {
+			extraWhere = "";
+		} else {
+			extraWhere = extraWhere.trim();
+		}
+		if(!extraWhere.isEmpty()) {
+			extraWhere = "(" + extraWhere + ")";
 		}
 		String deletedExpression = "";
 		
@@ -565,7 +583,13 @@ public class SQLUtils {
 			Field softDeleteT2 = DOInfoReader.getSoftDeleteColumn(rightTableField.getType());
 			
 			if(softDeleteT1 == null && softDeleteT2 == null) {
-				return " " + whereSql; // 不处理
+				try {
+					return " " + insertWhereAndExpression(whereSql, extraWhere);
+				} catch (JSQLParserException e) {
+					LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
+							whereSql, deletedExpression, e);
+					throw new BadSQLSyntaxException(e);
+				}
 			}
 			
 			StringBuilder deletedExpressionSb = new StringBuilder();
@@ -604,7 +628,13 @@ public class SQLUtils {
 		} else {
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 			if(softDelete == null) {
-				return " " + whereSql; // 不处理
+				try {
+					return " " + insertWhereAndExpression(whereSql, extraWhere);
+				} catch (JSQLParserException e) {
+					LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
+							whereSql, deletedExpression, e);
+					throw new BadSQLSyntaxException(e);
+				}
 			}
 			
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
@@ -613,6 +643,9 @@ public class SQLUtils {
 		}
 		
 		try {
+			if(!extraWhere.isEmpty()) {
+				deletedExpression = "(" + deletedExpression + " and " + extraWhere + ")";
+			}
 			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
 		} catch (JSQLParserException e) {
 			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",

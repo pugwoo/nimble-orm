@@ -1,4 +1,7 @@
 2018年5月10日
+v0.8.0 - [improve] 完美解决updateAll和delete拦截器after无法获得实际修改的记录的问题
+
+2018年5月10日
 v0.7.7 - [add] 增加getAllKey的接口
 
 2018年5月7日
