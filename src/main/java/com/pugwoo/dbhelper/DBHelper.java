@@ -147,12 +147,22 @@ public interface DBHelper {
 	<T> List<T> getAll(Class<T> clazz);
 	
 	/**
-	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
+	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 【-支持@JoinTable-】
+	 * @param postSql where及后续语句，可包含order by,group by,limit等语句
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
+	
+	/**
+	 * 查询列表，但只查询主键出来，postSql指定查询where及order by limit等后续语句。<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param postSql where及后续语句，可包含order by,group by,limit等语句
+	 * @return 返回不会是null
+	 */
+	<T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args);
 
 	/**
 	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>

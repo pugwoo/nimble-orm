@@ -15,7 +15,7 @@ import java.util.List;
 public class DBHelperInterceptor {
 
 	/**
-	 * select前执行
+	 * select前执行。不会拦截getCount计算总数和getAllKey只查询key这2个接口。
 	 * @param clazz 查询的对象
 	 * @param sql 查询的完整sql
 	 * @param args 查询的完整参数。理论上，拦截器就有可能修改args里面的object的值的，请小心。不建议修改args的值。
@@ -26,7 +26,7 @@ public class DBHelperInterceptor {
 	}
 	
 	/**
-	 * select后执行
+	 * select后执行。不会拦截getCount计算总数和getAllKey只查询key这2个接口。
 	 * @param clazz 查询的对象 
 	 * @param sql 查询的完整sql
 	 * @param args 查询的完整参数
@@ -35,7 +35,7 @@ public class DBHelperInterceptor {
 	 * @return DBHelper会使用返回值作为新的查询结果值，因此，没修改时请务必将result返回。
 	 *         对于机密的数据，请直接设置result的对象属性为null。
 	 */
-	public <T> List<T> afterSelect(Class<?> clazz, String sql, Object args[],
+	public <T> List<T> afterSelect(Class<?> clazz, String sql, Object[] args,
 			List<T> result, int count) {
 		return result;
 	}

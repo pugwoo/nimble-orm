@@ -33,7 +33,14 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private Field leftJoinField;
 	private Field rightJoinField;
 
+	private boolean selectOnlyKey = false; // 是否只选择主键列，默认false
+	
 	public AnnotationSupportRowMapper(Class<T> clazz) {
+		handleClazz(clazz);
+	}
+	
+	public AnnotationSupportRowMapper(Class<T> clazz, boolean selectOnlyKey) {
+		this.selectOnlyKey = selectOnlyKey;
 		handleClazz(clazz);
 	}
 	
@@ -68,7 +75,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
 				
 				boolean isT1AllNull = true;
-				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType());
+				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType(), selectOnlyKey);
 				for (Field field : fieldsT1) {
 					Column column = field.getAnnotation(Column.class);
 					String columnName;
@@ -87,7 +94,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				}
 				
 				boolean isT2AllNull = true;
-				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType());
+				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType(), selectOnlyKey);
 				for (Field field : fieldsT2) {
 					Column column = field.getAnnotation(Column.class);
 					String columnName;
@@ -109,7 +116,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
 				
 			} else {
-				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
+				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(

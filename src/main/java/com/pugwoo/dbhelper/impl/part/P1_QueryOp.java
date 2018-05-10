@@ -34,7 +34,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	public <T> boolean getByKey(T t) throws NullKeyValueException {
 		if(t == null) {return false;}
 		Class<?> clazz = t.getClass();
-		StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false));
+		StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false));
 		
 		List<Object> keyValues = new ArrayList<Object>();
 		sql.append(SQLUtils.getKeysWhereSQL(t, keyValues));
@@ -70,7 +70,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		SQLAssert.onlyOneKeyColumn(clazz);
 		
 		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectSQL(clazz, false));
+		sql.append(SQLUtils.getSelectSQL(clazz, false, false));
 		sql.append(SQLUtils.getKeysWhereSQL(clazz));
 		
 		try {
@@ -106,7 +106,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		}
 		
 		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectSQL(clazz, false));
+		sql.append(SQLUtils.getSelectSQL(clazz, false, false));
 		sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 		
 		log(sql);
@@ -146,7 +146,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
 		int offset = (page - 1) * pageSize;
-		return _getPage(clazz, true, offset, pageSize, postSql, args);
+		return _getPage(clazz, false, true, offset, pageSize, postSql, args);
 	}
     
     @Override
@@ -161,14 +161,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	@Override
 	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
-		return _getPage(clazz, true, 0, 1, postSql, args).getTotal();
+		return _getPage(clazz, false, true, 0, 1, postSql, args).getTotal();
 	}
 	 
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
 		int offset = (page - 1) * pageSize;
-		return _getPage(clazz, false, offset, pageSize, postSql, args);
+		return _getPage(clazz, false, false, offset, pageSize, postSql, args);
     }
     
     @Override
@@ -178,23 +178,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     
     @Override
 	public <T> List<T> getAll(final Class<T> clazz) {
-		return _getPage(clazz, false, null, null, null).getData();
+		return _getPage(clazz, false, false, null, null, null).getData();
 	}
     
     @Override
 	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
-		return _getPage(clazz, false, null, null, postSql, args).getData();
+		return _getPage(clazz, false, false, null, null, postSql, args).getData();
 	}
+    
+    @Override
+    public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
+    	return _getPage(clazz, true, false, null, null, postSql, args).getData();
+    }
 
     @Override
 	public <T> T getOne(Class<T> clazz) {
-    	List<T> list = _getPage(clazz, false, 0, 1, null).getData();
+    	List<T> list = _getPage(clazz, false, false, 0, 1, null).getData();
     	return list == null || list.isEmpty() ? null : list.get(0);
     }
 	
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
-    	List<T> list = _getPage(clazz, false, 0, 1, postSql, args).getData();
+    	List<T> list = _getPage(clazz, false, false, 0, 1, postSql, args).getData();
     	return list == null || list.isEmpty() ? null : list.get(0);
     }
     
@@ -202,6 +207,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	 * 查询列表
 	 * 
 	 * @param clazz
+	 * @param selectOnlyKey 是否只查询主键，只查询主键时，拦截器不进行拦截，RelatedColumn也不处理
 	 * @param withCount 是否计算总数，将使用SQL_CALC_FOUND_ROWS配合select FOUND_ROWS();来查询
 	 * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
 	 * @param limit null时不生效
@@ -210,28 +216,31 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T> PageData<T> _getPage(Class<T> clazz, boolean withCount,
+	private <T> PageData<T> _getPage(Class<T> clazz,
+			boolean selectOnlyKey, boolean withCount,
 			Integer offset, Integer limit,
 			String postSql, Object... args) {
 		
 		StringBuilder sql = new StringBuilder();
-		sql.append(SQLUtils.getSelectSQL(clazz, withCount));
+		sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, withCount));
 		sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
 		sql.append(SQLUtils.genLimitSQL(offset, limit));
 		
 		log(sql);
-		doInterceptBeforeQuery(clazz, sql, args);
+		if(!selectOnlyKey) {
+			doInterceptBeforeQuery(clazz, sql, args);
+		}
 		
 		long start = System.currentTimeMillis();
 		List<T> list;
 		if(args == null || args.length == 0) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
-					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
+					new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		} else {
 			list = namedParameterJdbcTemplate.query(
 					NamedParameterUtils.trans(sql.toString()),
 					NamedParameterUtils.transParam(args),
-					new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
+					new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		}
 		
 		int total = -1; // -1 表示没有查询总数，未知
@@ -239,12 +248,16 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
 		}
 		
-		postHandleRelatedColumn(list);
+		if(!selectOnlyKey) {
+			postHandleRelatedColumn(list);
+		}
 		
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql.toString(), args == null ? new ArrayList<Object>() : Arrays.asList(args));
 		
-		doInteceptAfterQuery(clazz, list, total, sql, args);
+		if(!selectOnlyKey) {
+			doInteceptAfterQuery(clazz, list, total, sql, args);
+		}
 		
 		PageData<T> pageData = new PageData<T>();
 		pageData.setData(list);

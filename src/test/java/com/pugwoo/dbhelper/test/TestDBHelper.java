@@ -544,6 +544,9 @@ public class TestDBHelper {
 		for(int i = 0; i < 3; i++) {
 			Assert.assertTrue(map.get(ids.get(i)).getId().equals(ids.get(i)));
 		}
+		
+		List<StudentDO> allKey = dbHelper.getAllKey(StudentDO.class, "where 1=1");
+		Assert.assertTrue(allKey.size() >= 3);
 	}
 	
 	@Test

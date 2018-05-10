@@ -43,10 +43,11 @@ public class SQLUtils {
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
 	 * @param clazz
+	 * @param selectOnlyKey 是否只查询key
 	 * @param withSQL_CALC_FOUND_ROWS 查询是否带上SQL_CALC_FOUND_ROWS，当配合select FOUND_ROWS();时需要为true
 	 * @return
 	 */
-	public static String getSelectSQL(Class<?> clazz, boolean withSQL_CALC_FOUND_ROWS) {
+	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean withSQL_CALC_FOUND_ROWS) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 		if(withSQL_CALC_FOUND_ROWS) {
@@ -63,10 +64,10 @@ public class SQLUtils {
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 			
 	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
-	        List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType());
+	        List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
 			
 	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
-	        List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType());
+	        List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
 	        
 	        sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
 	        sql.append(",");
@@ -76,13 +77,13 @@ public class SQLUtils {
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(table2)).append(" ").append(joinRightTable.alias());
 	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
-	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
+	        	throw new OnConditionIsNeedException("join table :" + clazz.getName());
 	        }
 	        sql.append(" on ").append(joinTable.on().trim());
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
+			List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 			
 			sql.append(join(fields, ","));
 			sql.append(" FROM ").append(getTableName(table)).append(" ").append(table.alias());

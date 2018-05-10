@@ -126,15 +126,16 @@ public class DOInfoReader {
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
 	 * 该方法只用于select读操作。
 	 * @param clazz
+	 * @param selectOnlyKey 是否只select主键
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
 	 */
-	public static List<Field> getColumnsForSelect(Class<?> clazz) {
+	public static List<Field> getColumnsForSelect(Class<?> clazz, boolean selectOnlyKey) {
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
 		
-		List<Field> result = _getFieldsForSelect(clazz);
+		List<Field> result = _getFieldsForSelect(clazz, selectOnlyKey);
 		if (result.isEmpty()) {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
 					+ " does not have any @Column fields");
@@ -364,7 +365,7 @@ public class DOInfoReader {
 		return true;
 	}
 	
-	private static List<Field> _getFieldsForSelect(Class<?> clazz) {
+	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {
 		if(clazz == null) {
 			return new ArrayList<Field>();
 		}
@@ -373,14 +374,27 @@ public class DOInfoReader {
 		Class<?> curClass = clazz;
 		while (curClass != null) {
 			classLink.add(curClass);
-			ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
-			if(eic != null) {
-				break;
+			if(!selectOnlyKey) {
+				ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
+				if(eic != null) {
+					break;
+				}
 			}
 			curClass = curClass.getSuperclass();
 		}
 		
-		return _getFields(classLink, Column.class);
+		List<Field> fields = _getFields(classLink, Column.class);
+		if(selectOnlyKey) {
+			List<Field> keyFields = new ArrayList<Field>();
+			for(Field field : fields) {
+				if(field.getAnnotation(Column.class).isKey()) {
+					keyFields.add(field);
+				}
+			}
+			return keyFields;
+		} else {
+			return fields;
+		}
 	}
 	
 	/**
