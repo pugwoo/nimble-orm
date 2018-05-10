@@ -99,11 +99,13 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	@Override
 	public <T> int insertWhereNotExist(T t, String whereSql, Object... args) {
+		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
 		return insertWhereNotExist(t, false, whereSql, args);
 	}
 	
 	@Override
 	public <T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args) {
+		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
 		return insertWhereNotExist(t, true, whereSql, args);
 	}
 	

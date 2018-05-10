@@ -60,6 +60,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	@Override
 	public <T> int update(T t, String postSql, Object... args) throws NullKeyValueException {
+		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _update(t, false, postSql, args);
 	}
 	
@@ -70,6 +71,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	@Override
 	public <T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException {
+		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _update(t, true, postSql, args);
 	}
 	
@@ -132,6 +134,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
+		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
 		if(setSql == null || setSql.trim().isEmpty()) {
 			return 0; // 不需要更新
 		}
@@ -173,6 +176,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
 	@Override @Transactional
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
+		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
 		if(setSql == null || setSql.trim().isEmpty()) {
 			return 0; // 不需要更新
 		}

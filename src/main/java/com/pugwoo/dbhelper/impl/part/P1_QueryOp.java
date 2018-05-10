@@ -145,6 +145,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
+    	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		int offset = (page - 1) * pageSize;
 		return _getPage(clazz, false, true, offset, pageSize, postSql, args);
 	}
@@ -161,12 +162,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	@Override
 	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
+		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _getPage(clazz, false, true, 0, 1, postSql, args).getTotal();
 	}
 	 
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
+    	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		int offset = (page - 1) * pageSize;
 		return _getPage(clazz, false, false, offset, pageSize, postSql, args);
     }
@@ -183,11 +186,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     
     @Override
 	public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
+    	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _getPage(clazz, false, false, null, null, postSql, args).getData();
 	}
     
     @Override
     public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
+    	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
     	return _getPage(clazz, true, false, null, null, postSql, args).getData();
     }
 
@@ -199,6 +204,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
+    	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
     	List<T> list = _getPage(clazz, false, false, 0, 1, postSql, args).getData();
     	return list == null || list.isEmpty() ? null : list.get(0);
     }
@@ -292,12 +298,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	@Override
 	public <T> boolean isExist(Class<T> clazz, String postSql, Object... args) {
+		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return getOne(clazz, postSql, args) != null;
 	}
 	
 	@Override
 	public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
 			String postSql, Object... args) {
+		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		if(atLeastCounts == 1) {
 			return isExist(clazz, postSql, args);
 		}
