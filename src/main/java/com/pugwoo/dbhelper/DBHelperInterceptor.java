@@ -102,7 +102,7 @@ public class DBHelperInterceptor {
      * @param t
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public <T> boolean beforeDelete(Class<?> clazz, List<T> tList) {
+    public <T> boolean beforeDelete(List<T> tList) {
     	return true;
     }
 
@@ -110,7 +110,7 @@ public class DBHelperInterceptor {
      * delete后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public <T> void afterDelete(Class<?> clazz, List<T> tList, int affectedRows) {
+    public <T> void afterDelete(List<T> tList, int affectedRows) {
     }
 
 }

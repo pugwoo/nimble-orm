@@ -19,21 +19,21 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected <T> void doInterceptBeforeDelete(Class<?> clazz, List<T> tList) {
+	protected <T> void doInterceptBeforeDelete(List<T> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeDelete(clazz, tList);
+			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
 
-	protected <T> void doInterceptAfterDelete(final Class<?> clazz, final List<T> tList, final int rows) {
+	protected <T> void doInterceptAfterDelete(final List<T> tList, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterDelete(clazz, tList, rows);
+					interceptors.get(i).afterDelete(tList, rows);
 				}
 			}
 		};
@@ -52,7 +52,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 		List<T> tList = new ArrayList<T>();
 		tList.add(t);
-		doInterceptBeforeDelete(t.getClass(), tList);
+		doInterceptBeforeDelete(tList);
 		
 		String sql = null;
 		
@@ -69,7 +69,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray());
 
-		doInterceptAfterDelete(t.getClass(), tList, rows);
+		doInterceptAfterDelete(tList, rows);
 		
 		return rows;
 	}
@@ -95,7 +95,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				Object key = DOInfoReader.getValue(keyField, t);
 				if(key != null) keys.add(key);
 			}
-			doInterceptBeforeDelete(clazz, list);
+			doInterceptBeforeDelete(list);
 			
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 			
@@ -109,7 +109,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			
 			int rows = namedJdbcExecuteUpdate(sql, keys);
 			
-			doInterceptAfterDelete(clazz, list, rows);
+			doInterceptAfterDelete(list, rows);
 			return rows;
 		} else {
 			int rows = 0;
