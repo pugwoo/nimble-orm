@@ -27,7 +27,7 @@ public class DBHelperInterceptor {
 	
 	/**
 	 * select后执行。不会拦截getCount计算总数和getAllKey只查询key这2个接口。
-	 * @param clazz 查询的对象 
+	 * @param clazz 查询的对象，这个参数之所以是必须的，因为查询结果可能为空，此时便获取不到clazz
 	 * @param sql 查询的完整sql
 	 * @param args 查询的完整参数
 	 * @param result 查询结果值，对于返回值是一个的，也放入该list中。对于没有的，这里会传入空list。
@@ -42,21 +42,19 @@ public class DBHelperInterceptor {
 	
 	/**
 	 * insert前执行
-	 * @param clazz 查询的对象
 	 * @param list 插入的对象列表。可以修改list中的元素，请小心操作；但删除list元素则不一定会影响insert。
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-	public <T> boolean beforeInsert(Class<?> clazz, List<T> list) {
+	public <T> boolean beforeInsert(List<T> list) {
 		return true;
 	}
 	
 	/**
 	 * insert后执行
-	 * @param clazz 查询的对象
 	 * @param list 插入的对象列表，对于有自增id的值，返回的list已经设置上了主键。
 	 * @param affectedRows 实际影响的数据库条数。注意list可能有值而affectedRows数据小于list个数，说明有的没有插入到数据库
 	 */
-	public <T> void afterInsert(Class<?> clazz, List<T> list, int affectedRows) {
+	public <T> void afterInsert(List<T> list, int affectedRows) {
 	}
 	
 	// 对于更新拦截器，只提供当前要更新的值。由于更新有自写set语句的接口，因此提供两个beforeUpdate

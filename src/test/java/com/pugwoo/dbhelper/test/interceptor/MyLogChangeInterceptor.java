@@ -23,17 +23,21 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 	
 	@Override
-	public <T> boolean beforeInsert(Class<?> clazz, List<T> list) {
-		System.out.println(">I> " + clazz.getSimpleName() + ",count:" + list.size() +
-				"\n    data:" + JSON.toJson(list));
+	public <T> boolean beforeInsert(List<T> list) {
+		if(!list.isEmpty()) {
+			System.out.println(">I> " + list.get(0).getClass().getSimpleName() + ",count:" + list.size() +
+					"\n    data:" + JSON.toJson(list));
+		}
 		return true;
 	}
 	
 	@Override
-	public <T> void afterInsert(Class<?> clazz, List<T> list, int affectedRows) {
-		System.out.println("<I< " + clazz.getSimpleName() + ",count:" + list.size()
-		        + ",affectedRows:" + affectedRows +
-				"\n    data:" + JSON.toJson(list));
+	public <T> void afterInsert(List<T> list, int affectedRows) {
+		if(!list.isEmpty()) {
+			System.out.println("<I< " + list.get(0).getClass().getSimpleName() + ",count:" + list.size()
+	        + ",affectedRows:" + affectedRows +
+			"\n    data:" + JSON.toJson(list));
+		}
 	}
 	
 	@Override

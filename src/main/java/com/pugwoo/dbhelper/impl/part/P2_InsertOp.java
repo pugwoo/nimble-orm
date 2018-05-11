@@ -15,32 +15,31 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	//////// 拦截器
-	private void doInterceptBeforeInsert(Class<?> clazz, Object t) {
+	private void doInterceptBeforeInsert(Object t) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
-		doInterceptBeforeInsert(clazz, list);
+		doInterceptBeforeInsert(list);
 	}
-	private <T> void doInterceptBeforeInsert(Class<?> clazz, List<T> list) {
+	private <T> void doInterceptBeforeInsert(List<T> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeInsert(clazz, list);
+			boolean isContinue = interceptor.beforeInsert(list);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
 	
-	private void doInterceptAfterInsert(Class<?> clazz, Object t, int rows) {
+	private void doInterceptAfterInsert(Object t, int rows) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
-		doInterceptAfterInsert(clazz, list, rows);
+		doInterceptAfterInsert(list, rows);
 	}
-	private <T> void doInterceptAfterInsert(final Class<?> clazz,
-			final List<T> list, final int rows) {
+	private <T> void doInterceptAfterInsert(final List<T> list, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterInsert(clazz, list, rows);
+					interceptors.get(i).afterInsert(list, rows);
 				}
 			}
 		};
@@ -77,7 +76,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		List<Object> values = new ArrayList<Object>();
 		
-		doInterceptBeforeInsert(t.getClass(), t);
+		doInterceptBeforeInsert(t);
 		
 		String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
 		log(sql);
@@ -93,7 +92,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
 		
-		doInterceptAfterInsert(t.getClass(), t, rows);
+		doInterceptAfterInsert(t, rows);
 		return rows;
 	}
 	
@@ -118,7 +117,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		List<Object> values = new ArrayList<Object>();
 		
-		doInterceptBeforeInsert(t.getClass(), t);
+		doInterceptBeforeInsert(t);
 		
 		String sql = SQLUtils.getInsertWhereNotExistSQL(t, values, isWithNullValue, whereSql);
 		
@@ -141,7 +140,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
 		
-		doInterceptAfterInsert(t.getClass(), t, rows);
+		doInterceptAfterInsert(t, rows);
 		return rows;
 	}
 
