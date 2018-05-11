@@ -23,7 +23,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 	
 	@Override
-	public <T> boolean beforeInsert(List<T> list) {
+	public boolean beforeInsert(List<Object> list) {
 		if(!list.isEmpty()) {
 			System.out.println(">I> " + list.get(0).getClass().getSimpleName() + ",count:" + list.size() +
 					"\n    data:" + JSON.toJson(list));
@@ -32,7 +32,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 	
 	@Override
-	public <T> void afterInsert(List<T> list, int affectedRows) {
+	public void afterInsert(List<Object> list, int affectedRows) {
 		if(!list.isEmpty()) {
 			System.out.println("<I< " + list.get(0).getClass().getSimpleName() + ",count:" + list.size()
 	        + ",affectedRows:" + affectedRows +
@@ -41,7 +41,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 	
 	@Override
-    public <T> boolean beforeUpdate(List<T> tList, String setSql, Object[] setSqlArgs) {
+    public boolean beforeUpdate(List<Object> tList, String setSql, Object[] setSqlArgs) {
 		if(!tList.isEmpty()) {
 			System.out.println(">U> " + tList.get(0).getClass().getSimpleName() +
 					"\n    data:" + JSON.toJson(tList));
@@ -50,7 +50,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
     
 	@Override
-    public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql,
+    public boolean beforeUpdateCustom(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams, Object[] args) {
 		if(clazz.equals(StudentDO.class)) {
 			customsSets.add("name=?");
@@ -61,7 +61,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
     
 	@Override
-    public <T> void afterUpdate(List<T> tList, int affectedRows) {
+    public void afterUpdate(List<Object> tList, int affectedRows) {
 		if(!tList.isEmpty()) {
 			System.out.println("<U< " + tList.get(0).getClass().getSimpleName() + ",affectedRows:" + affectedRows +
 					"\n    data:" + JSON.toJson(tList));
@@ -69,7 +69,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
 
 	@Override
-    public <T> boolean beforeDelete(List<T> tList) {
+    public boolean beforeDelete(List<Object> tList) {
 		if(!tList.isEmpty()) {
 			System.out.println(">D> " + tList.get(0).getClass().getSimpleName() +
 					"\n    data:" + JSON.toJson(tList));
@@ -78,7 +78,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
 
 	@Override
-    public <T> void afterDelete(List<T> tList, int affectedRows) {
+    public void afterDelete(List<Object> tList, int affectedRows) {
 		if(!tList.isEmpty()) {
 			System.out.println("<D< " + tList.get(0).getClass().getSimpleName() + ",affectedRows:" + affectedRows +
 					"\n    data:" + JSON.toJson(tList));

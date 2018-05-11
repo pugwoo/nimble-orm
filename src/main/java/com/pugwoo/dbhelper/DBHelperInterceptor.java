@@ -45,7 +45,7 @@ public class DBHelperInterceptor {
 	 * @param list 插入的对象列表。可以修改list中的元素，请小心操作；但删除list元素则不一定会影响insert。
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-	public <T> boolean beforeInsert(List<T> list) {
+	public boolean beforeInsert(List<Object> list) {
 		return true;
 	}
 	
@@ -54,7 +54,7 @@ public class DBHelperInterceptor {
 	 * @param list 插入的对象列表，对于有自增id的值，返回的list已经设置上了主键。
 	 * @param affectedRows 实际影响的数据库条数。注意list可能有值而affectedRows数据小于list个数，说明有的没有插入到数据库
 	 */
-	public <T> void afterInsert(List<T> list, int affectedRows) {
+	public void afterInsert(List<Object> list, int affectedRows) {
 	}
 	
 	// 对于更新拦截器，只提供当前要更新的值。由于更新有自写set语句的接口，因此提供两个beforeUpdate
@@ -68,7 +68,7 @@ public class DBHelperInterceptor {
 	 *        注意，修改此值会修改实际被设置的值，谨慎!
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-    public <T> boolean beforeUpdate(List<T> tList, String setSql, Object[] setSqlArgs) {
+    public boolean beforeUpdate(List<Object> tList, String setSql, Object[] setSqlArgs) {
     	return true;
     }
     
@@ -81,7 +81,7 @@ public class DBHelperInterceptor {
      * @param customsParams 允许拦截器自行添加若干set语句，这里是对应的参数
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public <T> boolean beforeUpdateCustom(Class<?> clazz, String sql,
+    public boolean beforeUpdateCustom(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams,
     		Object[] args) {
     	return true;
@@ -91,7 +91,7 @@ public class DBHelperInterceptor {
      * update后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public <T> void afterUpdate(List<T> tList, int affectedRows) {
+    public void afterUpdate(List<Object> tList, int affectedRows) {
     }
     
     // 删除相关的
@@ -102,7 +102,7 @@ public class DBHelperInterceptor {
      * @param t
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public <T> boolean beforeDelete(List<T> tList) {
+    public boolean beforeDelete(List<Object> tList) {
     	return true;
     }
 
@@ -110,7 +110,7 @@ public class DBHelperInterceptor {
      * delete后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public <T> void afterDelete(List<T> tList, int affectedRows) {
+    public void afterDelete(List<Object> tList, int affectedRows) {
     }
 
 }

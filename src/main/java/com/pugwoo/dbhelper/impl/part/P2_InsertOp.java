@@ -20,7 +20,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsert(list);
 	}
-	private <T> void doInterceptBeforeInsert(List<T> list) {
+	private <T> void doInterceptBeforeInsert(List<Object> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeInsert(list);
 			if (!isContinue) {
@@ -34,7 +34,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsert(list, rows);
 	}
-	private <T> void doInterceptAfterInsert(final List<T> list, final int rows) {
+	private <T> void doInterceptAfterInsert(final List<Object> list, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {

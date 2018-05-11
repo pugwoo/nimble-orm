@@ -19,7 +19,7 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected <T> void doInterceptBeforeDelete(List<T> tList) {
+	protected <T> void doInterceptBeforeDelete(List<Object> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
@@ -28,7 +28,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 
-	protected <T> void doInterceptAfterDelete(final List<T> tList, final int rows) {
+	protected <T> void doInterceptAfterDelete(final List<Object> tList, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -50,7 +50,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		List<Object> values = new ArrayList<Object>();
 
-		List<T> tList = new ArrayList<T>();
+		List<Object> tList = new ArrayList<Object>();
 		tList.add(t);
 		doInterceptBeforeDelete(tList);
 		
@@ -95,7 +95,12 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				Object key = DOInfoReader.getValue(keyField, t);
 				if(key != null) keys.add(key);
 			}
-			doInterceptBeforeDelete(list);
+			
+			List<Object> listTmp = new ArrayList<Object>();
+			for(T t : list) {
+				listTmp.add(t);
+			}
+			doInterceptBeforeDelete(listTmp);
 			
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 			
@@ -109,7 +114,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			
 			int rows = namedJdbcExecuteUpdate(sql, keys);
 			
-			doInterceptAfterDelete(list, rows);
+			doInterceptAfterDelete(listTmp, rows);
 			return rows;
 		} else {
 			int rows = 0;

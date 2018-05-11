@@ -37,7 +37,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	private <T> void doInterceptAfterUpdate(final List<T> tList, final int rows) {
+	private <T> void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -227,7 +227,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			if(ids != null && !ids.trim().isEmpty()) {
 				String strs[] = ids.split(",");
 				int size = strs.length / keyFields.size();
-				List<T> result = new ArrayList<T>();
+				List<Object> result = new ArrayList<Object>();
 				for(int i = 0; i < size; i++) {
 					T t = null;
 					try {
