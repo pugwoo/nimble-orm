@@ -51,7 +51,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	@Override
 	public <T> int insert(T t) {
-		return insert(t, false);
+		return insert(t, false, true);
 	}
 	
 	@Override @Transactional
@@ -59,24 +59,32 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
+		
+		doInterceptBeforeInsert(list);
+		
 		int sum = 0;
 		for(Object obj : list) {
-			sum += insert(obj, false);
+			sum += insert(obj, false, false);
 		}
+		
+		doInterceptAfterInsert(list, sum);
 		return sum;
 	}
 	
 	@Override
 	public <T> int insertWithNull(T t) {
-		return insert(t, true);
+		return insert(t, true, true);
 	}
 	
-	private <T> int insert(T t, boolean isWithNullValue) {
+	@Transactional
+	private <T> int insert(T t, boolean isWithNullValue, boolean withInterceptor) {
 		PreHandleObject.preHandleInsert(t);
 		
 		List<Object> values = new ArrayList<Object>();
 		
-		doInterceptBeforeInsert(t);
+		if(withInterceptor) {
+			doInterceptBeforeInsert(t);
+		}
 		
 		String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
 		log(sql);
@@ -92,7 +100,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, values);
 		
-		doInterceptAfterInsert(t, rows);
+		if(withInterceptor) {
+			doInterceptAfterInsert(t, rows);
+		}
 		return rows;
 	}
 	
@@ -110,7 +120,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	private <T> int insertWhereNotExist(T t, boolean isWithNullValue, String whereSql, Object... args) {
 		if(whereSql == null || whereSql.isEmpty()) {
-			return insert(t, isWithNullValue);
+			return insert(t, isWithNullValue, true);
 		}
 		
 		PreHandleObject.preHandleInsert(t);

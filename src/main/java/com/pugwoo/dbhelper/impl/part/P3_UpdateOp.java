@@ -55,24 +55,24 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 	@Override
 	public <T> int update(T t) throws NullKeyValueException {
-		return _update(t, false, null);
+		return _update(t, false, true, null);
 	}
 	
 	@Override
 	public <T> int update(T t, String postSql, Object... args) throws NullKeyValueException {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
-		return _update(t, false, postSql, args);
+		return _update(t, false, true, postSql, args);
 	}
 	
 	@Override
 	public <T> int updateWithNull(T t) throws NullKeyValueException {
-		return _update(t, true, null);
+		return _update(t, true, true, null);
 	}
 	
 	@Override
 	public <T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
-		return _update(t, true, postSql, args);
+		return _update(t, true, true, postSql, args);
 	}
 	
 	@Override @Transactional
@@ -81,12 +81,20 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0;
 		}
 		
+		List<Object> tmpList = new ArrayList<Object>();
+		for(T t : list) {
+			tmpList.add(t);
+		}
+		doInterceptBeforeUpdate(tmpList, null, null);
+		
 		int rows = 0;
 		for(T t : list) {
 			if(t != null) {
-				rows += updateWithNull(t);
+				rows += _update(t, true, false, null);
 			}
 		}
+		
+		doInterceptAfterUpdate(tmpList, rows);
 		return rows;
 	}
 	
@@ -96,17 +104,25 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0;
 		}
 		
+		List<Object> tmpList = new ArrayList<Object>();
+		for(T t : list) {
+			tmpList.add(t);
+		}
+		doInterceptBeforeUpdate(tmpList, null, null);
+		
 		int rows = 0;
 		for(T t : list) {
 			if(t != null) {
-				rows += update(t);
+				rows += _update(t, false, false, null);
 			}
 		}
+		
+		doInterceptAfterUpdate(tmpList, rows);
 		return rows;
 	}
 	
-	private <T> int _update(T t, boolean withNull, String postSql, Object... args) 
-			throws NullKeyValueException {
+	private <T> int _update(T t, boolean withNull, boolean withInterceptors,
+			String postSql, Object... args) throws NullKeyValueException {
 		
 		if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
 			return 0; // not need to update
@@ -117,7 +133,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		List<Object> tList = new ArrayList<Object>();
 		tList.add(t);
 		
-		doInterceptBeforeUpdate(tList, null, null);
+		if(withInterceptors) {
+			doInterceptBeforeUpdate(tList, null, null);
+		}
+		
 		List<Object> values = new ArrayList<Object>();
 		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
 		if(args != null) {
@@ -126,7 +145,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 		
-		doInterceptAfterUpdate(tList, rows);
+		if(withInterceptors) {
+			doInterceptAfterUpdate(tList, rows);
+		}
 		
 		return rows;
 	}
