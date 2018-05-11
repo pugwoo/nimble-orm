@@ -2,7 +2,9 @@ package com.pugwoo.dbhelper.test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,24 @@ public class TestDBHelperInterceptor {
 
 	@Autowired
 	private DBHelper dbHelper;
+	
+	private String getRandomName(String prefix) {
+		return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+	}
+	
+	private List<StudentDO> insertBatch(int num) {
+		List<StudentDO> list = new ArrayList<StudentDO>();
+		for(int i = 0; i < num; i++) {
+			StudentDO studentDO = new StudentDO();
+			studentDO.setName(getRandomName("nick"));
+			list.add(studentDO);
+		}
+		
+		int rows = dbHelper.insert(list);
+		Assert.assertTrue(rows == num);
+		
+		return list;
+	}
 	
 	@Test @Rollback(false)
 	public void testQuery() {
@@ -78,6 +98,17 @@ public class TestDBHelperInterceptor {
 		
 		dbHelper.deleteByKey(StudentDO.class, id);
 		dbHelper.delete(StudentDO.class, "where id > ?", 100);
+	}
+	
+	@Test @Rollback(false)
+	public void batchDelete() {
+		List<StudentDO> insertBatch = insertBatch(10);
+		int rows = dbHelper.deleteByKey(insertBatch);
+		Assert.assertTrue(rows == insertBatch.size());
+		
+		insertBatch = insertBatch(20);
+		rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
+		Assert.assertTrue(rows >= 20);
 	}
 	
 	@Test @Rollback(false)
