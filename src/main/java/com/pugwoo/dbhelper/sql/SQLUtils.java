@@ -436,8 +436,7 @@ public class SQLUtils {
 		return sql.toString();
 	}
 	
-	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz,
-			List<String> customsSets, String postSql) {
+	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql) {
 		
 		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
@@ -459,13 +458,7 @@ public class SQLUtils {
 				sql.append(df.format(new Date())).append("'");
 			}
 		}
-		
-		if(customsSets != null) {
-			for(String set : customsSets) {
-				sql.append(",").append(set);
-			}
-		}
-		
+
 		sql.append(autoSetSoftDeleted(postSql, clazz));
 		
 		return sql.toString();
