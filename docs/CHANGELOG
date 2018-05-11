@@ -3,6 +3,8 @@ v0.8.0 - [improve] 完美解决updateAll和delete拦截器after无法获得实�
        - [del] 删除拦截器中afterDeleteCustom、beforeDeleteCustom和afterUpdateCustom共3个方法
        - [del] 删除insertWithNullInOneSQL方法，该方法获得性能的同时却无法获得插入对象的id，从而破坏拦截器接口的统一性
        - [improve] 对所有用户传入的sql语句，替换tab符号\t为空格
+       - [improve] 修改拦截器beforeDelete和afterDelete的记录对象为List<T>
+       - [improve] 优化deleteByKey(List<T> list)，当所有对象是同类且只有一个主键时，使用批量删除方式
 
 2018年5月10日
 v0.7.7 - [add] 增加getAllKey的接口

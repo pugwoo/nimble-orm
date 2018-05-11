@@ -22,17 +22,24 @@ public class SQLAssert {
 	}
 	
 	public static <T> void allSameClass(List<T> list) throws InvalidParameterException {
+		if(!isAllSameClass(list)) {
+			throw new InvalidParameterException("list elements must be same class");
+		}
+	}
+	
+	public static <T> boolean isAllSameClass(List<T> list) {
+		if(list == null || list.isEmpty()) return true;
 		Class<?> clazz = null;
 		for(T t : list) {
 			if(clazz == null) {
 				clazz = t.getClass();
 			} else {
 				if (!clazz.equals(t.getClass())) {
-					throw new InvalidParameterException(
-							"list elements must be same class");
+					return false;
 				}
 			}
 		}
+		return true;
 	}
 	
 }

@@ -424,8 +424,8 @@ public interface DBHelper {
 	
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数。
+	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
 	 * 该操作【会】自动使用软删除进行删除
-	 * 
 	 * @param t
 	 * @return
 	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常

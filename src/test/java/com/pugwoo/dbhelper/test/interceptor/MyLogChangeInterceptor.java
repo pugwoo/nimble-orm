@@ -61,16 +61,16 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
 
 	@Override
-    public <T> boolean beforeDelete(Class<?> clazz, T t) {
+    public <T> boolean beforeDelete(Class<?> clazz, List<T> tList) {
 		System.out.println(">D> " + clazz.getSimpleName() +
-				"\n    data:" + JSON.toJson(t));
+				"\n    data:" + JSON.toJson(tList));
     	return true;
     }
 
 	@Override
-    public <T> void afterDelete(Class<?> clazz, T t, int affectedRows) {
+    public <T> void afterDelete(Class<?> clazz, List<T> tList, int affectedRows) {
 		System.out.println("<D< " + clazz.getSimpleName() + ",affectedRows:" + affectedRows +
-				"\n    data:" + JSON.toJson(t));
+				"\n    data:" + JSON.toJson(tList));
     }
 
 }

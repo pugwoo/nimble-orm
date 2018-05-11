@@ -637,6 +637,17 @@ public class TestDBHelper {
 		Assert.assertTrue(rows == 0);
 	}
 	
+	@Test @Rollback(false)
+	public void batchDelete() {
+		List<StudentDO> insertBatch = insertBatch(10);
+		int rows = dbHelper.deleteByKey(insertBatch);
+		Assert.assertTrue(rows == insertBatch.size());
+		
+		insertBatch = insertBatch(20);
+		rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
+		Assert.assertTrue(rows >= 20);
+	}
+	
 	@Test
 	@Rollback(false)
 	public void testTrueDelete() {

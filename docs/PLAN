@@ -11,3 +11,6 @@
 
 4. join关联支持5个表，支持join VO RelatedColumn关联查询
 2018年5月10日 15:47:08
+
+5. 检测RelatedColumn死循环或堆栈过长
+2018年5月11日 09:54:36

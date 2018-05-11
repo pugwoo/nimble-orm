@@ -12,27 +12,28 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected <T> void doInterceptBeforeDelete(Class<?> clazz, Object t) {
+	protected <T> void doInterceptBeforeDelete(Class<?> clazz, List<T> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeDelete(clazz, t);
+			boolean isContinue = interceptor.beforeDelete(clazz, tList);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
 
-	protected <T> void doInterceptAfterDelete(final Class<?> clazz, final Object t, final int rows) {
+	protected <T> void doInterceptAfterDelete(final Class<?> clazz, final List<T> tList, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterDelete(clazz, t, rows);
+					interceptors.get(i).afterDelete(clazz, tList, rows);
 				}
 			}
 		};
@@ -49,7 +50,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		List<Object> values = new ArrayList<Object>();
 
-		doInterceptBeforeDelete(t.getClass(), t);
+		List<T> tList = new ArrayList<T>();
+		tList.add(t);
+		doInterceptBeforeDelete(t.getClass(), tList);
 		
 		String sql = null;
 		
@@ -66,19 +69,55 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray());
 
-		doInterceptAfterDelete(t.getClass(), t, rows);
+		doInterceptAfterDelete(t.getClass(), tList, rows);
 		
 		return rows;
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int deleteByKey(List<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) return 0;
-		int rows = 0;
-		for(T t : list) {
-			rows += deleteByKey(t);
+		
+		boolean batchDelete = false;
+		Field keyField = null;
+		if(SQLAssert.isAllSameClass(list)) {
+			List<Field> keyFields = DOInfoReader.getKeyColumns(list.get(0).getClass());
+			if(keyFields.size() == 1) {
+				keyField = keyFields.get(0);
+				batchDelete = true;
+			}
 		}
-		return rows;
+		
+		if(batchDelete) {
+			Class<?> clazz = list.get(0).getClass();
+			List<Object> keys = new ArrayList<Object>();
+			for(T t : list) {
+				Object key = DOInfoReader.getValue(keyField, t);
+				if(key != null) keys.add(key);
+			}
+			doInterceptBeforeDelete(clazz, list);
+			
+			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
+			
+			String sql = null;
+			String where = "where `" + keyField.getAnnotation(Column.class).value() + "` in (?)";
+			if(softDelete == null) { // 物理删除
+				sql = SQLUtils.getCustomDeleteSQL(clazz, where);
+			} else { // 软删除
+				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, null, where);
+			}
+			
+			int rows = namedJdbcExecuteUpdate(sql, keys);
+			
+			doInterceptAfterDelete(clazz, list, rows);
+			return rows;
+		} else {
+			int rows = 0;
+			for(T t : list) {
+				rows += deleteByKey(t);
+			}
+			return rows;
+		}
 	}
 		
 	@Override
