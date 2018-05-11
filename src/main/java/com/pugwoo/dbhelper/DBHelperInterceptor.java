@@ -59,8 +59,7 @@ public class DBHelperInterceptor {
 	public <T> void afterInsert(Class<?> clazz, List<T> list, int affectedRows) {
 	}
 	
-	// 对于更新拦截器，只提供当前要更新的值。由于更新提供了setSql和customSetSql,所以提供了多个接口来拦截。
-	// 这意味着，拦截器提供了2个
+	// 对于更新拦截器，只提供当前要更新的值。由于更新有自写set语句的接口，因此提供两个beforeUpdate
 
 	/**
 	 * update前执行
@@ -108,34 +107,12 @@ public class DBHelperInterceptor {
     public <T> boolean beforeDelete(Class<?> clazz, T t) {
     	return true;
     }
-    
-    /**
-     * delete前执行，包括软删除和物理删除
-     * @param clazz
-     * @param sql
-     * @param customsSets 仅对于软删除可用，允许拦截器自行增加若干set语句，每个语句一个，不需要带set关键字，例如a=?
-     * @param customsParams 仅对于软删除可用，允许拦截器自行添加若干set语句，这里是对应的参数
-     * @param args sql的参数,理论上可以修改到args的值，请小心操作。
-     * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
-     */
-    public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql,
-    		List<String> customsSets, List<Object> customsParams,
-    		Object[] args) {
-    	return true;
-    }
-    
+
     /**
      * delete后执行
      * @param affectedRows 实际修改数据库条数
      */
     public <T> void afterDelete(Class<?> clazz, T t, int affectedRows) {
     }
-    
-    /**
-     * delete后执行
-     * @param affectedRows 实际修改数据库条数
-     */
-    public <T> void afterDeleteCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
-    }
-    
+
 }

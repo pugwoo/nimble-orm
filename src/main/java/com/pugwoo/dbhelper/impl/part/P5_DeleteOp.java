@@ -2,8 +2,9 @@ package com.pugwoo.dbhelper.impl.part;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
@@ -25,16 +26,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			}
 		}
 	}
-	protected void doInterceptBeforeDelete(Class<?> clazz, String sql,
-			List<String> customsSets, List<Object> customsParams, Object[] args) {
-		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeDeleteCustom(clazz, sql, customsSets, customsParams, args);
-			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
-			}
-		}
-	}
-	
+
 	protected <T> void doInterceptAfterDelete(final Class<?> clazz, final Object t, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
@@ -48,18 +40,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			runnable.run();
 		}
 	}
-	protected void doInterceptAfterDelete(final Class<?> clazz, final String sql, final Object[] args, final int rows) {
-		Runnable runnable = new Runnable() {
-			public void run() {
-				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterDeleteCustom(clazz, sql, args, rows);
-				}
-			}
-		};
-		if(!executeAfterCommit(runnable)) {
-			runnable.run();
-		}
-	}
+
 	///////////
 
 	@Override
@@ -120,47 +101,28 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请直接运维人员truncate表。
 			throw new InvalidParameterException("delete postSql is blank. it's very dangerous"); 
 		}
-		
-		List<Object> values = new ArrayList<Object>();
-		if(args != null) {
-			values.addAll(Arrays.asList(args));
-		}
-		
+
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
-
 		String sql = null;
-		if(softDelete == null) { // 物理删除
-			sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
-		} else { // 软删除
-			sql = SQLUtils.getCustomSoftDeleteSQL(clazz, null, postSql);
-		}
-
-		List<String> customsSets = new ArrayList<String>();
-		List<Object> customsParams = new ArrayList<Object>();
 		
-		doInterceptBeforeDelete(clazz, sql, customsSets, customsParams, args);
-		
-		if(softDelete != null && !customsSets.isEmpty()) { // 仅软删除有效，处理自定义加入set，需要重新生成sql
-			values = new ArrayList<Object>();
-			values.addAll(customsParams);
-			if(args != null) {
-				values.addAll(Arrays.asList(args));
+		if(interceptors == null || interceptors.isEmpty()) { // 没有配置拦截器，则直接删除
+			if(softDelete == null) { // 物理删除
+				sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
+			} else { // 软删除
+				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, null, postSql);
 			}
-			sql = SQLUtils.getCustomSoftDeleteSQL(clazz, customsSets, postSql);
+			return namedJdbcExecuteUpdate(sql, args);
+		} else { // 配置了拦截器，则先查出key，再删除
+			List<T> allKey = getAllKey(clazz, postSql, args);
+			return deleteByKey(allKey);
 		}
-		
-		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
-		
-		doInterceptAfterDelete(clazz, sql, values.toArray(), rows);
-		
-		return rows;
 	}
 	
 }

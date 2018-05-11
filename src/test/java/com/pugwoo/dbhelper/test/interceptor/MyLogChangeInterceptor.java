@@ -66,28 +66,11 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 				"\n    data:" + JSON.toJson(t));
     	return true;
     }
-    
-	@Override
-    public <T> boolean beforeDeleteCustom(Class<?> clazz, String sql,
-    		List<String> customsSets, List<Object> customsParams, Object[] args) {
-		if(clazz.equals(StudentDO.class)) {
-			customsSets.add("name=?");
-			customsParams.add("beforeDeleteCustom" + new Date());
-		}
-		System.out.println(">D> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args));
-    	return true;
-    }
-    
+
 	@Override
     public <T> void afterDelete(Class<?> clazz, T t, int affectedRows) {
 		System.out.println("<D< " + clazz.getSimpleName() + ",affectedRows:" + affectedRows +
 				"\n    data:" + JSON.toJson(t));
-    }
-    
-	@Override
-    public <T> void afterDeleteCustom(Class<?> clazz, String sql, Object[] args, int affectedRows) {
-		System.out.println("<D< " + clazz.getSimpleName() + ",sql:" + sql
-				+ "\n    args:" + JSON.toJson(args) + "\n     affectedRows:" + affectedRows);
     }
 
 }
