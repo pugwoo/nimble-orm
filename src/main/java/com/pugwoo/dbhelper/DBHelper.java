@@ -3,8 +3,6 @@ package com.pugwoo.dbhelper;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
@@ -246,7 +244,6 @@ public interface DBHelper {
 	 * @param list
 	 * @return
 	 */
-	@Transactional
 	int insert(List<?> list);
 	
 	/**
@@ -299,7 +296,6 @@ public interface DBHelper {
 	 * @param list
 	 * @return 返回数据库实际修改的条数
 	 */
-	@Transactional
 	<T> int insertOrUpdate(List<T> list);
 	
 	/**
@@ -307,7 +303,6 @@ public interface DBHelper {
 	 * @param list
 	 * @return 返回数据库实际修改的条数
 	 */
-	@Transactional
 	<T> int insertOrUpdateWithNull(List<T> list);
 	
 	/**
@@ -321,7 +316,6 @@ public interface DBHelper {
 	 * @param newList 不能是null，否则该方法什么都不执行
 	 * @return newList成功的值，不包括dbList中删除的
 	 */
-	@Transactional
 	<T> int insertOrUpdateFull(List<T> dbList, List<T> newList);
 	
 	/**
@@ -330,7 +324,6 @@ public interface DBHelper {
 	 * @param newList
 	 * @return
 	 */
-	@Transactional
 	<T> int insertOrUpdateFullWithNull(List<T> dbList, List<T> newList);
 		
 	/**
@@ -399,7 +392,6 @@ public interface DBHelper {
 	 * @return
 	 * @throws NullKeyValueException
 	 */
-	@Transactional
 	<T> int updateWithNull(List<T> list) throws NullKeyValueException;
 	
 	/**
@@ -410,7 +402,6 @@ public interface DBHelper {
 	 * @return
 	 * @throws NullKeyValueException
 	 */
-	@Transactional
 	<T> int update(List<T> list) throws NullKeyValueException;
 	
 	/**

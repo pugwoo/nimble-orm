@@ -76,7 +76,6 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return insert(t, true, true);
 	}
 	
-	@Transactional
 	private <T> int insert(T t, boolean isWithNullValue, boolean withInterceptor) {
 		PreHandleObject.preHandleInsert(t);
 		
@@ -106,13 +105,13 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return rows;
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int insertWhereNotExist(T t, String whereSql, Object... args) {
 		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
 		return insertWhereNotExist(t, false, whereSql, args);
 	}
 	
-	@Override
+	@Override @Transactional
 	public <T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args) {
 		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
 		return insertWhereNotExist(t, true, whereSql, args);

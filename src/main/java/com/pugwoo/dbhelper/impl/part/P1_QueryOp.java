@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperDataService;
@@ -142,7 +143,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return map;
 	}
 	
-    @Override
+    @Override @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
     	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
@@ -150,7 +151,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return _getPage(clazz, false, true, offset, pageSize, postSql, args);
 	}
     
-    @Override
+    @Override @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {		
 		return getPage(clazz, page, pageSize, null);
 	}
@@ -160,7 +161,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return getTotal(clazz);
 	}
 	
-	@Override
+	@Override @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
 	public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _getPage(clazz, false, true, 0, 1, postSql, args).getTotal();
@@ -302,7 +303,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return getOne(clazz, postSql, args) != null;
 	}
 	
-	@Override
+	@Override @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
 	public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
 			String postSql, Object... args) {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
