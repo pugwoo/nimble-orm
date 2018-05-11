@@ -68,7 +68,7 @@ public class DBHelperInterceptor {
 	 *        注意，修改此值会修改实际被设置的值，谨慎!
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-    public <T> boolean beforeUpdate(Class<?> clazz, T t, String setSql, Object[] setSqlArgs) {
+    public <T> boolean beforeUpdate(List<T> tList, String setSql, Object[] setSqlArgs) {
     	return true;
     }
     
@@ -91,7 +91,7 @@ public class DBHelperInterceptor {
      * update后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public <T> void afterUpdate(Class<?> clazz, List<T> tList, int affectedRows) {
+    public <T> void afterUpdate(List<T> tList, int affectedRows) {
     }
     
     // 删除相关的

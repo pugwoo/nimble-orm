@@ -5,7 +5,8 @@ v0.8.0 - [improve] 完美解决updateAll和delete拦截器after无法获得实�
        - [improve] 对所有用户传入的sql语句，替换tab符号\t为空格
        - [improve] 修改拦截器beforeDelete和afterDelete的记录对象为List<T>
        - [improve] 优化deleteByKey(List<T> list)，当所有对象是同类且只有一个主键时，使用批量删除方式
-       - [improve] 简化拦截器，去掉当有List或T对象时，Class的参数，该参数不再必要且有可能有歧义
+       - [improve] 简化拦截器，去掉当有List或T对象时，Class的参数，该参数不再必要且有可能有歧义；去掉泛型
+       - [improve] 当update是调用批量接口更新时，则批量只调用拦截器一次
 
 2018年5月10日
 v0.7.7 - [add] 增加getAllKey的接口

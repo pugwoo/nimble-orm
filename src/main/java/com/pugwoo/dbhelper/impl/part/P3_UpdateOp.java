@@ -19,9 +19,9 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private <T> void doInterceptBeforeUpdate(Class<?> clazz, Object t, String setSql, Object[] setSqlArgs) {
+	private <T> void doInterceptBeforeUpdate(List<Object> tList, String setSql, Object[] setSqlArgs) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdate(clazz, t, setSql, setSqlArgs);
+			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -37,12 +37,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	private <T> void doInterceptAfterUpdate(final Class<T> clazz, final List<T> tList, final int rows) {
+	private <T> void doInterceptAfterUpdate(final List<T> tList, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterUpdate(clazz, tList, rows);
+					interceptors.get(i).afterUpdate(tList, rows);
 				}
 			}
 		};
@@ -105,7 +105,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return rows;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private <T> int _update(T t, boolean withNull, String postSql, Object... args) 
 			throws NullKeyValueException {
 		
@@ -115,7 +114,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		PreHandleObject.preHandleUpdate(t);
 		
-		doInterceptBeforeUpdate(t.getClass(), t, null, null);
+		List<Object> tList = new ArrayList<Object>();
+		tList.add(t);
+		
+		doInterceptBeforeUpdate(tList, null, null);
 		List<Object> values = new ArrayList<Object>();
 		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
 		if(args != null) {
@@ -124,14 +126,11 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 		
-		List<T> tList = new ArrayList<T>();
-		tList.add(t);
-		doInterceptAfterUpdate((Class<T>)t.getClass(), tList, rows);
+		doInterceptAfterUpdate(tList, rows);
 		
 		return rows;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
 		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
@@ -148,7 +147,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		List<String> customsSets = new ArrayList<String>();
 		List<Object> customsParams = new ArrayList<Object>();
 		
-		doInterceptBeforeUpdate(t.getClass(), t, setSql, args);
+		List<Object> tList = new ArrayList<Object>();
+		tList.add(t);
+		
+		doInterceptBeforeUpdate(tList, setSql, args);
 		
 		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
 			values = new ArrayList<Object>();
@@ -166,9 +168,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 		
-		List<T> tList = new ArrayList<T>();
-		tList.add(t);
-		doInterceptAfterUpdate((Class<T>)t.getClass(), tList, rows);
+		doInterceptAfterUpdate(tList, rows);
 		
 		return rows;
 	}
@@ -245,7 +245,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					}
 					result.add(t);
 				}
-				doInterceptAfterUpdate(clazz, result, rows);
+				doInterceptAfterUpdate(result, rows);
 			}
 		} else {
 			sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
