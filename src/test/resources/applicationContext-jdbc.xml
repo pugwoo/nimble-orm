@@ -25,7 +25,7 @@
 		<property name="username" value="${jdbc.username}" />
 		<property name="password" value="${jdbc.password}" />
 		<property name="initialSize" value="10" />
-		<property name="maxActive" value="100" /> <!-- 最大连接数 -->
+		<property name="maxActive" value="20" /> <!-- 最大连接数 -->
 		<property name="validationQuery" value="SELECT 1" />
 		<property name="testWhileIdle" value="true" /> <!-- 检查空闲链接 -->
 		<property name="testOnBorrow" value="false" /> <!-- 借出链接不检查，否则过于影响性能，除非数据库经常重启 -->
