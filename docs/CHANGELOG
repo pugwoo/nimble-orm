@@ -1,3 +1,6 @@
+2018年5月13日
+v0.8.1 - [improve] 优化updateAll方法的性能
+
 2018年5月11日
 v0.8.0 - [improve] 完美解决updateAll和delete拦截器after无法获得实际修改的记录的问题
        - [del] 删除拦截器中afterDeleteCustom、beforeDeleteCustom和afterUpdateCustom共3个方法

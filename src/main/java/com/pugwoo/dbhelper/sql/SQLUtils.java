@@ -327,6 +327,7 @@ public class SQLUtils {
 	 * @param clazz
 	 * @param setSql
 	 * @param whereSql
+	 * @param extraWhereSql 会放在最后，以满足update子select语句的要求
 	 * @return
 	 */
 	public static <T> String getUpdateAllSQL(Class<T> clazz, String setSql, String whereSql,
@@ -531,7 +532,7 @@ public class SQLUtils {
 		
 		Expression ce = CCJSqlParserUtil.parseCondExpression(magic);
 		Expression oldWhere = plainSelect.getWhere();
-		Expression newWhere = new FixedAndExpression(ce, oldWhere);
+		Expression newWhere = new FixedAndExpression(oldWhere, ce);
 		plainSelect.setWhere(newWhere);
 		
 		String result = plainSelect.toString().substring(selectSql.length());
@@ -546,21 +547,18 @@ public class SQLUtils {
 	 * 自动为【最后】where sql字句加上软删除查询字段
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
 	 * @param clazz 要操作的DO类
-	 * @param extraWhere 附带的where语句，会加进去，不能带where关键字，仅能是where的条件字句
+	 * @param extraWhere 附带的where语句，会加进去，不能带where关键字，仅能是where的条件字句，该子句会放到最后
 	 * @return 无论如何前面会加空格，更安全
 	 */
 	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz, String extraWhere) {
 		if(whereSql == null) {
 			whereSql = "";
 		}
-		if(extraWhere == null) {
-			extraWhere = "";
-		} else {
-			extraWhere = extraWhere.trim();
-		}
+		extraWhere = extraWhere == null ? "" : extraWhere.trim();
 		if(!extraWhere.isEmpty()) {
 			extraWhere = "(" + extraWhere + ")";
 		}
+		
 		String deletedExpression = "";
 		
 		// 处理join方式clazz

@@ -195,6 +195,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	}
 	
 	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
+	@SuppressWarnings("unchecked")
 	@Override @Transactional
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
 		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
@@ -203,9 +204,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		
 		List<Object> values = new ArrayList<Object>();
-		if(args != null) {
-			values.addAll(Arrays.asList(args));
-		}
+
 		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
 		
 		List<String> customsSets = new ArrayList<String>();
@@ -249,6 +248,8 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 				String strs[] = ids.split(",");
 				int size = strs.length / keyFields.size();
 				List<Object> result = new ArrayList<Object>();
+				List<Object> keys = new ArrayList<Object>();
+				boolean isOneKey = keyFields.size() == 1;
 				for(int i = 0; i < size; i++) {
 					T t = null;
 					try {
@@ -260,11 +261,20 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					for(int j = 0; j < keyFields.size(); j++) {
 						DOInfoReader.setValue(keyFields.get(j), t, strs[i * keyFields.size() + j]);
 					}
-					boolean succ = getByKey(t);
-					if(!succ) {
-						LOGGER.error("getByKey fail for t:{}", JSON.toJson(t));
+					if(isOneKey) {
+						 // 这里之所以要从对象里拿值，是为了得到对的类型，才能走到主键索引
+						keys.add(DOInfoReader.getValue(keyFields.get(0), t));
+					} else {
+						boolean succ = getByKey(t);
+						if(!succ) {
+							LOGGER.error("getByKey fail for t:{}", JSON.toJson(t));
+						}
+						result.add(t);
 					}
-					result.add(t);
+				}
+				if(isOneKey && !keys.isEmpty()) {
+					result = (List<Object>) getAll(clazz, "where `" + 
+				       keyFields.get(0).getAnnotation(Column.class).value() + "` in (?)", keys);
 				}
 				doInterceptAfterUpdate(result, rows);
 			}
