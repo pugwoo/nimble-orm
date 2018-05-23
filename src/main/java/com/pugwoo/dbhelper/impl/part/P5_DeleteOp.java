@@ -67,7 +67,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values);
 		}
 		
-		int rows = jdbcExecuteUpdate(sql, values.toArray());
+		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 
 		doInterceptAfterDelete(tList, rows);
 		

@@ -139,7 +139,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		log(sql);
 		
 		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		int rows = namedJdbcExecuteUpdate(sql.toString(), values.toArray());
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
 		if(autoIncrementField != null && rows == 1) {
 			Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()",

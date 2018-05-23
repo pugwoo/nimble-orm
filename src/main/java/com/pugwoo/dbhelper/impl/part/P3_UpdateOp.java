@@ -187,7 +187,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			sql = SQLUtils.getCustomUpdateSQL(t, values, sbSet.toString());
 		}
 		
-		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 		
 		doInterceptAfterUpdate(tList, rows);
 		
