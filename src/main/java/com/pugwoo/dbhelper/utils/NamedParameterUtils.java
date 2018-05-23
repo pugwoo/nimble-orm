@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.pugwoo.dbhelper.bean.SubQuery;
+import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
+import com.pugwoo.dbhelper.sql.SQLUtils;
+
 /**
  * 2015年8月24日 18:37:48
  * 因为jdbcTemplate不支持 in (?)传入list的方式
@@ -19,7 +23,7 @@ public class NamedParameterUtils {
 			"450DB9DF910D25F80428D4A9BAB4FA36F45D0A15F0AC5B83AFC389D386F1AE9C";
 	
 	@SuppressWarnings("unchecked")
-	public static Map<String, Object> transParam(Object... params) {
+	public static Map<String, Object> transParam(List<Object> params) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		if(params != null) {
 			int currParamIndex = 1;
@@ -81,17 +85,97 @@ public class NamedParameterUtils {
 		}
 		return map;
 	}
+	
+	private static String expandParam(String sql, List<Object> args) {
+		if(args == null || args.isEmpty()) {
+			return sql;
+		}
+		while(true) {
+			boolean isExistSubQuery = false;
+			for(Object arg : args) {
+				if(arg instanceof SubQuery) {
+					isExistSubQuery = true;
+					break;
+				}
+			}
+			if(isExistSubQuery) {
+				sql = _expandParam(sql, args);
+			} else {
+				break;
+			}
+		}
+		return sql;
+	}
+	
+	/**
+	 * 展开参数，主要是处理SubQuery参数
+	 * @param sql
+	 * @param args
+	 * @return
+	 */
+	private static String _expandParam(String sql, List<Object> args) {
+		StringBuilder sb = new StringBuilder();
+		boolean isInStr = false;
+		boolean isPreSlash = false;
+		char strQuota = 0;
+		int currParamIndex = 0;
+		List<Object> newArgs = new ArrayList<Object>();
+		for(int i = 0; i < sql.length(); i++) {
+			char ch = sql.charAt(i);
+			
+			if(ch == '?' && !isInStr) {
+				if(args.size() <= currParamIndex) {
+					throw new ParameterSizeNotMatchedException(sql);
+				}
+				Object arg = args.get(currParamIndex);
+				if(arg != null && arg instanceof SubQuery) {
+					List<Object> values = new ArrayList<Object>();
+					sb.append(SQLUtils.expandSubQuery((SubQuery)arg, values));
+					newArgs.addAll(values);
+				} else {
+					sb.append("?");
+					newArgs.add(arg);
+				}
+				currParamIndex++;
+				continue;
+			} else {
+				sb.append(ch);
+			}
+			
+			if(ch == '\'' || ch == '"') {
+				if(!isInStr) {
+					isInStr = true;
+					strQuota = ch;
+				} else {
+					if(strQuota == ch && !isPreSlash) {
+						isInStr = false;
+						strQuota = 0;
+					}
+				}
+			}
+			
+			isPreSlash = ch == '\\';
+		}
+		
+		args.clear(); // 清空原数组并插入新数组
+		args.addAll(newArgs);
+		return sb.toString();
+	}
 
 	/**
 	 * 把?变成:paramN的形式，不包括"?"和'?'中的?
 	 * paramN的N从1开始
 	 * @param sql
+	 * @param args将会操作参数列表
 	 * @return
 	 */
-	public static String trans(String sql) {
+	public static String trans(String sql, List<Object> args) {
 		if(sql == null || sql.isEmpty()) {
 			return "";
 		}
+		
+		sql = expandParam(sql, args);
+		
 		StringBuilder sb = new StringBuilder();
 		boolean isInStr = false;
 		boolean isPreSlash = false;

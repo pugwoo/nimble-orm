@@ -111,18 +111,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 		
 		log(sql);
-		doInterceptBeforeQuery(clazz, sql, keyValues.toArray());
+		List<Object> argsList = new ArrayList<Object>();
+		argsList.add(keyValues);
+		doInterceptBeforeQuery(clazz, sql, argsList.toArray());
 		long start = System.currentTimeMillis();
 		List<T> list = namedParameterJdbcTemplate.query(
-				NamedParameterUtils.trans(sql.toString()),
-				NamedParameterUtils.transParam(keyValues),
+				NamedParameterUtils.trans(sql.toString(), argsList),
+				NamedParameterUtils.transParam(argsList),
 				new AnnotationSupportRowMapper(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		
 		postHandleRelatedColumn(list);
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql.toString(), (List<Object>) keyValues);
+		logSlow(cost, sql.toString(), argsList);
 		
-		list = doInteceptAfterQuery(clazz, list, list.size(), sql, keyValues.toArray());
+		list = doInteceptAfterQuery(clazz, list, list.size(), sql, argsList.toArray());
 		
 		// 转换to map
 		if(list == null || list.isEmpty()) {
@@ -240,13 +242,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		long start = System.currentTimeMillis();
 		List<T> list;
-		if(args == null || args.length == 0) {
+		List<Object> argsList = args == null ? new ArrayList<Object>() : Arrays.asList(args);
+		if(argsList.isEmpty()) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		} else {
 			list = namedParameterJdbcTemplate.query(
-					NamedParameterUtils.trans(sql.toString()),
-					NamedParameterUtils.transParam(args),
+					NamedParameterUtils.trans(sql.toString(), argsList),
+					NamedParameterUtils.transParam(argsList),
 					new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
 		}
 		
@@ -260,10 +263,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		}
 		
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql.toString(), args == null ? new ArrayList<Object>() : Arrays.asList(args));
+		logSlow(cost, sql.toString(), argsList);
 		
 		if(!selectOnlyKey) {
-			doInteceptAfterQuery(clazz, list, total, sql, args);
+			doInteceptAfterQuery(clazz, list, total, sql, argsList.toArray());
 		}
 		
 		PageData<T> pageData = new PageData<T>();

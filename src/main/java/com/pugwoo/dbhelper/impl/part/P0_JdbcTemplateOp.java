@@ -121,11 +121,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
 		log(sql);
 		long start = System.currentTimeMillis();
+		List<Object> argsList = args == null ? new ArrayList<Object>() : Arrays.asList(args);
 		int rows = namedParameterJdbcTemplate.update(
-				NamedParameterUtils.trans(sql),
-				NamedParameterUtils.transParam(args)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
+				NamedParameterUtils.trans(sql, argsList),
+				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args == null ? new ArrayList<Object>() : Arrays.asList(args));
+		logSlow(cost, sql, argsList);
 		return rows;
 	}
 	

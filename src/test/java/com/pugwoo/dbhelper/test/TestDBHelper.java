@@ -561,6 +561,11 @@ public class TestDBHelper {
 				"where id=?", studentDO.getId()));
 	}
 	
+	@Test @Rollback(false)
+	public void testSubQuery() {
+		// TODO 测试子查询
+	}
+	
 	@Test
 	@Rollback(false)
 	public void testInsert2() {

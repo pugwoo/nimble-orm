@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.sql;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import com.pugwoo.dbhelper.annotation.JoinLeftTable;
 import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
@@ -40,6 +42,29 @@ import net.sf.jsqlparser.statement.select.Select;
 public class SQLUtils {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SQLUtils.class);
+	
+	/**
+	 * 展开子查询SubQuery子句。该方法不支持子查询嵌套，由上一层方法来嵌套调用以实现SubQuery子句嵌套。
+	 * @param subQuery
+	 * @param values 带回去的参数列表
+	 * @return
+	 */
+	public static String expandSubQuery(SubQuery subQuery, List<Object> values) {
+		Table table = DOInfoReader.getTable(subQuery.getClazz());
+		
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT * FROM (SELECT ");
+		sql.append(subQuery.getField());
+		sql.append(" FROM ").append(getTableName(table));
+		String postSql = subQuery.getPostSql();
+		if(postSql == null) {postSql = "";}
+		sql.append(" ").append(postSql);
+		
+		if(subQuery.getArgs() != null) {
+			values.addAll(Arrays.asList(subQuery.getArgs()));
+		}
+		return sql.toString();
+	}
 	
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
