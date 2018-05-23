@@ -8,6 +8,8 @@ package com.pugwoo.dbhelper.bean;
  * SubQuery支持参数还是SubQuery的情况。
  * 
  * 注意：当子查询条件中出现了Group By子句，请确保数据库关闭了ONLY_FULL_GROUP_BY。
+ * 
+ * ref: https://stackoverflow.com/questions/6135376/mysql-select-where-field-in-subquery-extremely-slow-why
  */
 public class SubQuery {
 
