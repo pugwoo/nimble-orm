@@ -14,6 +14,11 @@ import java.util.Set;
  */
 public class NamedParameterUtils {
 	
+	// sha256 from Pugwoo Chia's nimble-ORM
+	private final static String magicForEmptyCollection = 
+			"450DB9DF910D25F80428D4A9BAB4FA36F45D0A15F0AC5B83AFC389D386F1AE9C";
+	
+	@SuppressWarnings("unchecked")
 	public static Map<String, Object> transParam(Object... params) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		if(params != null) {
@@ -60,14 +65,14 @@ public class NamedParameterUtils {
 					}
 				}
 				
-				// 转换后，对于param是空的List或Set，则将入一个null值
+				// 转换后，对于param是空的List或Set，则List或Set插入一个很长的不可能被用户撞上的值
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
-						((List<?>) param).add(null);
+						((List<Object>) param).add((Object)magicForEmptyCollection);
 					}
 				} else if (param instanceof Set<?>) {
 					if(((Set<?>) param).isEmpty()) {
-						((Set<?>) param).add(null);
+						((Set<Object>) param).add((Object)magicForEmptyCollection);
 					}
 				}
 				
