@@ -580,6 +580,17 @@ public class TestDBHelper {
 		for(StudentDO stu : all) {
 			Assert.assertTrue(ids.contains(stu.getId()));
 		}
+		
+		// 测试3层subQuery
+		SubQuery subQuery1 = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
+		SubQuery subQuery2 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery1);
+		SubQuery subQuery3 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery2);
+		
+		all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery3);
+		Assert.assertTrue(all.size() == 3);
+		for(StudentDO stu : all) {
+			Assert.assertTrue(ids.contains(stu.getId()));
+		}
 	}
 	
 	@Test
