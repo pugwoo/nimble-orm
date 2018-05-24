@@ -19,7 +19,7 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private <T> void doInterceptBeforeUpdate(List<Object> tList, String setSql, Object[] setSqlArgs) {
+	private <T> void doInterceptBeforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
 			if (!isContinue) {
@@ -28,7 +28,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	private void doInterceptBeforeUpdate(Class<?> clazz, String sql,
-			List<String> customsSets, List<Object> customsParams, Object[] args) {
+			List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdateCustom(clazz, sql, customsSets, customsParams, args);
 			if (!isContinue) {
@@ -165,28 +165,11 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
 		
-		List<String> customsSets = new ArrayList<String>();
-		List<Object> customsParams = new ArrayList<Object>();
-		
 		List<Object> tList = new ArrayList<Object>();
 		tList.add(t);
 		
-		doInterceptBeforeUpdate(tList, setSql, args);
-		
-		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
-			values = new ArrayList<Object>();
-			if(args != null) {
-				values.addAll(Arrays.asList(args));
-			}
-			values.addAll(customsParams);
-			StringBuilder sbSet = new StringBuilder(setSql);
-			for(String s : customsSets) {
-				sbSet.append(",").append(s);
-			}
-			
-			sql = SQLUtils.getCustomUpdateSQL(t, values, sbSet.toString());
-		}
-		
+		doInterceptBeforeUpdate(tList, setSql, values);
+
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 		
 		doInterceptAfterUpdate(tList, rows);
@@ -210,14 +193,16 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		List<String> customsSets = new ArrayList<String>();
 		List<Object> customsParams = new ArrayList<Object>();
 		
-		doInterceptBeforeUpdate(clazz, sql, customsSets, customsParams, args);
+		List<Object> argsList = new ArrayList<Object>();
+		if(args != null) {
+			argsList.addAll(Arrays.asList(args));
+		}
+		doInterceptBeforeUpdate(clazz, sql, customsSets, customsParams, argsList);
 		
 		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
 			values = new ArrayList<Object>();
 			values.addAll(customsParams);
-			if(args != null) {
-				values.addAll(Arrays.asList(args));
-			}
+			values.addAll(argsList);
 			
 			StringBuilder sbSet = new StringBuilder();
 			for(String s : customsSets) {
@@ -227,9 +212,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			
 			setSql = sbSet.toString();
 		} else {
-			if(args != null) {
-				values.addAll(Arrays.asList(args));
-			}
+			values.addAll(argsList);
 		}
 		
 		int rows = 0;

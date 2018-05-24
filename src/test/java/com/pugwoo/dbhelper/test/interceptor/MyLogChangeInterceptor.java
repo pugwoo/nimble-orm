@@ -10,13 +10,13 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
 public class MyLogChangeInterceptor extends DBHelperInterceptor {
 
 	@Override
-	public boolean beforeSelect(Class<?> clazz, String sql, Object[] args) {
+	public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {
 		System.out.println(">S> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args));
 		return true;
 	}
 
 	@Override
-	public <T> List<T> afterSelect(Class<?> clazz, String sql, Object[] args, List<T> result, int count) {
+	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args, List<T> result, int count) {
 		System.out.println("<S< " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args)
 		    + "\n    total:" + count + ",size:" + result.size() + ",data:" + JSON.toJson(result));
 		return result;
@@ -41,7 +41,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 	
 	@Override
-    public boolean beforeUpdate(List<Object> tList, String setSql, Object[] setSqlArgs) {
+    public boolean beforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
 		if(!tList.isEmpty()) {
 			System.out.println(">U> " + tList.get(0).getClass().getSimpleName() +
 					"\n    data:" + JSON.toJson(tList));
@@ -51,7 +51,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     
 	@Override
     public boolean beforeUpdateCustom(Class<?> clazz, String sql,
-    		List<String> customsSets, List<Object> customsParams, Object[] args) {
+    		List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		if(clazz.equals(StudentDO.class)) {
 			customsSets.add("name=?");
 			customsParams.add("beforeUpdateCustom" + new Date());

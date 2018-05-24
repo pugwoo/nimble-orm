@@ -42,7 +42,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		try {
 			log(sql);
-			doInterceptBeforeQuery(t.getClass(), sql, keyValues.toArray());
+			doInterceptBeforeQuery(t.getClass(), sql, keyValues);
 			
 			long start = System.currentTimeMillis();
 			jdbcTemplate.queryForObject(sql.toString(),
@@ -52,11 +52,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			postHandleRelatedColumn(t);
 			logSlow(System.currentTimeMillis() - start, sql.toString(), keyValues);
 			
-			t = doInterceptAfterQuery(clazz, t, sql, keyValues.toArray());
+			t = doInterceptAfterQuery(clazz, t, sql, keyValues);
 			return t != null;
 		} catch (EmptyResultDataAccessException e) {
 			t = null;
-			t = doInterceptAfterQuery(clazz, t, sql, keyValues.toArray());
+			t = doInterceptAfterQuery(clazz, t, sql, keyValues);
 			return t != null;
 		}
 	}
@@ -74,14 +74,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.getSelectSQL(clazz, false, false));
 		sql.append(SQLUtils.getKeysWhereSQL(clazz));
 		
+		List<Object> argsList = new ArrayList<Object>();
+		argsList.add(keyValue);
+		
 		try {
 			log(sql);
 			
-			doInterceptBeforeQuery(clazz, sql, new Object[]{keyValue});
+			doInterceptBeforeQuery(clazz, sql, argsList);
 			long start = System.currentTimeMillis();
 			T t = (T) jdbcTemplate.queryForObject(sql.toString(),
 					new AnnotationSupportRowMapper(clazz),
-					keyValue); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+					argsList.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 			
 			postHandleRelatedColumn(t);
 			
@@ -91,11 +94,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 			args.add(keyValue);
 			logSlow(cost, sql.toString(), args);
 			
-			t = doInterceptAfterQuery(clazz, t, sql, new Object[]{keyValue});
+			t = doInterceptAfterQuery(clazz, t, sql, argsList);
 			return t;
 		} catch (EmptyResultDataAccessException e) {
 			T t = null;
-			t = doInterceptAfterQuery(clazz, t, sql, new Object[]{keyValue});
+			t = doInterceptAfterQuery(clazz, t, sql, argsList);
 			return t;
 		}
 	}
@@ -113,7 +116,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		log(sql);
 		List<Object> argsList = new ArrayList<Object>();
 		argsList.add(keyValues);
-		doInterceptBeforeQuery(clazz, sql, argsList.toArray());
+		doInterceptBeforeQuery(clazz, sql, argsList);
 		long start = System.currentTimeMillis();
 		List<T> list = namedParameterJdbcTemplate.query(
 				NamedParameterUtils.trans(sql.toString(), argsList),
@@ -124,7 +127,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql.toString(), argsList);
 		
-		list = doInteceptAfterQuery(clazz, list, list.size(), sql, argsList.toArray());
+		list = doInteceptAfterQuery(clazz, list, list.size(), sql, argsList);
 		
 		// 转换to map
 		if(list == null || list.isEmpty()) {
@@ -236,16 +239,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		sql.append(SQLUtils.genLimitSQL(offset, limit));
 		
 		log(sql);
-		if(!selectOnlyKey) {
-			doInterceptBeforeQuery(clazz, sql, args);
-		}
 		
-		long start = System.currentTimeMillis();
-		List<T> list;
 		List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {
 			argsList.addAll(Arrays.asList(args));
 		}
+		
+		if(!selectOnlyKey) {
+			doInterceptBeforeQuery(clazz, sql, argsList);
+		}
+		
+		long start = System.currentTimeMillis();
+		List<T> list;
 		if(argsList.isEmpty()) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
@@ -269,7 +274,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		logSlow(cost, sql.toString(), argsList);
 		
 		if(!selectOnlyKey) {
-			doInteceptAfterQuery(clazz, list, total, sql, argsList.toArray());
+			doInteceptAfterQuery(clazz, list, total, sql, argsList);
 		}
 		
 		PageData<T> pageData = new PageData<T>();
@@ -321,7 +326,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	
 	//////////////////// 拦截器封装方法
 	
-	private void doInterceptBeforeQuery(Class<?> clazz, StringBuilder sql, Object[] args) {
+	private void doInterceptBeforeQuery(Class<?> clazz, StringBuilder sql, List<Object> args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeSelect(clazz, sql.toString(), args);
 			if (!isContinue) {
@@ -331,7 +336,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 	}
 	
 	/**t为null表示没有记录，因此等价于空list*/
-	private <T> T doInterceptAfterQuery(Class<?> clazz, T t, StringBuilder sql, Object[] args) {
+	private <T> T doInterceptAfterQuery(Class<?> clazz, T t, StringBuilder sql, List<Object> args) {
 		List<T> list = new ArrayList<T>();
 		if (t != null) {
 			list.add(t);
@@ -340,7 +345,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		return list == null || list.isEmpty() ? null : list.get(0);
 	}
 	private <T> List<T> doInteceptAfterQuery(Class<?> clazz, List<T> list, int total,
-			StringBuilder sql, Object[] args) {
+			StringBuilder sql, List<Object> args) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			list = interceptors.get(i).afterSelect(clazz, sql.toString(), args, list, total);
 		}

@@ -21,7 +21,7 @@ public class DBHelperInterceptor {
 	 * @param args 查询的完整参数。理论上，拦截器就有可能修改args里面的object的值的，请小心。不建议修改args的值。
 	 * @return 返回true，则查询继续; 返回false将终止查询并抛出NotAllowQueryException
 	 */
-	public boolean beforeSelect(Class<?> clazz, String sql, Object[] args) {
+	public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {
 		return true;
 	}
 	
@@ -35,7 +35,7 @@ public class DBHelperInterceptor {
 	 * @return DBHelper会使用返回值作为新的查询结果值，因此，没修改时请务必将result返回。
 	 *         对于机密的数据，请直接设置result的对象属性为null。
 	 */
-	public <T> List<T> afterSelect(Class<?> clazz, String sql, Object[] args,
+	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args,
 			List<T> result, int count) {
 		return result;
 	}
@@ -68,7 +68,7 @@ public class DBHelperInterceptor {
 	 *        注意，修改此值会修改实际被设置的值，谨慎!
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-    public boolean beforeUpdate(List<Object> tList, String setSql, Object[] setSqlArgs) {
+    public boolean beforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
     	return true;
     }
     
@@ -83,7 +83,7 @@ public class DBHelperInterceptor {
      */
     public boolean beforeUpdateCustom(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams,
-    		Object[] args) {
+    		List<Object> args) {
     	return true;
     }
     
