@@ -242,7 +242,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		
 		long start = System.currentTimeMillis();
 		List<T> list;
-		List<Object> argsList = args == null ? new ArrayList<Object>() : Arrays.asList(args);
+		List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+		if(args != null) {
+			argsList.addAll(Arrays.asList(args));
+		}
 		if(argsList.isEmpty()) {
 			list = namedParameterJdbcTemplate.query(sql.toString(),
 					new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate

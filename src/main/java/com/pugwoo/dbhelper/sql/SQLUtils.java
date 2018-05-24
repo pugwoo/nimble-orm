@@ -45,6 +45,7 @@ public class SQLUtils {
 	
 	/**
 	 * 展开子查询SubQuery子句。该方法不支持子查询嵌套，由上一层方法来嵌套调用以实现SubQuery子句嵌套。
+	 * 该方法会自动处理软删除标记。
 	 * @param subQuery
 	 * @param values 带回去的参数列表
 	 * @return
@@ -56,9 +57,8 @@ public class SQLUtils {
 		sql.append("SELECT * FROM (SELECT ");
 		sql.append(subQuery.getField());
 		sql.append(" FROM ").append(getTableName(table));
-		String postSql = subQuery.getPostSql();
-		if(postSql == null) {postSql = "";}
-		sql.append(" ").append(postSql);
+		sql.append(" ").append(SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()));
+		sql.append(") sub ");
 		
 		if(subQuery.getArgs() != null) {
 			values.addAll(Arrays.asList(subQuery.getArgs()));

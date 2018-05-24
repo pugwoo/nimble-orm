@@ -16,6 +16,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
@@ -563,7 +564,22 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void testSubQuery() {
-		// TODO 测试子查询
+		StudentDO stu1 = insertOne();
+		StudentDO stu2 = insertOne();
+		StudentDO stu3 = insertOne();
+		
+		List<Long> ids = new ArrayList<Long>();
+		ids.add(stu1.getId());
+		ids.add(stu2.getId());
+		ids.add(stu3.getId());
+		
+		SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
+		
+		List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery);
+		Assert.assertTrue(all.size() == 3);
+		for(StudentDO stu : all) {
+			Assert.assertTrue(ids.contains(stu.getId()));
+		}
 	}
 	
 	@Test
