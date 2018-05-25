@@ -127,7 +127,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql.toString(), argsList);
 		
-		list = doInteceptAfterQuery(clazz, list, list.size(), sql, argsList);
+		list = doInteceptAfterQueryList(clazz, list, list.size(), sql, argsList);
 		
 		// 转换to map
 		if(list == null || list.isEmpty()) {
@@ -274,7 +274,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		logSlow(cost, sql.toString(), argsList);
 		
 		if(!selectOnlyKey) {
-			doInteceptAfterQuery(clazz, list, total, sql, argsList);
+			doInteceptAfterQueryList(clazz, list, total, sql, argsList);
 		}
 		
 		PageData<T> pageData = new PageData<T>();
@@ -341,10 +341,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 		if (t != null) {
 			list.add(t);
 		}
-		list = doInteceptAfterQuery(clazz, list, 1, sql, args);
+		list = doInteceptAfterQueryList(clazz, list, 1, sql, args);
 		return list == null || list.isEmpty() ? null : list.get(0);
 	}
-	private <T> List<T> doInteceptAfterQuery(Class<?> clazz, List<T> list, int total,
+	private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, int total,
 			StringBuilder sql, List<Object> args) {
 		for (int i = interceptors.size() - 1; i >= 0; i--) {
 			list = interceptors.get(i).afterSelect(clazz, sql.toString(), args, list, total);

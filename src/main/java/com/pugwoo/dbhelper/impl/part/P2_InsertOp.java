@@ -18,9 +18,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	private void doInterceptBeforeInsert(Object t) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
-		doInterceptBeforeInsert(list);
+		doInterceptBeforeInsertList(list);
 	}
-	private <T> void doInterceptBeforeInsert(List<Object> list) {
+	private <T> void doInterceptBeforeInsertList(List<Object> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeInsert(list);
 			if (!isContinue) {
@@ -32,9 +32,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	private void doInterceptAfterInsert(Object t, int rows) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
-		doInterceptAfterInsert(list, rows);
+		doInterceptAfterInsertList(list, rows);
 	}
-	private <T> void doInterceptAfterInsert(final List<Object> list, final int rows) {
+	private <T> void doInterceptAfterInsertList(final List<Object> list, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -54,20 +54,21 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return insert(t, false, true);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override @Transactional
 	public int insert(List<?> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
 		
-		doInterceptBeforeInsert(list);
+		doInterceptBeforeInsertList((List<Object>) list);
 		
 		int sum = 0;
 		for(Object obj : list) {
 			sum += insert(obj, false, false);
 		}
 		
-		doInterceptAfterInsert(list, sum);
+		doInterceptAfterInsertList((List<Object>)list, sum);
 		return sum;
 	}
 	
