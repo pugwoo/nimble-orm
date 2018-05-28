@@ -234,15 +234,15 @@ public class StudentSchoolJoinVO {
 
 ## 注意事项
 
-* 如果需要传入的参数是Object...（例如getAll之类的方法），那么当单个参数需要传入多个值时，强烈使用List来传。因为如果使用Object[]来传，Object...本身就是Object[]类型，当只有单个Object[]的时候，就只会取Object[]的第一个参数作为参数，这样就有错误，而且是语义错误，很隐蔽。有一种hack的方式，但不推荐，在传入Object[]参数后面，再加上一个任意类型的参数，让Java不要认为参数是Object...。
+1. 如果需要传入的参数是Object...（例如getAll之类的方法），那么当单个参数需要传入多个值时，强烈使用List来传。因为如果使用Object[]来传，Object...本身就是Object[]类型，当只有单个Object[]的时候，就只会取Object[]的第一个参数作为参数，这样就有错误，而且是语义错误，很隐蔽。有一种hack的方式，但不推荐，在传入Object[]参数后面，再加上一个任意类型的参数，让Java不要认为参数是Object...。
 
-* 参数列表中不能出现null，否则会报`org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'`
+2. 参数列表中不能出现null，否则会报`org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'`
 
-* 目前发现HikariCP数据库连接池在高并发时，getPage获取分页总数时，会有返回1的异常数据。使用tomcat-jdbc或duird则没有问题。因此不推荐使用HikariCP，它在实现高性能的同时肯定突破了某些规范。
+3. 目前发现HikariCP数据库连接池在高并发时，getPage获取分页总数时，会有返回1的异常数据。使用tomcat-jdbc或duird则没有问题。因此不推荐使用HikariCP，它在实现高性能的同时肯定突破了某些规范。
 
-* 在JoinTable的关联类中的计算列`@Column`，其value和computed值都要自行带上join表的别名，例如t1。
+4. 在JoinTable的关联类中的计算列`@Column`，其value和computed值都要自行带上join表的别名，例如t1。
 
-* 对于内部类是由@RelatedColumn注解的@Table及其子类的，需要修饰为`public static class`，否则dbhelper访问不到，将导致数据转换成对象失败，从而返回null对象。详见测试代码中`SchoolWithInnerClassVO.java`例子。
+5. 对于内部类是由@RelatedColumn注解的@Table及其子类的，需要修饰为`public static class`，否则dbhelper访问不到，将导致数据转换成对象失败，从而返回null对象。详见测试代码中`SchoolWithInnerClassVO.java`例子。
 
 ## 未来规划
 
