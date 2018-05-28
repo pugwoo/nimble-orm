@@ -204,9 +204,10 @@ public class StudentSchoolJoinVO {
 
 ## 一些思考和选择
 
-* 为什么insert和update默认只插入非null的值，而单独提供一个insertWithNull和updateWithNull的方法呢?
-
-> 答：对于null值，如果写入到数据库，那肯定是null，同时无法使用数据库的默认值。因此null值是没有必要默认就写入数据库的。同理，update也保持一致的做法。
+<details>
+  <summary>为什么insert和update默认只插入非null的值，而单独提供一个insertWithNull和updateWithNull的方法呢?</summary>
+  答：对于null值，如果写入到数据库，那肯定是null，同时无法使用数据库的默认值。因此null值是没有必要默认就写入数据库的。同理，update也保持一致的做法。
+</details>
 
 * 为什么要提供`void rollback()`方法，手工来回滚事务？
 
