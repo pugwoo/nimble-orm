@@ -206,12 +206,13 @@ public class StudentSchoolJoinVO {
 
 <details>
   <summary>为什么insert和update默认只插入非null的值，而单独提供一个insertWithNull和updateWithNull的方法呢?</summary>
-  答：对于null值，如果写入到数据库，那肯定是null，同时无法使用数据库的默认值。因此null值是没有必要默认就写入数据库的。同理，update也保持一致的做法。
+> 答：对于null值，如果写入到数据库，那肯定是null，同时无法使用数据库的默认值。因此null值是没有必要默认就写入数据库的。同理，update也保持一致的做法。
 </details>
 
-* 为什么要提供`void rollback()`方法，手工来回滚事务？
-
+<details>
+  <summary>为什么要提供`void rollback()`方法，手工来回滚事务？</summary>
 > 答：DAO层和service层向上层抛出异常以表达错误，是不太建议的方式。我知道有些建议会推荐使用显式抛异常的方式来表达错误，但上层的处理就会变得麻烦。更好的做法我认为是尽量靠返回值来表示处理的结果，而异常仅用在“无法预测”的不正常情况或者返回值无法表达更多信息的情况下。而@Transational事务回滚，需要抛出RuntimeException，这个行为显然会干扰调用者。所以，为了保证用返回值表达结果，就必须手动回滚事务。
+</details>
 
 * 为什么@Column的注解要显示指定value值，不做自动根据字段名配置映射成驼峰形式或下划线形式？
 
