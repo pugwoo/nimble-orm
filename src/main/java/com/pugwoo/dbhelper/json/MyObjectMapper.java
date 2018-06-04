@@ -21,6 +21,7 @@ public class MyObjectMapper extends ObjectMapper {
 		configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false); //属性不存在的兼容处理
 		configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false); // 对于没有任何getter的bean序列化不抛异常
 		configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true); // 对枚举中不存在的值，设置为null
+		configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true); // 自动将空字符串转成null值传入Object
 		
 		getSerializerProvider().setNullKeySerializer(new NullKeySerializer()); // 当map含有null key时，转成空字符串
 		
