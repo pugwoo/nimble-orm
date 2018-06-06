@@ -16,7 +16,12 @@ public interface DBHelper {
 	/**
 	 * 手动回滚@Transactional的事务。
 	 * 对于已知需要回滚的动作，我更推荐主动调用让其回滚，而非抛出RuntimeException。
-	 * 当前如果没有事务而调用该方法，将抛出org.springframework.transaction.NoTransactionException
+	 * 当前如果没有事务而调用该方法，将抛出org.springframework.transaction.NoTransactionException。<br><br>
+	 * 
+	 * 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`
+	 * 异常的情况，需要使用者保证满足以下两点中的任意一点：<br>
+	 * 1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；<br>
+	 * 2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。<br>
 	 */
 	void rollback();
 	
