@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -77,12 +78,14 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		if(newList == null) {
 			return 0;
 		}
-		if((dbList == null || dbList != null && dbList.isEmpty()) && newList.isEmpty()) {
+		if(dbList == null) {
+			dbList = new ArrayList<T>();
+		}
+		if(dbList.isEmpty() && newList.isEmpty()) {
 			return 0; // 不需要处理了
 		}
 		
-		List<Field> fields = DOInfoReader.getColumns(
-				dbList != null && !dbList.isEmpty() ? dbList.get(0).getClass()
+		List<Field> fields = DOInfoReader.getColumns(!dbList.isEmpty() ? dbList.get(0).getClass()
 						: newList.get(0).getClass());
 		
 		int rows = 0;

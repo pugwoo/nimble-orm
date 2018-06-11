@@ -1,3 +1,6 @@
+2018年6月11日
+v0.8.5 - [fix] 修复insertOrUpdateFull方法当dbList参数值为null抛出空指针异常的问题
+
 2018年6月4日
 v0.8.4 - [improve] JSON转换支持将空字符设置为null赋值给对象
 
