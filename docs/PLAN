@@ -1,6 +1,6 @@
 == 开发计划 ==
 
-1. 多数据库支持，mysql、oracle、MSsql等
+1. 多数据库支持，mysql、oracle、MSsql等 【优先级低】
 2018年5月10日 15:41:53
 目前用到了mysql的两个特性：SQL_CALC_FOUND_ROWS和update获取修改的id列表
 
