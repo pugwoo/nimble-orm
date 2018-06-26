@@ -244,7 +244,9 @@ public class StudentSchoolJoinVO {
 
 5. 对于内部类是由@RelatedColumn注解的@Table及其子类的，需要修饰为`public static class`，否则dbhelper访问不到，将导致数据转换成对象失败，从而返回null对象。详见测试代码中`SchoolWithInnerClassVO.java`例子。
 
-6. 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`异常的情况，需要使用者保证满足以下两点中的任意一点：1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。
+6. 关于`org.springframework.transaction.NoTransactionException: No transaction aspect-managed TransactionStatus in scope`异常，如果方法已经注解了@Transactional，那么要注意SpringAOP的生效条件，一个易错点是没有注解@Transactional的方法内用了类内部的另一个注解了@Transactional的方法，这样是没有生效的。
+
+7. 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`异常的情况，需要使用者保证满足以下两点中的任意一点：1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。
 
 ## 未来规划
 
