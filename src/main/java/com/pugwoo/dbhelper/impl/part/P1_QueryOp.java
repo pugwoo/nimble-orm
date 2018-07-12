@@ -151,6 +151,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
 	public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
+    	if(maxPageSize != null && pageSize > maxPageSize) {
+    		pageSize = maxPageSize;
+    	}
+    	
     	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		int offset = (page - 1) * pageSize;
 		return _getPage(clazz, false, true, offset, pageSize, postSql, args);
@@ -175,6 +179,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
 			String postSql, Object... args) {
+    	if(maxPageSize != null && pageSize > maxPageSize) {
+    		pageSize = maxPageSize;
+    	}
+    	
     	if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		int offset = (page - 1) * pageSize;
 		return _getPage(clazz, false, false, offset, pageSize, postSql, args);

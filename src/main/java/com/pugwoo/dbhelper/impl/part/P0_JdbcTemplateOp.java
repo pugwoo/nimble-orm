@@ -32,6 +32,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected JdbcTemplate jdbcTemplate;
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
+	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
 	
 	protected ApplicationContext applicationContext;
 	
@@ -143,6 +144,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	public void setTimeoutWarningValve(long timeMS) {
 		timeoutWarningValve = timeMS;
+	}
+
+	public Integer getMaxPageSize() {
+		return maxPageSize;
+	}
+
+	public void setMaxPageSize(int maxPageSize) {
+		this.maxPageSize = maxPageSize;
 	}
 
 	public JdbcTemplate getJdbcTemplate() {

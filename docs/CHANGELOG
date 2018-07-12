@@ -1,3 +1,6 @@
+2018年7月12日
+v0.8.6 - [add] 增加maxPageSize设置，防止pageSize忘记限制而过大导致的数据库压力过大问题
+
 2018年6月11日
 v0.8.5 - [fix] 修复insertOrUpdateFull方法当dbList参数值为null抛出空指针异常的问题
 

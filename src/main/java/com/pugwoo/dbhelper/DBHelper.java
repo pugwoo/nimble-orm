@@ -39,6 +39,13 @@ public interface DBHelper {
 	void setTimeoutWarningValve(long timeMS);
 	
 	/**
+	 * 设置允许的每页最大的个数，当页数超过允许的最大页数时，设置为最大页数。
+	 * 默认对每页最大个数没有限制，该限制只对getPage和getPageWithoutCount接口生效。
+	 * @param maxPageSize 允许的每页最大的个数
+	 */
+	void setMaxPageSize(int maxPageSize);
+	
+	/**
 	 * 设置SQL执行超时回调，可用于自行实现将慢sql存放到db
 	 * @param runnable
 	 */
