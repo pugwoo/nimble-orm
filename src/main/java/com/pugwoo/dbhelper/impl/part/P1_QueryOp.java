@@ -541,52 +541,76 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             if (field.getType() == List.class) {
+                Map<Object, List<Object>> mapRemoteValues = new HashMap<Object, List<Object>>();
+                Map<String, List<Object>> mapRemoteValuesString = new HashMap<String, List<Object>>();
+                for (Object obj : relateValues) {
+                    Object oRemoteValue = DOInfoReader.getValue(remoteField, obj);
+                    if (oRemoteValue != null) {
+                        List<Object> oRemoteValueList = mapRemoteValues.get(oRemoteValue);
+                        if (oRemoteValueList == null) {
+                            List<Object> list = new ArrayList<Object>();
+                            list.add(obj);
+                            mapRemoteValues.put(oRemoteValue, list);
+                        } else {
+                            oRemoteValueList.add(obj);
+                        }
+                        List<Object> oRemoteValueListString = mapRemoteValuesString.get(oRemoteValue.toString());
+                        if (oRemoteValueListString == null) {
+                            List<Object> list = new ArrayList<Object>();
+                            list.add(obj);
+                            mapRemoteValuesString.put(oRemoteValue.toString(), list);
+                        } else {
+                            oRemoteValueListString.add(obj);
+                        }
+                    }
+                }
                 for (T t : tList) {
-                    List<Object> value = new ArrayList<Object>();
-                    for (Object obj : relateValues) {
-                        Object o1 = DOInfoReader.getValue(localField, t);
-                        Object o2 = DOInfoReader.getValue(remoteField, obj);
-                        if (o1 != null && o2 != null) {
-                            if (o1.getClass().equals(o2.getClass())) {
-                                if (o1.equals(o2)) {
-                                    value.add(obj);
-                                }
-                            } else {
+                    List<Object> valueList = new ArrayList<Object>();
+                    Object oLocalValue = DOInfoReader.getValue(localField, t);
+                    if (oLocalValue != null) {
+                        List<Object> objRemoteList = mapRemoteValues.get(oLocalValue);
+                        if (objRemoteList != null) {
+                            valueList = objRemoteList;
+                        } else {
+                            List<Object> objRemoteStringList = mapRemoteValuesString.get(oLocalValue.toString());
+                            if (objRemoteStringList != null) {
                                 LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
                                         localField, remoteField);
-                                if (o1.toString().equals(o2.toString())) {
-                                    value.add(obj);
-                                }
+                                valueList = objRemoteList;
                             }
                         }
                     }
-                    if (value.isEmpty()) { // 没有匹配数据时，当原字段有值，则不修改原来的值
+                    if (valueList.isEmpty()) { // 没有匹配数据时，当原字段有值，则不修改原来的值
                         if (DOInfoReader.getValue(field, t) == null) {
-                            DOInfoReader.setValue(field, t, value);
+                            DOInfoReader.setValue(field, t, valueList);
                         }
                     } else {
-                        DOInfoReader.setValue(field, t, value);
+                        DOInfoReader.setValue(field, t, valueList);
                     }
                 }
             } else {
+                Map<Object, Object> mapRemoteValues = new HashMap<Object, Object>();
+                Map<String, Object> mapRemoteValuesString = new HashMap<String, Object>();
+                for (Object obj : relateValues) {
+                    Object oRemoteValue = DOInfoReader.getValue(remoteField, obj);
+                    if (oRemoteValue != null) {
+                        mapRemoteValues.put(oRemoteValue, obj);
+                        mapRemoteValuesString.put(oRemoteValue.toString(), obj);
+                    }
+                }
                 for (T t : tList) {
-                    for (Object obj : relateValues) {
-                        Object o1 = DOInfoReader.getValue(localField, t);
-                        Object o2 = DOInfoReader.getValue(remoteField, obj);
-                        if (o1 != null && o2 != null) {
-                            if (o1.getClass().equals(o2.getClass())) {
-                                if (o1.equals(o2)) {
-                                    DOInfoReader.setValue(field, t, obj);
-                                    break;
-                                }
-                            } else {
-                                LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
-                                        localField, remoteField);
-                                if (o1.toString().equals(o2.toString())) {
-                                    DOInfoReader.setValue(field, t, obj);
-                                    break;
-                                }
-                            }
+                    Object oLocalValue = DOInfoReader.getValue(localField, t);
+                    if (oLocalValue != null) {
+                        Object objRemote = mapRemoteValues.get(oLocalValue);
+                        if (objRemote != null) {
+                            DOInfoReader.setValue(field, t, objRemote);
+                            continue;
+                        }
+                        Object objRemoteString = mapRemoteValuesString.get(oLocalValue.toString());
+                        if (objRemoteString != null) {
+                            LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
+                                    localField, remoteField);
+                            DOInfoReader.setValue(field, t, objRemoteString);
                         }
                     }
                 }
