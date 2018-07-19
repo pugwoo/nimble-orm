@@ -1,3 +1,6 @@
+2018年7月19日
+v0.8.7 - [improve] 优化@RelatedColumn性能，满足万级数据关联性能
+
 2018年7月12日
 v0.8.6 - [add] 增加maxPageSize设置，防止pageSize忘记限制而过大导致的数据库压力过大问题
 

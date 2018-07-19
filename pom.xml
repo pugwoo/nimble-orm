@@ -4,7 +4,7 @@
 
 	<groupId>com.pugwoo</groupId>
 	<artifactId>nimble-orm</artifactId>
-	<version>0.8.7-SNAPSHOT</version>
+	<version>0.8.7</version>
 	<packaging>jar</packaging>
 
 	<name>nimble-orm</name>
