@@ -17,14 +17,14 @@ public enum JoinTypeEnum {
 	
 	private String name;
 	
-	private JoinTypeEnum(String code, String name) {
+	JoinTypeEnum(String code, String name) {
 		this.code = code;
 		this.name = name;
 	}
 	
 	public static JoinTypeEnum getByCode(String code) {
 		for(JoinTypeEnum e : JoinTypeEnum.values()) {
-			if(code == e.getCode() || code != null && code.equals(e.getCode())) {
+			if(code == null && e.getCode() ==null || code != null && code.equals(e.getCode())) {
 				return e;
 			}
 		}
@@ -34,17 +34,9 @@ public enum JoinTypeEnum {
 	public String getCode() {
 		return code;
 	}
-	
-	public void setCode(String code) {
-		this.code = code;
-	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
+
 }
