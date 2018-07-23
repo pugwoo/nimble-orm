@@ -228,7 +228,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			rows = namedJdbcExecuteUpdate(sql, values.toArray());
 			String ids = jdbcTemplate.queryForObject("SELECT @uids", String.class);
 			if(ids != null && !ids.trim().isEmpty()) {
-				String strs[] = ids.split(",");
+				String[] strs = ids.split(",");
 				int size = strs.length / keyFields.size();
 				List<Object> result = new ArrayList<Object>();
 				List<Object> keys = new ArrayList<Object>();
