@@ -223,7 +223,9 @@ public class TypeAutoCast {
 	 */
 	private static JavaType parseGenericType(TypeFactory typeFactory, String className)
 			throws ClassNotFoundException {
-		if(className == null) return null;
+		if(className == null) {
+            return null;
+        }
 		int left = className.indexOf("<");
 		if(left < 0) {
 			return typeFactory.constructType(Class.forName(className.trim()));
@@ -248,7 +250,9 @@ public class TypeAutoCast {
 	}
 	
 	private static int getDotIndex(String str) {
-		if(str == null) return -1;
+		if(str == null) {
+            return -1;
+        }
 		int bracket = 0;
 		for(int i = 0; i < str.length(); i++) {
 			char c = str.charAt(i);
@@ -265,7 +269,9 @@ public class TypeAutoCast {
 	}
 	
 	private static void assertLessThan3Dot(String str) {
-		if(str == null) return;
+		if(str == null) {
+            return;
+        }
 		int counts = 0;
 		int bracket = 0;
 		for(int i = 0; i < str.length(); i++) {

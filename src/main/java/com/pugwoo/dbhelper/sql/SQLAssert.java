@@ -28,7 +28,9 @@ public class SQLAssert {
 	}
 	
 	public static <T> boolean isAllSameClass(List<T> list) {
-		if(list == null || list.isEmpty()) return true;
+		if(list == null || list.isEmpty()) {
+            return true;
+        }
 		Class<?> clazz = null;
 		for(T t : list) {
 			if(clazz == null) {
