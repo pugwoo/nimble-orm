@@ -6,8 +6,11 @@ package com.pugwoo.dbhelper.enums;
  */
 public enum JoinTypeEnum {
 
+	/**默认join*/
 	JOIN("join", "default join"),
+	/**left join左连接*/
 	LEFT_JOIN("left join", "left join"),
+	/**right join右连接*/
 	RIGHT_JOIN("right join", "right join");
 	
 	private String code;

@@ -23,7 +23,7 @@ public class TypeAutoCast {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeAutoCast.class);
 	
-	private static final ObjectMapper objectMapper = new MyObjectMapper();
+	private static final ObjectMapper OBJECT_MAPPER = new MyObjectMapper();
 	
 	/**
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
@@ -50,10 +50,10 @@ public class TypeAutoCast {
 			String typeName = field.getGenericType().toString();
 			try {
 				if(!typeName.contains("<")) {
-					return objectMapper.readValue(valStr, field.getType());
+					return OBJECT_MAPPER.readValue(valStr, field.getType());
 				} else { // 处理泛型
-					JavaType type = parseGenericType(objectMapper.getTypeFactory(), typeName);
-					return objectMapper.readValue(valStr, type);
+					JavaType type = parseGenericType(OBJECT_MAPPER.getTypeFactory(), typeName);
+					return OBJECT_MAPPER.readValue(valStr, type);
 				}
 			} catch(Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, typeName, e);
