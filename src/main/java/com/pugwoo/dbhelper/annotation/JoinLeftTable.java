@@ -15,7 +15,6 @@ public @interface JoinLeftTable {
 
 	/**
 	 * 表别名
-	 * @return
 	 */
 	String alias() default "t1";
 	

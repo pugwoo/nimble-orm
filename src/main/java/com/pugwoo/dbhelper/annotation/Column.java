@@ -15,42 +15,32 @@ public @interface Column {
 
 	/**
 	 * 列名
-	 * 
-	 * @return
 	 */
 	String value();
 	
 	/**
 	 * 标记该列是否转成json字符串存入数据库，此时数据库列的类型必须可以存放字符串
-	 * @return
 	 */
 	boolean isJSON() default false;
 	
 	/**
 	 * 计算列。注意：计算列的别名为value属性的值，不需要再写上as 别名。
-	 * @return
 	 */
 	String computed() default "";
 	
 	/**
 	 * 是否主键
-	 * 
-	 * @return
 	 */
 	boolean isKey() default false;
 	
 	/**
 	 * 主键是否自增
-	 * 
-	 * @return
 	 */
 	boolean isAutoIncrement() default false;
 	
 	/**
 	 * 插入时，当字段值未提供时，设置是否自动生成随机32字符，此时字段必须是String类型。<br>
 	 * 这个功能用于随机生成主键。
-	 * 
-	 * @return
 	 */
 	boolean setRandomStringWhenInsert() default false;
 	
@@ -70,14 +60,11 @@ public @interface Column {
 	 * 使用示例：<br>
 	 * \@Column(value = "deleted", softDelete = {"0", "1"}) private Boolean deleted;<br>
 	 * <br>
-	 * @return
 	 */
 	String[] softDelete() default "";
 	
 	/**
 	 * 当设置为true时，且原值为null时，更新时会自动设置Date，对应的类型必须是java.util.Date及其子类
-	 * 
-	 * @return
 	 */
 	boolean setTimeWhenInsert() default false;
 	
@@ -86,13 +73,11 @@ public @interface Column {
 	 * （这是因为，从数据库全量查出来的updateTime是有值的，只能强制设置Date）
 	 * 对应的类型必须是java.util.Date及其子类。
 	 * 特别的，软删除时，会设置该值为删除时的时间。
-	 * @return
 	 */
 	boolean setTimeWhenUpdate() default false;
 	
 	/**
 	 * 当设置了非空的字符串，且原值是null时，自动设置上值
-	 * @return
 	 */
 	String insertDefault() default "";
 	

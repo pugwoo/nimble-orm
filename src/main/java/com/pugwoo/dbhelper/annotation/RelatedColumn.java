@@ -42,13 +42,11 @@ public @interface RelatedColumn {
 	 * 不建议使用limit，因为在@RelatedColumn批量获取多个值时，由于limit的存在，会导致有些值关联不上，造成错误。
 	 * 
 	 * 重要：【当使用dataService时，该字段无效。】
-	 * @return
 	 */
 	String extraWhere() default "";
 	
 	/**
 	 * 外部查询数据接口，该接口必须继承实现IDBHelperDataService
-	 * @return
 	 */
 	Class<?> dataService() default void.class;
 
