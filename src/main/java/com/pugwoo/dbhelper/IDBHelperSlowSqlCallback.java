@@ -2,6 +2,10 @@ package com.pugwoo.dbhelper;
 
 import java.util.List;
 
+/**
+ * 特别说明：在回调方法callback，尽量不使用dbhelper及其关联的service，以免Spring循环依赖。
+ * 如确实需要依赖dbhelper及其关联的service，可以考虑使用懒加载的方式。
+ */
 public interface IDBHelperSlowSqlCallback {
 
 	/**
