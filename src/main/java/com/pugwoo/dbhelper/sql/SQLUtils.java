@@ -440,7 +440,7 @@ public class SQLUtils {
 	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
 		String setSql = getColumnName(softDeleteColumn) + "="
 	                    + softDeleteColumn.softDelete()[1];
-		return getCustomUpdateSQL(t, values, setSql);
+		return getCustomDeleteSQL(t, values, setSql);
 	}
 	
 	/**
@@ -475,10 +475,10 @@ public class SQLUtils {
 		sql.append(" SET ").append(getColumnName(softDeleteColumn));
 		sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		
-		// 特殊处理@Column setTimeWhenUpdate时间
+		// 特殊处理@Column setTimeWhenDelete时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
+			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column)).append("='");
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				sql.append(df.format(new Date())).append("'");
@@ -489,7 +489,55 @@ public class SQLUtils {
 		
 		return sql.toString();
 	}
-	
+
+	/**
+	 * 获得自定义更新的sql
+	 * @param t
+	 * @param values
+	 * @param setSql
+	 * @return
+	 */
+	public static <T> String getCustomDeleteSQL(T t, List<Object> values, String setSql) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+
+		sql.append(getTableName(table)).append(" ");
+
+		if(setSql.trim().toLowerCase().startsWith("set ")) {
+			sql.append(setSql);
+		} else {
+			sql.append("SET ").append(setSql);
+		}
+
+		// 加上删除时间
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
+				sql.append(",").append(getColumnName(column))
+						.append("=").append(getDateString(new Date()));
+			}
+		}
+
+		List<Object> whereValues = new ArrayList<Object>();
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+
+		for(Object value : whereValues) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		values.addAll(whereValues);
+
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
+
+		return sql.toString();
+	}
+
+
 	/**
 	 * 获得硬删除SQL
 	 * @param t
