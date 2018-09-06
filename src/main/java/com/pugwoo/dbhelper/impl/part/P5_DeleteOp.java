@@ -182,7 +182,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		List<Object> values = new ArrayList<Object>();
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
 
-		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		int rows = 0;
+		if (sql != null) {
+			rows = namedJdbcExecuteUpdate(sql, values.toArray());
+		}
 
 		return rows;
 	}
