@@ -61,7 +61,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		} else { // 软删除
 			// 对于软删除，当有拦截器时，可能使用者会修改数据以记录删除时间或删除人信息等，此时要先update该条数据
 			if(interceptors != null && !interceptors.isEmpty()) {
-				update(t);
+				updateForDelete(t);
 			}
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values);
@@ -168,5 +168,22 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			return deleteByKey(allKey);
 		}
 	}
-	
+
+	////////
+	private <T> int updateForDelete(T t) throws NullKeyValueException {
+
+		if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
+			return 0; // not need to update
+		}
+
+		List<Object> tList = new ArrayList<Object>();
+		tList.add(t);
+
+		List<Object> values = new ArrayList<Object>();
+		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
+
+		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
+
+		return rows;
+	}
 }
