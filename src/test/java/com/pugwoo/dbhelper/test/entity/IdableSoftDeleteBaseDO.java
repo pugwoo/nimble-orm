@@ -24,6 +24,9 @@ public class IdableSoftDeleteBaseDO {
 	@Column(value = "update_time", setTimeWhenUpdate = true, setTimeWhenInsert = true)
 	private Date updateTime;
 
+	@Column(value = "delete_time", setTimeWhenDelete = true)
+	private Date deleteTime;
+
 	public Long getId() {
 		return id;
 	}
@@ -55,5 +58,12 @@ public class IdableSoftDeleteBaseDO {
 	public void setUpdateTime(Date updateTime) {
 		this.updateTime = updateTime;
 	}
-	
+
+	public Date getDeleteTime() {
+		return deleteTime;
+	}
+
+	public void setDeleteTime(Date deleteTime) {
+		this.deleteTime = deleteTime;
+	}
 }
