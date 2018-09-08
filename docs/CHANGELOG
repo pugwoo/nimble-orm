@@ -1,6 +1,8 @@
 2018年9月8日
-v0.8.8 - [add] @Column增加setTimeWhenDelete属性，delete操作时自动设置时间
-         [del] @Column属性setTimeWhenUpdate，在软删除时不会自动设置时间
+v0.9.0 - 【升级须知】setTimeWhenUpdate在软删除时不会再修改时间，请加上setTimeWhenDelete=true
+         [add] @Column增加setTimeWhenDelete属性，delete操作时自动设置时间
+         [del] @Column属性setTimeWhenUpdate，在软删除时不会自动设置当前时间
+         [improve] 自动设置的时间精确到毫秒
 
 2018年7月19日
 v0.8.7 - [improve] 优化@RelatedColumn性能，满足万级数据关联性能
