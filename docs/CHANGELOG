@@ -1,6 +1,9 @@
 2018年9月8日
-v0.8.7 - [add] @Column增加setTimeWhenDelete属性，delete操作时自动设置时间
+v0.8.8 - [add] @Column增加setTimeWhenDelete属性，delete操作时自动设置时间
          [del] @Column属性setTimeWhenUpdate，在软删除时不会自动设置时间
+
+2018年7月19日
+v0.8.7 - [improve] 优化@RelatedColumn性能，满足万级数据关联性能
 
 2018年7月12日
 v0.8.6 - [add] 增加maxPageSize设置，防止pageSize忘记限制而过大导致的数据库压力过大问题

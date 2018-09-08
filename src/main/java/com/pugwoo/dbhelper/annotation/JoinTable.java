@@ -21,13 +21,11 @@ public @interface JoinTable {
 	 * 【注意】
 	 * 对于软删除的处理：当是left join时，右表的软删除条件为 (t2.软删除字段=未删除 or t2.软删除字段 is null)。
 	 *                 当是right join时，左表的软删除条件为 (t1.软删除字段=未删除 or t1.软删除字段 is null)
-	 * @return
 	 */
 	JoinTypeEnum joinType() default JoinTypeEnum.JOIN;
 	
 	/**
 	 * join的关联条件，必须，left表别名为t1，right表别名为t2
-	 * @return
 	 */
 	String on();
 	

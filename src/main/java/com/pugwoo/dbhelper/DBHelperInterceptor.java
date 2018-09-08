@@ -61,8 +61,7 @@ public class DBHelperInterceptor {
 
 	/**
 	 * update前执行
-	 * @param clazz 更新的类
-	 * @param t 更新的实例
+	 * @param tList 更新前的对象列表
 	 * @param setSql 如果使用了updateCustom方法，传入的setSql将传入。否则该值为null
 	 * @param setSqlArgs 如果使用了updateCustom方法，传入的args将传入，否则该值为null。
 	 *        注意，修改此值会修改实际被设置的值，谨慎!
@@ -98,8 +97,7 @@ public class DBHelperInterceptor {
     
     /**
      * delete前执行，包括软删除和物理删除
-     * @param clazz
-     * @param t
+     * @param tList 删除前的对象列表
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
     public boolean beforeDelete(List<Object> tList) {

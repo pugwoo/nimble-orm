@@ -25,9 +25,9 @@ public class SubQuery {
 	/**
 	 * 
 	 * @param field 仅支持一个字段，可以是计算列，当该字段名称和sql关键字相同时，请自行加上``
-	 * @param clazz 
-	 * @param postSql
-	 * @param args
+	 * @param clazz 子查询的表对应DO类
+	 * @param postSql 子查询的where后续sql语句
+	 * @param args postSql的参数列表
 	 */
 	public SubQuery(String field, Class<?> clazz, String postSql, Object... args) {
 		this.field = field;

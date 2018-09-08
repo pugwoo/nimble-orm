@@ -19,7 +19,7 @@ import com.pugwoo.dbhelper.sql.SQLUtils;
 public class NamedParameterUtils {
 	
 	// sha256 from Pugwoo Chia's nimble-ORM
-	private final static String magicForEmptyCollection = 
+	private final static String MAGIC_FOR_EMPTY_COLLECTION =
 			"450DB9DF910D25F80428D4A9BAB4FA36F45D0A15F0AC5B83AFC389D386F1AE9C";
 	
 	@SuppressWarnings("unchecked")
@@ -72,11 +72,11 @@ public class NamedParameterUtils {
 				// 转换后，对于param是空的List或Set，则List或Set插入一个很长的不可能被用户撞上的值
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
-						((List<Object>) param).add((Object)magicForEmptyCollection);
+						((List<Object>) param).add((Object) MAGIC_FOR_EMPTY_COLLECTION);
 					}
 				} else if (param instanceof Set<?>) {
 					if(((Set<?>) param).isEmpty()) {
-						((Set<Object>) param).add((Object)magicForEmptyCollection);
+						((Set<Object>) param).add((Object) MAGIC_FOR_EMPTY_COLLECTION);
 					}
 				}
 				

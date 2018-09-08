@@ -41,8 +41,12 @@ public class PageData<T> implements Serializable {
 	 * @return
 	 */
 	public int getTotalPage() {
-		if(total <= 0) return 0;
-		if(pageSize < 1) return total;
+		if(total <= 0) {
+			return 0;
+		}
+		if(pageSize < 1) {
+			return total;
+		}
 		return (total + pageSize - 1) / pageSize;
 	}
 

@@ -69,8 +69,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	@Override
 	public boolean executeAfterCommit(final Runnable runnable) {
-		if(runnable == null) return false;
-		if(!TransactionSynchronizationManager.isActualTransactionActive()) return false;
+		if(runnable == null) {
+            return false;
+        }
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+            return false;
+        }
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 			@Override
 			public void suspend() {
@@ -142,6 +146,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
 
+	@Override
 	public void setTimeoutWarningValve(long timeMS) {
 		timeoutWarningValve = timeMS;
 	}
@@ -150,6 +155,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return maxPageSize;
 	}
 
+	@Override
 	public void setMaxPageSize(int maxPageSize) {
 		this.maxPageSize = maxPageSize;
 	}

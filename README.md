@@ -62,7 +62,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>0.8.6</version>
+    <version>0.8.7</version>
 </dependency>
 ```
 
@@ -238,7 +238,7 @@ public class StudentSchoolJoinVO {
 
 2. 参数列表中不能出现null，否则会报`org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'`
 
-3. 目前发现HikariCP数据库连接池在高并发时，getPage获取分页总数时，会有返回1的异常数据。使用tomcat-jdbc或duird则没有问题。因此不推荐使用HikariCP，它在实现高性能的同时肯定突破了某些规范。
+3. 对于MySQL5.7及以上，默认会开启only_full_group_by特性，其是对SQL语义的加强，要求有group by的SQL语句中，所有select的字段要么是groupby字段要么是有聚合函数。在dbhelper中，大量需要“关闭only_full_group_by特性”,因此建议将此特性关闭掉。
 
 4. 在JoinTable的关联类中的计算列`@Column`，其value和computed值都要自行带上join表的别名，例如t1。
 

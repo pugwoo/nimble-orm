@@ -76,7 +76,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	@Override @Transactional
 	public <T> int deleteByKey(List<T> list) throws NullKeyValueException {
-		if(list == null || list.isEmpty()) return 0;
+		if(list == null || list.isEmpty()) {
+            return 0;
+        }
 		
 		boolean batchDelete = false;
 		Field keyField = null;
@@ -93,7 +95,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			List<Object> keys = new ArrayList<Object>();
 			for(T t : list) {
 				Object key = DOInfoReader.getValue(keyField, t);
-				if(key != null) keys.add(key);
+				if(key != null) {
+                    keys.add(key);
+                }
 			}
 			
 			List<Object> listTmp = new ArrayList<Object>();

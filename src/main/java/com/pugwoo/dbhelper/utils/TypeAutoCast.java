@@ -23,7 +23,7 @@ public class TypeAutoCast {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeAutoCast.class);
 	
-	private static final ObjectMapper objectMapper = new MyObjectMapper();
+	private static final ObjectMapper OBJECT_MAPPER = new MyObjectMapper();
 	
 	/**
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
@@ -50,10 +50,10 @@ public class TypeAutoCast {
 			String typeName = field.getGenericType().toString();
 			try {
 				if(!typeName.contains("<")) {
-					return objectMapper.readValue(valStr, field.getType());
+					return OBJECT_MAPPER.readValue(valStr, field.getType());
 				} else { // 处理泛型
-					JavaType type = parseGenericType(objectMapper.getTypeFactory(), typeName);
-					return objectMapper.readValue(valStr, type);
+					JavaType type = parseGenericType(OBJECT_MAPPER.getTypeFactory(), typeName);
+					return OBJECT_MAPPER.readValue(valStr, type);
 				}
 			} catch(Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, typeName, e);
@@ -223,7 +223,9 @@ public class TypeAutoCast {
 	 */
 	private static JavaType parseGenericType(TypeFactory typeFactory, String className)
 			throws ClassNotFoundException {
-		if(className == null) return null;
+		if(className == null) {
+            return null;
+        }
 		int left = className.indexOf("<");
 		if(left < 0) {
 			return typeFactory.constructType(Class.forName(className.trim()));
@@ -248,7 +250,9 @@ public class TypeAutoCast {
 	}
 	
 	private static int getDotIndex(String str) {
-		if(str == null) return -1;
+		if(str == null) {
+            return -1;
+        }
 		int bracket = 0;
 		for(int i = 0; i < str.length(); i++) {
 			char c = str.charAt(i);
@@ -265,7 +269,9 @@ public class TypeAutoCast {
 	}
 	
 	private static void assertLessThan3Dot(String str) {
-		if(str == null) return;
+		if(str == null) {
+            return;
+        }
 		int counts = 0;
 		int bracket = 0;
 		for(int i = 0; i < str.length(); i++) {

@@ -205,7 +205,7 @@ public class DateUtils {
             return "";
         }
         String interval = "";
-        long seconds = (new Date().getTime() - date.getTime()) / 1000;
+        long seconds = (System.currentTimeMillis() - date.getTime()) / 1000;
         if(seconds >= 0) {
             if (seconds < 10) {
                 interval = "刚刚";

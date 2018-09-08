@@ -545,24 +545,21 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<String, List<Object>> mapRemoteValuesString = new HashMap<String, List<Object>>();
                 for (Object obj : relateValues) {
                     Object oRemoteValue = DOInfoReader.getValue(remoteField, obj);
-                    if (oRemoteValue != null) {
-                        List<Object> oRemoteValueList = mapRemoteValues.get(oRemoteValue);
-                        if (oRemoteValueList == null) {
-                            List<Object> list = new ArrayList<Object>();
-                            list.add(obj);
-                            mapRemoteValues.put(oRemoteValue, list);
-                        } else {
-                            oRemoteValueList.add(obj);
-                        }
-                        List<Object> oRemoteValueListString = mapRemoteValuesString.get(oRemoteValue.toString());
-                        if (oRemoteValueListString == null) {
-                            List<Object> list = new ArrayList<Object>();
-                            list.add(obj);
-                            mapRemoteValuesString.put(oRemoteValue.toString(), list);
-                        } else {
-                            oRemoteValueListString.add(obj);
-                        }
+                    if (oRemoteValue == null) {continue;}
+
+                    List<Object> oRemoteValueList = mapRemoteValues.get(oRemoteValue);
+                    if (oRemoteValueList == null) {
+                    	oRemoteValueList = new ArrayList<Object>();
+                        mapRemoteValues.put(oRemoteValue, oRemoteValueList);
                     }
+                    oRemoteValueList.add(obj);
+                    
+                    List<Object> oRemoteValueListString = mapRemoteValuesString.get(oRemoteValue.toString());
+                    if (oRemoteValueListString == null) {
+                    	oRemoteValueListString = new ArrayList<Object>();
+                        mapRemoteValuesString.put(oRemoteValue.toString(), oRemoteValueListString);
+                    }
+                    oRemoteValueListString.add(obj);
                 }
                 for (T t : tList) {
                     List<Object> valueList = new ArrayList<Object>();
@@ -600,18 +597,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
                 for (T t : tList) {
                     Object oLocalValue = DOInfoReader.getValue(localField, t);
-                    if (oLocalValue != null) {
-                        Object objRemote = mapRemoteValues.get(oLocalValue);
-                        if (objRemote != null) {
-                            DOInfoReader.setValue(field, t, objRemote);
-                            continue;
-                        }
-                        Object objRemoteString = mapRemoteValuesString.get(oLocalValue.toString());
-                        if (objRemoteString != null) {
-                            LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
-                                    localField, remoteField);
-                            DOInfoReader.setValue(field, t, objRemoteString);
-                        }
+                    if (oLocalValue == null) {continue;}
+                    
+                    Object objRemote = mapRemoteValues.get(oLocalValue);
+                    if (objRemote != null) {
+                        DOInfoReader.setValue(field, t, objRemote);
+                        continue;
+                    }
+                    Object objRemoteString = mapRemoteValuesString.get(oLocalValue.toString());
+                    if (objRemoteString != null) {
+                        LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
+                                localField, remoteField);
+                        DOInfoReader.setValue(field, t, objRemoteString);
                     }
                 }
             }

@@ -15,14 +15,11 @@ public @interface Table {
 
 	/**
 	 * 表名
-	 * 
-	 * @return
 	 */
 	String value();
 	
 	/**
 	 * 表别名，默认是t
-	 * @return
 	 */
 	String alias() default "t";
 	
