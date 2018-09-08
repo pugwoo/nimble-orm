@@ -5,6 +5,7 @@ CREATE TABLE `t_student` (
   `deleted` TINYINT(4) DEFAULT NULL,
   `create_time` DATETIME DEFAULT NULL,
   `update_time` DATETIME DEFAULT NULL,
+  `delete_time` DATETIME DEFAULT NULL,
   `name` VARCHAR(128) DEFAULT 'DEFAULT',
   `age` TINYINT(1) DEFAULT NULL,
   `intro` BLOB,
@@ -21,6 +22,7 @@ CREATE TABLE `t_school` (
   `deleted` tinyint(4) DEFAULT NULL,
   `create_time` datetime DEFAULT NULL,
   `update_time` datetime DEFAULT NULL,
+  `delete_time` DATETIME DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -32,6 +34,7 @@ CREATE TABLE `t_course` (
   `deleted` tinyint(4) DEFAULT NULL,
   `create_time` datetime DEFAULT NULL,
   `update_time` datetime DEFAULT NULL,
+  `delete_time` DATETIME DEFAULT NULL,
   `student_id` int(11) DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL COMMENT '课程名称',
   `is_main` tinyint(4) DEFAULT '0' COMMENT '是否主课程',

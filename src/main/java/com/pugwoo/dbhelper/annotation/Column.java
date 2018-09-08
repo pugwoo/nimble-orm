@@ -75,6 +75,13 @@ public @interface Column {
 	 * 特别的，软删除时，会设置该值为删除时的时间。
 	 */
 	boolean setTimeWhenUpdate() default false;
+
+	/**
+	 * 当设置为true时，会自动设置Date
+	 * 对应的类型必须是java.util.Date及其子类
+	 * @return
+	 */
+	boolean setTimeWhenDelete() default false;
 	
 	/**
 	 * 当设置了非空的字符串，且原值是null时，自动设置上值
