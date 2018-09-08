@@ -480,7 +480,7 @@ public class SQLUtils {
 			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column)).append("='");
-				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 				sql.append(df.format(new Date())).append("'");
 			}
 		}
@@ -944,7 +944,7 @@ public class SQLUtils {
 	 * @return
 	 */
 	private static String getDateString(Date date) {
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		return "'" + df.format(date) + "'";
 	}
 

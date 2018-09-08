@@ -284,7 +284,7 @@ public class TestDBHelper {
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 		
 		studentDO = insertOne();
-		Thread.sleep(3000);
+		//Thread.sleep(3000);
 		dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
 		
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
