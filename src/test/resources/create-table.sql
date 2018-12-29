@@ -39,4 +39,12 @@ CREATE TABLE `t_course` (
   `name` varchar(32) DEFAULT NULL COMMENT '课程名称',
   `is_main` tinyint(4) DEFAULT '0' COMMENT '是否主课程',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `t_json`;
+
+CREATE TABLE `t_json` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `json` json DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
