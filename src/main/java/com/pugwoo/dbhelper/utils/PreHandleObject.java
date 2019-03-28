@@ -57,6 +57,12 @@ public class PreHandleObject {
 							UUID.randomUUID().toString().replace("-", "").substring(0, 32));
 				}
 			}
+
+			if(column.casVersion()) {
+				if(DOInfoReader.getValue(field, t) == null) {
+					DOInfoReader.setValue(field, t, 1);
+				}
+			}
 		}
 	}
 	

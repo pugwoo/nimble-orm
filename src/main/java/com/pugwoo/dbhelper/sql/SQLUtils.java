@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import com.pugwoo.dbhelper.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,11 +19,6 @@ import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
-import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
-import com.pugwoo.dbhelper.exception.InvalidParameterException;
-import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NullKeyValueException;
-import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
 import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 
@@ -330,6 +326,19 @@ public class SQLUtils {
 			}
 		}
 		values.addAll(whereValues);
+
+		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
+		if(casVersionField != null) {
+			List<Field> casVersionFields = new ArrayList<Field>();
+			casVersionFields.add(casVersionField);
+			List<Object> casValues = new ArrayList<Object>();
+			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
+			if(casValues.size() != 1 || casValues.get(0) == null) {
+				throw new CasVersionNotMatchException("casVersion column value is null");
+			}
+			values.add(casValues.get(0));
+			where = where + " AND " + casWhere;
+		}
 		
 		// 带上postSql
 		if(postSql != null) {
@@ -407,12 +416,27 @@ public class SQLUtils {
 			sql.append("SET ").append(setSql);
 		}
 		
-		// 加上更新时间
+		// 加上更新时间和casVersion字段
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column))
 				   .append("=").append(getDateString(new Date()));
+			}
+			if(column.casVersion()) {
+				Object value = DOInfoReader.getValue(field, t);
+				if(value == null) {
+					throw new CasVersionNotMatchException("casVersion column value is null");
+				}
+				Long _v = null;
+				if(value instanceof Long) {
+					_v = (Long) value;
+				} else if (value instanceof Integer) {
+					_v = ((Integer) value).longValue();
+				} else {
+					throw new CasVersionNotMatchException("casVersion column value type must be Integer or Long");
+				}
+				sql.append(",").append(getColumnName(column)).append("=").append(_v + 1);
 			}
 		}
 		
@@ -425,6 +449,19 @@ public class SQLUtils {
 			}
 		}
 		values.addAll(whereValues);
+
+		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
+		if(casVersionField != null) {
+			List<Field> casVersionFields = new ArrayList<Field>();
+			casVersionFields.add(casVersionField);
+			List<Object> casValues = new ArrayList<Object>();
+			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
+			if(casValues.size() != 1 || casValues.get(0) == null) {
+				throw new CasVersionNotMatchException("casVersion column value is null");
+			}
+			values.add(casValues.get(0));
+			where = where + " AND " + casWhere;
+		}
 		
 		sql.append(autoSetSoftDeleted(where, t.getClass()));
 		
@@ -905,7 +942,7 @@ public class SQLUtils {
     }
     
 	/**
-	 * 拼凑set子句
+	 * 拼凑set子句，将会处理casVersion的字段自动+1
 	 * @param fields
 	 * @param values
 	 * @param obj
@@ -919,12 +956,27 @@ public class SQLUtils {
 		for(int i = 0; i < fieldSize; i++) {
 			Column column = fields.get(i).getAnnotation(Column.class);
 			Object value = DOInfoReader.getValue(fields.get(i), obj);
-			if(value != null && column.isJSON()) {
-				value = JSON.toJson(value);
-			}
-			if(withNull || value != null) {
-				sb.append(getColumnName(column)).append("=?,");
-				values.add(value);
+			if(column.casVersion()) {
+				if(value == null) {
+					throw new CasVersionNotMatchException("casVersion column value is null");
+				}
+				Long _v = null;
+				if(value instanceof Long) {
+					_v = (Long) value;
+				} else if (value instanceof Integer) {
+					_v = ((Integer) value).longValue();
+				} else {
+					throw new CasVersionNotMatchException("casVersion column type must be Integer or Long");
+				}
+				sb.append(getColumnName(column)).append("=").append(_v + 1).append(",");
+			} else {
+				if(value != null && column.isJSON()) {
+					value = JSON.toJson(value);
+				}
+				if(withNull || value != null) {
+					sb.append(getColumnName(column)).append("=?,");
+					values.add(value);
+				}
 			}
 		}
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);

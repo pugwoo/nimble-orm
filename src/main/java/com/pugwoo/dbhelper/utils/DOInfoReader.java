@@ -7,6 +7,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.pugwoo.dbhelper.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +18,6 @@ import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.Table;
-import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
-import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
-import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
@@ -198,6 +194,27 @@ public class DOInfoReader {
 			throw new NoKeyColumnAnnotationException();
 		}
 		return keyFields;
+	}
+
+	/**
+	 * 获得一个DO类注解的casVersion字段
+	 * @param clazz
+	 * @return 当没有column字段时返回null
+	 * @throws CasVersionNotMatchException 当有2个及2个以上的casVersion字段时抛出该异常
+	 */
+	public static Field getCasVersionColumn(Class<?> clazz) throws CasVersionNotMatchException {
+		List<Field> fields = getColumns(clazz);
+		Field casVersionField = null;
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.casVersion()) {
+				if(casVersionField != null) {
+					throw new CasVersionNotMatchException("there are more than one casVersion column in a DO class");
+				}
+				casVersionField = field;
+			}
+		}
+		return casVersionField;
 	}
 	
 	public static Field getOneKeyColumn(Class<?> clazz) throws NotOnlyOneKeyColumnException {

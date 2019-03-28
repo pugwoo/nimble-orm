@@ -87,5 +87,13 @@ public @interface Column {
 	 * 当设置了非空的字符串，且原值是null时，自动设置上值
 	 */
 	String insertDefault() default "";
-	
+
+	/**
+	 * 乐观锁，当字段为乐观锁时，它必须是Integer或Long类型，默认初始值为1，
+	 * 当乐观锁失败时抛出CasVersionNotMatchException。
+	 * 该特性仅对update和updateCustom方法生效，对updateAll不生效。
+	 * 限制一个DO类最多只能有一个casVersion字段。
+	 */
+	boolean casVersion() default false;
+
 }
