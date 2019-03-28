@@ -278,13 +278,13 @@ public class TestDBHelper {
 	@Test @Rollback(false)
 	public void testDelete() throws InterruptedException {
 		StudentDO studentDO = insertOne();
-		Thread.sleep(3000);
+
 		dbHelper.deleteByKey(studentDO);
 		
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 		
 		studentDO = insertOne();
-		//Thread.sleep(3000);
+
 		dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
 		
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
@@ -297,8 +297,6 @@ public class TestDBHelper {
 		studentDOList.add(insertOne());
 		studentDOList.add(insertOne());
 
-		Thread.sleep(2000);
-
 		dbHelper.deleteByKey(studentDOList);
 		for (StudentDO studentDO : studentDOList) {
 			Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
@@ -309,7 +307,6 @@ public class TestDBHelper {
 	@Test @Rollback(false)
 	public void testDeleteWhere() throws InterruptedException {
 		StudentDO studentDO = insertOne();
-		Thread.sleep(3000);
 		dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName());
 	}
 	
