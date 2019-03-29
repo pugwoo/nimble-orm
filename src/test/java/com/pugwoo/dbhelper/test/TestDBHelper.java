@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.test.entity.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,10 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.test.entity.CourseDO;
-import com.pugwoo.dbhelper.test.entity.SchoolDO;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
 import com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO;
 import com.pugwoo.dbhelper.test.vo.StudentCalVO;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
@@ -661,7 +659,55 @@ public class TestDBHelper {
 		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
 		Assert.assertTrue(row == 0);
 	}
-	
+
+	@Test
+    @Rollback(false)
+	public void testCasVersion() {
+        CasVersionDO casVersionDO = new CasVersionDO();
+        casVersionDO.setName("nick");
+
+        assert dbHelper.insert(casVersionDO) > 0; // 插入时会自动写入casVersion字段的值
+
+        assert casVersionDO.getId() > 0;
+        assert casVersionDO.getVersion() > 0;
+
+        casVersionDO.setName("nick2");
+        assert dbHelper.update(casVersionDO) > 0; // 更新时不会自动改casVersion字段的值
+
+        // 再更新就是异常了
+        boolean exOccur = false;
+        try {
+            casVersionDO.setName("nick3");
+            dbHelper.update(casVersionDO);
+        } catch (Exception e) {
+            if(e instanceof CasVersionNotMatchException) {
+                exOccur = true;
+            }
+        }
+        assert exOccur;
+
+        // version设置为null也会异常
+        casVersionDO.setVersion(null);
+        exOccur = false;
+        try {
+            casVersionDO.setName("nick3");
+            dbHelper.update(casVersionDO);
+        } catch (Exception e) {
+            if(e instanceof CasVersionNotMatchException) {
+                exOccur = true;
+            }
+        }
+        assert exOccur;
+
+        // 再把version设置为2，应该就正常了
+        casVersionDO.setVersion(2);
+        assert dbHelper.update(casVersionDO) > 0;
+
+        // 反查之后，版本应该就是3了
+        CasVersionDO tmp = dbHelper.getByKey(CasVersionDO.class, casVersionDO.getId());
+        assert tmp.getVersion().equals(3);
+    }
+
 	/////////////////////////测试删除///////////////////////////
 	
 	@Test

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
@@ -144,7 +145,13 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
-		
+
+		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
+		if(casVersionField != null && rows == 0) {
+			throw new CasVersionNotMatchException("update fail for class:"
+					 + t.getClass().getName() + ",data:" + JSON.toJson(t));
+		}
+
 		if(withInterceptors) {
 			doInterceptAfterUpdate(tList, rows);
 		}
@@ -171,7 +178,13 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		doInterceptBeforeUpdate(tList, setSql, values);
 
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
-		
+
+		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
+		if(casVersionField != null && rows == 0) {
+			throw new CasVersionNotMatchException("update fail for class:"
+					+ t.getClass() + ",data:" + JSON.toJson(t));
+		}
+
 		doInterceptAfterUpdate(tList, rows);
 		
 		return rows;
