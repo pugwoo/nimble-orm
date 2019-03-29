@@ -706,6 +706,18 @@ public class TestDBHelper {
         // 反查之后，版本应该就是3了
         CasVersionDO tmp = dbHelper.getByKey(CasVersionDO.class, casVersionDO.getId());
         assert tmp.getVersion().equals(3);
+
+        assert dbHelper.updateCustom(tmp, "name=?", "nick5") > 0;
+        exOccur = false;
+        try {
+            dbHelper.updateCustom(tmp, "name=?", "nick6"); // 此时版本已经不对了
+        } catch (Exception e) {
+            if(e instanceof CasVersionNotMatchException) {
+                exOccur = true;
+            }
+        }
+        assert exOccur;
+
     }
 
 	/////////////////////////测试删除///////////////////////////
