@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS `t_student`;
-
 CREATE TABLE `t_student` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `deleted` TINYINT(4) DEFAULT NULL,
@@ -16,7 +15,6 @@ CREATE TABLE `t_student` (
 ) ENGINE=INNODB DEFAULT CHARSET=utf8
 
 DROP TABLE IF EXISTS `t_school`;
-
 CREATE TABLE `t_school` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `deleted` tinyint(4) DEFAULT NULL,
@@ -28,7 +26,6 @@ CREATE TABLE `t_school` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `t_course`;
-
 CREATE TABLE `t_course` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `deleted` tinyint(4) DEFAULT NULL,
@@ -42,9 +39,16 @@ CREATE TABLE `t_course` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `t_json`;
-
 CREATE TABLE `t_json` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `json` json DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `t_cas_version`;
+CREATE TABLE `t_cas_version` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(32) DEFAULT NULL,
+  `version` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
