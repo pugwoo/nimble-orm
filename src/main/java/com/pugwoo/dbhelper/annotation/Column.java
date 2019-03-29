@@ -93,6 +93,7 @@ public @interface Column {
 	 * 当乐观锁失败时抛出CasVersionNotMatchException。
 	 * 该特性仅对update和updateCustom方法生效，对updateAll不生效。
 	 * 限制一个DO类最多只能有一个casVersion字段。
+	 * 新增和更新会自动设置该字段的值，因此不需要在数据库和程序中手动去修改该值。
 	 */
 	boolean casVersion() default false;
 

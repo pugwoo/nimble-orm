@@ -146,11 +146,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 
-		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
-		if(casVersionField != null && rows == 0) {
-			throw new CasVersionNotMatchException("update fail for class:"
-					 + t.getClass().getName() + ",data:" + JSON.toJson(t));
-		}
+		postHandleCasVersion(t, rows);
 
 		if(withInterceptors) {
 			doInterceptAfterUpdate(tList, rows);
@@ -158,6 +154,34 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		return rows;
 	}
+
+    /**
+     * 后处理casVersion相关内容：
+     * 1. 当DO类有注解casVersion但是数据库没有修改时抛出异常。
+     * 2. 当DO类有注解casVersion且数据库提交成功时，自动设置casVersion+1
+     * @param t
+     * @param rows
+     */
+	private void postHandleCasVersion(Object t, int rows) {
+        Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
+        if(casVersionField != null) {
+            if(rows <= 0) {
+                throw new CasVersionNotMatchException("update fail for class:"
+                        + t.getClass().getName() + ",data:" + JSON.toJson(t));
+            } else {
+                Object casVersion = DOInfoReader.getValue(casVersionField, t);
+                if(casVersion instanceof Integer) {
+                    Integer newVersion = ((Integer) casVersion) + 1;
+                    DOInfoReader.setValue(casVersionField, t, newVersion);
+                } else if (casVersion instanceof Long) {
+                    Long newVersion = ((Long) casVersion) + 1;
+                    DOInfoReader.setValue(casVersionField, t, newVersion);
+                } else {
+                    // 其它类型ignore，已经在update之前就断言casVersion必须是Integer或Long类型
+                }
+            }
+        }
+    }
 	
 	@Override
 	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
@@ -179,11 +203,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 
-		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
-		if(casVersionField != null && rows == 0) {
-			throw new CasVersionNotMatchException("update fail for class:"
-					+ t.getClass() + ",data:" + JSON.toJson(t));
-		}
+        postHandleCasVersion(t, rows);
 
 		doInterceptAfterUpdate(tList, rows);
 		

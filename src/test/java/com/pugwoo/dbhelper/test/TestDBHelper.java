@@ -672,9 +672,13 @@ public class TestDBHelper {
         assert casVersionDO.getVersion() > 0;
 
         casVersionDO.setName("nick2");
-        assert dbHelper.update(casVersionDO) > 0; // 更新时不会自动改casVersion字段的值
+        assert dbHelper.update(casVersionDO) > 0; // 更新时会自动改casVersion字段的值
 
-        // 再更新就是异常了
+		casVersionDO.setName("nick3");
+		assert dbHelper.update(casVersionDO) > 0;
+
+        // version设置为null会异常
+        casVersionDO.setVersion(null);
         boolean exOccur = false;
         try {
             casVersionDO.setName("nick3");
@@ -686,38 +690,34 @@ public class TestDBHelper {
         }
         assert exOccur;
 
-        // version设置为null也会异常
-        casVersionDO.setVersion(null);
-        exOccur = false;
-        try {
-            casVersionDO.setName("nick3");
-            dbHelper.update(casVersionDO);
-        } catch (Exception e) {
-            if(e instanceof CasVersionNotMatchException) {
-                exOccur = true;
-            }
-        }
-        assert exOccur;
+        // version设置为一个错的值，会异常
+		casVersionDO.setVersion(99);
+		exOccur = false;
+		try {
+			casVersionDO.setName("nick3");
+			dbHelper.update(casVersionDO);
+		} catch (Exception e) {
+			if(e instanceof CasVersionNotMatchException) {
+				exOccur = true;
+			}
+		}
+		assert exOccur;
 
-        // 再把version设置为2，应该就正常了
-        casVersionDO.setVersion(2);
+        // 再把version设置为3，就正常了
+        casVersionDO.setVersion(3);
         assert dbHelper.update(casVersionDO) > 0;
 
-        // 反查之后，版本应该就是3了
+        // 反查之后，版本应该就是4了
         CasVersionDO tmp = dbHelper.getByKey(CasVersionDO.class, casVersionDO.getId());
-        assert tmp.getVersion().equals(3);
+        assert tmp.getVersion().equals(4);
 
         assert dbHelper.updateCustom(tmp, "name=?", "nick5") > 0;
-        exOccur = false;
-        try {
-            dbHelper.updateCustom(tmp, "name=?", "nick6"); // 此时版本已经不对了
-        } catch (Exception e) {
-            if(e instanceof CasVersionNotMatchException) {
-                exOccur = true;
-            }
-        }
-        assert exOccur;
+		assert dbHelper.updateCustom(tmp, "name=?", "nick6") > 0;
+		assert dbHelper.updateCustom(tmp, "name=?", "nick7") > 0;
 
+		// 此时版本应该是7
+		tmp = dbHelper.getByKey(CasVersionDO.class, casVersionDO.getId());
+		assert tmp.getVersion().equals(7);
     }
 
 	/////////////////////////测试删除///////////////////////////
