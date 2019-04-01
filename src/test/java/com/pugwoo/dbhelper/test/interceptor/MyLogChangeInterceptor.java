@@ -50,11 +50,11 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     }
     
 	@Override
-    public boolean beforeUpdateCustom(Class<?> clazz, String sql,
+    public boolean beforeUpdateAll(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		if(clazz.equals(StudentDO.class)) {
 			customsSets.add("name=?");
-			customsParams.add("beforeUpdateCustom" + new Date());
+			customsParams.add("beforeUpdateAll" + new Date());
 		}
 		System.out.println(">U> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args));
     	return true;

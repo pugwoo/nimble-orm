@@ -80,7 +80,7 @@ public class DBHelperInterceptor {
      * @param customsParams 允许拦截器自行添加若干set语句，这里是对应的参数
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public boolean beforeUpdateCustom(Class<?> clazz, String sql,
+    public boolean beforeUpdateAll(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams,
     		List<Object> args) {
     	return true;

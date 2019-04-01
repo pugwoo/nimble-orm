@@ -1,5 +1,6 @@
 
 v0.9.1 - [add] 增加乐观锁支持，在Column上指定casVersion为true即生效
+       - [rename] DBHelperInterceptor拦截器中方法beforeUpdateCustom修改为beforeUpdateAll
 
 2018年9月8日
 v0.9.0 - 【升级须知】setTimeWhenUpdate在软删除时不会再修改时间，请加上setTimeWhenDelete=true

@@ -31,7 +31,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	private void doInterceptBeforeUpdate(Class<?> clazz, String sql,
 			List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdateCustom(clazz, sql, customsSets, customsParams, args);
+			boolean isContinue = interceptor.beforeUpdateAll(clazz, sql, customsSets, customsParams, args);
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
