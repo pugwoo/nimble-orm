@@ -1,4 +1,4 @@
-
+2019年4月1日
 v0.9.1 - [add] 增加乐观锁支持，在Column上指定casVersion为true即生效
        - [rename] DBHelperInterceptor拦截器中方法beforeUpdateCustom修改为beforeUpdateAll
 
