@@ -21,16 +21,7 @@ public enum JoinTypeEnum {
 		this.code = code;
 		this.name = name;
 	}
-	
-	public static JoinTypeEnum getByCode(String code) {
-		for(JoinTypeEnum e : JoinTypeEnum.values()) {
-			if(code == null && e.getCode() ==null || code != null && code.equals(e.getCode())) {
-				return e;
-			}
-		}
-		return null;
-	}
-	
+
 	public String getCode() {
 		return code;
 	}
