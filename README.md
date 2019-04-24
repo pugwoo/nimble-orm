@@ -248,6 +248,8 @@ public class StudentSchoolJoinVO {
 
 7. 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`异常的情况，需要使用者保证满足以下两点中的任意一点：1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。
 
+8. 目前发现mysql的驱动依赖mysql-connector-java问题比较多，例如5.x的最新版本5.1.47就有bug，请退回到5.1.46。建议使用8.0.15，目前spring boot官方也使用该版本。
+
 ## 未来规划
 
 1. 拦截器设计。(0.5.0+ 已实现)
