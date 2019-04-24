@@ -618,6 +618,12 @@ public class TestDBHelper {
 		}
 		row = dbHelper.insert(students);
 		System.out.println("affected rows:" + row);
+
+		// 测试random值
+        StudentRandomNameDO studentRandomNameDO = new StudentRandomNameDO();
+        dbHelper.insert(studentRandomNameDO);
+        assert studentRandomNameDO.getId() != null;
+        assert !studentRandomNameDO.getName().isEmpty();
 	}
 	
 	@Test

@@ -1,18 +1,17 @@
 package com.pugwoo.dbhelper.utils;
 
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.json.MyObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * 2015年8月22日 16:58:48
@@ -31,8 +30,6 @@ public class TypeAutoCast {
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 * @param rs
 	 * @param columnName
-	 * @param clazz
-	 * @param isJSON 标记
 	 * @return
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field)
@@ -286,7 +283,7 @@ public class TypeAutoCast {
 			}
 		}
 		if(counts > 1) {
-			throw new RuntimeException("spring-mvc-conf not support more than two generic type, found " + (counts+1)
+			throw new RuntimeException("nimble-orm not support more than two generic type, found " + (counts+1)
 				+ " for class:" +str);
 		}
 	}
