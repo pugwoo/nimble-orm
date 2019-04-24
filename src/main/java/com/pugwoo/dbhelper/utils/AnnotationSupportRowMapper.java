@@ -1,19 +1,18 @@
 package com.pugwoo.dbhelper.utils;
 
-import java.lang.reflect.Field;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.RowMapper;
-
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinLeftTable;
 import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.exception.RowMapperFailException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.RowMapper;
+
+import java.lang.reflect.Field;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  * 2015年1月13日 17:48:30<br>
@@ -73,44 +72,12 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
 				
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
-				
-				boolean isT1AllNull = true;
+
 				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType(), selectOnlyKey);
-				for (Field field : fieldsT1) {
-					Column column = field.getAnnotation(Column.class);
-					String columnName;
-					if(!column.computed().trim().isEmpty()) {
-						columnName = column.value(); // 计算列用用户自行制定别名
-					} else {
-						columnName = joinLeftTable.alias() + "." + column.value();
-					}
-					Object value = TypeAutoCast.cast(
-						TypeAutoCast.getFromRS(rs, columnName, field), 
-						field.getType());
-					if(value != null) {
-						isT1AllNull = false;
-					}
-					DOInfoReader.setValue(field, t1, value);
-				}
-				
-				boolean isT2AllNull = true;
+				boolean isT1AllNull = handleFieldAndIsAllFieldNull(fieldsT1, joinLeftTable.alias(), t1, rs);
+
 				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType(), selectOnlyKey);
-				for (Field field : fieldsT2) {
-					Column column = field.getAnnotation(Column.class);
-					String columnName;
-					if(!column.computed().trim().isEmpty()) {
-						columnName = column.value(); // 计算列用用户自行制定别名
-					} else {
-						columnName = joinRightTable.alias() + "." + column.value();
-					}
-					Object value = TypeAutoCast.cast(
-						TypeAutoCast.getFromRS(rs, columnName, field), 
-						field.getType());
-					if(value != null) {
-						isT2AllNull = false;
-					}
-					DOInfoReader.setValue(field, t2, value);
-				}
+				boolean isT2AllNull = handleFieldAndIsAllFieldNull(fieldsT2, joinRightTable.alias(), t2, rs);
 				
 				DOInfoReader.setValue(leftJoinField, obj, isT1AllNull ? null : t1);
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
@@ -131,5 +98,25 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			LOGGER.error("mapRow exception", e);
 			throw new RowMapperFailException(e);
 		}
+	}
+
+	private boolean handleFieldAndIsAllFieldNull(List<Field> fields, String tableAlias, Object t, ResultSet rs) throws SQLException{
+		boolean isAllNull = true;
+		for (Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			String columnName;
+			if(!column.computed().trim().isEmpty()) {
+				columnName = column.value(); // 计算列用用户自行制定别名
+			} else {
+				columnName = tableAlias + "." + column.value();
+			}
+			Object value = TypeAutoCast.cast(
+					TypeAutoCast.getFromRS(rs, columnName, field), field.getType());
+			if(value != null) {
+				isAllNull = false;
+			}
+			DOInfoReader.setValue(field, t, value);
+		}
+		return isAllNull;
 	}
 }
