@@ -3,9 +3,12 @@ package com.pugwoo.dbhelper.test;
 import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import org.junit.Test;
+
+import java.util.ArrayList;
 
 /**
  * 其它的一些测试，主要为了覆盖代码
@@ -13,7 +16,7 @@ import org.junit.Test;
 public class TestOthers {
 
     @Test
-    public void testGetterSetter() {
+    public void testOthers() {
 
         // SubQuery
         SubQuery subQuery = new SubQuery("field", StudentDO.class, "postsql", "1");
@@ -28,6 +31,22 @@ public class TestOthers {
 
         // JoinTypeEnum
         assert !JoinTypeEnum.JOIN.getName().isEmpty();
+
+        // PageData
+        PageData<String> page = new PageData<String>(100, new ArrayList<String>(), 10);
+        assert page.getTotalPage() == 10;
+        assert page.getPageSize() == 10;
+        page = new PageData<String>(9, new ArrayList<String>(), 10);
+        assert page.getTotalPage() == 1;
+        assert page.getPageSize() == 10;
+        page = new PageData<String>(0, new ArrayList<String>(), 10);
+        assert page.getTotalPage() == 0;
+        assert page.getPageSize() == 10;
+        page = new PageData<String>(11, new ArrayList<String>(), 10);
+        assert page.getTotalPage() == 2;
+        assert page.getPageSize() == 10;
+        page = new PageData<String>(11, new ArrayList<String>(), 0);
+        assert page.getTotalPage() == 11;
 
         // exceptions
         Exception cause = new Exception();
