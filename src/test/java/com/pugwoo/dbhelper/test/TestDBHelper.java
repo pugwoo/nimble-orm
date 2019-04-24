@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.test.entity.*;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,33 +37,7 @@ public class TestDBHelper {
 	
 	@Autowired
 	private DBHelper dbHelper;
-	
-	private String getRandomName(String prefix) {
-		return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-	}
-	
-	private StudentDO insertOne() {
-		StudentDO studentDO = new StudentDO();
-		studentDO.setName(getRandomName("nick"));
-		studentDO.setIntro(studentDO.getName().getBytes());
-		dbHelper.insert(studentDO);
-		return studentDO;
-	}
-	
-	private List<StudentDO> insertBatch(int num) {
-		List<StudentDO> list = new ArrayList<StudentDO>();
-		for(int i = 0; i < num; i++) {
-			StudentDO studentDO = new StudentDO();
-			studentDO.setName(getRandomName("nick"));
-			list.add(studentDO);
-		}
-		
-		int rows = dbHelper.insert(list);
-		Assert.assertTrue(rows == num);
-		
-		return list;
-	}
-	
+
 	// ============ JSON test ============================
 	
 	@Test @Rollback(false)
@@ -108,8 +83,8 @@ public class TestDBHelper {
 	@Transactional
 	@Test @Rollback(false) 
 	public void testTransaction() throws InterruptedException {
-		final StudentDO studentDO1 = insertOne();
-		final StudentDO studentDO2 = insertOne();
+		final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
+		final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
 		
 		System.out.println("insert ok, id1:" + studentDO1.getId() +
 				",id2:" + studentDO2.getId());
@@ -151,7 +126,7 @@ public class TestDBHelper {
 	// ============ UPDATE TEST START ======================
 	@Test @Rollback(false)
 	public void testUpdateNull() {
-		StudentDO db = insertOne();
+		StudentDO db = CommonOps.insertOne(dbHelper);
 		db.setAge(null);
 		dbHelper.updateWithNull(db);
 		
@@ -177,7 +152,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testUpdate() {
-		StudentDO db = insertOne();
+		StudentDO db = CommonOps.insertOne(dbHelper);
 		db.setName("nick2");
 		dbHelper.update(db);
 		
@@ -208,7 +183,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testUpdateCustom() {
-		StudentDO db = insertOne();
+		StudentDO db = CommonOps.insertOne(dbHelper);
 		
 		StudentDO studentDO = new StudentDO();
 		studentDO.setId(db.getId());
@@ -223,7 +198,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testUpdateAll() {
-		insertBatch(101);
+		CommonOps.insertBatch(dbHelper,101);
 		String newName = "nick" + UUID.randomUUID().toString().replace("-", "");
 		
 		int rows = dbHelper.updateAll(StudentDO.class,
@@ -241,7 +216,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void testInsertOrUpdateFull() {
-		List<StudentDO> old = insertBatch(20);
+		List<StudentDO> old = CommonOps.insertBatch(dbHelper,20);
 		Assert.assertTrue(old.size() == 20);
 		
 		List<StudentDO> newlist = 
@@ -275,13 +250,13 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void testDelete() throws InterruptedException {
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
 		dbHelper.deleteByKey(studentDO);
 		
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 		
-		studentDO = insertOne();
+		studentDO = CommonOps.insertOne(dbHelper);
 
 		dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
 		
@@ -292,8 +267,8 @@ public class TestDBHelper {
 	public void testDeleteList() throws InterruptedException {
 
 		List<StudentDO> studentDOList = new ArrayList<StudentDO>();
-		studentDOList.add(insertOne());
-		studentDOList.add(insertOne());
+		studentDOList.add(CommonOps.insertOne(dbHelper));
+		studentDOList.add(CommonOps.insertOne(dbHelper));
 
 		dbHelper.deleteByKey(studentDOList);
 		for (StudentDO studentDO : studentDOList) {
@@ -304,7 +279,7 @@ public class TestDBHelper {
 	// 测试写where条件的自定义删除
 	@Test @Rollback(false)
 	public void testDeleteWhere() throws InterruptedException {
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName());
 	}
 	
@@ -323,11 +298,11 @@ public class TestDBHelper {
 		schoolDO.setName("sysu");
 		dbHelper.insert(schoolDO);
 		
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		studentDO.setSchoolId(schoolDO.getId());
 		dbHelper.update(studentDO);
 		
-		StudentDO studentDO2 = insertOne();
+		StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
 		studentDO2.setSchoolId(schoolDO.getId());
 		dbHelper.update(studentDO2);
 		
@@ -381,7 +356,7 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void testGetPage() {
-		insertBatch(100);
+		CommonOps.insertBatch(dbHelper,100);
 		
 		// 测试分页获取
 		PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
@@ -407,7 +382,7 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void testExcludeInheritedColumn() {
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		StudentCalVO db = dbHelper.getByKey(StudentCalVO.class, studentDO.getId());
 		Assert.assertTrue(db != null);
 		Assert.assertTrue(db.getId() == null);
@@ -421,7 +396,7 @@ public class TestDBHelper {
 		schoolDO.setName("sysu");
 		dbHelper.insert(schoolDO);
 		
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		studentDO.setSchoolId(schoolDO.getId());
 		dbHelper.update(studentDO);
 		
@@ -436,7 +411,7 @@ public class TestDBHelper {
 		courseDO2.setStudentId(studentDO.getId());
 		dbHelper.insert(courseDO2);
 		
-		StudentDO studentDO2  = insertOne();
+		StudentDO studentDO2  = CommonOps.insertOne(dbHelper);
 		studentDO2.setSchoolId(schoolDO.getId());
 		dbHelper.update(studentDO2);
 		
@@ -550,9 +525,9 @@ public class TestDBHelper {
 	@Test @Rollback(false)
 	public void testGetByKeyList() {
 		List<Long> ids = new ArrayList<Long>();
-		ids.add(insertOne().getId());
-		ids.add(insertOne().getId());
-		ids.add(insertOne().getId());
+		ids.add(CommonOps.insertOne(dbHelper).getId());
+		ids.add(CommonOps.insertOne(dbHelper).getId());
+		ids.add(CommonOps.insertOne(dbHelper).getId());
 		Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
 		
 		Assert.assertTrue(map.size() == 3);
@@ -566,7 +541,7 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void testExists() {
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		Assert.assertTrue(dbHelper.isExist(StudentDO.class, null));
 		Assert.assertTrue(dbHelper.isExist(StudentDO.class, "where id=?", studentDO.getId()));
 		Assert.assertTrue(dbHelper.isExistAtLeast(1, StudentDO.class,
@@ -578,9 +553,9 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void testSubQuery() {
-		StudentDO stu1 = insertOne();
-		StudentDO stu2 = insertOne();
-		StudentDO stu3 = insertOne();
+		StudentDO stu1 = CommonOps.insertOne(dbHelper);
+		StudentDO stu2 = CommonOps.insertOne(dbHelper);
+		StudentDO stu3 = CommonOps.insertOne(dbHelper);
 		
 		List<Long> ids = new ArrayList<Long>();
 		ids.add(stu1.getId());
@@ -725,7 +700,7 @@ public class TestDBHelper {
 	@Test
 	@Rollback(false)
 	public void deleteByKey() {
-		StudentDO studentDO = insertOne();
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		
 		int rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
 		Assert.assertTrue(rows == 1);
@@ -735,7 +710,7 @@ public class TestDBHelper {
 		
 	    // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 		
-		studentDO = insertOne();
+		studentDO = CommonOps.insertOne(dbHelper);
 		rows = dbHelper.deleteByKey(studentDO);
 		Assert.assertTrue(rows == 1);
 		
@@ -745,11 +720,11 @@ public class TestDBHelper {
 	
 	@Test @Rollback(false)
 	public void batchDelete() {
-		List<StudentDO> insertBatch = insertBatch(10);
+		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
 		int rows = dbHelper.deleteByKey(insertBatch);
 		Assert.assertTrue(rows == insertBatch.size());
 		
-		insertBatch = insertBatch(20);
+		insertBatch = CommonOps.insertBatch(dbHelper,20);
 		rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
 		Assert.assertTrue(rows >= 20);
 	}

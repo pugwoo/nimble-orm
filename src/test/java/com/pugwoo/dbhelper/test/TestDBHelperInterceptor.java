@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,25 +24,7 @@ public class TestDBHelperInterceptor {
 
 	@Autowired
 	private DBHelper dbHelper;
-	
-	private String getRandomName(String prefix) {
-		return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-	}
-	
-	private List<StudentDO> insertBatch(int num) {
-		List<StudentDO> list = new ArrayList<StudentDO>();
-		for(int i = 0; i < num; i++) {
-			StudentDO studentDO = new StudentDO();
-			studentDO.setName(getRandomName("nick"));
-			list.add(studentDO);
-		}
-		
-		int rows = dbHelper.insert(list);
-		Assert.assertTrue(rows == num);
-		
-		return list;
-	}
-	
+
 	@Test @Rollback(false)
 	public void testQuery() {
 		StudentDO studentDO = new StudentDO();
@@ -102,11 +85,11 @@ public class TestDBHelperInterceptor {
 	
 	@Test @Rollback(false)
 	public void batchDelete() {
-		List<StudentDO> insertBatch = insertBatch(10);
+		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
 		int rows = dbHelper.deleteByKey(insertBatch);
 		Assert.assertTrue(rows == insertBatch.size());
 		
-		insertBatch = insertBatch(20);
+		insertBatch = CommonOps.insertBatch(dbHelper,20);
 		rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
 		Assert.assertTrue(rows >= 20);
 	}
