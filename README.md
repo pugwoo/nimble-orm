@@ -250,6 +250,8 @@ public class StudentSchoolJoinVO {
 
 8. 目前发现mysql的驱动依赖mysql-connector-java问题比较多，例如5.x的最新版本5.1.47就有bug，请退回到5.1.46。建议使用8.0.15，目前spring boot官方也使用该版本。
 
+9. 虽然mysql数据库支持使用单引号和双引号来表示字符串，但在SQL标准中，定义的是单引号，并没有双引号。因此，nimble-orm为了处理规范和简单，只支持单引号表示字符串。
+
 ## 未来规划
 
 1. 拦截器设计。(0.5.0+ 已实现)
