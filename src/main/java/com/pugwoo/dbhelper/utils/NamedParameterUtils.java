@@ -1,14 +1,10 @@
 package com.pugwoo.dbhelper.utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
 import com.pugwoo.dbhelper.sql.SQLUtils;
+
+import java.util.*;
 
 /**
  * 2015年8月24日 18:37:48
@@ -166,7 +162,7 @@ public class NamedParameterUtils {
 	 * 把?变成:paramN的形式，不包括"?"和'?'中的?
 	 * paramN的N从1开始
 	 * @param sql
-	 * @param args将会操作参数列表
+	 * @param args 将会操作参数列表
 	 * @return
 	 */
 	public static String trans(String sql, List<Object> args) {

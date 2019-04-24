@@ -1,14 +1,12 @@
 package com.pugwoo.dbhelper.test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
+import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.dbhelper.test.vo.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,14 +16,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.bean.SubQuery;
-import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO;
-import com.pugwoo.dbhelper.test.vo.StudentCalVO;
-import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
-import com.pugwoo.dbhelper.test.vo.StudentVO;
-import com.pugwoo.dbhelper.test.vo.StudentVOForHandleRelatedColumnOnly;
+import java.util.*;
 
 /**
  * 2015年1月13日 11:11:23
@@ -290,6 +281,22 @@ public class TestDBHelper {
 		// 但是这种写法不稳定的，推荐传入List参数值
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
 		System.out.println(list.size());
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new int[]{50,51,52});
+		System.out.println(list.size());
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new short[]{50,51,52});
+		System.out.println(list.size());
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
+		System.out.println(list.size());
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new float[]{50,51,52});
+		System.out.println(list.size());
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new double[]{50,51,52});
+		System.out.println(list.size());
+
+		// 测试空list或空set
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new ArrayList<Long>());
+		assert list.isEmpty();
+		list = dbHelper.getAll(StudentDO.class, "where id in (?)", new HashSet<Long>());
+		assert list.isEmpty();
 	}
 	
 	@Test @Rollback(false)
@@ -550,6 +557,23 @@ public class TestDBHelper {
 		Assert.assertFalse(dbHelper.isExistAtLeast(2, StudentDO.class,
 				"where id=?", studentDO.getId()));
 	}
+
+	/*@Test @Rollback(false)
+	public void test1111() {
+		StudentDO stu1 = CommonOps.insertOne(dbHelper);
+		StudentDO stu2 = CommonOps.insertOne(dbHelper);
+		StudentDO stu3 = CommonOps.insertOne(dbHelper);
+
+		List<Long> ids = new ArrayList<Long>();
+		ids.add(stu1.getId());
+		ids.add(stu2.getId());
+		ids.add(stu3.getId());
+
+		SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
+
+		List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?) and id > ?" +
+				" and name != '\\''", subQuery, 0); // 测试subQuery和参数混合
+	}*/
 	
 	@Test @Rollback(false)
 	public void testSubQuery() {
@@ -565,6 +589,13 @@ public class TestDBHelper {
 		SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
 		
 		List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery);
+		Assert.assertTrue(all.size() == 3);
+		for(StudentDO stu : all) {
+			Assert.assertTrue(ids.contains(stu.getId()));
+		}
+
+		all = dbHelper.getAll(StudentDO.class, "where id in (?) and id > ?" +
+				" and name != '\\''", subQuery, 0); // 测试subQuery和参数混合
 		Assert.assertTrue(all.size() == 3);
 		for(StudentDO stu : all) {
 			Assert.assertTrue(ids.contains(stu.getId()));
