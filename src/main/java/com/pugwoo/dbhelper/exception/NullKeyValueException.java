@@ -5,16 +5,16 @@ package com.pugwoo.dbhelper.exception;
  */
 public class NullKeyValueException extends RuntimeException {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public NullKeyValueException() {
-		
 	}
 	
 	public NullKeyValueException(String errmsg) {
 		super(errmsg);
+	}
+
+	public NullKeyValueException(Throwable e) {
+		super(e);
 	}
 }

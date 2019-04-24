@@ -5,16 +5,17 @@ package com.pugwoo.dbhelper.exception;
  */
 public class MustProvideConstructorException extends RuntimeException {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public MustProvideConstructorException() {
-		
 	}
 	
 	public MustProvideConstructorException(String errmsg) {
 		super(errmsg);
 	}
+
+	public MustProvideConstructorException(Throwable e) {
+		super(e);
+	}
+
 }

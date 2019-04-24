@@ -14,4 +14,7 @@ public class ParameterSizeNotMatchedException extends RuntimeException {
 		super(errmsg);
 	}
 
+	public ParameterSizeNotMatchedException(Throwable e) {
+		super(e);
+	}
 }

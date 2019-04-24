@@ -9,11 +9,13 @@ public class NoJoinTableMemberException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 	
 	public NoJoinTableMemberException() {
-		
 	}
 	
 	public NoJoinTableMemberException(String errmsg) {
 		super(errmsg);
 	}
-	
+
+	public NoJoinTableMemberException(Throwable e) {
+		super(e);
+	}
 }
