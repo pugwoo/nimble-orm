@@ -1,19 +1,46 @@
 package com.pugwoo.dbhelper.test;
 
+import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.TypesDO;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 
 /**
  * 其它的一些测试，主要为了覆盖代码
  */
+@ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
+@RunWith(SpringJUnit4ClassRunner.class)
+@Transactional
 public class TestOthers {
+
+    @Autowired
+    private DBHelper dbHelper;
+
+    @Test
+    public void testTypes() {
+        TypesDO typesDO = new TypesDO();
+        typesDO.setMyByte(Byte.valueOf("a".getBytes()[0]));
+
+        dbHelper.insert(typesDO);
+        assert typesDO.getId() != null;
+
+        TypesDO types2 = dbHelper.getByKey(TypesDO.class, typesDO.getId());
+        assert types2.getMyByte().equals(typesDO.getMyByte());
+
+        System.out.println(typesDO.getMyByte());
+    }
 
     @Test
     public void testOthers() {
