@@ -558,23 +558,6 @@ public class TestDBHelper {
 				"where id=?", studentDO.getId()));
 	}
 
-	/*@Test @Rollback(false)
-	public void test1111() {
-		StudentDO stu1 = CommonOps.insertOne(dbHelper);
-		StudentDO stu2 = CommonOps.insertOne(dbHelper);
-		StudentDO stu3 = CommonOps.insertOne(dbHelper);
-
-		List<Long> ids = new ArrayList<Long>();
-		ids.add(stu1.getId());
-		ids.add(stu2.getId());
-		ids.add(stu3.getId());
-
-		SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
-
-		List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?) and id > ?" +
-				" and name != '\\''", subQuery, 0); // 测试subQuery和参数混合
-	}*/
-	
 	@Test @Rollback(false)
 	public void testSubQuery() {
 		StudentDO stu1 = CommonOps.insertOne(dbHelper);

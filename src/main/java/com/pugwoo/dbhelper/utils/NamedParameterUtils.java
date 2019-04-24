@@ -138,7 +138,7 @@ public class NamedParameterUtils {
 				sb.append(ch);
 			}
 			
-			if(ch == '\'' || ch == '"') {
+			if(ch == '\'') {
 				if(!isInStr) {
 					isInStr = true;
 					strQuota = ch;
@@ -159,7 +159,7 @@ public class NamedParameterUtils {
 	}
 
 	/**
-	 * 把?变成:paramN的形式，不包括"?"和'?'中的?
+	 * 把?变成:paramN的形式，不包括'?'中的?
 	 * paramN的N从1开始
 	 * @param sql
 	 * @param args 将会操作参数列表
@@ -187,7 +187,7 @@ public class NamedParameterUtils {
 				sb.append(ch);
 			}
 			
-			if(ch == '\'' || ch == '"') {
+			if(ch == '\'') {
 				if(!isInStr) {
 					isInStr = true;
 					strQuota = ch;
