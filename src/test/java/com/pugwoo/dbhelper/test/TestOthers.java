@@ -11,10 +11,12 @@ import com.pugwoo.dbhelper.test.entity.TypesDO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 /**
@@ -28,18 +30,25 @@ public class TestOthers {
     @Autowired
     private DBHelper dbHelper;
 
-    @Test
+    @Test @Rollback(false)
     public void testTypes() {
         TypesDO typesDO = new TypesDO();
         typesDO.setMyByte(Byte.valueOf("a".getBytes()[0]));
+        typesDO.setMyShort(Short.valueOf("11"));
+        typesDO.setMyFloat(11.1f);
+        typesDO.setMyDouble(22.2);
+        typesDO.setMyDecimal(new BigDecimal("11.22"));
 
         dbHelper.insert(typesDO);
         assert typesDO.getId() != null;
 
         TypesDO types2 = dbHelper.getByKey(TypesDO.class, typesDO.getId());
         assert types2.getMyByte().equals(typesDO.getMyByte());
+        assert types2.getMyShort().equals(typesDO.getMyShort());
+        assert types2.getMyFloat().equals(typesDO.getMyFloat());
+        assert types2.getMyDouble().equals(typesDO.getMyDouble());
+        assert types2.getMyDecimal().equals(typesDO.getMyDecimal());
 
-        System.out.println(typesDO.getMyByte());
     }
 
     @Test
