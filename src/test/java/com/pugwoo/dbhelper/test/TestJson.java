@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.json.DateUtils;
 import com.pugwoo.dbhelper.test.entity.JsonAsTeacherDO;
 import com.pugwoo.dbhelper.test.entity.JsonDO;
 import com.pugwoo.dbhelper.test.entity.JsonRawDO;
@@ -31,6 +32,7 @@ public class TestJson {
         Map<String, Object> json = new HashMap();
         json.put("name", name);
         json.put("age", age);
+        json.put(null, null);
         jsonDO.setJson(json);
         dbHelper.insert(jsonDO);
         return jsonDO.getId();
@@ -76,8 +78,24 @@ public class TestJson {
 
         JsonAsTeacherDO teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
+        assert DateUtils.formatDate(teacherDO.getTeacher().getBirth()).equals("1960-06-08");
 
-        System.out.println(teacherDO.getTeacher().getBirth());
+        jsonRawDO = new JsonRawDO();
+        jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"\"}");
+        dbHelper.insert(jsonRawDO);
+        teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
+        assert teacherDO.getTeacher().getName().equals("wu");
+        assert teacherDO.getTeacher().getBirth() == null;
+
+        jsonRawDO = new JsonRawDO();
+        jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":null,null:null}");
+        dbHelper.insert(jsonRawDO);
+        teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
+        assert teacherDO.getTeacher().getName().equals("wu");
+        assert teacherDO.getTeacher().getBirth() == null;
+
+
+
     }
 
 }
