@@ -11,8 +11,13 @@ import java.sql.Timestamp;
 @Table("t_types")
 public class TypesDO {
 
-    @Column(value = "id", isKey = true, isAutoIncrement = true)
-    private Long id;
+    // 测试多字段key
+
+    @Column(value = "id1", isKey = true)
+    private Long id1;
+
+    @Column(value = "id2", isKey = true)
+    private Long id2;
 
     @Column("my_byte")
     private Byte myByte;
@@ -38,12 +43,20 @@ public class TypesDO {
     @Column(value = "my_timestamp")
     private Timestamp myTimestamp;
 
-    public Long getId() {
-        return id;
+    public Long getId1() {
+        return id1;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setId1(Long id1) {
+        this.id1 = id1;
+    }
+
+    public Long getId2() {
+        return id2;
+    }
+
+    public void setId2(Long id2) {
+        this.id2 = id2;
     }
 
     public Byte getMyByte() {

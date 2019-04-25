@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * 其它的一些测试，主要为了覆盖代码
@@ -33,6 +34,8 @@ public class TestOthers {
     @Test @Rollback(false)
     public void testTypes() {
         TypesDO typesDO = new TypesDO();
+        typesDO.setId1(new Random().nextLong());
+        typesDO.setId2(new Random().nextLong());
         typesDO.setMyByte(Byte.valueOf("a".getBytes()[0]));
         typesDO.setMyShort(Short.valueOf("11"));
         typesDO.setMyFloat(11.1f);
@@ -43,9 +46,14 @@ public class TestOthers {
         typesDO.setMyTimestamp(new java.sql.Timestamp(new java.util.Date().getTime()));
 
         dbHelper.insert(typesDO);
-        assert typesDO.getId() != null;
+        assert typesDO.getId1() != null;
+        assert typesDO.getId2() != null;
 
-        TypesDO types2 = dbHelper.getByKey(TypesDO.class, typesDO.getId());
+        TypesDO types2 = new TypesDO();
+        types2.setId1(typesDO.getId1());
+        types2.setId2(typesDO.getId2());
+
+        dbHelper.getByKey(types2);
         assert types2.getMyByte().equals(typesDO.getMyByte());
         assert types2.getMyShort().equals(typesDO.getMyShort());
         assert types2.getMyFloat().equals(typesDO.getMyFloat());
