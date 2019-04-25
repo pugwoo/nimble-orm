@@ -1,8 +1,9 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.json.JSON;
+import com.pugwoo.dbhelper.test.entity.JsonAsTeacherDO;
 import com.pugwoo.dbhelper.test.entity.JsonDO;
+import com.pugwoo.dbhelper.test.entity.JsonRawDO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,20 @@ public class TestJson {
         list = dbHelper.getAll(JsonDO.class, "WHERE JSON_EXTRACT(JSON, '$.name')=?", name);
         assert list.size() == 1;
         assert name.equals(list.get(0).getJson().get("name"));
+    }
+
+    @Test @Rollback(false)
+    public void testJsonRaw() {
+        JsonRawDO jsonRawDO = new JsonRawDO();
+        jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"1960-06-08\"}");
+
+        dbHelper.insert(jsonRawDO);
+        assert jsonRawDO.getId() != null;
+
+        JsonAsTeacherDO teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
+        assert teacherDO.getTeacher().getName().equals("wu");
+
+        System.out.println(teacherDO.getTeacher().getBirth());
     }
 
 }
