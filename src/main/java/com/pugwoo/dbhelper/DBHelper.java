@@ -1,11 +1,11 @@
 package com.pugwoo.dbhelper;
 
-import java.util.List;
-import java.util.Map;
-
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 2015年8月17日 18:18:57
@@ -253,7 +253,8 @@ public interface DBHelper {
 	/**
 	 * 插入多条记录，返回数据库实际修改的条数。<br>
 	 * 实际上，这个是int insert(T t)的循环遍历而已。插入性能并不会因多条而提升。<br>
-	 * 【注】只插入非null的值。该方法为一个事务，要么全部插入成功，要么全部插入失败。
+	 * 【注】只插入非null的值。该方法为一个事务，要么全部插入成功，要么全部插入失败。<br>
+	 * 【特别说明】因为主键和拦截器方面的设计，dbhelper并没有提供真正批量插入的方式。对于插入性能要求高的场景，请以消息队列辅助消峰。
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */
