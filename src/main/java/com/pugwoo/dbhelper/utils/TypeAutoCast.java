@@ -41,7 +41,7 @@ public class TypeAutoCast {
 		Column column = field.getAnnotation(Column.class);
 		if(column != null && column.isJSON()) { // 优先处理标记为json的列
 			String valStr = rs.getString(columnName);
-			if(valStr.trim().isEmpty()) {
+			if(valStr == null || valStr.trim().isEmpty()) {
 				return null;
 			}
 			String typeName = field.getGenericType().toString();
