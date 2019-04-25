@@ -4,6 +4,9 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 @Table("t_types")
 public class TypesDO {
@@ -25,6 +28,15 @@ public class TypesDO {
 
     @Column("my_decimal")
     private BigDecimal myDecimal;
+
+    @Column(value = "my_date")
+    private Date myDate;
+
+    @Column(value = "my_datetime")
+    private Time myTime;
+
+    @Column(value = "my_timestamp")
+    private Timestamp myTimestamp;
 
     public Long getId() {
         return id;
@@ -72,5 +84,29 @@ public class TypesDO {
 
     public void setMyDecimal(BigDecimal myDecimal) {
         this.myDecimal = myDecimal;
+    }
+
+    public Date getMyDate() {
+        return myDate;
+    }
+
+    public void setMyDate(Date myDate) {
+        this.myDate = myDate;
+    }
+
+    public Time getMyTime() {
+        return myTime;
+    }
+
+    public void setMyTime(Time myTime) {
+        this.myTime = myTime;
+    }
+
+    public Timestamp getMyTimestamp() {
+        return myTimestamp;
+    }
+
+    public void setMyTimestamp(Timestamp myTimestamp) {
+        this.myTimestamp = myTimestamp;
     }
 }

@@ -38,6 +38,9 @@ public class TestOthers {
         typesDO.setMyFloat(11.1f);
         typesDO.setMyDouble(22.2);
         typesDO.setMyDecimal(new BigDecimal("11.22"));
+        typesDO.setMyDate(new java.sql.Date(new java.util.Date().getTime()));
+        typesDO.setMyTime(new java.sql.Time(new java.util.Date().getTime()));
+        typesDO.setMyTimestamp(new java.sql.Timestamp(new java.util.Date().getTime()));
 
         dbHelper.insert(typesDO);
         assert typesDO.getId() != null;
@@ -48,7 +51,10 @@ public class TestOthers {
         assert types2.getMyFloat().equals(typesDO.getMyFloat());
         assert types2.getMyDouble().equals(typesDO.getMyDouble());
         assert types2.getMyDecimal().equals(typesDO.getMyDecimal());
-
+        // 日期的手工比对过了，数据库存的是0时区的值，记得
+        System.out.println(types2.getMyDate());
+        System.out.println(types2.getMyTime());
+        System.out.println(types2.getMyTimestamp());
     }
 
     @Test
