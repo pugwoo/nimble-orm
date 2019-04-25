@@ -68,32 +68,7 @@ public class TestDBHelper {
 		Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("english"));
 		
 	}
-	
-	// ============ Transaction TEST =======================
-	
-	@Transactional
-	@Test @Rollback(false) 
-	public void testTransaction() throws InterruptedException {
-		final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
-		final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
-		
-		System.out.println("insert ok, id1:" + studentDO1.getId() +
-				",id2:" + studentDO2.getId());
-		
-		dbHelper.executeAfterCommit(new Runnable() {
-			@Override
-			public void run() {
-				System.out.println("transaction commit, student1:" + studentDO1.getId()
-				 + ",student2:" + studentDO2.getId());
-			}
-		});
-		
-		System.out.println("myTrans end");
-//		dbHelper.rollback(); // org.springframework.transaction.NoTransactionException
-		// throw new RuntimeException(); // 抛出异常也无法让事务回滚
-		// 原因：https://stackoverflow.com/questions/13525106/transactions-doesnt-work-in-junit
-	}
-	
+
 	// ============ INSERT TEST ============================
 	
 	@Test @Rollback(false)

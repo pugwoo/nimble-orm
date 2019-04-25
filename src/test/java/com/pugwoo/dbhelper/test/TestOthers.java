@@ -200,6 +200,9 @@ public class TestOthers {
             ex = new RowMapperFailException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
+
+        // test some getter setter
+
     }
 
 }
