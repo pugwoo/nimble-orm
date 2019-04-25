@@ -1,15 +1,14 @@
 package com.pugwoo.dbhelper.json;
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.Date;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
 
 public class MultiDateDeserializer extends StdDeserializer<Date> {
 	
@@ -23,7 +22,7 @@ public class MultiDateDeserializer extends StdDeserializer<Date> {
 	}
 	
 	@Override
-	public Date deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+	public Date deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
 		JsonNode node = jp.getCodec().readTree(jp);
 		String date = node.textValue();
 		if(date == null) {
