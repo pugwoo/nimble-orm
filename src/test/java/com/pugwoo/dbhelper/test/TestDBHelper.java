@@ -636,11 +636,14 @@ public class TestDBHelper {
 		
 		// 删除后再插入
 		studentDO.setId(null);
-		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
 		Assert.assertTrue(row == 1);
 		
-		row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
+		row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
 		Assert.assertTrue(row == 0);
+
+        row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
+        Assert.assertTrue(row == 0);
 	}
 
 	@Test
@@ -735,6 +738,21 @@ public class TestDBHelper {
 		insertBatch = CommonOps.insertBatch(dbHelper,20);
 		rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
 		Assert.assertTrue(rows >= 20);
+
+
+        insertBatch = CommonOps.insertBatch(dbHelper,10);
+
+        List<Object> differents = new ArrayList<Object>();
+        for(StudentDO studentDO : insertBatch) {
+            differents.add(studentDO);
+        }
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("school");
+        dbHelper.insert(schoolDO);
+        differents.add(schoolDO);
+
+        rows = dbHelper.deleteByKey(differents);
+        assert rows == 11;
 	}
 	
 	@Test

@@ -87,6 +87,12 @@ public class TestDBHelper_query {
         PageData<StudentDO> pageData = dbHelper.getPage(StudentDO.class, 1, 10);
         assert pageData.getData().size() == 5; // 受限制于maxPageSize
 
+        pageData = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
+        assert pageData.getData().size() == 5; // 受限制于maxPageSize
+
+        pageData = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10, "where 1=1");
+        assert pageData.getData().size() == 5; // 受限制于maxPageSize
+
         dbHelper.setMaxPageSize(1000000);
     }
 
