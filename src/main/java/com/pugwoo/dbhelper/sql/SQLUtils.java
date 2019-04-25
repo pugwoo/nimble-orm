@@ -205,36 +205,25 @@ public class SQLUtils {
 	 * @return
 	 */
 	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
-		List<T> list = new ArrayList<T>();
-		list.add(t);
-		return _getInsertSQL(list, values, isWithNullValue);
+		return _getInsertSQL(t, values, isWithNullValue);
 	}
 
-	private static <T> String _getInsertSQL(List<T> tList, List<Object> values,
+	private static <T> String _getInsertSQL(T t, List<Object> values,
 			boolean isWithNullValue) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
-		
-		if(tList.size() > 1) {
-			isWithNullValue = true; // 对于多个值的，只能含null值一起插入
-		}
-		
-		Table table = DOInfoReader.getTable(tList.get(0).getClass());
-		List<Field> fields = DOInfoReader.getColumns(tList.get(0).getClass());
+
+		Table table = DOInfoReader.getTable(t.getClass());
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		
 		sql.append(getTableName(table)).append(" (");
 		List<Object> _values = new ArrayList<Object>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
-		String fieldSql = joinAndGetValue(fields, ",", _values, tList.get(0), isWithNullValue);
+		String fieldSql = joinAndGetValue(fields, ",", _values, t, isWithNullValue);
 		sql.append(fieldSql);
 		sql.append(") VALUES ");
 		String dotSql = "(" + join("?", _values.size(), ",") + ")";
 		sql.append(dotSql);
 		values.addAll(_values);
-		
-		for(int i = 1; i < tList.size(); i++) {
-			joinAndGetValue(fields, ",", values, tList.get(i), isWithNullValue);
-			sql.append(",").append(dotSql);
-		}
-			
+
 		return sql.toString();
 	}
 	
