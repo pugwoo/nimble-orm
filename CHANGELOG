@@ -1,5 +1,6 @@
 v0.9.2 - [update] 升级jsqlparser为2.0，升级jackson为2.9.8
        - [del] 移除nimble-orm对双引号表示字符串的支持，只支持单引号表示
+       - [improve] 完善文档说明
 
 2019年4月1日
 v0.9.1 - [add] 增加乐观锁支持，在Column上指定casVersion为true即生效
