@@ -323,7 +323,6 @@ public class TestDBHelper {
 		Assert.assertTrue(pageData.getData().size() > 0);
 		for(StudentSchoolJoinVO vo : pageData.getData()) {
 			Assert.assertTrue(vo.getStudentDO() != null);
-//			System.out.println(vo.getSchoolDO());
 		}
 		
 		pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
@@ -337,6 +336,14 @@ public class TestDBHelper {
 		Assert.assertTrue(total > 0);
 		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
 		Assert.assertTrue(total > 0);
+
+		// right join test
+        PageData<StudentSchoolJoinVO2> pageData2 = dbHelper.getPage(StudentSchoolJoinVO2.class, 1, 10);
+        Assert.assertTrue(pageData2.getData().size() > 0);
+        for(StudentSchoolJoinVO2 vo : pageData2.getData()) {
+            Assert.assertTrue(vo.getStudentDO() != null);
+        }
+
 	}
 		
 	@Test @Rollback(false)

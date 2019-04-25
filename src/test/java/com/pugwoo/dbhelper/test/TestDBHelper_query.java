@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.dbhelper.test.vo.StudentSelfTrueDeleteJoinVO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,16 @@ public class TestDBHelper_query {
 
         all = dbHelper.getAll(StudentDO.class, "where 1=1 and 1=1 or 1=1 or 1=1");
         assert all.size() == 10;
+    }
+
+
+    /**测试join真删除的类*/
+    @Test @Rollback(false)
+    public void testJoinTrueDelete() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentSelfTrueDeleteJoinVO joinVO = dbHelper.getOne(StudentSelfTrueDeleteJoinVO.class, "where t1.id=?", studentDO.getId());
+        assert joinVO.getStudent1().getId().equals(studentDO.getId());
+        assert joinVO.getStudent2().getId().equals(studentDO.getId());
     }
 
 
