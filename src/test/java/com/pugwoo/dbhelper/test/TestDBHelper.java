@@ -181,9 +181,15 @@ public class TestDBHelper {
 		
 		int rows = dbHelper.updateCustom(studentDO, "name=?", "nick2");
 		Assert.assertTrue(rows == 1);
+
+		rows = dbHelper.updateCustom(studentDO, "set name=?", "nick3");
+		Assert.assertTrue(rows == 1);
+
+		rows = dbHelper.updateCustom(studentDO, "SET name=?", "nick4");
+		Assert.assertTrue(rows == 1);
 		
 		db = dbHelper.getByKey(StudentDO.class, db.getId());
-		Assert.assertTrue("nick2".equals(db.getName()));
+		Assert.assertTrue("nick4".equals(db.getName()));
 	}
 	
 	@Test
