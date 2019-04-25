@@ -1,9 +1,10 @@
 package com.pugwoo.dbhelper.impl.part;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
+import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -15,11 +16,9 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
-import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
-import com.pugwoo.dbhelper.utils.NamedParameterUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * jdbcTemplate原生操作接口封装
@@ -151,27 +150,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		timeoutWarningValve = timeMS;
 	}
 
-	public Integer getMaxPageSize() {
-		return maxPageSize;
-	}
-
 	@Override
 	public void setMaxPageSize(int maxPageSize) {
 		this.maxPageSize = maxPageSize;
 	}
 
-	public JdbcTemplate getJdbcTemplate() {
-		return jdbcTemplate;
-	}
-
-	public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
-		return namedParameterJdbcTemplate;
-	}
-
-	public long getTimeoutWarningValve() {
-		return timeoutWarningValve;
-	}
-	
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) 
 			throws BeansException {
