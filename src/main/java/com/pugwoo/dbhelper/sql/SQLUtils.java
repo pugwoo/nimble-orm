@@ -1,33 +1,23 @@
 package com.pugwoo.dbhelper.sql;
 
-import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import com.pugwoo.dbhelper.exception.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.annotation.JoinLeftTable;
-import com.pugwoo.dbhelper.annotation.JoinRightTable;
-import com.pugwoo.dbhelper.annotation.JoinTable;
-import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.bean.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
+import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
-
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * SQL解析工具类
@@ -219,17 +209,7 @@ public class SQLUtils {
 		list.add(t);
 		return _getInsertSQL(list, values, isWithNullValue);
 	}
-	
-	/**
-	 * 生成insert语句，将值放到values中。
-	 * @param tList 要插入的元素值
-	 * @param values 必须
-	 * @return
-	 */
-	public static <T> String getInsertSQLWithNull(List<T> tList, List<Object> values) {
-		return _getInsertSQL(tList, values, true);
-	}
-	
+
 	private static <T> String _getInsertSQL(List<T> tList, List<Object> values,
 			boolean isWithNullValue) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
