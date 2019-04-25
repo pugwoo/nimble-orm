@@ -71,7 +71,7 @@ public class TestJson {
     @Test @Rollback(false)
     public void testJsonRaw() {
         JsonRawDO jsonRawDO = new JsonRawDO();
-        jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"1960-06-08\"}");
+        jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"1960-06-08 12:13:14\"}");
 
         dbHelper.insert(jsonRawDO);
         assert jsonRawDO.getId() != null;
@@ -79,6 +79,7 @@ public class TestJson {
         JsonAsTeacherDO teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
         assert DateUtils.formatDate(teacherDO.getTeacher().getBirth()).equals("1960-06-08");
+        assert DateUtils.format(teacherDO.getTeacher().getBirth()).equals("1960-06-08 12:13:14");
 
         jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"\"}");
