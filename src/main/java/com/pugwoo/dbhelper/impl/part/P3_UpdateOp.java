@@ -202,6 +202,8 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 
+		postHandleCasVersion(t, rows);
+
 		doInterceptAfterUpdate(tList, rows);
 		
 		return rows;
