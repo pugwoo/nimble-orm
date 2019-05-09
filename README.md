@@ -62,7 +62,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
 </dependency>
 ```
 
