@@ -1,21 +1,20 @@
 package com.pugwoo.dbhelper.impl.part;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
@@ -202,8 +201,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		doInterceptBeforeUpdate(tList, setSql, values);
 
 		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
-
-        postHandleCasVersion(t, rows);
 
 		doInterceptAfterUpdate(tList, rows);
 		
