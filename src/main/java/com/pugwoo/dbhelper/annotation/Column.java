@@ -89,6 +89,28 @@ public @interface Column {
 	String insertDefault() default "";
 
 	/**
+	 * 当设置了非空字符串时，在对象插入数据库时，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库
+	 */
+	String insertScript() default "";
+
+	/**
+	 * 当设置了非空字符串时，在对象更新数据库时，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库
+	 */
+	String updateScript() default "";
+
+	/**
+	 * 当设置了非空字符串时，在对象删除数据时，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）
+	 */
+	String deleteScript() default "";
+
+	/**
+	 * 当新增、修改、删除的mvel脚本执行出错时，是否忽略该错误，默认忽略。
+	 * 如果设置为不忽略，则会在脚本执行出错时，抛出异常ScriptErrorException
+	 * @return
+	 */
+	boolean ignoreScriptError() default true;
+
+	/**
 	 * 乐观锁，当字段为乐观锁时，它必须是Integer或Long类型，默认初始值为1，
 	 * 当乐观锁失败时抛出CasVersionNotMatchException。
 	 * 该特性仅对update和updateCustom方法生效，对updateAll不生效。
