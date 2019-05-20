@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.ScriptUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -344,12 +345,23 @@ public class SQLUtils {
 			sql.append("SET ").append(setSql);
 		}
 		
-		// 加上更新时间
+		// 加上更新时间和updateValueScript
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
+
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column))
 				   .append("=").append(getDateString(new Date()));
+			}
+
+			String updateValueScript = column.updateValueScript().trim();
+			if(!updateValueScript.isEmpty()) {
+				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), updateValueScript);
+				if(value != null) {
+					sql.append(",").append(getColumnName(column)).append("='")
+							.append(value.toString().replace("'", "\\'"))
+							.append("'");
+				}
 			}
 		}
 		
@@ -380,13 +392,15 @@ public class SQLUtils {
 			sql.append("SET ").append(setSql);
 		}
 		
-		// 加上更新时间和casVersion字段
+		// 加上更新时间和casVersion字段、updateValueScript字段
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
+
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column))
 				   .append("=").append(getDateString(new Date()));
 			}
+
 			if(column.casVersion()) {
 				Object value = DOInfoReader.getValue(field, t);
 				if(value == null) {
@@ -401,6 +415,16 @@ public class SQLUtils {
 					throw new CasVersionNotMatchException("casVersion column value type must be Integer or Long");
 				}
 				sql.append(",").append(getColumnName(column)).append("=").append(_v + 1);
+			}
+
+			String updateValueScript = column.updateValueScript().trim();
+			if(!updateValueScript.isEmpty()) {
+				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), updateValueScript);
+				if(value != null) {
+					sql.append(",").append(getColumnName(column)).append("='")
+							.append(value.toString().replace("'", "\\'"))
+							.append("'");
+				}
 			}
 		}
 		

@@ -35,5 +35,43 @@ public class ScriptUtils {
         }
     }
 
+    /**
+     * 执行mvel脚本，返回脚本执行返回的值
+     * @param t 对象
+     * @param ignoreScriptError 是否忽略脚本出错，如果忽略，则方法返回null
+     * @param script
+     * @return
+     */
+    public static Object getValueFromScript(Object t, Boolean ignoreScriptError, String script) {
+        Map<String, Object> vars = new HashMap<String, Object>();
+        vars.put("t", t);
+        try {
+            return MVEL.eval(script, vars);
+        } catch (Throwable e) {
+            LOGGER.error("execute script fail: {}", script, e);
+            if(!ignoreScriptError) {
+                throw new ScriptErrorException(e);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 执行mvel脚本，返回脚本执行返回的值
+     * @param ignoreScriptError
+     * @param script
+     * @return
+     */
+    public static Object getValueFromScript(Boolean ignoreScriptError, String script) {
+        try {
+            return MVEL.eval(script);
+        } catch (Throwable e) {
+            LOGGER.error("execute script fail: {}", script, e);
+            if(!ignoreScriptError) {
+                throw new ScriptErrorException(e);
+            }
+            return null;
+        }
+    }
 
 }
