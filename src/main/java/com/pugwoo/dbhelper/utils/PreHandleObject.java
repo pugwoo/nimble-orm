@@ -1,11 +1,13 @@
 package com.pugwoo.dbhelper.utils;
 
-import java.lang.reflect.Field;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.exception.ScriptErrorException;
+import org.mvel2.MVEL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.util.*;
 
 /**
  * 预处理对象
@@ -14,6 +16,8 @@ import com.pugwoo.dbhelper.annotation.Column;
  * 2017年3月18日 17:30:14
  */
 public class PreHandleObject {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(PreHandleObject.class);
 
 	/**
 	 * 插入前预处理字段值
@@ -63,6 +67,22 @@ public class PreHandleObject {
 					DOInfoReader.setValue(field, t, 1);
 				}
 			}
+
+			String insertValueScript = column.insertValueScript().trim();
+			if(!insertValueScript.isEmpty()) {
+				Map<String, Object> vars = new HashMap<String, Object>();
+				vars.put("t", t);
+				try {
+					Object value = MVEL.eval(insertValueScript, vars);
+					DOInfoReader.setValue(field, t, value);
+				} catch (Throwable e) {
+					LOGGER.error("execute script fail: {}", insertValueScript, e);
+					if(!column.ignoreScriptError()) {
+						throw new ScriptErrorException(e);
+					}
+				}
+			}
+
 		}
 	}
 	
