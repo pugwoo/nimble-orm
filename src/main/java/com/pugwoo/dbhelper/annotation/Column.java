@@ -91,17 +91,17 @@ public @interface Column {
 	/**
 	 * 当设置了非空字符串时，在对象插入数据库时，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库
 	 */
-	String insertScript() default "";
+	String insertValueScript() default "";
 
 	/**
 	 * 当设置了非空字符串时，在对象更新数据库时，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库
 	 */
-	String updateScript() default "";
+	String updateValueScript() default "";
 
 	/**
 	 * 当设置了非空字符串时，在对象删除数据时，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）
 	 */
-	String deleteScript() default "";
+	String deleteValueScript() default "";
 
 	/**
 	 * 当新增、修改、删除的mvel脚本执行出错时，是否忽略该错误，默认忽略。
