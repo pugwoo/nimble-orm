@@ -81,18 +81,37 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		if(list == null || list.isEmpty()) {
             return 0;
         }
-		
-		boolean batchDelete = false;
+
+		boolean batchDelete = false; // 当所有list都是一个类型，且key是1个，且没有用到deleteValueScript时
 		Field keyField = null;
 		if(SQLAssert.isAllSameClass(list)) {
 			List<Field> keyFields = DOInfoReader.getKeyColumns(list.get(0).getClass());
 			if(keyFields.size() == 1) {
 				keyField = keyFields.get(0);
-				batchDelete = true;
+
+				boolean isUseDeleteValueScript = false;
+                List<Field> fields = DOInfoReader.getColumns(list.get(0).getClass());
+                for(Field field : fields) {
+                    Column column = field.getAnnotation(Column.class);
+                    String deleteValueScript = column.deleteValueScript().trim();
+                    if(!deleteValueScript.isEmpty()) {
+                        isUseDeleteValueScript = true;
+                        break;
+                    }
+                }
+
+                if(!isUseDeleteValueScript) {
+                    batchDelete = true;
+                }
 			}
 		}
 		
 		if(batchDelete) {
+
+            for(T t : list) {
+                PreHandleObject.preHandleDelete(t); // 这里目前暂时不会走到这里，但仍保留该语句
+            }
+
 			Class<?> clazz = list.get(0).getClass();
 			List<Object> keys = new ArrayList<Object>();
 			for(T t : list) {
@@ -125,7 +144,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		} else {
 			int rows = 0;
 			for(T t : list) {
-				rows += deleteByKey(t);
+				rows += deleteByKey(t); // deleteByKey中已经做了preHandleDelete
 			}
 			return rows;
 		}
