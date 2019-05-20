@@ -84,19 +84,21 @@ public @interface Column {
 	boolean setTimeWhenDelete() default false;
 	
 	/**
-	 * 当设置了非空的字符串，且原值是null时，自动设置上值
+	 * 当设置了非空的字符串，且原值是null时，自动设置上值<br>
+     * mvel脚本中，可以通过t标识获取当前插入的对象
 	 */
 	String insertDefault() default "";
 
 	/**
 	 * 当设置了非空字符串时，在对象插入数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。<br>
-	 * 脚本中，可以通过t命令获取当前插入的对象
+	 * mvel脚本中，可以通过t标识获取当前插入的对象
 	 */
 	String insertValueScript() default "";
 
 	/**
 	 * 当设置了非空字符串时，在对象更新数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。<br>
-	 * 脚本中，可以通过t命令获取当前插入的对象（【特别注意】对于updateAll方法，无法获得该变量t）<br>
+	 * mvel脚本中，可以通过t标识获取当前插入的对象（【特别注意】）<br>
+     * 【特别注意】对于updateAll方法，mvel脚本无法获得该变量t<br>
      * 说明：该脚本对于updateCustom和updateAll也是生效的。<br>
      * 说明：如果脚本的返回值为null，则等价于不设置值（不支持通过该脚本将数据库的值设置为null）。
 	 */
@@ -104,7 +106,8 @@ public @interface Column {
 
 	/**
 	 * 当设置了非空字符串时，在对象删除数据之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）。<br>
-	 * 说明：无论是否是软删除，该脚本都会被执行。
+	 * 说明：无论是否是软删除，该脚本都会被执行。<br>
+     * 【特别注意】对于delete(Class<T> clazz, String postSql, Object... args)方法，mvel脚本无法获得变量t
 	 */
 	String deleteValueScript() default "";
 
