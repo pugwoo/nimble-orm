@@ -89,24 +89,25 @@ public @interface Column {
 	String insertDefault() default "";
 
 	/**
-	 * 当设置了非空字符串时，在对象插入数据库时，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库
+	 * 当设置了非空字符串时，在对象插入数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。
+	 * 脚本中，可以通过t命令获取当前插入的对象
 	 */
 	String insertValueScript() default "";
 
 	/**
-	 * 当设置了非空字符串时，在对象更新数据库时，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库
+	 * 当设置了非空字符串时，在对象更新数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。
+	 * 脚本中，可以通过t命令获取当前插入的对象（【特别注意】对于updateAll方法，无法获得该变量t）
 	 */
 	String updateValueScript() default "";
 
 	/**
-	 * 当设置了非空字符串时，在对象删除数据时，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）
+	 * 当设置了非空字符串时，在对象删除数据之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）。
 	 */
 	String deleteValueScript() default "";
 
 	/**
 	 * 当新增、修改、删除的mvel脚本执行出错时，是否忽略该错误，默认忽略。
-	 * 如果设置为不忽略，则会在脚本执行出错时，抛出异常ScriptErrorException
-	 * @return
+	 * 如果设置为不忽略，则会在脚本执行出错时，抛出异常ScriptErrorException。
 	 */
 	boolean ignoreScriptError() default true;
 

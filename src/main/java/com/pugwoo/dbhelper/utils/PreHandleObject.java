@@ -1,13 +1,13 @@
 package com.pugwoo.dbhelper.utils;
 
 import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.exception.ScriptErrorException;
-import org.mvel2.MVEL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * 预处理对象
@@ -70,17 +70,7 @@ public class PreHandleObject {
 
 			String insertValueScript = column.insertValueScript().trim();
 			if(!insertValueScript.isEmpty()) {
-				Map<String, Object> vars = new HashMap<String, Object>();
-				vars.put("t", t);
-				try {
-					Object value = MVEL.eval(insertValueScript, vars);
-					DOInfoReader.setValue(field, t, value);
-				} catch (Throwable e) {
-					LOGGER.error("execute script fail: {}", insertValueScript, e);
-					if(!column.ignoreScriptError()) {
-						throw new ScriptErrorException(e);
-					}
-				}
+			    ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
 			}
 
 		}
@@ -108,6 +98,11 @@ public class PreHandleObject {
 					DOInfoReader.setValue(field, t, column.softDelete()[0]);
 				}
 			}
+
+            String updateValueScript = column.updateValueScript().trim();
+            if(!updateValueScript.isEmpty()) {
+                ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), updateValueScript);
+            }
 		}
 	}
 	
