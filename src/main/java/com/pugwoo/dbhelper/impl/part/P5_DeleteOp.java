@@ -1,11 +1,5 @@
 package com.pugwoo.dbhelper.impl.part;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
@@ -15,6 +9,12 @@ import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.PreHandleObject;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
@@ -46,6 +46,8 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 	@Override
 	public <T> int deleteByKey(T t) throws NullKeyValueException {
+		PreHandleObject.preHandleDelete(t);
+
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 		
 		List<Object> values = new ArrayList<Object>();

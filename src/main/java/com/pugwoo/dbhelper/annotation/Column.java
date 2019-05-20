@@ -103,7 +103,8 @@ public @interface Column {
 	String updateValueScript() default "";
 
 	/**
-	 * 当设置了非空字符串时，在对象删除数据之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）。
+	 * 当设置了非空字符串时，在对象删除数据之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）。<br>
+	 * 说明：无论是否是软删除，该脚本都会被执行。
 	 */
 	String deleteValueScript() default "";
 

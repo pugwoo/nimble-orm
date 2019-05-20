@@ -465,6 +465,22 @@ public class SQLUtils {
 	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
 		String setSql = getColumnName(softDeleteColumn) + "="
 	                    + softDeleteColumn.softDelete()[1];
+
+		// 处理deleteValueScript
+        List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
+        for(Field field : notKeyFields) {
+            Column column = field.getAnnotation(Column.class);
+
+            String deleteValueScript = column.deleteValueScript().trim();
+            if(!deleteValueScript.isEmpty()) {
+                Object value = DOInfoReader.getValue(field, t);
+                if(value != null) {
+                    setSql = setSql + "," + getColumnName(column)
+                            + "='" + value.toString().replace("'", "\\'") + "'";
+                }
+            }
+        }
+
 		return getCustomDeleteSQL(t, values, setSql);
 	}
 	

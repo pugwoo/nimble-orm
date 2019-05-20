@@ -75,6 +75,24 @@ public class PreHandleObject {
 
 		}
 	}
+
+
+    public static <T> void preHandleDelete(T t) {
+        if(t == null) {
+            return;
+        }
+
+        List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
+
+        for(Field field : notKeyFields) {
+            Column column = field.getAnnotation(Column.class);
+
+            String deleteValueScript = column.deleteValueScript().trim();
+            if(!deleteValueScript.isEmpty()) {
+                ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), deleteValueScript);
+            }
+        }
+    }
 	
 	public static <T> void preHandleUpdate(T t) {
 		if(t == null) {
