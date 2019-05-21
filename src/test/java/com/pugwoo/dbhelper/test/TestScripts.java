@@ -30,4 +30,44 @@ public class TestScripts {
     }
 
 
+    @Test
+    @Rollback(false)
+    public void testUpdateScript1() {
+        StudentScriptDO studentDO = new StudentScriptDO();
+        dbHelper.insert(studentDO);
+
+        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        dbHelper.update(student2);
+
+        StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        assert student3.getName().equals("222");
+    }
+
+    @Test
+    @Rollback(false)
+    public void testUpdateScript2() {
+        StudentScriptDO studentDO = new StudentScriptDO();
+        dbHelper.insert(studentDO);
+
+        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        dbHelper.updateCustom(student2, "set age=?", 18);
+
+        StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        assert student3.getName().equals("222");
+    }
+
+
+    @Test
+    @Rollback(false)
+    public void testUpdateScript3() {
+        StudentScriptDO studentDO = new StudentScriptDO();
+        dbHelper.insert(studentDO);
+
+        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        dbHelper.updateAll(StudentScriptDO.class, "set age=?", "where id=?",18, studentDO.getId());
+
+        StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        assert student3.getName().equals("222");
+    }
+
 }
