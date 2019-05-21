@@ -6,9 +6,8 @@ import com.pugwoo.dbhelper.annotation.Table;
 @Table("t_student")
 public class StudentScriptDO extends IdableSoftDeleteBaseDO {
 
-    @Column(value = "name", insertValueScript = "1+1")
+    @Column(value = "name", insertValueScript = "1+'1'+1")
     private String name;
-
 
     public String getName() {
         return name;

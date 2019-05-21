@@ -20,10 +20,13 @@ public class TestScripts {
 
     @Test
     @Rollback(false)
-    public void test() {
+    public void testInsertScript() {
         StudentScriptDO studentDO = new StudentScriptDO();
         dbHelper.insert(studentDO);
-        System.out.println(studentDO.getId());
+
+        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        assert studentDO.getName().equals(student2.getName());
+        assert student2.getName().equals("111");
     }
 
 
