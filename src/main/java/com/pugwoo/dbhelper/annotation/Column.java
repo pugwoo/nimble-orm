@@ -101,7 +101,7 @@ public @interface Column {
      * 【特别注意】对于updateAll方法，mvel脚本无法获得该变量t<br>
      * 说明：该脚本对于updateCustom和updateAll也是生效的。<br>
      * 说明：如果脚本的返回值为null，则等价于不设置值（不支持通过该脚本将数据库的值设置为null）。
-	 * 【特别注意】对于updateCustom和updateAll方法，要求脚本返回的对象toString之后，数据库可以识别，特别是日期格式
+	 * 【特别注意】对于updateCustom和updateAll方法，要求脚本返回的对象toString之后，数据库可以识别
 	 */
 	String updateValueScript() default "";
 

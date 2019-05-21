@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.json.DateUtils;
 import com.pugwoo.dbhelper.json.MyObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 /**
  * 2015年8月22日 16:58:48
@@ -211,6 +213,25 @@ public class TypeAutoCast {
 		
 		return (T) obj;
 	}
+
+	/**
+	 * 转换成sql值的字符串形式，带上单引号。
+	 * 例如传入hello，返回'hello'
+	 * @param object 不应该为null，如果为null则返回空字符串''
+	 * @return
+	 */
+	public static String toSqlValueStr(Object object) {
+		if(object == null) {
+			return "''";
+		}
+
+		if(object instanceof Date) {
+			return "'" + DateUtils.formatWithMs((Date) object) + "'";
+		}
+
+		return "'" + object.toString().replace("'", "\\'") + "'";
+	}
+
 
 	/**
 	 * 解析泛型的类,只支持1个或2个的泛型类型，不支持3个及以上的

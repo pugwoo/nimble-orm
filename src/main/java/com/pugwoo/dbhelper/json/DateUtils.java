@@ -78,6 +78,15 @@ public class DateUtils {
 		}
 		return new SimpleDateFormat(pattern).format(date);
 	}
+
+	/**
+	 * 带上毫秒的时间
+	 * @param date
+	 * @return
+	 */
+	public static String formatWithMs(Date date) {
+		return format(date, "yyyy-MM-dd HH:mm:ss.SSS");
+	}
 	
 	private static String determineDateFormat(String dateString) {
 	    for (String regexp : DATE_FORMAT_REGEXPS.keySet()) {

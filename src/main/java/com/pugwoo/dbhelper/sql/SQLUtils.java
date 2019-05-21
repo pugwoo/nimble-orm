@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.ScriptUtils;
+import com.pugwoo.dbhelper.utils.TypeAutoCast;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -358,9 +359,8 @@ public class SQLUtils {
 			if(!updateValueScript.isEmpty()) {
 				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), updateValueScript);
 				if(value != null) {
-					sql.append(",").append(getColumnName(column)).append("='")
-							.append(value.toString().replace("'", "\\'"))
-							.append("'");
+					sql.append(",").append(getColumnName(column)).append("=")
+							.append(TypeAutoCast.toSqlValueStr(value));
 				}
 			}
 		}
@@ -421,9 +421,8 @@ public class SQLUtils {
 			if(!updateValueScript.isEmpty()) {
 				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), updateValueScript);
 				if(value != null) {
-					sql.append(",").append(getColumnName(column)).append("='")
-							.append(value.toString().replace("'", "\\'"))
-							.append("'");
+					sql.append(",").append(getColumnName(column)).append("=")
+							.append(TypeAutoCast.toSqlValueStr(value));
 				}
 			}
 		}
@@ -476,7 +475,7 @@ public class SQLUtils {
                 Object value = DOInfoReader.getValue(field, t);
                 if(value != null) {
                     setSql = setSql + "," + getColumnName(column)
-                            + "='" + value.toString().replace("'", "\\'") + "'";
+                            + "=" + TypeAutoCast.toSqlValueStr(value);
                 }
             }
         }
@@ -540,8 +539,8 @@ public class SQLUtils {
 			if(!deleteValueScript.isEmpty()) {
 			    Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), deleteValueScript);
 			    if(value != null) {
-			        sql.append(",").append(getColumnName(column)).append("='")
-                       .append(value.toString().replace("'", "\\'")).append("'");
+			        sql.append(",").append(getColumnName(column)).append("=")
+                       .append(TypeAutoCast.toSqlValueStr(value));
                 }
 			}
 		}
