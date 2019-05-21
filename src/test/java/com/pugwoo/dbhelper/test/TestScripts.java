@@ -1,6 +1,8 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.test.entity.StudentScriptDO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,6 +70,57 @@ public class TestScripts {
 
         StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
         assert student3.getName().equals("222");
+    }
+
+    @Test
+    @Rollback(false)
+    public void testDeleteScript() {
+        StudentScriptDO studentDO = new StudentScriptDO();
+        dbHelper.insert(studentDO);
+
+        dbHelper.deleteByKey(studentDO);
+
+        StudentRawDO student2 = dbHelper.getByKey(StudentRawDO.class, studentDO.getId());
+        assert student2.getName().equals("333");
+    }
+
+    @Test
+    @Rollback(false)
+    public void testDeleteScript2() {
+        StudentScriptDO studentDO = new StudentScriptDO();
+        dbHelper.insert(studentDO);
+
+        dbHelper.delete(StudentScriptDO.class, "where id=?", studentDO.getId());
+
+        StudentRawDO student2 = dbHelper.getByKey(StudentRawDO.class, studentDO.getId());
+        assert student2.getName().equals("333");
+    }
+
+
+    @Table("t_student")
+    public static class StudentRawDO {
+
+        @Column(value = "id", isKey = true, isAutoIncrement = true)
+        private Long id;
+
+        @Column(value = "name")
+        private String name;
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
 }
