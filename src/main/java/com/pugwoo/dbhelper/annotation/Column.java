@@ -108,7 +108,7 @@ public @interface Column {
 	/**
 	 * 当设置了非空字符串时，在对象删除数据之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）。<br>
 	 * 说明：无论是否是软删除，该脚本都会被执行。<br>
-     * 【特别注意】对于delete(Class<T> clazz, String postSql, Object... args)方法，mvel脚本无法获得变量t
+     * 【特别注意】对于delete(Class clazz, String postSql, Object... args)方法，mvel脚本无法获得变量t
 	 */
 	String deleteValueScript() default "";
 
