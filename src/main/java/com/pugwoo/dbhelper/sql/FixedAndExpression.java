@@ -19,7 +19,8 @@ public class FixedAndExpression extends AndExpression {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(isNot() ? "NOT " : "");
+		// jsqlparse 2.1+版本已移除not
+		StringBuilder sb = new StringBuilder(/*isNot() ? "NOT " : ""*/);
 		
 		if(getLeftExpression() instanceof OrExpression) {
 			sb.append("(").append(getLeftExpression()).append(")");
