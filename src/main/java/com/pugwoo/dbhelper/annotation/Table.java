@@ -19,7 +19,7 @@ public @interface Table {
 	String value();
 	
 	/**
-	 * 表别名，默认是t
+	 * 表别名，默认是t，该别名目前仅对查询操作生效
 	 */
 	String alias() default "t";
 	

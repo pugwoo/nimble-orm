@@ -5,7 +5,9 @@ package com.pugwoo.dbhelper.bean;
  * 自动构造子查询 (select 字段 from (select * from 表格 where子句))。
  * 该方式不支持引用了父表的子查询，一般这种子查询效率也非常慢，不推荐使用。
  * 
- * SubQuery支持参数还是SubQuery的情况。
+ * SubQuery支持参数还是SubQuery的情况，即多层递归。
+ *
+ * 特别说明：子查询中的@Table注解的表别名alias无效，如有特殊需求，请自行写SubQuery。
  * 
  * 注意：当子查询条件中出现了Group By子句，请确保数据库关闭了ONLY_FULL_GROUP_BY。
  * 

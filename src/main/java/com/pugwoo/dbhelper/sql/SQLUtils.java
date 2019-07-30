@@ -44,7 +44,7 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT * FROM (SELECT ");
 		sql.append(subQuery.getField());
-		sql.append(" FROM ").append(getTableName(table));
+		sql.append(" FROM ").append(getTableName(table)); // 注意：subQuery这里不用table的alias
 		sql.append(" ").append(SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()));
 		sql.append(") sub ");
 		
@@ -138,7 +138,7 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			sql.append(" FROM ").append(getTableName(table));
+			sql.append(" FROM ").append(getTableName(table)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
