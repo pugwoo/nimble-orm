@@ -1,5 +1,6 @@
 v0.9.4 - [update] jsqlparser升级至2.1
        - [improve] 明确@Table的alias别名的影响范围
+       - [move] 将SubQuery从bean包移动到model包
 
 2019年5月22日
 v0.9.3 - [add] 增加新增、修改、删除操作时，自动通过mvel脚本获取值的能力

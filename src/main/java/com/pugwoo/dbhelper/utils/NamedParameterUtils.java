@@ -1,6 +1,6 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.pugwoo.dbhelper.bean.SubQuery;
+import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 

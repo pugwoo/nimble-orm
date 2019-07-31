@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.sql;
 
 import com.pugwoo.dbhelper.annotation.*;
-import com.pugwoo.dbhelper.bean.SubQuery;
+import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.json.JSON;

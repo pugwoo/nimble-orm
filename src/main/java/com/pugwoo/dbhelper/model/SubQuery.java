@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.bean;
+package com.pugwoo.dbhelper.model;
 
 /**
  * 纯子查询参数，用于传入到SQL的查询参数in (?)中，将会

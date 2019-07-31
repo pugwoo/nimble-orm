@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.bean.SubQuery;
+import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
