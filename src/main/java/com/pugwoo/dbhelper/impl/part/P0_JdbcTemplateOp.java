@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
@@ -178,4 +179,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		this.slowSqlCallback = callback;
 	}
 
+	@Override
+	public <T> void setTableName(Class<T> clazz, String tableName) {
+		DBHelperContext.setTableName(clazz, tableName);
+	}
+
+	@Override
+	public void resetTableNames() {
+		DBHelperContext.resetTableName();
+	}
 }

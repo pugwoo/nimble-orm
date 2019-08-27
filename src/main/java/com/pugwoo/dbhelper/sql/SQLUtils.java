@@ -1,10 +1,11 @@
 package com.pugwoo.dbhelper.sql;
 
 import com.pugwoo.dbhelper.annotation.*;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.JSON;
+import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.ScriptUtils;
 import com.pugwoo.dbhelper.utils.TypeAutoCast;
@@ -39,12 +40,10 @@ public class SQLUtils {
 	 * @return
 	 */
 	public static String expandSubQuery(SubQuery subQuery, List<Object> values) {
-		Table table = DOInfoReader.getTable(subQuery.getClazz());
-		
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT * FROM (SELECT ");
 		sql.append(subQuery.getField());
-		sql.append(" FROM ").append(getTableName(table)); // 注意：subQuery这里不用table的alias
+		sql.append(" FROM ").append(getTableName(subQuery.getClazz())); // 注意：subQuery这里不用table的alias
 		sql.append(" ").append(SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()));
 		sql.append(") sub ");
 		
@@ -77,20 +76,17 @@ public class SQLUtils {
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 			
-	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
 	        List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
-			
-	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
 	        List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
 	        
 	        sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
 	        sql.append(",");
 	        sql.append(join(fields2, ",", joinRightTable.alias() + "."));
-	        sql.append(" FROM ").append(getTableName(table1))
+	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(table2)).append(" ").append(joinRightTable.alias());
-	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
+	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+	        if(joinTable.on().trim().isEmpty()) {
 	        	throw new OnConditionIsNeedException("join table :" + clazz.getName());
 	        }
 	        sql.append(" on ").append(joinTable.on().trim());
@@ -100,7 +96,7 @@ public class SQLUtils {
 			List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 			
 			sql.append(join(fields, ","));
-			sql.append(" FROM ").append(getTableName(table)).append(" ").append(table.alias());
+			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -123,22 +119,19 @@ public class SQLUtils {
 			
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
-			
-	        Table table1 = DOInfoReader.getTable(leftTableField.getType());
-	        Table table2 = DOInfoReader.getTable(rightTableField.getType());
-	        
-	        sql.append(" FROM ").append(getTableName(table1))
+
+	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(table2)).append(" ").append(joinRightTable.alias());
-	        if(joinTable.on() == null || joinTable.on().trim().isEmpty()) {
+	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+	        if(joinTable.on().trim().isEmpty()) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
 	        }
 	        sql.append(" on ").append(joinTable.on().trim());
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			sql.append(" FROM ").append(getTableName(table)).append(" ").append(table.alias());
+			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -162,7 +155,7 @@ public class SQLUtils {
 		String where = joinWhereAndGetValue(keyFields, "AND", _keyValues, t);
 		
 		// 检查主键不允许为null
-		for(Object value : keyValues) {
+		for(Object value : _keyValues) {
 			if(value == null) {
 				throw new NullKeyValueException();
 			}
@@ -209,10 +202,9 @@ public class SQLUtils {
 	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
         StringBuilder sql = new StringBuilder("INSERT INTO ");
 
-        Table table = DOInfoReader.getTable(t.getClass());
         List<Field> fields = DOInfoReader.getColumns(t.getClass());
 
-        sql.append(getTableName(table)).append(" (");
+        sql.append(getTableName(t.getClass())).append(" (");
         List<Object> _values = new ArrayList<Object>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
         String fieldSql = joinAndGetValue(fields, ",", _values, t, isWithNullValue);
         sql.append(fieldSql);
@@ -235,10 +227,10 @@ public class SQLUtils {
 			boolean isWithNullValue, String whereSql) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 		
-		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		String tableName = getTableName(t.getClass());
 		
-		sql.append(getTableName(table)).append(" (");
+		sql.append(tableName).append(" (");
 		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
 		sql.append(") select ");
 		sql.append(join("?", values.size(), ","));
@@ -249,7 +241,7 @@ public class SQLUtils {
 		}
 		whereSql = autoSetSoftDeleted(whereSql, t.getClass());
 		
-		sql.append(getTableName(table)).append(" ").append(whereSql).append(" limit 1)");
+		sql.append(tableName).append(" ").append(whereSql).append(" limit 1)");
 		
 		return sql.toString();
 	}
@@ -268,12 +260,10 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
-		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-		
 		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
 		
-		sql.append(getTableName(table)).append(" SET ");
+		sql.append(getTableName(t.getClass())).append(" SET ");
 		
 		List<Object> setValues = new ArrayList<Object>();
 		String setSql = joinSetAndGetValue(notKeyFields, setValues, t, withNull);
@@ -335,10 +325,9 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
-		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		
-		sql.append(getTableName(table)).append(" ");
+		sql.append(getTableName(clazz)).append(" ");
 		
 		if(setSql.trim().toLowerCase().startsWith("set ")) {
 			sql.append(setSql);
@@ -380,11 +369,10 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
-		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
-		sql.append(getTableName(table)).append(" ");
+		sql.append(getTableName(t.getClass())).append(" ");
 		
 		if(setSql.trim().toLowerCase().startsWith("set ")) {
 			sql.append(setSql);
@@ -491,11 +479,9 @@ public class SQLUtils {
 	 */
 	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
 		StringBuilder sql = new StringBuilder();
-		
-		Table table = DOInfoReader.getTable(clazz);
-		
+
 		sql.append("DELETE FROM ");
-		sql.append(getTableName(table));
+		sql.append(getTableName(clazz));
 		
 		sql.append(autoSetSoftDeleted(postSql, clazz));
 
@@ -515,14 +501,13 @@ public class SQLUtils {
 	
 	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql) {
 		
-		Table table = DOInfoReader.getTable(clazz);
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 		Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 		
 		StringBuilder sql = new StringBuilder();
 		
-		sql.append("UPDATE ").append(getTableName(table));
+		sql.append("UPDATE ").append(getTableName(clazz));
 		sql.append(" SET ").append(getColumnName(softDeleteColumn));
 		sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		
@@ -561,11 +546,10 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 
-		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 
-		sql.append(getTableName(table)).append(" ");
+		sql.append(getTableName(t.getClass())).append(" ");
 
 		if(setSql.trim().toLowerCase().startsWith("set ")) {
 			sql.append(setSql);
@@ -606,13 +590,12 @@ public class SQLUtils {
 	 */
 	public static <T> String getDeleteSQL(T t, List<Object> values) {
 		
-		Table table = DOInfoReader.getTable(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		StringBuilder sql = new StringBuilder();
 		
 		sql.append("DELETE FROM ");
-		sql.append(getTableName(table));
+		sql.append(getTableName(t.getClass()));
 		
 		List<Object> _values = new ArrayList<Object>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", _values, t);
@@ -1004,8 +987,14 @@ public class SQLUtils {
 		}
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
-    
-	private static String getTableName(Table table) {
+
+	private static String getTableName(Class<?> clazz) {
+		String tableName = DBHelperContext.getTableName(clazz);
+		if(tableName != null) {
+			return "`" + tableName + "`";
+		}
+
+		Table table = DOInfoReader.getTable(clazz);
 		return "`" + table.value() + "`";
 	}
 

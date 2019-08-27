@@ -57,7 +57,24 @@ public interface DBHelper {
 	 */
 	void setInterceptors(List<DBHelperInterceptor> interceptors);
 
-	// ===============Query methods START ==================================
+	// =============== Dynamic Table Name ===================================
+
+	/**
+	 * 为指定的类设置表名，适合于分表场景；
+	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持（例如servlet规范），
+	 *            然后设置完之后要记得调用resetTableNames清除设置
+	 * @param clazz
+	 * @param tableName
+	 * @return
+	 */
+	<T> void setTableName(Class<T> clazz, String tableName);
+
+	/**
+	 * 清除setTableName设置的表名信息
+	 */
+	void resetTableNames();
+
+	// =============== Query methods START ==================================
 	
 	/**
 	 * 通过T的主键，将数据查出来并设置到T中<br>
