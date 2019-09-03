@@ -94,14 +94,20 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.17</version>
+			 <version>8.0.17</version>
+			<!--<version>5.1.48</version>-->
 			<scope>test</scope>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 		    <groupId>org.apache.tomcat</groupId>
 		    <artifactId>tomcat-jdbc</artifactId>
 		    <version>9.0.22</version>
 		    <scope>test</scope>
+		</dependency>-->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>3.3.1</version>
 		</dependency>
 
 		<dependency>
