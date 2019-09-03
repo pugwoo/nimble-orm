@@ -14,12 +14,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-// 这里不能用@Transactional，不如另外的线程读取不到
+// 这里不能用@Transactional
 public class BenchmarkCount {
 
     @Autowired
     private DBHelper dbHelper;
 
+    /**
+     * 测试getPage计算总数是否有串的情况
+     * 测试数据库是mysql 8.0 innodb
+     *
+     * tomcat-jdbc + mysql-connector-java 8.0.x 5.1.x 均没有问题
+     * HiKariCP + mysql-connector-java 8.0.x 5.1.x 均没有问题
+     *
+     * @throws Exception
+     */
     @Test
     public void bench() throws Exception {
         final AtomicInteger totalQuery = new AtomicInteger(0);
