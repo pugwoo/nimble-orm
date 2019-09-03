@@ -208,6 +208,9 @@ public class TypeAutoCast {
 		if (clazz == java.sql.Date.class && obj instanceof java.util.Date) {
 			return (T) new java.sql.Date(((java.util.Date)obj).getTime());
 		}
+		if (clazz == java.sql.Time.class && obj instanceof java.util.Date) {
+			return (T) new java.sql.Time(((java.util.Date)obj).getTime());
+		}
 		
 		// TODO 可能还有更多的类型需要转换
 		
