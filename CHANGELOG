@@ -1,7 +1,8 @@
-v0.9.4 - [update] jsqlparser升级至2.1
+2019年9月3日
+v0.9.4 - [add] 支持动态指定表名，适合于分表的场景
+       - [update] jsqlparser升级至2.1
        - [improve] 明确@Table的alias别名的影响范围
        - [move] 将SubQuery从bean包移动到model包
-       - [add] 支持动态指定表名，适合于分表的场景
        - [fix] 增加java.util.Date到java.sql.Time的类型映射
 
 2019年5月22日
