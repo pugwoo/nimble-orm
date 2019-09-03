@@ -175,7 +175,7 @@ public class StudentSchoolJoinVO {
   @JoinRightTable
   private SchoolDO schoolDO;
   
-｝
+}
 ```
 
 上面定义的StudentSchoolJoinVO即表达了`select t1.*,t2.* from t_student t1 left join t_school t2 on t1.school_id=t2.id where t1.deleted=0 and (t2.deleted=0 or t2.deleted is null)`的基本语句。
@@ -248,7 +248,7 @@ public class StudentSchoolJoinVO {
 
 7. 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`异常的情况，需要使用者保证满足以下两点中的任意一点：1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。
 
-8. 目前发现mysql的驱动依赖mysql-connector-java问题比较多，例如5.x的最新版本5.1.47就有bug，请退回到5.1.46。建议使用8.0.15，目前spring boot官方也使用该版本。
+8. 目前发现mysql的驱动依赖mysql-connector-java问题比较多，例如5.x的最新版本5.1.47就有bug，请退回到5.1.46。建议使用8.0.15+，目前spring boot官方也使用该版本。
 
 9. 虽然mysql数据库支持使用单引号和双引号来表示字符串，但在SQL标准中，定义的是单引号，并没有双引号。因此，nimble-orm为了处理规范和简单，只支持单引号表示字符串。
 

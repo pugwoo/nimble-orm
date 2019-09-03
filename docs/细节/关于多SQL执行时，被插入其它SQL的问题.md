@@ -7,3 +7,5 @@ https://blog.csdn.net/syuhaitao/article/details/51727453
 但tomcat pool和druid对于相同的代码则没有，所以可能是这个原因。
 
 因此，全系统在多sql执行时，都加上了事务。同时，事务@Transactional必须加在public方法上。
+
+加上事务@Transactional注解之后，HikariCP就没有问题了。
