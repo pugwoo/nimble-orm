@@ -65,7 +65,6 @@ public interface DBHelper {
 	 *            然后设置完之后要记得调用resetTableNames清除设置
 	 * @param clazz
 	 * @param tableName
-	 * @return
 	 */
 	<T> void setTableName(Class<T> clazz, String tableName);
 
