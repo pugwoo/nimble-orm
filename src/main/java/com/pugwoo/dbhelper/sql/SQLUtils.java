@@ -103,13 +103,13 @@ public class SQLUtils {
 	}
 	
 	/**
-	 * select count(*) from t_table, 不包含where子句及以后的语句
+	 * select count(1) from t_table, 不包含where子句及以后的语句
 	 * @param clazz
 	 * @return
 	 */
 	public static String getSelectCountSQL(Class<?> clazz) {
 		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT count(*)");
+		sql.append("SELECT count(1)");
 		
 		// 处理join方式clazz
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
