@@ -17,6 +17,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,9 +63,40 @@ public class TestDBHelper_query {
         count = dbHelper.getCount(StudentDO.class, "where name like ? group by name", "nick%");
         assert count == 99;
 
+        count = dbHelper.getCount(StudentDO.class, "where name not like ? group by name", "nick%");
+        assert count == 0;
+
+        List<String> names = new ArrayList<String>();
+        names.add(studentDOS.get(0).getName());
+        names.add(studentDOS.get(10).getName());
+        names.add(studentDOS.get(30).getName());
+        count = dbHelper.getCount(StudentDO.class, "where name in (?)",names);
+        assert count == 3;
+
         PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
         assert page.getData().size() == 10;
         assert page.getTotal() == 99;
+
+        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name like ?", "nick%");
+        assert page.getData().size() == 10;
+        assert page.getTotal() == 99;
+
+        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name not like ?", "nick%");
+        assert page.getData().size() == 0;
+        assert page.getTotal() == 0;
+
+        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name in (?)", names);
+        assert page.getData().size() == 3;
+        assert page.getTotal() == 3;
+
+        page = dbHelper.getPage(StudentDO.class, 1, 2, "where name in (?)", names);
+        assert page.getData().size() == 2;
+        assert page.getTotal() == 3;
+
+        page = dbHelper.getPage(StudentDO.class, 1, 2, "where name in (?) group by name", names);
+        assert page.getData().size() == 2;
+        assert page.getTotal() == 3;
+
 
         page = dbHelper.getPage(StudentDO.class, 1, 100);
         assert page.getData().size() == 99;
