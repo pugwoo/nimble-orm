@@ -59,6 +59,8 @@ public class TestDBHelper_query {
         assert count == 99;
         count = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
         assert count == 99;
+        count = dbHelper.getCount(StudentDO.class, "where name like ? group by name", "nick%");
+        assert count == 99;
 
         PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
         assert page.getData().size() == 10;
@@ -73,6 +75,8 @@ public class TestDBHelper_query {
         count = dbHelper.getCount(StudentSchoolJoinVO.class, "where 1=1");
         assert count == 99;
         count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
+        assert count == 99;
+        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ? group by t1.name", "nick%");
         assert count == 99;
 
         PageData<StudentSchoolJoinVO> page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
