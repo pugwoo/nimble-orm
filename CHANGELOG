@@ -1,3 +1,6 @@
+
+v0.9.5 - [improve] 替换SQL_CALC_FOUND_ROWS以提升性能，接口、功能逻辑及正确性无变化
+
 2019年9月3日
 v0.9.4 - [add] 支持动态指定表名，适合于分表的场景
        - [update] jsqlparser升级至2.1

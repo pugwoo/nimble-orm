@@ -15,7 +15,6 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -147,7 +146,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
                                    String postSql, Object... args) {
         if (maxPageSize != null && pageSize > maxPageSize) {
@@ -162,23 +160,62 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {
         return getPage(clazz, page, pageSize, null);
     }
 
     @Override
     public <T> int getCount(Class<T> clazz) {
-        return getTotal(clazz);
+        StringBuilder sql = new StringBuilder();
+        sql.append(SQLUtils.getSelectCountSQL(clazz));
+        sql.append(SQLUtils.autoSetSoftDeleted("", clazz));
+
+        log(sql);
+        long start = System.currentTimeMillis();
+        int rows = jdbcTemplate.queryForObject(sql.toString(), Integer.class);
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql.toString(), null);
+        return rows;
     }
 
+    // 为了解决group by的计数问题，将计数转换成select count(1) from (子select语句) 的形式
     @Override
-    @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
     public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
-        return _getPage(clazz, false, true, 0, 1, postSql, args).getTotal();
+
+        StringBuilder sql = new StringBuilder("SELECT count(1) FROM (");
+
+        sql.append(SQLUtils.getSelectSQL(clazz, false, true));
+        sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
+
+        sql.append(") tff305c6");
+
+        log(sql);
+
+        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        if (args != null) {
+            argsList.addAll(Arrays.asList(args));
+        }
+
+        long start = System.currentTimeMillis();
+
+        Integer rows;
+        if (argsList.isEmpty()) {
+            rows = namedParameterJdbcTemplate.queryForObject(sql.toString(), new HashMap<String, Object>(),
+                    Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+        } else {
+            rows = namedParameterJdbcTemplate.queryForObject(
+                    NamedParameterUtils.trans(sql.toString(), argsList),
+                    NamedParameterUtils.transParam(argsList),
+                    Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+        }
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql.toString(), null);
+        return rows == null ? 0 : rows;
     }
 
     @Override
@@ -241,7 +278,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
      *
      * @param clazz
      * @param selectOnlyKey 是否只查询主键，只查询主键时，拦截器不进行拦截，RelatedColumn也不处理
-     * @param withCount 是否计算总数，将使用SQL_CALC_FOUND_ROWS配合select FOUND_ROWS();来查询
+     * @param withCount 是否计算总数
      * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
      * @param limit null时不生效
      * @param postSql sql的where/group/order等sql语句
@@ -255,7 +292,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      String postSql, Object... args) {
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, withCount));
+        sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false));
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sql.append(SQLUtils.genLimitSQL(offset, limit));
 
@@ -283,8 +320,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         int total = -1; // -1 表示没有查询总数，未知
-        if (withCount) { // 注意：必须在查询完列表之后马上查询总数
-            total = jdbcTemplate.queryForObject("select FOUND_ROWS()", Integer.class);
+        if (withCount) {
+            if(postSql == null) {
+                total = getCount(clazz);
+            } else {
+                total = getCount(clazz, postSql, args);
+            }
         }
 
         if (!selectOnlyKey) {
@@ -308,27 +349,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return pageData;
     }
 
-    /**
-     * 查询列表总数。
-     * 0.3.1+版本起，带条件的count不使用count(*)计算总数，
-     * 而改用FOUND_ROWS()，目的是统一group by等复杂子句的总数计算方式。
-     * @param clazz
-     * @return
-     */
-    private int getTotal(Class<?> clazz) {
-        StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectCountSQL(clazz));
-        sql.append(SQLUtils.autoSetSoftDeleted("", clazz));
-
-        log(sql);
-        long start = System.currentTimeMillis();
-        int rows = jdbcTemplate.queryForObject(sql.toString(), Integer.class);
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql.toString(), null);
-        return rows;
-    }
-
     @Override
     public <T> boolean isExist(Class<T> clazz, String postSql, Object... args) {
         if (postSql != null) {
@@ -338,7 +358,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    @Transactional /*FOUND_ROWS()必须在语句执行后马上执行*/
     public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
                                       String postSql, Object... args) {
         if (postSql != null) {

@@ -57,16 +57,13 @@ public class SQLUtils {
 	 * select 字段 from t_table, 不包含where子句及以后的语句
 	 * @param clazz
 	 * @param selectOnlyKey 是否只查询key
-	 * @param withSQL_CALC_FOUND_ROWS 查询是否带上SQL_CALC_FOUND_ROWS，当配合select FOUND_ROWS();时需要为true
+	 * @param isSelect1 是否只select 1，不查询实际字段；当该值为true时，selectOnlyKey无效。
 	 * @return
 	 */
-	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean withSQL_CALC_FOUND_ROWS) {
+	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
-		if(withSQL_CALC_FOUND_ROWS) {
-			sql.append("SQL_CALC_FOUND_ROWS ");
-		}
-		
+
 		// 处理join方式clazz
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
 		if(joinTable != null) {
@@ -75,13 +72,17 @@ public class SQLUtils {
 			
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
-			
-	        List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
-	        List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
-	        
-	        sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
-	        sql.append(",");
-	        sql.append(join(fields2, ",", joinRightTable.alias() + "."));
+
+			if(isSelect1) {
+			    sql.append("1");
+            } else {
+                List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
+                List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
+                sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
+                sql.append(",");
+                sql.append(join(fields2, ",", joinRightTable.alias() + "."));
+            }
+
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
@@ -93,9 +94,14 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
-			
-			sql.append(join(fields, ","));
+
+			if(isSelect1) {
+			    sql.append("1");
+            } else {
+                List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
+                sql.append(join(fields, ","));
+            }
+
 			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
 		}
 		
