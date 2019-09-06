@@ -321,10 +321,15 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         int total = -1; // -1 表示没有查询总数，未知
         if (withCount) {
-            if(postSql == null) {
-                total = getCount(clazz);
+            // 如果offset为0且查询的list小于limit数量，说明总数就这么多了，不需要再查总数了
+            if(offset != null && offset == 0 && limit != null && list.size() < limit) {
+                total = list.size();
             } else {
-                total = getCount(clazz, postSql, args);
+                if(postSql == null) {
+                    total = getCount(clazz);
+                } else {
+                    total = getCount(clazz, postSql, args);
+                }
             }
         }
 
