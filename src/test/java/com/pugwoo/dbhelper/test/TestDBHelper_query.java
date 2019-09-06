@@ -4,8 +4,10 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.json.JSON;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentSelfTrueDeleteJoinVO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +29,61 @@ public class TestDBHelper_query {
 
     @Autowired
     private DBHelper dbHelper;
+
+    @Test @Rollback(false)
+    public void testCount() {
+
+        dbHelper.delete(StudentDO.class, "where 1=1");
+        int count = dbHelper.getCount(StudentDO.class);
+        assert count == 0;
+
+        dbHelper.delete(SchoolDO.class, "where 1=1");
+        count = dbHelper.getCount(SchoolDO.class);
+        assert count == 0;
+
+        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 99);
+
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("sysu");
+        dbHelper.insert(schoolDO);
+        assert schoolDO.getId() != null;
+
+        for(StudentDO studentDO : studentDOS) {
+            studentDO.setSchoolId(schoolDO.getId());
+            dbHelper.update(studentDO);
+        }
+
+        count = dbHelper.getCount(StudentDO.class);
+        assert count == 99;
+        count = dbHelper.getCount(StudentDO.class, "where 1=1");
+        assert count == 99;
+        count = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
+        assert count == 99;
+
+        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
+        assert page.getData().size() == 10;
+        assert page.getTotal() == 99;
+
+        page = dbHelper.getPage(StudentDO.class, 1, 100);
+        assert page.getData().size() == 99;
+        assert page.getTotal() == 99;
+
+        count = dbHelper.getCount(StudentSchoolJoinVO.class);
+        assert count == 99;
+        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where 1=1");
+        assert count == 99;
+        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
+        assert count == 99;
+
+        PageData<StudentSchoolJoinVO> page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
+        assert page2.getData().size() == 10;
+        assert page2.getTotal() == 99;
+
+        page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 100);
+        assert page2.getData().size() == 99;
+        assert page2.getTotal() == 99;
+
+    }
 
     /**测试软删除DO查询条件中涉及到OR条件的情况*/
     @Test @Rollback(false)
