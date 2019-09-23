@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
@@ -148,6 +149,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
                                    String postSql, Object... args) {
+        if (page < 1) {
+            throw new InvalidParameterException("[page] must greater than 0");
+        }
         if (maxPageSize != null && pageSize > maxPageSize) {
             pageSize = maxPageSize;
         }
@@ -221,6 +225,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
                                                String postSql, Object... args) {
+        if (page < 1) {
+            throw new InvalidParameterException("[page] must greater than 0");
+        }
         if (maxPageSize != null && pageSize > maxPageSize) {
             pageSize = maxPageSize;
         }
