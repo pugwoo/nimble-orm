@@ -4,7 +4,7 @@ import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
-import com.pugwoo.dbhelper.json.JSON;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.ScriptUtils;
@@ -827,7 +827,7 @@ public class SQLUtils {
 			}
 			Object val = DOInfoReader.getValue(fields.get(i), obj);
 			if(val != null && column.isJSON()) {
-				val = JSON.toJson(val);
+				val = NimbleOrmJSON.toJson(val);
 			}
 			values.add(val);
 		}
@@ -921,7 +921,7 @@ public class SQLUtils {
 
 			Object value = DOInfoReader.getValue(field, obj);
 			if(value != null && column.isJSON()) {
-				value = JSON.toJson(value);
+				value = NimbleOrmJSON.toJson(value);
 			}
 			if(isWithNullValue) {
 				values.add(value);
@@ -983,7 +983,7 @@ public class SQLUtils {
 				sb.append(getColumnName(column)).append("=").append(_v + 1).append(",");
 			} else {
 				if(value != null && column.isJSON()) {
-					value = JSON.toJson(value);
+					value = NimbleOrmJSON.toJson(value);
 				}
 				if(withNull || value != null) {
 					sb.append(getColumnName(column)).append("=?,");

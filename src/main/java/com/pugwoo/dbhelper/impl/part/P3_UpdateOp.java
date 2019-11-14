@@ -5,7 +5,7 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
-import com.pugwoo.dbhelper.json.JSON;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
@@ -166,7 +166,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
         if(casVersionField != null) {
             if(rows <= 0) {
                 throw new CasVersionNotMatchException("update fail for class:"
-                        + t.getClass().getName() + ",data:" + JSON.toJson(t));
+                        + t.getClass().getName() + ",data:" + NimbleOrmJSON.toJson(t));
             } else {
                 Object casVersion = DOInfoReader.getValue(casVersionField, t);
                 if(casVersion instanceof Integer) {
@@ -282,7 +282,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					} else {
 						boolean succ = getByKey(t);
 						if(!succ) {
-							LOGGER.error("getByKey fail for t:{}", JSON.toJson(t));
+							LOGGER.error("getByKey fail for t:{}", NimbleOrmJSON.toJson(t));
 						}
 						result.add(t);
 					}

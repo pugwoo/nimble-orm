@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 封装起来的常用的json方法
  * @author NICK
  */
-public class JSON {
+public class NimbleOrmJSON {
 
 	private static ObjectMapper objectMapper = new MyObjectMapper();
 

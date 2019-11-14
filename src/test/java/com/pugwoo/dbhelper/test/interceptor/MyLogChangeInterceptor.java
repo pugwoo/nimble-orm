@@ -1,24 +1,24 @@
 package com.pugwoo.dbhelper.test.interceptor;
 
+import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
+
 import java.util.Date;
 import java.util.List;
-
-import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.json.JSON;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
 
 public class MyLogChangeInterceptor extends DBHelperInterceptor {
 
 	@Override
 	public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {
-		System.out.println(">S> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args));
+		System.out.println(">S> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + NimbleOrmJSON.toJson(args));
 		return true;
 	}
 
 	@Override
 	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args, List<T> result, int count) {
-		System.out.println("<S< " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args)
-		    + "\n    total:" + count + ",size:" + result.size() + ",data:" + JSON.toJson(result));
+		System.out.println("<S< " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + NimbleOrmJSON.toJson(args)
+		    + "\n    total:" + count + ",size:" + result.size() + ",data:" + NimbleOrmJSON.toJson(result));
 		return result;
 	}
 	
@@ -26,7 +26,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	public boolean beforeInsert(List<Object> list) {
 		if(!list.isEmpty()) {
 			System.out.println(">I> " + list.get(0).getClass().getSimpleName() + ",count:" + list.size() +
-					"\n    data:" + JSON.toJson(list));
+					"\n    data:" + NimbleOrmJSON.toJson(list));
 		}
 		return true;
 	}
@@ -36,7 +36,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 		if(!list.isEmpty()) {
 			System.out.println("<I< " + list.get(0).getClass().getSimpleName() + ",count:" + list.size()
 	        + ",affectedRows:" + affectedRows +
-			"\n    data:" + JSON.toJson(list));
+			"\n    data:" + NimbleOrmJSON.toJson(list));
 		}
 	}
 	
@@ -44,7 +44,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     public boolean beforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
 		if(!tList.isEmpty()) {
 			System.out.println(">U> " + tList.get(0).getClass().getSimpleName() +
-					"\n    data:" + JSON.toJson(tList));
+					"\n    data:" + NimbleOrmJSON.toJson(tList));
 		}
     	return true;
     }
@@ -56,7 +56,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 			customsSets.add("name=?");
 			customsParams.add("beforeUpdateAll" + new Date());
 		}
-		System.out.println(">U> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + JSON.toJson(args));
+		System.out.println(">U> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + NimbleOrmJSON.toJson(args));
     	return true;
     }
     
@@ -64,7 +64,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     public void afterUpdate(List<Object> tList, int affectedRows) {
 		if(!tList.isEmpty()) {
 			System.out.println("<U< " + tList.get(0).getClass().getSimpleName() + ",affectedRows:" + affectedRows +
-					"\n    data:" + JSON.toJson(tList));
+					"\n    data:" + NimbleOrmJSON.toJson(tList));
 		}
     }
 
@@ -72,7 +72,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     public boolean beforeDelete(List<Object> tList) {
 		if(!tList.isEmpty()) {
 			System.out.println(">D> " + tList.get(0).getClass().getSimpleName() +
-					"\n    data:" + JSON.toJson(tList));
+					"\n    data:" + NimbleOrmJSON.toJson(tList));
 		}
     	return true;
     }
@@ -81,7 +81,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     public void afterDelete(List<Object> tList, int affectedRows) {
 		if(!tList.isEmpty()) {
 			System.out.println("<D< " + tList.get(0).getClass().getSimpleName() + ",affectedRows:" + affectedRows +
-					"\n    data:" + JSON.toJson(tList));
+					"\n    data:" + NimbleOrmJSON.toJson(tList));
 		}
     }
 

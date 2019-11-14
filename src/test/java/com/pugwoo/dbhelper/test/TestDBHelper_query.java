@@ -2,7 +2,7 @@ package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
-import com.pugwoo.dbhelper.json.JSON;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
@@ -160,7 +160,7 @@ public class TestDBHelper_query {
             @Override
             public void callback(long executeMsTime, String sql, List<Object> args) {
                 System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
-                    + "sql:" + sql + "args:" + JSON.toJson(args));
+                    + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
                 sb.append(sql);
             }
         });
