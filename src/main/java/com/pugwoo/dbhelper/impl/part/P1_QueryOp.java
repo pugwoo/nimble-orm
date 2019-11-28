@@ -190,7 +190,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             postSql = postSql.replace('\t', ' ');
         }
 
-        StringBuilder sql = new StringBuilder("SELECT count(1) FROM (");
+        StringBuilder sql = new StringBuilder("SELECT count(*) FROM (");
 
         sql.append(SQLUtils.getSelectSQL(clazz, false, true));
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));

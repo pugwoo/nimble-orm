@@ -115,7 +115,7 @@ public class SQLUtils {
 	 */
 	public static String getSelectCountSQL(Class<?> clazz) {
 		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT count(1)");
+		sql.append("SELECT count(*)");
 		
 		// 处理join方式clazz
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
