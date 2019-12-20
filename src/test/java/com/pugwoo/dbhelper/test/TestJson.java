@@ -1,7 +1,8 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.json.DateUtils;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.JsonAsTeacherDO;
 import com.pugwoo.dbhelper.test.entity.JsonDO;
 import com.pugwoo.dbhelper.test.entity.JsonRawDO;
@@ -78,8 +79,8 @@ public class TestJson {
 
         JsonAsTeacherDO teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
-        assert DateUtils.formatDate(teacherDO.getTeacher().getBirth()).equals("1960-06-08");
-        assert DateUtils.format(teacherDO.getTeacher().getBirth()).equals("1960-06-08 12:13:14");
+        assert NimbleOrmDateUtils.formatDate(teacherDO.getTeacher().getBirth()).equals("1960-06-08");
+        assert NimbleOrmDateUtils.format(teacherDO.getTeacher().getBirth()).equals("1960-06-08 12:13:14");
 
         jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"\"}");
@@ -95,8 +96,31 @@ public class TestJson {
         assert teacherDO.getTeacher().getName().equals("wu");
         assert teacherDO.getTeacher().getBirth() == null;
 
+    }
 
+    private static class TimeDTO {
+        private Date date;
+        public Date getDate() {
+            return date;
+        }
+        public void setDate(Date date) {
+            this.date = date;
+        }
+    }
 
+    @Test
+    public void testDateTimestamp() throws Exception {
+        Date now = new Date();
+        assert now.equals(NimbleOrmDateUtils.parseThrowException(String.valueOf(now.getTime())));
+
+        String json = "{\"date\":" + now.getTime() + "}";
+        String json2 = "{\"date\":\"" + now.getTime() + "\"}";
+
+        TimeDTO time1 = NimbleOrmJSON.parse(json, TimeDTO.class);
+        TimeDTO time2 = NimbleOrmJSON.parse(json2, TimeDTO.class);
+
+        assert time1.getDate().equals(now);
+        assert time2.getDate().equals(now);
     }
 
 }

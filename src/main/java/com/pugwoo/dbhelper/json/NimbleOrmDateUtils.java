@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DateUtils {
+public class NimbleOrmDateUtils {
 
 	/**标准日期时间格式**/
 	public final static String FORMAT_STANDARD = "yyyy-MM-dd HH:mm:ss";
@@ -46,10 +46,58 @@ public class DateUtils {
 		}
 		String pattern = determineDateFormat(date);
 		if(pattern == null) {
+
+			// 检查是否是时间戳
+			Date _date = tryParseTimestamp(date);
+			if(_date != null) {
+				return _date;
+			}
+
 			throw new ParseException("Unparseable date: \"" + date +
 					"\". Supported formats: " + DATE_FORMAT_REGEXPS.values(), -1);
 		}
 		return new SimpleDateFormat(pattern).parse(date);
+	}
+
+	private static Date tryParseTimestamp(String date) {
+		if (!isDigit(date)) {
+			return null;
+		}
+		Long timestamp = parseLong(date);
+		if (timestamp == null) {
+			return null;
+		}
+
+		// 时间戳小于42亿则认为是秒，否则是毫秒
+		if(timestamp < 4200000000L) {
+			return new Date(timestamp * 1000L);
+		} else {
+			return new Date(timestamp);
+		}
+	}
+
+	private static boolean isDigit(String str) {
+		if(str == null || str.isEmpty()) {return false;}
+		for(char c : str.toCharArray()) {
+			if(!Character.isDigit(c)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static Long parseLong(Object obj) {
+		if(obj == null) {
+			return null;
+		}
+		if(obj instanceof Long) {
+			return (Long) obj;
+		}
+		try {
+			return new Long(obj.toString().trim());
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	/**

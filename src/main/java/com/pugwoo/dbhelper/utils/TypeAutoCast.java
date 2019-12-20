@@ -1,11 +1,8 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.json.DateUtils;
-import com.pugwoo.dbhelper.json.MyObjectMapper;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +20,7 @@ import java.util.Date;
 public class TypeAutoCast {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeAutoCast.class);
-	
-	private static final ObjectMapper OBJECT_MAPPER = new MyObjectMapper();
-	
+
 	/**
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
 	 * 
@@ -49,10 +44,9 @@ public class TypeAutoCast {
 			String typeName = field.getGenericType().toString();
 			try {
 				if(!typeName.contains("<")) {
-					return OBJECT_MAPPER.readValue(valStr, field.getType());
+					return NimbleOrmJSON.parse(valStr, field.getType());
 				} else { // 处理泛型
-					JavaType type = parseGenericType(OBJECT_MAPPER.getTypeFactory(), typeName);
-					return OBJECT_MAPPER.readValue(valStr, type);
+					return NimbleOrmJSON.parseGeneric(valStr, typeName);
 				}
 			} catch(Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, typeName, e);
@@ -229,86 +223,10 @@ public class TypeAutoCast {
 		}
 
 		if(object instanceof Date) {
-			return "'" + DateUtils.formatWithMs((Date) object) + "'";
+			return "'" + NimbleOrmDateUtils.formatWithMs((Date) object) + "'";
 		}
 
 		return "'" + object.toString().replace("'", "\\'") + "'";
 	}
 
-
-	/**
-	 * 解析泛型的类,只支持1个或2个的泛型类型，不支持3个及以上的
-	 * @param className
-	 * @return 如果没有泛型，则返回null
-	 * @throws ClassNotFoundException 
-	 */
-	private static JavaType parseGenericType(TypeFactory typeFactory, String className)
-			throws ClassNotFoundException {
-		if(className == null) {
-            return null;
-        }
-		int left = className.indexOf("<");
-		if(left < 0) {
-			return typeFactory.constructType(Class.forName(className.trim()));
-		}
-		int right = className.lastIndexOf(">");
-		
-		String baseClassName = className.substring(0, left);
-		String genericAll = className.substring(left + 1, right);
-		
-		assertLessThan3Dot(genericAll);
-		int dotIndex = getDotIndex(genericAll);
-		if(dotIndex < 0) {
-			return typeFactory.constructParametricType(Class.forName(baseClassName.trim()),
-					parseGenericType(typeFactory, genericAll));
-		} else {
-			String leftClassName = genericAll.substring(0, dotIndex);
-			String rightClassName = genericAll.substring(dotIndex + 1);
-			return typeFactory.constructParametricType(Class.forName(baseClassName.trim()),
-					parseGenericType(typeFactory, leftClassName),
-					parseGenericType(typeFactory, rightClassName));
-		}
-	}
-	
-	private static int getDotIndex(String str) {
-		if(str == null) {
-            return -1;
-        }
-		int bracket = 0;
-		for(int i = 0; i < str.length(); i++) {
-			char c = str.charAt(i);
-			if(c == ',' && bracket == 0) {
-				return i;
-			}
-			if(c == '<') {
-				bracket++;
-			} else if(c == '>') {
-				bracket--;
-			}
-		}
-		return -1;
-	}
-	
-	private static void assertLessThan3Dot(String str) {
-		if(str == null) {
-            return;
-        }
-		int counts = 0;
-		int bracket = 0;
-		for(int i = 0; i < str.length(); i++) {
-			char c = str.charAt(i);
-			if(c == ',' && bracket == 0) {
-				counts++;
-			}
-			if(c == '<') {
-				bracket++;
-			} else if(c == '>') {
-				bracket--;
-			}
-		}
-		if(counts > 1) {
-			throw new RuntimeException("nimble-orm not support more than two generic type, found " + (counts+1)
-				+ " for class:" +str);
-		}
-	}
 }

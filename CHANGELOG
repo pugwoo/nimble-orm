@@ -1,7 +1,8 @@
 
 v0.9.6 - [improve] 当分页查询传入page小于1时，抛出InvalidParameterException异常
-       - [rename] 重名JSON为NimbleOrmJSON，避免被外部误引用到
+       - [rename] 重名JSON为NimbleOrmJSON，重命名DateUtils为NimbleOrmDateUtils，避免被外部误引用到
        - [modify] 基于SQL92定义，使用count(*)代替原来的count(1)，两者功能是等价的
+       - [add] NimbleOrmDateUtils增加支持时间戳的日期解析
 
 2019年9月6日
 v0.9.5 - [improve] 替换SQL_CALC_FOUND_ROWS以提升性能，接口、功能逻辑及正确性无变化

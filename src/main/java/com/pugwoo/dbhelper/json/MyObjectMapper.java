@@ -1,14 +1,14 @@
 package com.pugwoo.dbhelper.json;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MyObjectMapper extends ObjectMapper {
 
@@ -30,6 +30,7 @@ public class MyObjectMapper extends ObjectMapper {
 		configure(JsonParser.Feature.ALLOW_NUMERIC_LEADING_ZEROS, true); //允许数字以0开头
 		configure(JsonParser.Feature.ALLOW_MISSING_VALUES, true); //允许[]中有多个,,,
 		configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true); //允许[]最后带多一个,
+		configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true); // 允许字符串值出现反斜杠\
 	
 		MultiDateDeserializer deserializer = new MultiDateDeserializer();
 		SimpleModule module = new SimpleModule("DateDeserializerModule",

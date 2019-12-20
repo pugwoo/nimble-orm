@@ -116,8 +116,8 @@ public class NamedParameterUtils {
 		char strQuota = 0;
 		int currParamIndex = 0;
 		List<Object> newArgs = new ArrayList<Object>();
-		for(int i = 0; i < sql.length(); i++) {
-			char ch = sql.charAt(i);
+		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
+			//char ch = sql.charAt(i);
 			
 			if(ch == '?' && !isInStr) {
 				if(args.size() <= currParamIndex) {
@@ -177,8 +177,8 @@ public class NamedParameterUtils {
 		boolean isPreSlash = false;
 		char strQuota = 0;
 		int currParamIndex = 1;
-		for(int i = 0; i < sql.length(); i++) {
-			char ch = sql.charAt(i);
+		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
+			//char ch = sql.charAt(i);
 			
 			if(ch == '?' && !isInStr) {
 				sb.append(":param").append(currParamIndex++);
