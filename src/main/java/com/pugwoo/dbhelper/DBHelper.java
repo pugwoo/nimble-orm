@@ -279,8 +279,11 @@ public interface DBHelper {
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。<br>
-	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNullWhereNotExist。
-	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
+	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNullWhereNotExist。<br>
+	 * <br>
+	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。<br>
+	 * <br>
+	 * 说明：再高并发情况下可能出现DeadlockLoserDataAccessException，需要应用自行重试，乐观锁本身就是这么用的。
 	 * @param t 需要插入的DO对象实例
 	 * @param whereSql 只能是where语句（可含可不含where关键字），【不能】包含order/group/limit等后续语句
 	 * @param args whereSql中的参数
@@ -299,7 +302,10 @@ public interface DBHelper {
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
 	 * 如果包含了自增id，则自增Id会被设置。<br>
-	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。
+	 * <br>
+	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。<br>
+	 * <br>
+	 * 说明：再高并发情况下可能出现DeadlockLoserDataAccessException，需要应用自行重试，乐观锁本身就是这么用的。
 	 * @param t 需要插入的DO对象实例
 	 * @param whereSql 只能是where语句（可含可不含where关键字），不能包含order/group/limit等后续语句
 	 * @param args whereSql中的参数
