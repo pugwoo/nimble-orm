@@ -1,16 +1,14 @@
 package com.pugwoo.dbhelper.impl.part;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.transaction.annotation.Transactional;
-
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
@@ -55,7 +53,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override @Transactional
+	@Override
 	public int insert(List<?> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -106,13 +104,13 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return rows;
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int insertWhereNotExist(T t, String whereSql, Object... args) {
 		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
 		return insertWhereNotExist(t, false, whereSql, args);
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args) {
 		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
 		return insertWhereNotExist(t, true, whereSql, args);

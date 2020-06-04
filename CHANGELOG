@@ -1,3 +1,6 @@
+v0.9.7 - [add] Column支持对String类型的字段设置最大字符数
+       - [del] 重大变化：去掉了插入和更新的@Transactional注解，以后多条插入或更新时，是否需要事务由调用者自行决定
+
 2019年12月20日
 v0.9.6 - [improve] 当分页查询传入page小于1时，抛出InvalidParameterException异常
        - [rename] 重名JSON为NimbleOrmJSON，重命名DateUtils为NimbleOrmDateUtils，避免被外部误引用到

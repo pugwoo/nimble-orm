@@ -613,6 +613,26 @@ public class TestDBHelper {
         assert studentRandomNameDO.getId() != null;
         assert !studentRandomNameDO.getName().isEmpty();
 	}
+
+	@Test
+	@Rollback(false)
+	public void testMaxStringLength() {
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("nick1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+
+		dbHelper.insert(studentDO);
+		assert studentDO.getName().length()==32; // 注解配置了32位长度
+
+		StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		assert student2.getName().length()==32;
+
+		student2.setName("nick222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222");
+		dbHelper.update(student2);
+		assert student2.getName().length()==32;
+
+		StudentDO student3 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		assert student3.getName().length()==32;
+	}
 	
 	@Test
 	@Rollback(false)

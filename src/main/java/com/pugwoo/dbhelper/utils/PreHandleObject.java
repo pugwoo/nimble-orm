@@ -73,6 +73,18 @@ public class PreHandleObject {
 			    ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
 			}
 
+			// truncate string should be last
+			if (column.maxStringLength() >= 0) {
+				if (String.class.equals(field.getType())) {
+					String value = (String) DOInfoReader.getValue(field, t);
+					if (value != null && value.length() > column.maxStringLength()) {
+						String newValue = value.substring(0, column.maxStringLength());
+						DOInfoReader.setValue(field, t, newValue);
+						LOGGER.warn("truncate class:{} field:{} value:{} to maxStringLength:{} newValue:{}",
+								t.getClass().getName(), field.getName(), value, column.maxStringLength(), newValue);
+					}
+				}
+			}
 		}
 	}
 
@@ -121,6 +133,19 @@ public class PreHandleObject {
             if(!updateValueScript.isEmpty()) {
                 ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), updateValueScript);
             }
+
+            // truncate string should be last
+			if (column.maxStringLength() >= 0) {
+				if (String.class.equals(field.getType())) {
+					String value = (String) DOInfoReader.getValue(field, t);
+					if (value != null && value.length() > column.maxStringLength()) {
+						String newValue = value.substring(0, column.maxStringLength());
+						DOInfoReader.setValue(field, t, newValue);
+						LOGGER.warn("truncate class:{} field:{} value:{} to maxStringLength:{} newValue:{}",
+								t.getClass().getName(), field.getName(), value, column.maxStringLength(), newValue);
+					}
+				}
+			}
 		}
 	}
 	

@@ -1,12 +1,10 @@
 package com.pugwoo.dbhelper.impl.part;
 
+import com.pugwoo.dbhelper.utils.DOInfoReader;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.transaction.annotation.Transactional;
-
-import com.pugwoo.dbhelper.utils.DOInfoReader;
 
 public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 
@@ -36,7 +34,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		}
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int insertOrUpdate(List<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -50,7 +48,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		return rows;
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int insertOrUpdateWithNull(List<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -64,12 +62,12 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		return rows;
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int insertOrUpdateFull(List<T> dbList, List<T> newList) {
 		return insertOrUpdateFull(dbList, newList, false);
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int insertOrUpdateFullWithNull(List<T> dbList, List<T> newList) {
 		return insertOrUpdateFull(dbList, newList, true);
 	}

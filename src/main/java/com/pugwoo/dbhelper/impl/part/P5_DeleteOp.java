@@ -10,7 +10,6 @@ import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		return rows;
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int deleteByKey(List<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
             return 0;
@@ -170,7 +169,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous

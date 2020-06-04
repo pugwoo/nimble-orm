@@ -2,10 +2,10 @@ package com.pugwoo.dbhelper.test.entity;
 
 
 
-import java.util.List;
-
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+
+import java.util.List;
 
 /**
  * 2015年1月12日 15:20:09 这个是有注解的DO
@@ -13,7 +13,7 @@ import com.pugwoo.dbhelper.annotation.Table;
 @Table("t_student")
 public class StudentDO extends IdableSoftDeleteBaseDO {
 		
-	@Column("name")
+	@Column(value = "name", maxStringLength = 32)
 	private String name;
 	
 //  不支持枚举

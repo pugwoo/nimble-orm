@@ -9,7 +9,6 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -75,7 +74,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return _update(t, true, true, postSql, args);
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int updateWithNull(List<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -98,7 +97,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return rows;
 	}
 	
-	@Override @Transactional
+	@Override
 	public <T> int update(List<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
@@ -211,7 +210,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
 	@SuppressWarnings("unchecked")
-	@Override @Transactional
+	@Override
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
 		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
 		if(setSql == null || setSql.trim().isEmpty()) {

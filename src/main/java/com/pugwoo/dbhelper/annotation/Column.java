@@ -37,6 +37,13 @@ public @interface Column {
 	 * 主键是否自增
 	 */
 	boolean isAutoIncrement() default false;
+
+	/**
+	 * 写入到数据库的最大字符串长度（字符数，不是字节数）<br>
+	 * 当字段的值的字符串长度超过设置的值时，将自动截取前maxStringLength个字符。<br>
+	 * 说明：如果值为负数表示不限制。该限制只对String类型生效，其它类型不生效。特别的，当值为0时，字符串将截断成空字符串。
+	 */
+	int maxStringLength() default -1;
 	
 	/**
 	 * 插入时，当字段值未提供时，设置是否自动生成随机32字符，此时字段必须是String类型。<br>
