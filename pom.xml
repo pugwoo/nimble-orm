@@ -4,7 +4,7 @@
 
 	<groupId>com.pugwoo</groupId>
 	<artifactId>nimble-orm</artifactId>
-	<version>0.9.7</version>
+	<version>0.9.8-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>nimble-orm</name>
@@ -88,6 +88,13 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.pugwoo</groupId>
+			<artifactId>woo-utils</artifactId>
+			<version>0.8.8</version>
 			<scope>test</scope>
 		</dependency>
 		
