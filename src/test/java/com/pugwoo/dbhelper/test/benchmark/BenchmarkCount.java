@@ -22,7 +22,7 @@ public class BenchmarkCount {
 
     /**
      * 测试getPage计算总数是否有串的情况
-     * 测试数据库是mysql 8.0 innodb
+     * 测试数据库是mysql 5.7和8.0 innodb
      *
      * tomcat-jdbc + mysql-connector-java 8.0.x 5.1.x 均没有问题
      * HiKariCP + mysql-connector-java 8.0.x 5.1.x 均没有问题
@@ -35,7 +35,7 @@ public class BenchmarkCount {
         final AtomicInteger failQuery = new AtomicInteger(0);
 
         // insert 72
-        final String name72 = UUID.randomUUID().toString();
+        final String name72 = UUID.randomUUID().toString().replace("-", "");
         for(int i = 0; i < 72; i++) {
             StudentDO studentDO = new StudentDO();
             studentDO.setName(name72);
@@ -43,7 +43,7 @@ public class BenchmarkCount {
         }
 
         // insert 76
-        final String name76 = UUID.randomUUID().toString();
+        final String name76 = UUID.randomUUID().toString().replace("-", "");
         for(int i = 0; i < 76; i++) {
             StudentDO studentDO = new StudentDO();
             studentDO.setName(name76);
@@ -88,6 +88,9 @@ public class BenchmarkCount {
         Thread.sleep(120000);
         System.out.println("total query:" + totalQuery.get());
         System.out.println("fail query:" + failQuery.get());
+
+        assert totalQuery.get() > 0;
+        assert failQuery.get() == 0;
     }
 
 
