@@ -114,8 +114,10 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 				}
 			}, holder);
 
-			long primaryKey = holder.getKey().longValue();
-			DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+			if(rows > 0) {
+				long primaryKey = holder.getKey().longValue();
+				DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+			}
 
 		} else {
 			rows = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
@@ -195,8 +197,10 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 				new MapSqlParameterSource(NamedParameterUtils.transParam(argsList)),
 				keyHolder); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 
-		long primaryKey = keyHolder.getKey().longValue();
-		DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+		if(rows > 0) {
+			long primaryKey = keyHolder.getKey().longValue();
+			DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+		}
 
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, argsList);
