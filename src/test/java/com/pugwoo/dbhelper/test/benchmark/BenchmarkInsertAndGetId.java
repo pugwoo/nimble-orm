@@ -2,7 +2,6 @@ package com.pugwoo.dbhelper.test.benchmark;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.wooutils.json.JSON;
 import com.pugwoo.wooutils.task.ExecuteThem;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,21 +79,10 @@ public class BenchmarkInsertAndGetId {
         executeThem.waitAllTerminate();
         System.out.println("insert:" + insert.get() + ",insertFail:" + insertFail.get()
            + ",getIdFail:" + getIdFail.get());
-    }
 
-    @Test
-    public void tmp() {
-        StudentDO studentDO = new StudentDO();
-
-        String name = UUID.randomUUID().toString().replace("-", "");
-        studentDO.setName(name);
-
-        int row = dbHelper.insertWhereNotExist(studentDO, "where name=?", name);
-
-        System.out.println(JSON.toJson(studentDO));
-
-        StudentDO student2 = dbHelper.getOne(StudentDO.class, "where id=?", studentDO.getId());
-        System.out.println(JSON.toJson(student2));
+        assert insert.get() > 0;
+        assert insertFail.get() == 0;
+        assert getIdFail.get() == 0;
     }
 
     @Test
@@ -157,6 +145,10 @@ public class BenchmarkInsertAndGetId {
         executeThem.waitAllTerminate();
         System.out.println("insert:" + insert.get() + ",insertFail:" + insertFail.get()
                 + ",getIdFail:" + getIdFail.get());
+
+        assert insert.get() > 0;
+        assert insertFail.get() == 0;
+        assert getIdFail.get() == 0;
     }
 
 }
