@@ -1,12 +1,15 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -203,5 +206,59 @@ public class TestDBHelper_delete {
             ex = true;
         }
         assert ex;
+    }
+
+    @Test
+    @Rollback(false)
+    public void testBatchDeleteWithDeleteScript() {
+        StudentDO stu1 = CommonOps.insertOne(dbHelper);
+        StudentDO stu2 = CommonOps.insertOne(dbHelper);
+
+        StudentWithDeleteScriptDO s1 = new StudentWithDeleteScriptDO();
+        s1.setId(stu1.getId());
+        StudentWithDeleteScriptDO s2 = new StudentWithDeleteScriptDO();
+        s2.setId(stu2.getId());
+
+        int rows = dbHelper.deleteByKey(ListUtils.newArrayList(s1, s2));
+        assert rows == 2;
+
+        dbHelper.turnOffSoftDelete(StudentWithDeleteScriptDO.class);
+
+        List<StudentTrueDeleteDO> list = dbHelper.getAll(StudentTrueDeleteDO.class,
+                "where id in (?)", ListUtils.newArrayList(s1.getId(), s2.getId()));
+        assert list.size() == 2;
+        assert list.get(0).getName().equals("deleteddata");
+        assert list.get(1).getName().equals("deleteddata");
+
+        dbHelper.turnOnSoftDelete(StudentWithDeleteScriptDO.class);
+    }
+
+    @Table("t_student")
+    private static class StudentWithDeleteScriptDO {
+        @Column(value = "id", isKey = true, isAutoIncrement = true)
+        private Long id;
+        @Column(value = "deleted", softDelete = {"0", "1"})
+        private Boolean deleted;
+        @Column(value = "name", deleteValueScript = "'deleted' + 'data'")
+        private String name;
+
+        public Long getId() {
+            return id;
+        }
+        public void setId(Long id) {
+            this.id = id;
+        }
+        public Boolean getDeleted() {
+            return deleted;
+        }
+        public void setDeleted(Boolean deleted) {
+            this.deleted = deleted;
+        }
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 }
