@@ -693,7 +693,7 @@ public class TestDBHelper {
 	@Rollback(false)
 	public void testInsertWhereNotExists() {
 		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick" + UUID.randomUUID().toString().replace("-", "").substring(0, 16));
+		studentDO.setName(CommonOps.getRandomName("nick"));
 		
 		int row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
 		Assert.assertTrue(row == 1);
@@ -719,6 +719,24 @@ public class TestDBHelper {
 
         row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
         Assert.assertTrue(row == 0);
+
+        // 如果没有指定where条件，则等价于插入
+		studentDO = new StudentDO();
+		studentDO.setName(CommonOps.getRandomName("nick"));
+		assert dbHelper.insertWhereNotExist(studentDO, null) == 1;
+		assert studentDO.getId() != null;
+		assert dbHelper.getByKey(StudentDO.class, studentDO.getId()).getName().equals(studentDO.getName());
+
+		// 测试不需要自增id的情况
+		TypesDO typesDO = new TypesDO();
+		typesDO.setId1(new Random().nextLong());
+		typesDO.setId2(new Random().nextLong());
+		assert dbHelper.insertWhereNotExist(typesDO, "where id1=? and id2=?",
+				typesDO.getId1(), typesDO.getId2()) == 1;
+		assert dbHelper.insertWhereNotExist(typesDO, "where id1=? and id2=?",
+				typesDO.getId1(), typesDO.getId2()) == 0;
+		assert dbHelper.getOne(TypesDO.class, "where id1=? and id2=?",
+				typesDO.getId1(), typesDO.getId2()) != null;
 	}
 
 	@Test
