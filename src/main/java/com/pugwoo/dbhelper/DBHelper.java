@@ -303,12 +303,16 @@ public interface DBHelper {
 	 * <br>
 	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。<br>
 	 * <br>
-	 * 说明：再高并发情况下可能出现DeadlockLoserDataAccessException，需要应用自行重试，乐观锁本身就是这么用的。
+	 * 说明：再高并发情况下可能出现DeadlockLoserDataAccessException，需要应用自行重试，乐观锁本身就是这么用的。<br>
+	 *<br>
+	 * 【特别注意】如果where条件缺少索引或过于复杂，将导致锁表进而导致严重的性能问题。这是标记为@Deprecated的原因。
+	 *<br>
 	 * @param t 需要插入的DO对象实例
 	 * @param whereSql 只能是where语句（可含可不含where关键字），【不能】包含order/group/limit等后续语句
 	 * @param args whereSql中的参数
 	 * @return 实际修改的条数
 	 */
+	@Deprecated
 	<T> int insertWhereNotExist(T t, String whereSql, Object... args);
 	
 	/**
@@ -325,12 +329,16 @@ public interface DBHelper {
 	 * <br>
 	 * whereSql是判断条件，当条件成立时，不插入；当条件不成立时，插入。<br>
 	 * <br>
-	 * 说明：再高并发情况下可能出现DeadlockLoserDataAccessException，需要应用自行重试，乐观锁本身就是这么用的。
+	 * 说明：再高并发情况下可能出现DeadlockLoserDataAccessException，需要应用自行重试，乐观锁本身就是这么用的。<br>
+	 *<br>
+	 * 【特别注意】如果where条件缺少索引或过于复杂，将导致锁表进而导致严重的性能问题。这是标记为@Deprecated的原因。
+	 *<br>
 	 * @param t 需要插入的DO对象实例
 	 * @param whereSql 只能是where语句（可含可不含where关键字），不能包含order/group/limit等后续语句
 	 * @param args whereSql中的参数
 	 * @return 实际修改的条数
 	 */
+	@Deprecated
 	<T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args);
 
 	/**
