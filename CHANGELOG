@@ -1,4 +1,5 @@
 v0.9.8 - [improve] 使用jdbc keyHolder替换SELECT LAST_INSERT_ID()，减少对MySQL及事务的依赖
+       - [improve] 优化内部类访问，允许使用private static内部类，0.9.7及以前的版本不支持
        - [add] 增加线程范围内(临时)关闭指定类的软删除设置，turnOffSoftDelete
        - [del] 标记废弃insertWhereNotExist和insertWithNullWhereNotExist两个方法，短期内不会删除，但标记为在高并发情况下，可能有性能问题，如果使用，请加好索引
        - [upgrade] 升级jackson至2.10.4，mvel至2.4.8.Final

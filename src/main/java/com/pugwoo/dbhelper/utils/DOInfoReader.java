@@ -328,6 +328,7 @@ public class DOInfoReader {
 		
 		if(method != null) {
 			try {
+				method.setAccessible(true);
 				return method.invoke(object);
 			} catch (Exception e) {
 				LOGGER.error("method invoke", e);
@@ -364,6 +365,7 @@ public class DOInfoReader {
 		
 		if(method != null) {
 			try {
+				method.setAccessible(true);
 				method.invoke(object, value);
 			} catch (Exception e) {
 				LOGGER.error("method invoke", e);
