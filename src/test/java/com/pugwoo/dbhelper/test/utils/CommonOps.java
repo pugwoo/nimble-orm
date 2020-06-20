@@ -5,12 +5,17 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 public class CommonOps {
 
-    private static String getRandomName(String prefix) {
+    public static String getRandomName(String prefix) {
         return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    }
+
+    public static int getRandomInt(int base, int bound) {
+        return base + new Random().nextInt(bound);
     }
 
     public static StudentDO insertOne(DBHelper dbHelper) {
