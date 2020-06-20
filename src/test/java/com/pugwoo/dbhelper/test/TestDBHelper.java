@@ -831,6 +831,9 @@ public class TestDBHelper {
 		assert total >= softTotal + 100;
 		assert softTotal >= counts2;
 
+		dbHelper.turnOnSoftDelete(StudentDO.class); // 测速错误顺序
+		dbHelper.turnOffSoftDelete(null); // 测试错误参数
+
 		dbHelper.turnOffSoftDelete(StudentDO.class);
 
 		int turnoffTotal = dbHelper.getCount(StudentDO.class);
@@ -840,6 +843,7 @@ public class TestDBHelper {
 		dbHelper.delete(StudentDO.class, "where 1=1");
 
 		dbHelper.turnOnSoftDelete(StudentDO.class);
+		dbHelper.turnOnSoftDelete(null); // 测试错误参数
 
 		total = dbHelper.getCount(StudentTrueDeleteDO.class);
 		assert total == 0;

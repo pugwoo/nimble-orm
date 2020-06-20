@@ -19,10 +19,16 @@ public class TestDynamic {
     @Autowired
     private DBHelper dbHelper;
 
+    /**测试分表*/
     @Test
     public void test() {
         String tableName = DBHelperContext.getTableName(StudentDO.class);
         assert tableName == null;
+
+        // 测试错误参数
+        DBHelperContext.setTableName(StudentDO.class, null);
+        DBHelperContext.setTableName(StudentDO.class, "");
+        DBHelperContext.setTableName(null, "my_table");
 
         DBHelperContext.setTableName(StudentDO.class, "my_table");
         tableName = DBHelperContext.getTableName(StudentDO.class);

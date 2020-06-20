@@ -108,7 +108,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		if(batchDelete) {
 
             for(T t : list) {
-                PreHandleObject.preHandleDelete(t); // 这里目前暂时不会走到这里，但仍保留该语句
+                PreHandleObject.preHandleDelete(t);
             }
 
 			Class<?> clazz = list.get(0).getClass();
