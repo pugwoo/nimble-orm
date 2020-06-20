@@ -9,7 +9,7 @@ import java.util.List;
  * 
  * 关于拦截器的设计想法：
  * 1. 查询拦截器，用于数据安全拦截和数据查询审计。
- * 2. 
+ * 2. 修改拦截器，用于在修改、插入、删除之前和之后做一些操作。
  * @author pugwoo
  */
 public class DBHelperInterceptor {
