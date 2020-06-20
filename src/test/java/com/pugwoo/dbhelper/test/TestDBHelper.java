@@ -166,6 +166,9 @@ public class TestDBHelper {
 		
 		db = dbHelper.getByKey(StudentDO.class, db.getId());
 		Assert.assertTrue("nick4".equals(db.getName()));
+
+		// 测试异常参数
+		assert dbHelper.updateCustom(studentDO, null) == 0;
 	}
 	
 	@Test
@@ -180,6 +183,9 @@ public class TestDBHelper {
 		
 		List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where name=?", newName);
 		Assert.assertTrue(list.size() == rows);
+
+		// 测试异常参数
+		assert dbHelper.updateAll(StudentDO.class, null, "where 1=1") == 0;
 	}
 	
 	// ============ UPDATE TEST END ======================

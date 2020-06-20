@@ -1,10 +1,10 @@
 package com.pugwoo.dbhelper.test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
+import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.TypesDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,8 +14,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc-interceptor.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -69,6 +70,38 @@ public class TestDBHelperInterceptor {
 		
 		dbHelper.updateCustom(studentDO, "age=age+1");
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
+	}
+
+	@Test @Rollback(false)
+	public void testMultiKeyUpdateAll() {
+		Long long1 = new Random().nextLong();
+		Long long2 = new Random().nextLong();
+		Long long3 = new Random().nextLong();
+		Long long4 = new Random().nextLong();
+
+		TypesDO typesDO1 = new TypesDO();
+		typesDO1.setId1(long1);
+		typesDO1.setId2(long2);
+
+		assert dbHelper.insert(typesDO1) == 1;
+
+		TypesDO typesDO2 = new TypesDO();
+		typesDO2.setId1(long1);
+		typesDO2.setId2(long3);
+		TypesDO typesDO3 = new TypesDO();
+		typesDO3.setId1(long1);
+		typesDO3.setId2(long4);
+
+		assert dbHelper.insert(ListUtils.newArrayList(typesDO2, typesDO3)) == 2;
+
+		assert dbHelper.updateAll(TypesDO.class, "set my_short=3",
+				"where id1=?", long1) == 3;
+		List<TypesDO> all = dbHelper.getAll(TypesDO.class, "where id1=?", long1);
+		assert all.size() == 3;
+		for(TypesDO typesDO : all) {
+			assert typesDO.getMyShort() == 3;
+		}
+
 	}
 	
 	@Test @Rollback(false)
