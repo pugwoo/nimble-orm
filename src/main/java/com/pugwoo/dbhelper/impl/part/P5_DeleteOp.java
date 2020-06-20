@@ -196,9 +196,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	////////
 	private <T> int updateForDelete(T t) throws NullKeyValueException {
 
-		if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
-			return 0; // not need to update
-		}
+		// 这个if是肯定不会进去的，因为updateForDelete只对软删除有用，此时非key column肯定不会为空
+		//if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
+		//	return 0; // not need to update
+		//}
 
 		List<Object> tList = new ArrayList<Object>();
 		tList.add(t);

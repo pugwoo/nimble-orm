@@ -71,14 +71,23 @@ public class TestDBHelperDefaultInterceptor {
 	
 	@Test @Rollback(false)
 	public void testDelete() {
-		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick");
-		studentDO.setAge(29);
-		dbHelper.insert(studentDO);
+		StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
 		Long id = studentDO.getId();
+		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 		
-		dbHelper.deleteByKey(StudentDO.class, id);
-		dbHelper.delete(StudentDO.class, "where id > ?", 100);
+		assert dbHelper.deleteByKey(StudentDO.class, id) == 1;
+
+		CommonOps.insertBatch(dbHelper, CommonOps.getRandomInt(101, 100));
+		assert dbHelper.delete(StudentDO.class, "where id > ?", 100) > 0;
+
+		studentDO = CommonOps.insertOne(dbHelper);
+
+		assert dbHelper.getByKey(StudentDO.class, studentDO.getId())
+				.getName().equals(studentDO.getName());
+		studentDO.setName(studentDO.getName() + "Del");
+		assert dbHelper.deleteByKey(studentDO) == 1;
+
 	}
 	
 	@Test @Rollback(false)
