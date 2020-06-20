@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.exception.ScriptErrorException;
 import com.pugwoo.dbhelper.test.entity.StudentScriptDO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,6 +97,21 @@ public class TestScripts {
         assert student2.getName().equals("333");
     }
 
+    @Test
+    @Rollback(false)
+    public void testWrongScript() {
+        StudentTestScriptErrorDO student = new StudentTestScriptErrorDO();
+
+        int i = 0;
+        try {
+            dbHelper.insert(student);
+        } catch (Exception e) {
+            assert e instanceof ScriptErrorException;
+            i = 1;
+        }
+        assert i == 1;
+    }
+
 
     @Table("t_student")
     public static class StudentRawDO {
@@ -122,5 +138,34 @@ public class TestScripts {
             this.name = name;
         }
     }
+
+    @Table("t_student")
+    public static class StudentTestScriptErrorDO {
+
+        @Column(value = "id", isKey = true, isAutoIncrement = true)
+        private Long id;
+
+        @Column(value = "name", insertValueScript = "1++++", ignoreScriptError = false) // 故意弄错的脚本
+        private String name;
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+
+
 
 }

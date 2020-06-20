@@ -201,6 +201,13 @@ public class TestOthers {
             assert ex.getMessage().equals(errorMsg);
         }
 
+        {
+            ScriptErrorException ex = new ScriptErrorException();
+            ex = new ScriptErrorException(cause);
+            assert ex.getCause().equals(cause);
+            ex = new ScriptErrorException(errorMsg);
+            assert ex.getMessage().equals(errorMsg);
+        }
         // test some getter setter
 
     }
