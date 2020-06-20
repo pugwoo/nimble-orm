@@ -2,7 +2,6 @@ package com.pugwoo.dbhelper.test.utils;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,7 @@ public class CommonOps {
         }
 
         int rows = dbHelper.insert(list);
-        Assert.assertTrue(rows == num);
+        assert rows == num;
 
         return list;
     }

@@ -811,5 +811,39 @@ public class TestDBHelper {
 		rows = dbHelper.delete(StudentTrueDeleteDO.class, "where name=?", "john");
 		Assert.assertTrue(rows == 0);
 	}
+
+	@Test
+	@Rollback(false)
+    public void testTurnOffSoftDelete() {
+		int counts1 = 100 + new Random().nextInt(100);
+		CommonOps.insertBatch(dbHelper, counts1);
+
+		// 先制造点软删除
+		dbHelper.delete(StudentDO.class, "Where 1=1");
+
+		int counts2 = 100 + new Random().nextInt(100);
+		CommonOps.insertBatch(dbHelper, counts2);
+
+		int total = dbHelper.getCount(StudentTrueDeleteDO.class);
+		int softTotal = dbHelper.getCount(StudentDO.class);
+
+		assert total >= counts1 + counts2;
+		assert total >= softTotal + 100;
+		assert softTotal >= counts2;
+
+		dbHelper.turnOffSoftDelete(StudentDO.class);
+
+		int turnoffTotal = dbHelper.getCount(StudentDO.class);
+		assert total == turnoffTotal;
+
+		// 物理删除了
+		dbHelper.delete(StudentDO.class, "where 1=1");
+
+		dbHelper.turnOnSoftDelete(StudentDO.class);
+
+		total = dbHelper.getCount(StudentTrueDeleteDO.class);
+		assert total == 0;
+
+	}
 	
 }

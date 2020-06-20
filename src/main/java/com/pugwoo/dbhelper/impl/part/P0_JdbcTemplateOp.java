@@ -188,4 +188,15 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	public void resetTableNames() {
 		DBHelperContext.resetTableName();
 	}
+
+	@Override
+	public <T> void turnOffSoftDelete(Class<T> clazz) {
+		DBHelperContext.turnOffSoftDelete(clazz);
+	}
+
+	@Override
+	public <T> void turnOnSoftDelete(Class<T> clazz) {
+		DBHelperContext.turnOnSoftDelete(clazz);
+	}
+
 }

@@ -73,6 +73,26 @@ public interface DBHelper {
 	 */
 	void resetTableNames();
 
+	// ================ Disable soft delete ================================
+
+	/**
+	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都会进行物理删除。<br>
+	 * 该设置仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
+	 * 如果需要永久性的移除软删除，请使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
+	 *
+	 * @param clazz
+	 * @param <T>
+	 */
+	<T> void turnOffSoftDelete(Class<T> clazz);
+
+	/**
+	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete
+	 *
+	 * @param clazz
+	 * @param <T>
+	 */
+	<T> void turnOnSoftDelete(Class<T> clazz);
+
 	// =============== Query methods START ==================================
 	
 	/**

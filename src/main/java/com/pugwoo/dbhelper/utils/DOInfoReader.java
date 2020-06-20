@@ -1,23 +1,17 @@
 package com.pugwoo.dbhelper.utils;
 
+import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.pugwoo.dbhelper.exception.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.annotation.ExcludeInheritedColumn;
-import com.pugwoo.dbhelper.annotation.JoinLeftTable;
-import com.pugwoo.dbhelper.annotation.JoinRightTable;
-import com.pugwoo.dbhelper.annotation.JoinTable;
-import com.pugwoo.dbhelper.annotation.RelatedColumn;
-import com.pugwoo.dbhelper.annotation.Table;
 
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
@@ -248,6 +242,12 @@ public class DOInfoReader {
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
+
+		// 处理turnoff软删除
+		if (DBHelperContext.isTurnOffSoftDelete(clazz)) {
+			return null;
+		}
+
 		List<Field> fields = getColumns(clazz);
 		
 		for(Field field : fields) {

@@ -33,7 +33,8 @@ public class PreHandleObject {
 		
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			
+
+			// 这个地方不需要处理turnOff软删除，因为它只是写入时设置默认值
 			if(column.softDelete() != null && column.softDelete().length == 2
 					&& !column.softDelete()[0].trim().isEmpty()
 					&& !column.softDelete()[1].trim().isEmpty()) {
@@ -119,7 +120,8 @@ public class PreHandleObject {
 			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
 				DOInfoReader.setValue(field, t, new Date());
 			}
-			
+
+			// 这个地方不用处理turnOff软删除，因为它只是更新时自动设置软删除的值
 			if(column.softDelete() != null && column.softDelete().length == 2
 					&& !column.softDelete()[0].trim().isEmpty()
 					&& !column.softDelete()[1].trim().isEmpty()) {
