@@ -779,6 +779,21 @@ public class TestDBHelper {
 		// 此时版本应该是7
 		tmp = dbHelper.getByKey(CasVersionDO.class, casVersionDO.getId());
 		assert tmp.getVersion().equals(7);
+
+
+		// 测试CAS版本字段是Long的情况
+		CasVersionLongDO casVersionLongDO = new CasVersionLongDO();
+		casVersionLongDO.setName("nick");
+
+		assert dbHelper.insert(casVersionLongDO) > 0; // 插入时会自动写入casVersion字段的值
+
+		assert casVersionLongDO.getId() > 0;
+		assert casVersionLongDO.getVersion() == 1;
+
+		casVersionLongDO.setName("nick2");
+		assert dbHelper.update(casVersionLongDO) > 0; // 更新时会自动改casVersion字段的值
+		assert casVersionLongDO.getVersion() == 2;
+
     }
 
 
