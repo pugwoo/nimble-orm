@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -184,6 +185,49 @@ public class TestDBHelper {
 	// ============ UPDATE TEST END ======================
 	
 	// ============ INSERT_UPDATE TEST START =============
+
+    @Test @Rollback(false)
+	public void testInsertOrUpdate() {
+		assert dbHelper.insertOrUpdate(null) == 0;
+
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName(CommonOps.getRandomName("tom"));
+		assert dbHelper.insertOrUpdate(null) == 0;
+		assert dbHelper.insertOrUpdate(studentDO) == 1;
+		assert studentDO.getId() != null;
+
+		StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		assert student2.getName().equals(studentDO.getName());
+
+		student2.setName(CommonOps.getRandomName("jim"));
+		assert dbHelper.insertOrUpdate(student2) == 1;
+		assert student2.getId().equals(studentDO.getId());
+
+		StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
+		assert student2.getName().equals(student3.getName());
+	}
+
+	@Test @Rollback(false)
+	public void testInsertOrUpdateWithNull() {
+		assert dbHelper.insertOrUpdateWithNull(null) == 0;
+
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName(CommonOps.getRandomName("tom"));
+		assert dbHelper.insertOrUpdateWithNull(null) == 0;
+		assert dbHelper.insertOrUpdateWithNull(studentDO) == 1;
+		assert studentDO.getId() != null;
+
+		StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+		assert student2.getName().equals(studentDO.getName());
+
+		student2.setName(CommonOps.getRandomName("jim"));
+		assert dbHelper.insertOrUpdateWithNull(student2) == 1;
+		assert student2.getId().equals(studentDO.getId());
+
+		StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
+		assert student2.getName().equals(student3.getName());
+	}
+
 	
 	@Test
 	@Rollback(false)
@@ -214,6 +258,17 @@ public class TestDBHelper {
 		}
 		
 		dbHelper.insertOrUpdateFullWithNull(old, newlist);
+
+
+		// 异常参数的情况
+		assert dbHelper.insertOrUpdateFull(null, null) == 0;
+		assert dbHelper.insertOrUpdateFull(null, new ArrayList<StudentDO>()) == 0;
+
+		StudentDO new1 = new StudentDO();
+		new1.setName(CommonOps.getRandomName("tom"));
+		assert dbHelper.insertOrUpdateFull(null, ListUtils.newArrayList(new1)) == 1;
+		assert new1.getId() != null;
+		assert dbHelper.getByKey(StudentDO.class, new1.getId()).getName().equals(new1.getName());
 	}
 	
 	// ============ INSERT_UPDATE TEST END ===============
