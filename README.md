@@ -8,8 +8,6 @@
 
 3. MyBatis提供一种定义接口，然后去xml中实现同名标记的sql，就可以暴露为可用DAO的方式。这种方式我并不推荐，在简单的增删改查功能下，这种方式没有问题，因为一个DAO接口对应于sql并不是只有一条，特别是复杂的DAO接口。如果一条SQL就是一个DAO接口的话，那组装多个sql的逻辑就暴露到service层，这样service层会变得复杂。
 
-4. 实现的这个小工具nimble-orm没有完全取代MyBatis的打算，但对于大多数增删改查，可以很简单地完成。特别的，我觉得分布式系统的强一致性，非常合适由MySQL来保证。因此，使用类似update where, insert select where这样的CAS乐观锁写法的SQL，特别常用。
-
 # 使用nimble-orm的优势
 
 1. **为互联网频繁的表变动而生。** 表名、字段名，仅在代码中出现一次。修改表名只需要改一处地方，修改字段名，仅需改字段注解一次及where子句中涉及的字段名。增加字段只需增加一个表成员。修改量相比MyBatis大大减少。
@@ -100,6 +98,8 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 			<artifactId>spring-context-support</artifactId>
 		</dependency>
 ```
+
+nimble-orm提供了spring-boot-starter接入方式，详见：https://github.com/pugwoo/nimbleorm-spring-boot-starter
 
 ## 一些高级好玩特性介绍（部分）
 
@@ -251,6 +251,8 @@ public class StudentSchoolJoinVO {
 8. 目前发现mysql的驱动依赖mysql-connector-java问题比较多，例如5.x的最新版本5.1.47就有bug，请退回到5.1.46。建议使用8.0.15+，目前spring boot官方也使用该版本。
 
 9. 虽然mysql数据库支持使用单引号和双引号来表示字符串，但在SQL标准中，定义的是单引号，并没有双引号。因此，nimble-orm为了处理规范和简单，只支持单引号表示字符串。
+
+10. nimble-orm支持多数据源，在多数据源事务管理器的情况下，nimble-orm仍能正常工作。
 
 ## 未来规划
 
