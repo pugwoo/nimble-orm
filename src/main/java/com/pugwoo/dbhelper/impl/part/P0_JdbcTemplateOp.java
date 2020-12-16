@@ -146,6 +146,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
 
+	public JdbcTemplate getJdbcTemplate() {
+		return this.jdbcTemplate;
+	}
+
+	public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+		return this.namedParameterJdbcTemplate;
+	}
+
 	@Override
 	public void setTimeoutWarningValve(long timeMS) {
 		timeoutWarningValve = timeMS;
