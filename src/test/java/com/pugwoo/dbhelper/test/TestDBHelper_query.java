@@ -214,6 +214,17 @@ public class TestDBHelper_query {
         // 这意味着rollback()这个方法在单元测试中没法测
     }
 
+    @Transactional
+    @Test @Rollback(false)
+    public void testGetRaw() {
+        final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
+        final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
 
+        List<StudentDO> list = dbHelper.getRaw(StudentDO.class, "select id,name from t_student where name=?", studentDO1.getName());
+
+        assert list.size() == 1;
+        assert list.get(0).getName().equals(studentDO1.getName());
+
+    }
 
 }

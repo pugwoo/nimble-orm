@@ -1,3 +1,5 @@
+v0.9.9 - [add] 增加getRaw和getRawCount方法，支持自定义SQL查询，适用于统计类SQL
+
 2020年6月20日
 v0.9.8 - [improve] 使用jdbc keyHolder替换SELECT LAST_INSERT_ID()，减少对MySQL及事务的依赖
        - [add] 增加线程范围内(临时)关闭指定类的软删除设置，turnOffSoftDelete

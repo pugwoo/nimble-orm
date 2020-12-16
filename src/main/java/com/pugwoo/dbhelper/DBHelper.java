@@ -228,7 +228,23 @@ public interface DBHelper {
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
-	
+
+	/**
+	 * 执行自行指定的SQL查询语句
+	 * @param clazz 转换回来的DO类，也支持关联查询后处理
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 */
+	<T> List<T> getRaw(Class<T> clazz, String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL查询语句的总数
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 * @return
+	 */
+	long getRawCount(String sql, Object... args);
+
 	/**
 	 * 是否出现至少一条记录
 	 * @param clazz 查询的DO类

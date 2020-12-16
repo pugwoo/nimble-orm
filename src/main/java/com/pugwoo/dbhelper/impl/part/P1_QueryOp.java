@@ -280,6 +280,67 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
+    @Override
+    public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
+        log(sql);
+
+        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        if (args != null) {
+            argsList.addAll(Arrays.asList(args));
+        }
+
+        doInterceptBeforeQuery(clazz, sql, argsList);
+
+        long start = System.currentTimeMillis();
+        List<T> list;
+        if (argsList.isEmpty()) {
+            list = namedParameterJdbcTemplate.query(sql,
+                    new AnnotationSupportRowMapper(clazz, false));
+        } else {
+            list = namedParameterJdbcTemplate.query(
+                    NamedParameterUtils.trans(sql, argsList),
+                    NamedParameterUtils.transParam(argsList),
+                    new AnnotationSupportRowMapper(clazz, false));
+        }
+
+        postHandleRelatedColumn(list);
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql.toString(), argsList);
+
+
+        doInteceptAfterQueryList(clazz, list, -1, sql, argsList);
+
+        return list;
+    }
+
+    @Override
+    public long getRawCount(String sql, Object... args) {
+        log(sql);
+
+        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        if (args != null) {
+            argsList.addAll(Arrays.asList(args));
+        }
+
+        long start = System.currentTimeMillis();
+
+        Long rows;
+        if (argsList.isEmpty()) {
+            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<String, Object>(),
+                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+        } else {
+            rows = namedParameterJdbcTemplate.queryForObject(
+                    NamedParameterUtils.trans(sql, argsList),
+                    NamedParameterUtils.transParam(argsList),
+                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+        }
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql, null);
+        return rows == null ? 0 : rows;
+    }
+
     /**
      * 查询列表
      *
@@ -384,8 +445,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     //////////////////// 拦截器封装方法
 
     private void doInterceptBeforeQuery(Class<?> clazz, StringBuilder sql, List<Object> args) {
+        doInterceptBeforeQuery(clazz, sql.toString(), args);
+    }
+
+    private void doInterceptBeforeQuery(Class<?> clazz, String sql, List<Object> args) {
         for (DBHelperInterceptor interceptor : interceptors) {
-            boolean isContinue = interceptor.beforeSelect(clazz, sql.toString(), args);
+            boolean isContinue = interceptor.beforeSelect(clazz, sql, args);
             if (!isContinue) {
                 throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
             }
@@ -404,8 +469,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, int total,
                                                  StringBuilder sql, List<Object> args) {
+        return doInteceptAfterQueryList(clazz, list, total, sql.toString(), args);
+    }
+
+    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, int total,
+                                                 String sql, List<Object> args) {
         for (int i = interceptors.size() - 1; i >= 0; i--) {
-            list = interceptors.get(i).afterSelect(clazz, sql.toString(), args, list, total);
+            list = interceptors.get(i).afterSelect(clazz, sql, args, list, total);
         }
         return list;
     }
