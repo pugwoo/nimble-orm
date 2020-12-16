@@ -11,7 +11,9 @@ public enum JoinTypeEnum {
 	/**left join左连接*/
 	LEFT_JOIN("left join", "left join"),
 	/**right join右连接*/
-	RIGHT_JOIN("right join", "right join");
+	RIGHT_JOIN("right join", "right join"),
+    /**STRAIGHT_JOIN强制左表为驱动表进行join*/
+	STRAIGHT_JOIN("STRAIGHT_JOIN", "STRAIGHT JOIN ");
 	
 	private String code;
 	
