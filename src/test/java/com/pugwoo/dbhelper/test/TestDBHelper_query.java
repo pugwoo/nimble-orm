@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.StudentForRawDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentSelfTrueDeleteJoinVO;
@@ -220,11 +221,18 @@ public class TestDBHelper_query {
         final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
         final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
 
-        List<StudentDO> list = dbHelper.getRaw(StudentDO.class, "select id,name from t_student where name=?", studentDO1.getName());
+        List<StudentForRawDO> list = dbHelper.getRaw(StudentForRawDO.class,
+                "select id,name from t_student where name=?", studentDO1.getName());
 
         assert list.size() == 1;
         assert list.get(0).getName().equals(studentDO1.getName());
 
+        List<String> names = new ArrayList<String>();
+        names.add(studentDO1.getName());
+        names.add(studentDO2.getName());
+        long count = dbHelper.getRawCount("select count(*) from t_student where name in (?)",
+                names);
+        assert count == 2;
     }
 
 }
