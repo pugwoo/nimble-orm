@@ -1,3 +1,4 @@
+2020年12月16日
 v0.9.9 - [add] 增加getRaw和getRawCount方法，支持自定义SQL查询，适用于统计类SQL
        - [add] 增加join类型STRAIGHT_JOIN
 

@@ -4,7 +4,7 @@
 
 	<groupId>com.pugwoo</groupId>
 	<artifactId>nimble-orm</artifactId>
-	<version>0.9.8</version>
+	<version>0.9.9</version>
 	<packaging>jar</packaging>
 
 	<name>nimble-orm</name>
@@ -14,7 +14,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<spring.version>5.2.7.RELEASE</spring.version>
+		<spring.version>5.2.12.RELEASE</spring.version>
 	</properties>
 
     <developers>
@@ -54,13 +54,13 @@
 		<dependency>
 		    <groupId>com.fasterxml.jackson.core</groupId>
 		    <artifactId>jackson-databind</artifactId>
-		    <version>2.10.4</version>
+		    <version>2.11.4</version>
 		</dependency>
 		<!-- mvel -->
 		<dependency>
 			<groupId>org.mvel</groupId>
 			<artifactId>mvel2</artifactId>
-			<version>2.4.8.Final</version>
+			<version>2.4.10.Final</version>
 		</dependency>
 
 		<!-- external provided -->
@@ -94,7 +94,7 @@
 		<dependency>
 			<groupId>com.pugwoo</groupId>
 			<artifactId>woo-utils</artifactId>
-			<version>0.8.8</version>
+			<version>0.9.2</version>
 			<scope>test</scope>
 		</dependency>
 		
