@@ -261,5 +261,5 @@ public class StudentSchoolJoinVO {
 2. Join方式设计。(0.3.0+ 已实现)
 
 3. json支持。（0.7.0+ 已实现）
- 
+
 ## QQ群：178709063 欢迎使用

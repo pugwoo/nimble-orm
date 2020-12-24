@@ -2,7 +2,7 @@
 
 由于Join所关联的表和字段是相对文档的，所以合适在VO上表达：
 
-@Join(type = "inner join", condition = "t1.school_id=t2.id")
+@JoinTable(type = "inner join", on = "t1.school_id=t2.id")
 public class StudentSchoolVO {
 
     @JoinLeftTable(alias = "t1")
@@ -10,6 +10,7 @@ public class StudentSchoolVO {
 
     @JoinRightTable(alias = "t2")
     private SchoolDO school;
+
 }
 
 然后查询接口和原DO/VO查询方式一样。
