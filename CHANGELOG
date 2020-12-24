@@ -1,4 +1,5 @@
 v1.0.0 - [enhance] getCount和Page的total等返回记录总数的类型由int升级为long
+       - [enhance] IDBHelperDataService接口的返回值泛型化，支持各种类型返回，实现者不需要强制转换成Object了
 
 2020年12月16日
 v0.9.9 - [add] 增加getRaw和getRawCount方法，支持自定义SQL查询，适用于统计类SQL

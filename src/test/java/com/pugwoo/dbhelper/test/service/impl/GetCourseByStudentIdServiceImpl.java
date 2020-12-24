@@ -1,14 +1,12 @@
 package com.pugwoo.dbhelper.test.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 通过学生id查询该学生的所有课程，批量接口
@@ -21,7 +19,7 @@ public class GetCourseByStudentIdServiceImpl implements IGetCourseByStudentIdDat
 	private DBHelper dbHelper;
 	
 	@Override
-	public List<Object> get(List<Object> values,
+	public List<?> get(List<Object> values,
 			Class<?> localClass, String localColumn,
 			Class<?> remoteClass, String remoteColumn) {
 		
@@ -34,7 +32,7 @@ public class GetCourseByStudentIdServiceImpl implements IGetCourseByStudentIdDat
 		 */
 		List<CourseDO> list = dbHelper.getAll(CourseDO.class, 
 				"where student_id in (?)", values);
-		return new ArrayList<Object>(list);
+		return list;
 	}
 
 }
