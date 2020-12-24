@@ -169,23 +169,23 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    public <T> int getCount(Class<T> clazz) {
+    public <T> long getCount(Class<T> clazz) {
         StringBuilder sql = new StringBuilder();
         sql.append(SQLUtils.getSelectCountSQL(clazz));
         sql.append(SQLUtils.autoSetSoftDeleted("", clazz));
 
         log(sql);
         long start = System.currentTimeMillis();
-        int rows = jdbcTemplate.queryForObject(sql.toString(), Integer.class);
+        Long rows = jdbcTemplate.queryForObject(sql.toString(), Long.class);
 
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql.toString(), null);
-        return rows;
+        return rows == null ? 0 : rows;
     }
 
-    // 为了解决group by的计数问题，将计数转换成select count(1) from (子select语句) 的形式
+    // 为了解决group by的计数问题，将计数转换成select count(*) from (子select语句) 的形式
     @Override
-    public <T> int getCount(Class<T> clazz, String postSql, Object... args) {
+    public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
@@ -206,15 +206,15 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         long start = System.currentTimeMillis();
 
-        Integer rows;
+        Long rows;
         if (argsList.isEmpty()) {
             rows = namedParameterJdbcTemplate.queryForObject(sql.toString(), new HashMap<String, Object>(),
-                    Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
         } else {
             rows = namedParameterJdbcTemplate.queryForObject(
                     NamedParameterUtils.trans(sql.toString(), argsList),
                     NamedParameterUtils.transParam(argsList),
-                    Integer.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
         }
 
         long cost = System.currentTimeMillis() - start;
@@ -387,7 +387,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
         }
 
-        int total = -1; // -1 表示没有查询总数，未知
+        long total = -1; // -1 表示没有查询总数，未知
         if (withCount) {
             // 如果offset为0且查询的list小于limit数量，说明总数就这么多了，不需要再查总数了
             if(offset != null && offset == 0 && limit != null && list.size() < limit) {
@@ -467,12 +467,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
-    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, int total,
+    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, long total,
                                                  StringBuilder sql, List<Object> args) {
         return doInteceptAfterQueryList(clazz, list, total, sql.toString(), args);
     }
 
-    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, int total,
+    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, long total,
                                                  String sql, List<Object> args) {
         for (int i = interceptors.size() - 1; i >= 0; i--) {
             list = interceptors.get(i).afterSelect(clazz, sql, args, list, total);

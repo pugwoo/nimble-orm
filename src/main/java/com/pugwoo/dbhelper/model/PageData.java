@@ -14,7 +14,7 @@ public class PageData<T> implements Serializable {
 	/**
 	 * 总数
 	 */
-	private int total;
+	private long total;
 
 	/**
 	 * 每页个数
@@ -30,7 +30,7 @@ public class PageData<T> implements Serializable {
 		this.data = new ArrayList<T>();
 	}
 
-	public PageData(int total, List<T> data, int pageSize) {
+	public PageData(long total, List<T> data, int pageSize) {
 		this.total = total;
 		this.data = data;
 		this.pageSize = pageSize;
@@ -38,23 +38,22 @@ public class PageData<T> implements Serializable {
 	
 	/**
 	 * 总页数，通过计算得出来
-	 * @return
 	 */
 	public int getTotalPage() {
 		if(total <= 0) {
 			return 0;
 		}
 		if(pageSize < 1) {
-			return total;
+			return (int) total;
 		}
-		return (total + pageSize - 1) / pageSize;
+		return (int) ((total + pageSize - 1) / pageSize);
 	}
 
-	public int getTotal() {
+	public long getTotal() {
 		return total;
 	}
 
-	public void setTotal(int total) {
+	public void setTotal(long total) {
 		this.total = total;
 	}
 

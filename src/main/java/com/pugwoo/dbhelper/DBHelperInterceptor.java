@@ -36,7 +36,7 @@ public class DBHelperInterceptor {
 	 *         对于机密的数据，请直接设置result的对象属性为null。
 	 */
 	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args,
-			List<T> result, int count) {
+			List<T> result, long count) {
 		return result;
 	}
 	

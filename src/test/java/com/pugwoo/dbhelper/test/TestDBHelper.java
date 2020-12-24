@@ -368,7 +368,7 @@ public class TestDBHelper {
 			Assert.assertTrue(vo.getStudentDO() != null);
 		}
 		
-		int total = dbHelper.getCount(StudentSchoolJoinVO.class);
+		long total = dbHelper.getCount(StudentSchoolJoinVO.class);
 		Assert.assertTrue(total > 0);
 		total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
 		Assert.assertTrue(total > 0);
@@ -429,7 +429,7 @@ public class TestDBHelper {
 		page1 = dbHelper.getPageWithoutCount(StudentDO.class, 2, 10);
 		Assert.assertTrue(page1.getData().size() == 10);
 		
-		int total = dbHelper.getCount(StudentDO.class);
+		long total = dbHelper.getCount(StudentDO.class);
 		Assert.assertTrue(total >= 100);
 		
 		total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");

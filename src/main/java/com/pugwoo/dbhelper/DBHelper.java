@@ -151,7 +151,7 @@ public interface DBHelper {
 	 * @param clazz 【-支持@JoinTable-】
 	 * @return 总数
 	 */
-	<T> int getCount(Class<T> clazz);
+	<T> long getCount(Class<T> clazz);
 	
 	/**
 	 * 计算总数<br>
@@ -161,7 +161,7 @@ public interface DBHelper {
 	 * @param args postSql中的参数列表
 	 * @return 总数
 	 */
-	<T> int getCount(Class<T> clazz, String postSql, Object... args);
+	<T> long getCount(Class<T> clazz, String postSql, Object... args);
 	
 	/**
 	 * 查询列表，没有查询条件；不查询总数<br>

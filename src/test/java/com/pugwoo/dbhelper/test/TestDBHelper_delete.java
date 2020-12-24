@@ -158,8 +158,8 @@ public class TestDBHelper_delete {
         int counts2 = 100 + new Random().nextInt(100);
         CommonOps.insertBatch(dbHelper, counts2);
 
-        int total = dbHelper.getCount(StudentTrueDeleteDO.class);
-        int softTotal = dbHelper.getCount(StudentDO.class);
+        long total = dbHelper.getCount(StudentTrueDeleteDO.class);
+        long softTotal = dbHelper.getCount(StudentDO.class);
 
         assert total >= counts1 + counts2;
         assert total >= softTotal + 100;
@@ -170,7 +170,7 @@ public class TestDBHelper_delete {
 
         dbHelper.turnOffSoftDelete(StudentDO.class);
 
-        int turnoffTotal = dbHelper.getCount(StudentDO.class);
+        long turnoffTotal = dbHelper.getCount(StudentDO.class);
         assert total == turnoffTotal;
 
         // 物理删除了

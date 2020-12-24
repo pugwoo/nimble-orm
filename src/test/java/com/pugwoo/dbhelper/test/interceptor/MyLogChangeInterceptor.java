@@ -16,7 +16,7 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
 	}
 
 	@Override
-	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args, List<T> result, int count) {
+	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args, List<T> result, long count) {
 		System.out.println("<S< " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + NimbleOrmJSON.toJson(args)
 		    + "\n    total:" + count + ",size:" + result.size() + ",data:" + NimbleOrmJSON.toJson(result));
 		return result;

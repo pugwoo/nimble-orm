@@ -36,7 +36,7 @@ public class TestDBHelper_query {
     public void testCount() {
 
         dbHelper.delete(StudentDO.class, "where 1=1");
-        int count = dbHelper.getCount(StudentDO.class);
+        long count = dbHelper.getCount(StudentDO.class);
         assert count == 0;
 
         dbHelper.delete(SchoolDO.class, "where 1=1");
