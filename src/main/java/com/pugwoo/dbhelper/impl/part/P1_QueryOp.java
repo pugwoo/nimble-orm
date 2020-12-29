@@ -625,7 +625,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                             remoteDOClass, column.remoteColumn());
                 }
             } else {
-                String inExpr = column.remoteColumn() + " in (?)";
+                String inExpr = "`" + column.remoteColumn() + "`" + " in (?)";
                 if (column.extraWhere() == null || column.extraWhere().trim().isEmpty()) {
                     relateValues = getAll(remoteDOClass, "where " + inExpr, values);
                 } else {
