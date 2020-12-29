@@ -1,13 +1,30 @@
 package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
+import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
+import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
+import com.pugwoo.dbhelper.exception.RowMapperFailException;
+import com.pugwoo.dbhelper.exception.ScriptErrorException;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.model.SubQuery;
+import com.pugwoo.dbhelper.test.entity.AreaDO;
+import com.pugwoo.dbhelper.test.entity.AreaLocationDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.TypesDO;
+import com.pugwoo.dbhelper.test.vo.AreaVO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 /**
- * 其它的一些测试，主要为了覆盖代码
+ * 其它的一些测试，主要为了覆盖代码或最佳实践
  */
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -30,6 +47,30 @@ public class TestOthers {
 
     @Autowired
     private DBHelper dbHelper;
+    
+    @Test @Rollback(false)
+    public void testRelateComputedColumn() {
+        dbHelper.delete(AreaDO.class, "where 1=1");
+        dbHelper.delete(AreaLocationDO.class, "where 1=1");
+
+        AreaDO area = new AreaDO();
+        area.setLayerCode("CITY");
+        area.setAreaCode("SZ");
+
+        dbHelper.insert(area);
+
+        AreaLocationDO areaLocationDO = new AreaLocationDO();
+        areaLocationDO.setLayerCode("CITY");
+        areaLocationDO.setAreaCode("SZ");
+        areaLocationDO.setLongitude(new BigDecimal("120"));
+        areaLocationDO.setLatitude(new BigDecimal("22"));
+
+        dbHelper.insert(areaLocationDO);
+
+        AreaVO one = dbHelper.getOne(AreaVO.class);
+        assert one.getLocationVO() != null;
+
+    }
 
     @Test @Rollback(false)
     public void testTypes() {

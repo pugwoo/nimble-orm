@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperDataService;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
@@ -18,7 +19,14 @@ import net.sf.jsqlparser.JSQLParserException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
@@ -625,7 +633,15 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                             remoteDOClass, column.remoteColumn());
                 }
             } else {
-                String inExpr = "`" + column.remoteColumn() + "`" + " in (?)";
+                Column remoteColumn = remoteField.getAnnotation(Column.class);
+                String whereColumn;
+                if (remoteColumn.computed().trim().isEmpty()) {
+                    whereColumn = "`" + column.remoteColumn() + "`";
+                } else {
+                    whereColumn = remoteColumn.computed();
+                }
+
+                String inExpr = whereColumn + " in (?)";
                 if (column.extraWhere() == null || column.extraWhere().trim().isEmpty()) {
                     relateValues = getAll(remoteDOClass, "where " + inExpr, values);
                 } else {

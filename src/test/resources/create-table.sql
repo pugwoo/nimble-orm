@@ -75,3 +75,20 @@ CREATE TABLE `t_types` (
   PRIMARY KEY (`id1`,`id2`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+DROP TABLE IF EXISTS `t_area`;
+CREATE TABLE `t_area` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `layer_code` varchar(20) DEFAULT NULL,
+  `area_code` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `t_area_location`;
+CREATE TABLE `t_area_location` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `layer_code` varchar(20) DEFAULT NULL,
+  `area_code` varchar(20) DEFAULT NULL,
+  `longitude` decimal(10,6) DEFAULT NULL,
+  `latitude` decimal(10,6) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
