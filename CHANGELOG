@@ -2,7 +2,7 @@ v1.0.0 - [add] 关联查询RelatedColumn支持对computed计算值进行关联�
        - [enhance] getCount和Page的total等返回记录总数的类型由int升级为long
        - [enhance] IDBHelperDataService接口的返回值泛型化，支持各种类型返回，实现者不需要强制转换成Object了
        - [fix] 修复当RelateColumn注解的remoteColumn的值是SQL关键词时导致SQL异常的问题
-       - [enhance] 使用缓存的方式优化AnnotationSupportRowMapper的性能，4000行结果减少230毫秒
+       - [enhance] 使用缓存的方式优化AnnotationSupportRowMapper的性能，4000行处理从1830毫秒减少230毫秒为1600毫秒
 
 2020年12月16日
 v0.9.9 - [add] 增加getRaw和getRawCount方法，支持自定义SQL查询，适用于统计类SQL
