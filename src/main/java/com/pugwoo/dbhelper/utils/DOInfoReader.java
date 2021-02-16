@@ -1,7 +1,19 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.pugwoo.dbhelper.annotation.*;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.ExcludeInheritedColumn;
+import com.pugwoo.dbhelper.annotation.JoinLeftTable;
+import com.pugwoo.dbhelper.annotation.JoinRightTable;
+import com.pugwoo.dbhelper.annotation.JoinTable;
+import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.cache.ClassInfoCache;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -353,19 +365,11 @@ public class DOInfoReader {
 	 * @param value
 	 */
 	public static boolean setValue(Field field, Object object, Object value) {
-		String fieldName = field.getName();
-		String setMethodName = "set" + firstLetterUpperCase(fieldName);
 		value = TypeAutoCast.cast(value, field.getType());
-		
-		Method method = null;
-		try {
-			method = object.getClass().getMethod(setMethodName, value.getClass());
-		} catch (Exception e) {
-		}
+		Method method = ClassInfoCache.getFieldMethod(field);
 		
 		if(method != null) {
 			try {
-				method.setAccessible(true);
 				method.invoke(object, value);
 			} catch (Exception e) {
 				LOGGER.error("method invoke", e);
