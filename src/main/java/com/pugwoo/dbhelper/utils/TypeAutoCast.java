@@ -30,14 +30,16 @@ public class TypeAutoCast {
 	 * @return
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field)
-			throws SQLException{
-		if(rs.getObject(columnName) == null) { // 保证null会返回null值
+			throws SQLException {
+		int columnIndex = rs.findColumn(columnName);
+		Object result = rs.getObject(columnIndex);
+		if(result == null) { // 保证null会返回null值
 			return null;
 		}
 		
 		Column column = field.getAnnotation(Column.class);
 		if(column != null && column.isJSON()) { // 优先处理标记为json的列
-			String valStr = rs.getString(columnName);
+			String valStr = (result instanceof String) ? (String) result : rs.getString(columnIndex);
 			if(valStr == null || valStr.trim().isEmpty()) {
 				return null;
 			}
@@ -55,48 +57,48 @@ public class TypeAutoCast {
 		}
 		
 		Class<?> clazz = field.getType();
-		
+
+		if(clazz == String.class) {
+			return result instanceof String ? result : rs.getString(columnIndex);
+		}
 		if(clazz == Integer.class || clazz == int.class) {
-			return rs.getInt(columnName);
+			return result instanceof Integer ? result : rs.getInt(columnIndex);
 		}
 		if(clazz == Long.class || clazz == long.class) {
-			return rs.getLong(columnName);
-		}
-		if(clazz == Byte.class || clazz == byte.class) {
-			return rs.getByte(columnName);
-		}
-		if(clazz == byte[].class) {
-			return rs.getBytes(columnName);
-		}
-		if(clazz == Short.class || clazz == short.class) {
-			return rs.getShort(columnName);
+			return result instanceof Long ? result : rs.getLong(columnIndex);
 		}
 		if(clazz == Boolean.class || clazz == boolean.class) {
-			return rs.getBoolean(columnName);
+			return result instanceof Boolean ? result : rs.getBoolean(columnIndex);
+		}
+		if(clazz == Byte.class || clazz == byte.class) {
+			return result instanceof Byte ? result : rs.getByte(columnIndex);
+		}
+		if(clazz == byte[].class) {
+			return result instanceof byte[] ? result : rs.getBytes(columnIndex);
+		}
+		if(clazz == Short.class || clazz == short.class) {
+			return result instanceof Short ? result : rs.getShort(columnIndex);
 		}
 		if(clazz == Float.class || clazz == float.class) {
-			return rs.getFloat(columnName);
+			return result instanceof Float ? result : rs.getFloat(columnIndex);
 		}
 		if(clazz == Double.class || clazz == double.class) {
-			return rs.getDouble(columnName);
-		}
-		if(clazz == String.class) {
-			return rs.getString(columnName);
+			return result instanceof Double ? result : rs.getDouble(columnIndex);
 		}
 		if(clazz == BigDecimal.class) {
-			return rs.getBigDecimal(columnName);
+			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.sql.Date.class) {
-			return rs.getDate(columnName);
+			return result instanceof java.sql.Date ? result : rs.getDate(columnIndex);
 		}
 		if (clazz == java.sql.Time.class) {
-			return rs.getDate(columnName);
+			return result instanceof java.sql.Time ? result : rs.getDate(columnIndex);
 		}
 		if (clazz == java.sql.Timestamp.class) {
-			return rs.getTimestamp(columnName);
+			return result instanceof java.sql.Timestamp ? result : rs.getTimestamp(columnIndex);
 		}
 		
-		return rs.getObject(columnName);
+		return result;
 	}
 	
 	/**
