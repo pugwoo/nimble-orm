@@ -80,13 +80,30 @@ public class TestDBHelper {
 		dbHelper.insert(studentDO);
 		
 		StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-		Assert.assertTrue(st.getName().equals("mytestname"));
-		
+		assert st.getName().equals("mytestname");
+
+		studentDO = new StudentDO();
 		studentDO.setId(null);
 		studentDO.setName(null);
 		dbHelper.insertWithNull(studentDO);
 		st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-		Assert.assertTrue(st.getName() == null);
+		assert st.getName() == null;
+	}
+
+	@Test @Rollback(false)
+	public void testInsertId() {
+		// 测试插入时，如果自增id 同时 又指定了id，查回id是否正常
+		Long id = (long) (new Random().nextInt(100000000) + 100001234);
+		String name = UUID.randomUUID().toString().replace("-", "");
+		StudentDO studentDO = new StudentDO();
+		studentDO.setId(id);
+		studentDO.setName(name);
+		dbHelper.insert(studentDO);
+
+		assert id.equals(studentDO.getId());
+
+		StudentDO studentDO2 = dbHelper.getByKey(StudentDO.class, id);
+		assert studentDO2.getName().equals(name);
 	}
 	
 	
