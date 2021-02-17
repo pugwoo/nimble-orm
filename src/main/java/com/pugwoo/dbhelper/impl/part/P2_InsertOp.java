@@ -22,13 +22,13 @@ import java.util.List;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
-	//////// 拦截器
+	//////// 拦截器 BEGIN
 	private void doInterceptBeforeInsert(Object t) {
 		List<Object> list = new ArrayList<Object>();
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
-	private <T> void doInterceptBeforeInsertList(List<Object> list) {
+	private void doInterceptBeforeInsertList(List<Object> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeInsert(list);
 			if (!isContinue) {
@@ -42,7 +42,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsertList(list, rows);
 	}
-	private <T> void doInterceptAfterInsertList(final List<Object> list, final int rows) {
+	private void doInterceptAfterInsertList(final List<Object> list, final int rows) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -55,7 +55,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			runnable.run();
 		}
 	}
-	////////////
+	/////// 拦截器 END
 
 	@Override
 	public <T> int insert(T t) {
