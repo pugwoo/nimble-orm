@@ -707,7 +707,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<String, Object> mapRemoteValuesString = new HashMap<String, Object>();
                 for (Object obj : relateValues) {
                     Object oRemoteValue = DOInfoReader.getValue(remoteField, obj);
-                    if (oRemoteValue != null) {
+                    if (oRemoteValue != null && !mapRemoteValues.containsKey(oRemoteValue)) {
                         mapRemoteValues.put(oRemoteValue, obj);
                         mapRemoteValuesString.put(oRemoteValue.toString(), obj);
                     }
@@ -723,7 +723,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     }
                     Object objRemoteString = mapRemoteValuesString.get(oLocalValue.toString());
                     if (objRemoteString != null) {
-                        LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
+                        LOGGER.warn("@RelatedColumn fields local:{},remote:{} are different classes. Use String compare.",
                                 localField, remoteField);
                         DOInfoReader.setValue(field, t, objRemoteString);
                     }
