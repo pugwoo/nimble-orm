@@ -43,6 +43,9 @@ public class TypesDO {
     @Column(value = "my_timestamp")
     private Timestamp myTimestamp;
 
+    @Column(value = "my_mediumint")
+    private Integer myMediumint;
+
     public Long getId1() {
         return id1;
     }
@@ -121,5 +124,13 @@ public class TypesDO {
 
     public void setMyTimestamp(Timestamp myTimestamp) {
         this.myTimestamp = myTimestamp;
+    }
+
+    public Integer getMyMediumint() {
+        return myMediumint;
+    }
+
+    public void setMyMediumint(Integer myMediumint) {
+        this.myMediumint = myMediumint;
     }
 }

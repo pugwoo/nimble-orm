@@ -85,6 +85,7 @@ public class TestOthers {
         typesDO.setMyDate(new java.sql.Date(new java.util.Date().getTime()));
         typesDO.setMyTime(new java.sql.Time(new java.util.Date().getTime()));
         typesDO.setMyTimestamp(new java.sql.Timestamp(new java.util.Date().getTime()));
+        typesDO.setMyMediumint(123456);
 
         dbHelper.insert(typesDO);
         assert typesDO.getId1() != null;
@@ -100,6 +101,7 @@ public class TestOthers {
         assert types2.getMyFloat().equals(typesDO.getMyFloat());
         assert types2.getMyDouble().equals(typesDO.getMyDouble());
         assert types2.getMyDecimal().equals(typesDO.getMyDecimal());
+        assert types2.getMyMediumint().equals(typesDO.getMyMediumint());
         // 日期的手工比对过了，数据库存的是0时区的值，记得
         System.out.println(types2.getMyDate());
         System.out.println(types2.getMyTime());
