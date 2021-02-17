@@ -72,6 +72,7 @@ CREATE TABLE `t_types` (
   `my_date` date DEFAULT NULL,
   `my_datetime` time DEFAULT NULL,
   `my_timestamp` timestamp NULL DEFAULT NULL,
+  `my_mediumint` MEDIUMINT DEFAULT NULL,
   PRIMARY KEY (`id1`,`id2`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
