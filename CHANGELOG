@@ -6,6 +6,7 @@ v1.0.0 - [upgrade] 【重要】jdk最低支持版本由1.6升级为1.8，不再�
        - [fix] 修复当RelateColumn注解的remoteColumn的值是SQL关键词时导致SQL异常的问题
        - [enhance] 使用缓存的方式优化AnnotationSupportRowMapper的性能，4000行处理从1830毫秒减少230毫秒为1600毫秒
        - [enhance] 对于字段是java.util.Date类型，明确转换为java.util.Date类型，不再使用其子类例如java.sql.Date
+       - [add] 增加对类型LocalDateTime LocalDate LocalTime的支持
 
 2020年12月16日
 v0.9.9 - [add] 增加getRaw和getRawCount方法，支持自定义SQL查询，适用于统计类SQL

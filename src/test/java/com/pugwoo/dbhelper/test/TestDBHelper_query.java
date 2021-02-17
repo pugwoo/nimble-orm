@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentForRawDO;
+import com.pugwoo.dbhelper.test.entity.StudentWithLocalDateTimeDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentSelfTrueDeleteJoinVO;
@@ -31,6 +32,19 @@ public class TestDBHelper_query {
 
     @Autowired
     private DBHelper dbHelper;
+
+    @Test @Rollback(false)
+    public void testDateTime() {
+
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        dbHelper.deleteByKey(studentDO);
+
+        StudentWithLocalDateTimeDO one = dbHelper.getOne(StudentWithLocalDateTimeDO.class);
+
+        assert one.getCreateTime() != null;
+        assert one.getUpdateTime() != null;
+        assert one.getDeleteTime() != null;
+    }
 
     @Test @Rollback(false)
     public void testCount() {

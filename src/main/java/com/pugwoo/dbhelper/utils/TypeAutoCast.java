@@ -10,6 +10,10 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 
 /**
@@ -95,6 +99,27 @@ public class TypeAutoCast {
 			}
 			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
 			return new Date(date.getTime());
+		}
+		if (clazz == LocalDateTime.class) {
+			if (result instanceof LocalDateTime) {
+				return result;
+			}
+			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			return timestamp.toLocalDateTime();
+		}
+		if (clazz == LocalDate.class) {
+			if (result instanceof LocalDate) {
+				return result;
+			}
+			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			return timestamp.toLocalDateTime().toLocalDate();
+		}
+		if (clazz == LocalTime.class) {
+			if (result instanceof LocalTime) {
+				return result;
+			}
+			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			return timestamp.toLocalDateTime().toLocalTime();
 		}
 		if (clazz == java.sql.Date.class) {
 			return result instanceof java.sql.Date ? result : rs.getDate(columnIndex);
