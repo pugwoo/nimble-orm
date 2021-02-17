@@ -39,7 +39,8 @@ public class TestDBHelper_query {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         dbHelper.deleteByKey(studentDO);
 
-        StudentWithLocalDateTimeDO one = dbHelper.getOne(StudentWithLocalDateTimeDO.class);
+        StudentWithLocalDateTimeDO one = dbHelper.getOne(StudentWithLocalDateTimeDO.class,
+                "where id=?", studentDO.getId());
 
         assert one.getCreateTime() != null;
         assert one.getUpdateTime() != null;
