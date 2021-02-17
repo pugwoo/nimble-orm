@@ -4,13 +4,20 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentForRawDO;
 import com.pugwoo.dbhelper.test.entity.StudentWithLocalDateTimeDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO;
+import com.pugwoo.dbhelper.test.vo.StudentCalVO;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
+import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO2;
 import com.pugwoo.dbhelper.test.vo.StudentSelfTrueDeleteJoinVO;
+import com.pugwoo.dbhelper.test.vo.StudentVO;
+import com.pugwoo.dbhelper.test.vo.StudentVOForHandleRelatedColumnOnly;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +27,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 测试读操作相关
@@ -32,6 +42,295 @@ public class TestDBHelper_query {
 
     @Autowired
     private DBHelper dbHelper;
+
+    @Test @Rollback(false)
+    public void testExcludeInheritedColumn() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentCalVO db = dbHelper.getByKey(StudentCalVO.class, studentDO.getId());
+        Assert.assertTrue(db != null);
+        Assert.assertTrue(db.getId() == null);
+        Assert.assertTrue(db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi"));
+    }
+
+    @Test @Rollback(false)
+    public void testRelatedColumn() {
+
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("sysu");
+        dbHelper.insert(schoolDO);
+
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        studentDO.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO);
+
+        CourseDO courseDO1 = new CourseDO();
+        courseDO1.setName("math");
+        courseDO1.setStudentId(studentDO.getId());
+        courseDO1.setIsMain(true); // math是主课程
+        dbHelper.insert(courseDO1);
+
+        CourseDO courseDO2 = new CourseDO();
+        courseDO2.setName("eng");
+        courseDO2.setStudentId(studentDO.getId());
+        dbHelper.insert(courseDO2);
+
+        StudentDO studentDO2  = CommonOps.insertOne(dbHelper);
+        studentDO2.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO2);
+
+        CourseDO courseDO3 = new CourseDO();
+        courseDO3.setName("math");
+        courseDO3.setStudentId(studentDO2.getId());
+        courseDO3.setIsMain(true); // math是主课程
+        dbHelper.insert(courseDO3);
+
+        CourseDO courseDO4 = new CourseDO();
+        courseDO4.setName("chinese");
+        courseDO4.setStudentId(studentDO2.getId());
+        dbHelper.insert(courseDO4);
+
+        /////////////////// 下面是查询 ///////////////////
+
+        StudentVO studentVO1 = dbHelper.getByKey(StudentVO.class, studentDO.getId());
+        Assert.assertTrue(studentVO1 != null);
+        Assert.assertTrue(studentVO1.getSchoolDO() != null);
+        Assert.assertTrue(studentVO1.getSchoolDO().getId().equals(studentVO1.getSchoolId()));
+        Assert.assertTrue(studentVO1.getCourses() != null);
+        Assert.assertTrue(studentVO1.getCourses().size() == 2);
+        Assert.assertTrue(studentVO1.getCourses().get(0).getId().equals(courseDO1.getId())
+                || studentVO1.getCourses().get(0).getId().equals(courseDO2.getId()));
+        Assert.assertTrue(studentVO1.getMainCourses().size() == 1 &&
+                studentVO1.getMainCourses().get(0).getName().equals("math")); // math是主课程
+        Assert.assertTrue(studentVO1.getNameWithHi().equals(studentVO1.getName() + "hi")); // 测试计算列
+
+        // == handleRelatedColumn test
+        StudentVOForHandleRelatedColumnOnly studentVO2 = new StudentVOForHandleRelatedColumnOnly();
+        studentVO2.setId(studentDO.getId());
+        studentVO2.setSchoolId(studentDO.getSchoolId());
+        dbHelper.handleRelatedColumn(studentVO2);
+        Assert.assertTrue(studentVO2 != null);
+        Assert.assertTrue(studentVO2.getSchoolDO() != null);
+        Assert.assertTrue(studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId()));
+        Assert.assertTrue(studentVO2.getCourses() != null);
+        Assert.assertTrue(studentVO2.getCourses().size() == 2);
+        Assert.assertTrue(studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
+                || studentVO2.getCourses().get(0).getId().equals(courseDO2.getId()));
+        Assert.assertTrue(studentVO2.getMainCourses().size() == 1 &&
+                studentVO2.getMainCourses().get(0).getName().equals("math")); // math是主课程
+
+        studentVO2 = new StudentVOForHandleRelatedColumnOnly();
+        studentVO2.setId(studentDO.getId());
+        studentVO2.setSchoolId(studentDO.getSchoolId());
+        dbHelper.handleRelatedColumn(studentVO2, "courses", "schoolDO"); // 指定要的RelatedColumn
+        Assert.assertTrue(studentVO2 != null);
+        Assert.assertTrue(studentVO2.getSchoolDO() != null);
+        Assert.assertTrue(studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId()));
+        Assert.assertTrue(studentVO2.getCourses() != null);
+        Assert.assertTrue(studentVO2.getCourses().size() == 2);
+        Assert.assertTrue(studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
+                || studentVO2.getCourses().get(0).getId().equals(courseDO2.getId()));
+        Assert.assertTrue(studentVO2.getMainCourses() == null);
+
+        // END
+
+        List<Long> ids = new ArrayList<Long>();
+        ids.add(studentDO.getId());
+        ids.add(studentDO2.getId());
+        List<StudentVO> studentVOs = dbHelper.getAll(StudentVO.class,
+                "where id in (?)", ids);
+        Assert.assertTrue(studentVOs.size() == 2);
+        for(StudentVO sVO : studentVOs) {
+            Assert.assertTrue(sVO != null);
+            Assert.assertTrue(sVO.getSchoolDO() != null);
+            Assert.assertTrue(sVO.getSchoolDO().getId().equals(sVO.getSchoolId()));
+            Assert.assertTrue(sVO.getCourses() != null);
+            Assert.assertTrue(sVO.getCourses().size() == 2);
+            Assert.assertTrue(sVO.getMainCourses().size() == 1 &&
+                    studentVO1.getMainCourses().get(0).getName().equals("math")); // math是主课程
+
+            if(sVO.getId().equals(studentDO2.getId())) {
+                Assert.assertTrue(
+                        sVO.getCourses().get(0).getId().equals(courseDO3.getId())
+                                || sVO.getCourses().get(1).getId().equals(courseDO4.getId()));
+            }
+
+            Assert.assertTrue(sVO.getNameWithHi().equals(sVO.getName() + "hi")); // 测试计算列
+        }
+
+        // 测试innerClass
+        SchoolWithInnerClassVO schoolVO = dbHelper.getByKey(SchoolWithInnerClassVO.class, schoolDO.getId());
+        Assert.assertTrue(schoolVO != null && schoolVO.getId().equals(schoolDO.getId()));
+        Assert.assertTrue(schoolVO.getStudents().size() == 2);
+        for(com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO.StudentVO s : schoolVO.getStudents()) {
+            Assert.assertTrue(s != null && s.getId() != null && s.getCourses().size() == 2);
+        }
+    }
+
+    @Test @Rollback(false)
+    public void testGetByKey() {
+        StudentDO studentDO = new StudentDO();
+        studentDO.setId(2L);
+        if(dbHelper.getByKey(studentDO)) {
+            System.out.println(studentDO);
+        } else {
+            System.out.println("not found");
+        }
+
+        StudentDO student2 = dbHelper.getByKey(StudentDO.class, 2);
+        System.out.println("student2:" + student2);
+
+        Map<String, Object> keyMap = new HashMap<String, Object>();
+        keyMap.put("id", 2);
+        StudentDO student3 = dbHelper.getByKey(StudentDO.class, keyMap);
+        System.out.println("student3:" + student3);
+    }
+
+    @Test @Rollback(false)
+    public void testGetByKeyList() {
+        List<Long> ids = new ArrayList<Long>();
+        ids.add(CommonOps.insertOne(dbHelper).getId());
+        ids.add(CommonOps.insertOne(dbHelper).getId());
+        ids.add(CommonOps.insertOne(dbHelper).getId());
+        Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
+
+        Assert.assertTrue(map.size() == 3);
+        for(int i = 0; i < 3; i++) {
+            Assert.assertTrue(map.get(ids.get(i)).getId().equals(ids.get(i)));
+        }
+
+        List<StudentDO> allKey = dbHelper.getAllKey(StudentDO.class, "where 1=1");
+        Assert.assertTrue(allKey.size() >= 3);
+    }
+
+    @Test @Rollback(false)
+    public void testExists() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        Assert.assertTrue(dbHelper.isExist(StudentDO.class, null));
+        Assert.assertTrue(dbHelper.isExist(StudentDO.class, "where id=?", studentDO.getId()));
+        Assert.assertTrue(dbHelper.isExistAtLeast(1, StudentDO.class,
+                "where id=?", studentDO.getId()));
+
+        Assert.assertFalse(dbHelper.isExistAtLeast(2, StudentDO.class,
+                "where id=?", studentDO.getId()));
+    }
+
+    @Test @Rollback(false)
+    public void testGetList() {
+        // 测试获取全部
+        List<StudentDO> list = dbHelper.getAll(StudentDO.class);
+        System.out.println("total:" + list.size());
+        for(StudentDO studentDO : list) {
+            System.out.println(studentDO);
+        }
+
+        System.out.println("===============================");
+
+        // 测试获取有条件的查询
+        Long[] ids = new Long[3];
+        ids[0] = 2L;
+        ids[1] = 4L;
+        ids[2] = 6L;
+        //List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
+        //		ids); // 这样是错误的范例，getAll只会取ids的第一个参数传入in (?)中
+        List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
+                ids, 1); // 这是一种hack的写法，后面带上的参数1，可以让Java把ids当作单个参数处理
+        System.out.println("total:" + list2.size());
+        for(StudentDO studentDO : list2) {
+            System.out.println(studentDO);
+        }
+
+        System.out.println("===============================");
+    }
+
+    @Test @Rollback(false)
+    public void testGetPage() {
+        CommonOps.insertBatch(dbHelper,100);
+
+        // 测试分页获取
+        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
+        Assert.assertTrue(page1.getTotal() >= 100);
+        Assert.assertTrue(page1.getData().size() == 10);
+
+        page1 = dbHelper.getPage(StudentDO.class, 2, 10);
+        Assert.assertTrue(page1.getTotal() >= 100);
+        Assert.assertTrue(page1.getData().size() == 10);
+
+        page1 = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
+        Assert.assertTrue(page1.getData().size() == 10);
+
+        page1 = dbHelper.getPageWithoutCount(StudentDO.class, 2, 10);
+        Assert.assertTrue(page1.getData().size() == 10);
+
+        long total = dbHelper.getCount(StudentDO.class);
+        Assert.assertTrue(total >= 100);
+
+        total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
+        Assert.assertTrue(total >= 100);
+    }
+
+    @Test @Rollback(false)
+    public void testGetByArray() {
+        // 但是这种写法容易有歧义，推荐传入List参数值
+        List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
+        System.out.println(list.size());
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new int[]{50,51,52});
+        System.out.println(list.size());
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new short[]{50,51,52});
+        System.out.println(list.size());
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
+        System.out.println(list.size());
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new float[]{50,51,52});
+        System.out.println(list.size());
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new double[]{50,51,52});
+        System.out.println(list.size());
+
+        // 测试空list或空set
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new ArrayList<Long>());
+        assert list.isEmpty();
+        list = dbHelper.getAll(StudentDO.class, "where id in (?)", new HashSet<Long>());
+        assert list.isEmpty();
+    }
+
+    @Test @Rollback(false)
+    public void testGetJoin() {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("sysu");
+        dbHelper.insert(schoolDO);
+
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        studentDO.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO);
+
+        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+        studentDO2.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO2);
+
+        PageData<StudentSchoolJoinVO> pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
+        Assert.assertTrue(pageData.getData().size() > 0);
+        for(StudentSchoolJoinVO vo : pageData.getData()) {
+            Assert.assertTrue(vo.getStudentDO() != null);
+        }
+
+        pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
+                "where t1.name like ?", "nick%");
+        Assert.assertTrue(pageData.getData().size() > 0);
+        for(StudentSchoolJoinVO vo : pageData.getData()) {
+            Assert.assertTrue(vo.getStudentDO() != null);
+        }
+
+        long total = dbHelper.getCount(StudentSchoolJoinVO.class);
+        Assert.assertTrue(total > 0);
+        total = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
+        Assert.assertTrue(total > 0);
+
+        // right join test
+        PageData<StudentSchoolJoinVO2> pageData2 = dbHelper.getPage(StudentSchoolJoinVO2.class, 1, 10);
+        Assert.assertTrue(pageData2.getData().size() > 0);
+        for(StudentSchoolJoinVO2 vo : pageData2.getData()) {
+            Assert.assertTrue(vo.getStudentDO() != null);
+        }
+
+    }
 
     @Test @Rollback(false)
     public void testDateTime() {
