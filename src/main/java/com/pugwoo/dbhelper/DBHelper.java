@@ -311,6 +311,18 @@ public interface DBHelper {
 	 * @return 实际修改的条数
 	 */
 	int insert(List<?> list);
+
+	/**
+	 * 批量插入多条记录，返回数据库实际修改的条数. <br>
+	 * <br>
+	 * 【重点】但不会自动设置插入数据的返回自增ID（拦截器里也拿不到ID）<br>
+	 * 【重要】批量插入只能默认插入null值，因为每个DO实例其null值属性不同 <br>
+	 * <br>
+	 * 说明：请确保mysql url带上rewriteBatchedStatements=TRUE
+	 * @param list 需要插入的DO对象实例列表
+	 * @return 实际修改的条数
+	 */
+	<T> int insertBatchWithoutReturnId(List<T> list);
 	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>

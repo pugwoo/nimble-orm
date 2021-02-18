@@ -199,7 +199,7 @@ public class SQLUtils {
 	}
 	
 	/**
-	 * 生成insert语句，将值放到values中。
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
 	 * @param t
 	 * @param values 必须
 	 * @param isWithNullValue 标记是否将null字段放到insert语句中
@@ -220,6 +220,34 @@ public class SQLUtils {
         values.addAll(_values);
 
         return sql.toString();
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * @param list 要插入的数据，非空
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static <T> String getInsertSQLForBatch(List<T> list, List<Object[]> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+
+		List<Field> fields = DOInfoReader.getColumns(list.get(0).getClass());
+
+		sql.append(getTableName(list.get(0).getClass())).append(" (");
+
+		for (int i = 0; i < list.size(); i++) {
+			List<Object> _values = new ArrayList<>();
+			String fieldSql = joinAndGetValue(fields, ",", _values, list.get(i), true);
+			if (i == 0) {
+				sql.append(fieldSql);
+				sql.append(") VALUES ");
+				String dotSql = "(" + join("?", _values.size(), ",") + ")";
+				sql.append(dotSql);
+			}
+			values.add(_values.toArray());
+		}
+
+		return sql.toString();
 	}
 	
 	/**

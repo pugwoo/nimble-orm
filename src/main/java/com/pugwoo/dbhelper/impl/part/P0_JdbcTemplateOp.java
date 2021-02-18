@@ -62,6 +62,20 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	protected void logSlowForBatch(long cost, String sql, int listSize) {
+		if(cost > timeoutWarningValve) {
+			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
+			try {
+				if(slowSqlCallback != null) {
+					slowSqlCallback.callback(cost, sql, new ArrayList<>());
+				}
+			} catch (Throwable e) {
+				LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{},cost:{}ms,listSize:{}",
+						sql, cost, listSize, e);
+			}
+		}
+	}
+
 	@Override
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();

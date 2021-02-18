@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
@@ -79,7 +80,47 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		doInterceptAfterInsertList((List<Object>)list, sum);
 		return sum;
 	}
-	
+
+	@Override
+	public <T> int insertBatchWithoutReturnId(List<T> list) {
+		if(list == null || list.isEmpty()) {
+			return 0;
+		}
+		SQLAssert.allSameClass(list);
+
+		for (T t : list) {
+			PreHandleObject.preHandleInsert(t);
+		}
+
+		doInterceptBeforeInsertList((List<Object>) list);
+
+		List<Object[]> values = new ArrayList<>();
+		final String sql = SQLUtils.getInsertSQLForBatch(list, values);
+		log(sql);
+
+		final long start = System.currentTimeMillis();
+
+		int[] rows = jdbcTemplate.batchUpdate(sql, values);
+
+		int total = 0;
+		for (int row : rows) {
+			int result = row;
+			if (row == -2) {
+				result = 1; // -2 means Statement.SUCCESS_NO_INFO
+			} else if (row < 0) {
+				result = 0; // not success
+			}
+			total += result;
+		}
+
+		long cost = System.currentTimeMillis() - start;
+		logSlowForBatch(cost, sql, list.size());
+
+		doInterceptAfterInsertList((List<Object>)list, total);
+
+		return total;
+	}
+
 	@Override
 	public <T> int insertWithNull(T t) {
 		return insert(t, true, true);
