@@ -7,6 +7,8 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.StudentDeleteSetIdDO;
+import com.pugwoo.dbhelper.test.entity.StudentDeleteSetIdDO2;
 import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
@@ -30,6 +32,27 @@ public class TestDBHelper_delete {
 
     @Autowired
     private DBHelper dbHelper;
+
+    @Test
+    @Rollback(false)
+    public void deleteAndSetId() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
+        StudentDeleteSetIdDO stu1 = new StudentDeleteSetIdDO();
+        stu1.setId(studentDO.getId());
+
+        dbHelper.deleteByKey(stu1);
+
+        StudentDO stuDelete = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        assert stuDelete == null; // 已经被删除了
+
+        StudentDeleteSetIdDO stuDelete2 = dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId());
+        assert stuDelete == null; // 已经被删除了
+
+        StudentDeleteSetIdDO2 stuDelete3 =
+                dbHelper.getByKey(StudentDeleteSetIdDO2.class, studentDO.getId());
+        assert stuDelete3.getId().equals(stuDelete3.getDeleted()); // 验证一下设置的delete是否是对的
+    }
 
     @Test
     @Rollback(false)

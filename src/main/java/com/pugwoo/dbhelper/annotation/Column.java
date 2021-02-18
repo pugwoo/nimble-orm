@@ -67,6 +67,7 @@ public @interface Column {
 	 * 使用示例：<br>
 	 * \@Column(value = "deleted", softDelete = {"0", "1"}) private Boolean deleted;<br>
 	 * <br>
+	 * 特别的，softDelete的第二个参数写为列名称时，可以在软删除时设置为该列的值
 	 */
 	String[] softDelete() default "";
 	

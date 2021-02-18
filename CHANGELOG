@@ -10,6 +10,7 @@ v1.0.0 - [upgrade] 【重要】jdk最低支持版本由1.6升级为1.8，不再�
        - [add] 增加对类型LocalDateTime LocalDate LocalTime的支持
        - [fix] 当RelateColumn是oneToOne时，取匹配中的第一个，原来是取匹配中的最后一个，这个对于排序时的映射有影响
        - [add] 增加批量插入方法insertBatchWithoutReturnId，该方法不会返回自增id
+       - [add] 增加软删除时，支持设置软删除列为id的值，这样便于软删除的表，建立有业务规则的唯一索引
 
 2020年12月16日
 v0.9.9 - [add] 增加getRaw和getRawCount方法，支持自定义SQL查询，适用于统计类SQL
