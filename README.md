@@ -262,4 +262,4 @@ public class StudentSchoolJoinVO {
 
 3. json支持。（0.7.0+ 已实现）
 
-## QQ群：178709063 欢迎使用
+
