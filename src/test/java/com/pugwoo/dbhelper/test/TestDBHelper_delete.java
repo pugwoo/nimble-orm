@@ -47,7 +47,7 @@ public class TestDBHelper_delete {
         assert stuDelete == null; // 已经被删除了
 
         StudentDeleteSetIdDO stuDelete2 = dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId());
-        assert stuDelete == null; // 已经被删除了
+        assert stuDelete2 == null; // 已经被删除了
 
         StudentDeleteSetIdDO2 stuDelete3 =
                 dbHelper.getByKey(StudentDeleteSetIdDO2.class, studentDO.getId());
