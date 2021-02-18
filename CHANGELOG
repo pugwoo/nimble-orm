@@ -1,5 +1,6 @@
 v1.0.0 - [upgrade] 【重要】jdk最低支持版本由1.6升级为1.8，不再支持低版本jdk 1.6
        - [upgrade] 升级jsqlparser2.1->4.0
+       - [del] 【升级须知】去掉updateAll接口的拦截器afterUpdate方法的调用，对于此接口的拦截器依赖，请考虑使用canal方法代替
        - [add] 关联查询RelatedColumn支持对computed计算值进行关联，从而支持多字段关联查询
        - [enhance] getCount和Page的total等返回记录总数的类型由int升级为long
        - [enhance] IDBHelperDataService接口的返回值泛型化，支持各种类型返回，实现者不需要强制转换成Object了
