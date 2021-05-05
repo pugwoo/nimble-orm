@@ -27,7 +27,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -168,21 +167,16 @@ public class TestDBHelper_query {
 
     @Test @Rollback(false)
     public void testGetByKey() {
+        Long id = CommonOps.insertOne(dbHelper).getId();
+
         StudentDO studentDO = new StudentDO();
-        studentDO.setId(2L);
-        if(dbHelper.getByKey(studentDO)) {
-            System.out.println(studentDO);
-        } else {
-            System.out.println("not found");
-        }
+        studentDO.setId(id);
 
-        StudentDO student2 = dbHelper.getByKey(StudentDO.class, 2);
-        System.out.println("student2:" + student2);
+        assert  dbHelper.getByKey(studentDO);
 
-        Map<String, Object> keyMap = new HashMap<String, Object>();
-        keyMap.put("id", 2);
-        StudentDO student3 = dbHelper.getByKey(StudentDO.class, keyMap);
-        System.out.println("student3:" + student3);
+        StudentDO student2 = dbHelper.getByKey(StudentDO.class, id);
+        assert student2 != null;
+
     }
 
     @Test @Rollback(false)
