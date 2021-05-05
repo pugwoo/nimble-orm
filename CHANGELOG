@@ -1,3 +1,5 @@
+v1.0.1 - [del] 移除类缓存的WARN日志，框架允许没有setter方法
+
 2021年2月18日
 v1.0.0 - [upgrade] 【重要】jdk最低支持版本由1.6升级为1.8，不再支持低版本jdk 1.6
        - [upgrade] 升级jsqlparser2.1->4.0

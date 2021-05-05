@@ -15,12 +15,12 @@ public class ClassInfoCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassInfoCache.class);
 
-    private static Map<Field, Method> fieldMethodMap = new HashMap<Field, Method>();
-    private static Map<Field, Boolean> fieldMethodNullMap = new HashMap<Field, Boolean>();
+    private static final Map<Field, Method> fieldMethodMap = new HashMap<>();
+    private static final Map<Field, Boolean> fieldMethodNullMap = new HashMap<>();
 
     /**
      * 获得field对应的method的缓存数据
-     * @param field
+     * @param field 字段
      * @return 不存在返回null
      */
     public synchronized static Method getFieldMethod(Field field) {
@@ -39,9 +39,10 @@ public class ClassInfoCache {
 
         try {
             method = field.getDeclaringClass().getMethod(setMethodName, field.getType());
-        } catch (Exception e) {
-            LOGGER.warn("get field method fail, class:{}, methodName:{}",
-                    field.getDeclaringClass().getName(), setMethodName, e);
+        } catch (NoSuchMethodException e) {
+            // 不需要打log，框架允许没有setter方法
+            // LOGGER.warn("get field method fail, class:{}, methodName:{}",
+            //        field.getDeclaringClass().getName(), setMethodName, e);
         }
 
         if (method == null) {
