@@ -3,6 +3,8 @@ package com.pugwoo.dbhelper.utils;
 import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
 import com.pugwoo.dbhelper.sql.SQLUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -13,6 +15,8 @@ import java.util.*;
  * 【重要】约定替换后的参数为 paramN， N从1开始
  */
 public class NamedParameterUtils {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(NamedParameterUtils.class);
 	
 	// sha256 from Pugwoo Chia's nimble-ORM
 	private final static String MAGIC_FOR_EMPTY_COLLECTION =
@@ -169,6 +173,8 @@ public class NamedParameterUtils {
 		if(sql == null || sql.isEmpty()) {
 			return "";
 		}
+
+		String originSql = sql;
 		
 		sql = expandParam(sql, args);
 		
@@ -201,6 +207,12 @@ public class NamedParameterUtils {
 			
 			isPreSlash = ch == '\\';
 		}
+
+        if (currParamIndex - 1 != args.size()) {
+			LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}",
+					args.size(), currParamIndex - 1, originSql);
+		}
+
 		return sb.toString();
 	}
 	

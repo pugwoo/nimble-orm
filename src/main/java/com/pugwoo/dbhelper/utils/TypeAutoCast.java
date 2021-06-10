@@ -93,12 +93,12 @@ public class TypeAutoCast {
 			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.util.Date.class) {
-			java.sql.Date date = rs.getDate(columnIndex);
-			if (date == null) {
+			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			if (timestamp == null) {
 				return null;
 			}
 			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
-			return new Date(date.getTime());
+			return new Date(timestamp.getTime());
 		}
 		if (clazz == LocalDateTime.class) {
 			if (result instanceof LocalDateTime) {
