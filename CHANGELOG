@@ -1,3 +1,6 @@
+2021年6月30日
+v1.0.2 - [add] 新增getRaw支持使用namedParameter的方式查询
+
 2021年6月10日
 v1.0.1 - [del] 移除类缓存的WARN日志，框架允许没有setter方法
        - [fix] 对于字段是java.util.Date类型，只查询到日期而查询不到时间的问题

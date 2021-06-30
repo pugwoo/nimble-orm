@@ -289,7 +289,47 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public <T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args) {
+        return getRawByNamedParam(clazz, sql, args);
+    }
+
+    private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, Object> args) {
+        log(sql);
+
+        List<Object> forIntercept = new ArrayList<>();
+        if (args != null) {
+            forIntercept.add(args);
+        }
+
+        doInterceptBeforeQuery(clazz, sql, forIntercept);
+
+        long start = System.currentTimeMillis();
+        List<T> list;
+        if (args == null || args.isEmpty()) {
+            list = namedParameterJdbcTemplate.query(sql,
+                    new AnnotationSupportRowMapper(clazz, false));
+        } else {
+            list = namedParameterJdbcTemplate.query(sql, args,
+                    new AnnotationSupportRowMapper(clazz, false));
+        }
+
+        postHandleRelatedColumn(list);
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql, forIntercept);
+
+        doInteceptAfterQueryList(clazz, list, -1, sql, forIntercept);
+
+        return list;
+    }
+
+    @Override
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
+        // 解决如果java选择错重载的问题
+        if (args != null && args.length == 1 && args[0] instanceof Map) {
+            return getRawByNamedParam(clazz, sql, (Map<String, Object>)(args[0]));
+        }
+
         log(sql);
 
         List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -323,7 +363,36 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public long getRawCount(String sql, Map<String, Object> args) {
+        return getRowCountByNamedParam(sql, args);
+    }
+
+    private long getRowCountByNamedParam(String sql, Map<String, Object> args) {
+        log(sql);
+
+        long start = System.currentTimeMillis();
+
+        Long rows;
+        if (args == null || args.isEmpty()) {
+            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<String, Object>(),
+                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+        } else {
+            rows = namedParameterJdbcTemplate.queryForObject(
+                    sql, args, Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
+        }
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql, null);
+        return rows == null ? 0 : rows;
+    }
+
+    @Override
     public long getRawCount(String sql, Object... args) {
+        // 解决如果java选择错重载的问题
+        if (args != null && args.length == 1 && args[0] instanceof Map) {
+            return getRowCountByNamedParam(sql, (Map<String, Object>)(args[0]));
+        }
+
         log(sql);
 
         List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法

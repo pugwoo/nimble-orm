@@ -238,12 +238,26 @@ public interface DBHelper {
 	<T> List<T> getRaw(Class<T> clazz, String sql, Object... args);
 
 	/**
+	 * 执行自行指定的SQL查询语句，支持通过namedParameter的方式传入参数，放到args里面
+	 * @param clazz 转换回来的DO类，也支持关联查询后处理
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param args 自定义参数
+	 */
+	<T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args);
+
+	/**
 	 * 执行自行指定的SQL查询语句的总数
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
-	 * @return
 	 */
 	long getRawCount(String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL查询语句的总数，支持通过namedParameter的方式传入参数，放到args里面
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param args 自定义参数
+	 */
+	long getRawCount(String sql, Map<String, Object> args);
 
 	/**
 	 * 是否出现至少一条记录

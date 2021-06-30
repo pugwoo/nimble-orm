@@ -26,11 +26,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 测试读操作相关
@@ -543,12 +539,28 @@ public class TestDBHelper_query {
         assert list.size() == 1;
         assert list.get(0).getName().equals(studentDO1.getName());
 
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", studentDO1.getName());
+        list = dbHelper.getRaw(StudentForRawDO.class,
+                "select id,name from t_student where name=:name",
+                params);
+
+        assert list.size() == 1;
+        assert list.get(0).getName().equals(studentDO1.getName());
+
+        long count = dbHelper.getRawCount("select count(*) from t_student where name=:name",
+                params);
+        assert count == 1;
+
         List<String> names = new ArrayList<String>();
         names.add(studentDO1.getName());
         names.add(studentDO2.getName());
-        long count = dbHelper.getRawCount("select count(*) from t_student where name in (?)",
+        count = dbHelper.getRawCount("select count(*) from t_student where name in (?)",
                 names);
         assert count == 2;
+
+
     }
 
 }
