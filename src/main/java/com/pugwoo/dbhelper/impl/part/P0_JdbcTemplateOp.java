@@ -212,13 +212,23 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public <T> void turnOffSoftDelete(Class<T> clazz) {
-		DBHelperContext.turnOffSoftDelete(clazz);
+	public void turnOffSoftDelete(Class<?>... clazz) {
+		if (clazz == null) {
+			return;
+		}
+		for (Class<?> c : clazz) {
+			DBHelperContext.turnOffSoftDelete(c);
+		}
 	}
 
 	@Override
-	public <T> void turnOnSoftDelete(Class<T> clazz) {
-		DBHelperContext.turnOnSoftDelete(clazz);
+	public void turnOnSoftDelete(Class<?>... clazz) {
+		if (clazz == null) {
+			return;
+		}
+		for (Class<?> c : clazz) {
+			DBHelperContext.turnOnSoftDelete(c);
+		}
 	}
 
 }

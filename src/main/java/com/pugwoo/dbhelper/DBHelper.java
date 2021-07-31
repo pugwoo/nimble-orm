@@ -81,17 +81,15 @@ public interface DBHelper {
 	 * 如果需要永久性的移除软删除，请使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
 	 *
 	 * @param clazz
-	 * @param <T>
 	 */
-	<T> void turnOffSoftDelete(Class<T> clazz);
+	void turnOffSoftDelete(Class<?>... clazz);
 
 	/**
 	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete
 	 *
 	 * @param clazz
-	 * @param <T>
 	 */
-	<T> void turnOnSoftDelete(Class<T> clazz);
+	void turnOnSoftDelete(Class<?>... clazz);
 
 	// =============== Query methods START ==================================
 	
