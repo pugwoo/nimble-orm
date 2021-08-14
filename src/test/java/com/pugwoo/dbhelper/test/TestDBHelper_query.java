@@ -267,6 +267,25 @@ public class TestDBHelper_query {
     }
 
     @Test @Rollback(false)
+    public void testGetByExample() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
+        StudentDO example = new StudentDO();
+        example.setName(studentDO.getName());
+
+        List<StudentDO> byExample = dbHelper.getByExample(example, 10);
+        assert byExample.size() == 1;
+        assert byExample.get(0).getId().equals(studentDO.getId());
+        assert byExample.get(0).getName().equals(studentDO.getName());
+
+        example.setIntro(studentDO.getIntro());
+        byExample = dbHelper.getByExample(example, 10);
+        assert byExample.size() == 1;
+        assert byExample.get(0).getId().equals(studentDO.getId());
+        assert byExample.get(0).getName().equals(studentDO.getName());
+    }
+
+    @Test @Rollback(false)
     public void testGetByArray() {
         // 但是这种写法容易有歧义，推荐传入List参数值
         List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
