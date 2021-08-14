@@ -1,4 +1,5 @@
 v1.0.3 - [enhance] turnOffSoftDelete和turnOnSoftDelete支持传入多个参数
+       - [enhance] 增加3种日期格式的解析
 
 2021年6月30日
 v1.0.2 - [add] 新增getRaw支持使用namedParameter的方式查询
