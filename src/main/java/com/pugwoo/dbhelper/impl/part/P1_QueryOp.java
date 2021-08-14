@@ -363,6 +363,46 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    @SuppressWarnings({"unchecked"})
+    public <T> List<T> getByExample(T t, int limit) {
+        Map<Field, String> filed2column = new HashMap<>();
+        List<Field> declaredFields = DOInfoReader.getColumns(t.getClass());
+        for (Field declaredField : declaredFields) {
+            Column annotation = declaredField.getAnnotation(Column.class);
+            if (annotation != null) {
+                filed2column.put(declaredField, annotation.value());
+            }
+        }
+
+        List<String> cols = new ArrayList<>();
+        List<Object> args = new ArrayList<>();
+
+        for (Map.Entry<Field, String> filed : filed2column.entrySet()) {
+            Object value = DOInfoReader.getValue(filed.getKey(), t);
+            if (value != null) {
+                cols.add(filed.getValue());
+                args.add(value);
+            }
+        }
+
+        StringBuilder sql = new StringBuilder();
+        if (!cols.isEmpty()) {
+            sql.append(" WHERE ");
+        }
+
+        int size = cols.size();
+        for (int i = 0; i < size; i++) {
+            sql.append("`").append(cols.get(i)).append("`").append("=?");
+            if (i != size - 1) {
+                sql.append(" AND ");
+            }
+        }
+
+        return (List<T>) _getPage(t.getClass(), false,
+                false, null, limit, sql.toString(), args.toArray()).getData();
+    }
+
+    @Override
     public long getRawCount(String sql, Map<String, Object> args) {
         return getRowCountByNamedParam(sql, args);
     }

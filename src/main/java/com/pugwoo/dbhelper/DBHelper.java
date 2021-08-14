@@ -258,6 +258,14 @@ public interface DBHelper {
 	long getRawCount(String sql, Map<String, Object> args);
 
 	/**
+	 * 根据给定的对象t查询跟t的非null值完全相等的记录。
+	 * 因为很容易出现当t的全部属性全为null时，把整个表都查询出来的问题，特要求调用者给定limit参数，该参数为返回的最大条目数。
+	 * @param t 提供查询条件的对象t
+	 * @param limit 限制查询的最大条目数
+	 */
+	<T> List<T> getByExample(T t, int limit);
+
+	/**
 	 * 是否出现至少一条记录
 	 * @param clazz 查询的DO类
 	 * @param postSql 不能有limit子句
