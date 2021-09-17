@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
@@ -20,6 +21,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * jdbcTemplate原生操作接口封装
@@ -37,6 +40,8 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected ApplicationContext applicationContext;
 	
 	protected List<DBHelperInterceptor> interceptors = new ArrayList<DBHelperInterceptor>();
+
+	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<>();
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 	
@@ -231,4 +236,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	@Override
+	public void turnOnFeature(FeatureEnum featureEnum) {
+		features.put(FeatureEnum.AUTO_SUM_COALESCE_TO_ZERO, true);
+	}
+
+	@Override
+	public void turnOffFeature(FeatureEnum featureEnum) {
+		features.put(FeatureEnum.AUTO_SUM_COALESCE_TO_ZERO, false);
+	}
 }
