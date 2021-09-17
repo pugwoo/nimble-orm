@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper;
 
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
@@ -56,6 +57,20 @@ public interface DBHelper {
 	 * @param interceptors 拦截器列表，全量更新
 	 */
 	void setInterceptors(List<DBHelperInterceptor> interceptors);
+
+	// =============== Turn-on Or Turn-off features
+
+	/**
+	 * 开启某个特性
+	 * @param featureEnum 特性枚举，默认特性是否开启详见特性文档说明
+	 */
+	void turnOnFeature(FeatureEnum featureEnum);
+
+	/**
+	 * 关闭某个特性
+	 * @param featureEnum 特性枚举，默认特性是否开启详见特性文档说明
+	 */
+	void turnOffFeature(FeatureEnum featureEnum);
 
 	// =============== Dynamic Table Name ===================================
 
