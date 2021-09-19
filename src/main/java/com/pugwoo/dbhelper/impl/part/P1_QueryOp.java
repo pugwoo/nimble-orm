@@ -37,7 +37,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return false;
         }
         Class<?> clazz = t.getClass();
-        StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false));
+        StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features));
 
         List<Object> keyValues = new ArrayList<Object>();
         sql.append(SQLUtils.getKeysWhereSQL(t, keyValues));
@@ -74,7 +74,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         SQLAssert.onlyOneKeyColumn(clazz);
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, false, false));
+        sql.append(SQLUtils.getSelectSQL(clazz, false, false, features));
         sql.append(SQLUtils.getKeysWhereSQL(clazz));
 
         List<Object> argsList = new ArrayList<Object>();
@@ -114,7 +114,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, false, false));
+        sql.append(SQLUtils.getSelectSQL(clazz, false, false, features));
         sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 
         log(sql);
@@ -200,7 +200,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         StringBuilder sql = new StringBuilder("SELECT count(*) FROM (");
 
-        sql.append(SQLUtils.getSelectSQL(clazz, false, true));
+        sql.append(SQLUtils.getSelectSQL(clazz, false, true, features));
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
 
         sql.append(") tff305c6");
@@ -477,7 +477,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      String postSql, Object... args) {
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false));
+        sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features));
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sql.append(SQLUtils.genLimitSQL(offset, limit));
 
@@ -747,11 +747,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 if (remoteColumn.computed().trim().isEmpty()) {
                     whereColumn = "`" + column.remoteColumn() + "`";
                 } else {
-                    whereColumn = remoteColumn.computed();
+                    whereColumn = SQLUtils.getComputedColumn(remoteColumn, features);
                 }
 
                 String inExpr = whereColumn + " in (?)";
-                if (column.extraWhere() == null || column.extraWhere().trim().isEmpty()) {
+                if (column.extraWhere().trim().isEmpty()) {
                     relateValues = getAll(remoteDOClass, "where " + inExpr, values);
                 } else {
                     String where;

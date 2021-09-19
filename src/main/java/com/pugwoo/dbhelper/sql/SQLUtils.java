@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.sql;
 
 import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
@@ -60,7 +61,8 @@ public class SQLUtils {
 	 * @param isSelect1 是否只select 1，不查询实际字段；当该值为true时，selectOnlyKey无效。
 	 * @return
 	 */
-	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1) {
+	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1,
+									  Map<FeatureEnum, Boolean> features) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 
@@ -78,9 +80,9 @@ public class SQLUtils {
             } else {
                 List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
                 List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
-                sql.append(join(fields1, ",", joinLeftTable.alias() + "."));
+                sql.append(join(fields1, ",", joinLeftTable.alias() + ".", features));
                 sql.append(",");
-                sql.append(join(fields2, ",", joinRightTable.alias() + "."));
+                sql.append(join(fields2, ",", joinRightTable.alias() + ".", features));
             }
 
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
@@ -99,7 +101,7 @@ public class SQLUtils {
 			    sql.append("1");
             } else {
                 List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
-                sql.append(join(fields, ","));
+                sql.append(join(fields, ",", features));
             }
 
 			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
@@ -813,14 +815,34 @@ public class SQLUtils {
 		return sb.toString();
 	}
 
+	/**
+	 * 拿到computed SQL在特性开关的情况下的返回值。说明：调用此方法请确保计算列是非空的。
+	 * @param column 列注解
+	 * @param features 特性开关map
+	 * @return 返回计算列的结果SQL
+	 */
+	public static String getComputedColumn(Column column, Map<FeatureEnum, Boolean> features) {
+		String computed = column.computed();
+
+		Boolean autoSumNullToZero = features.get(FeatureEnum.AUTO_SUM_NULL_TO_ZERO);
+		if (autoSumNullToZero != null && autoSumNullToZero) {
+			String computedLower = computed.toLowerCase().trim();
+			if (computedLower.startsWith("sum(") && computedLower.endsWith(")")) {
+				computed = "COALESCE(" + computed + ",0)";
+			}
+		}
+
+		return computed;
+	}
+
     /**
      * 拼凑select的field的语句
      * @param fields
      * @param sep
      * @return
      */
-	private static String join(List<Field> fields, String sep) {
-	    return join(fields, sep, null);
+	private static String join(List<Field> fields, String sep, Map<FeatureEnum, Boolean> features) {
+	    return join(fields, sep, null, features);
     }
 	
     /**
@@ -830,8 +852,9 @@ public class SQLUtils {
      * @param fieldPrefix
      * @return
      */
-    private static String join(List<Field> fields, String sep, String fieldPrefix) {
-    	return joinAndGetValueForSelect(fields, sep, fieldPrefix);
+    private static String join(List<Field> fields, String sep, String fieldPrefix,
+							   Map<FeatureEnum, Boolean> features) {
+    	return joinAndGetValueForSelect(fields, sep, fieldPrefix, features);
     }
 	
 	/**
@@ -902,7 +925,8 @@ public class SQLUtils {
      * @param fieldPrefix
      * @return
      */
-	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix) {
+	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix,
+												   Map<FeatureEnum, Boolean> features) {
         fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
 
     	StringBuilder sb = new StringBuilder();
@@ -911,7 +935,7 @@ public class SQLUtils {
     		
     		String computed = column.computed().trim();
     		if(!computed.isEmpty()) {
-    			sb.append("(").append(computed).append(") AS ");
+    			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ");
     		} else {
     			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
     		}
