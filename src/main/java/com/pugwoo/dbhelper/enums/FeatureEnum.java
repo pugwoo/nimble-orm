@@ -10,7 +10,7 @@ public enum FeatureEnum {
      *
      * 默认开启
      */
-    AUTO_SUM_COALESCE_TO_ZERO
+    AUTO_SUM_NULL_TO_ZERO
     ;
 
 }

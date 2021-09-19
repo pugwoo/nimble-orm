@@ -41,7 +41,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	protected List<DBHelperInterceptor> interceptors = new ArrayList<DBHelperInterceptor>();
 
-	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<>();
+	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<FeatureEnum, Boolean>() {{
+		put(FeatureEnum.AUTO_SUM_NULL_TO_ZERO, true);
+	}};
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 	
@@ -238,11 +240,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	@Override
 	public void turnOnFeature(FeatureEnum featureEnum) {
-		features.put(FeatureEnum.AUTO_SUM_COALESCE_TO_ZERO, true);
+		features.put(featureEnum, true);
 	}
 
 	@Override
 	public void turnOffFeature(FeatureEnum featureEnum) {
-		features.put(FeatureEnum.AUTO_SUM_COALESCE_TO_ZERO, false);
+		features.put(featureEnum, false);
 	}
+
 }
