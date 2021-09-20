@@ -1,3 +1,7 @@
+2021年9月20日
+v1.0.4 - [add] 增加当计算列是sum()时，自动将null转成0的特性，并支持关闭该特性
+       - [fix] 修复当计算列参与到postSql计算时，getCount计算总数时抛出SQL语法错误的bug
+
 2021年8月14日
 v1.0.3 - [add] 增加getByExample方法
        - [enhance] turnOffSoftDelete和turnOnSoftDelete支持传入多个参数
