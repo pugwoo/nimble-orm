@@ -10,13 +10,7 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentForRawDO;
 import com.pugwoo.dbhelper.test.entity.StudentWithLocalDateTimeDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
-import com.pugwoo.dbhelper.test.vo.SchoolWithInnerClassVO;
-import com.pugwoo.dbhelper.test.vo.StudentCalVO;
-import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
-import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO2;
-import com.pugwoo.dbhelper.test.vo.StudentSelfTrueDeleteJoinVO;
-import com.pugwoo.dbhelper.test.vo.StudentVO;
-import com.pugwoo.dbhelper.test.vo.StudentVOForHandleRelatedColumnOnly;
+import com.pugwoo.dbhelper.test.vo.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -579,7 +573,13 @@ public class TestDBHelper_query {
                 names);
         assert count == 2;
 
+    }
 
+    @Test
+    public void testSum() {
+        // 故意让sum的记录不存在
+        StudentSumVO one = dbHelper.getOne(StudentSumVO.class, "where id = -1");
+        assert one.getAgeSum() == 0;
     }
 
 }
