@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.test;
 
+import com.fasterxml.jackson.annotation.JsonRootName;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
@@ -575,11 +576,22 @@ public class TestDBHelper_query {
 
     }
 
+    @Rollback(false)
     @Test
     public void testSum() {
         // 故意让sum的记录不存在
         StudentSumVO one = dbHelper.getOne(StudentSumVO.class, "where id = -1");
         assert one.getAgeSum() == 0;
+
+        dbHelper.delete(StudentDO.class, "where 1=1");
+        CommonOps.insertBatch(dbHelper, 30);
+
+        PageData<StudentSumVO> pageData = dbHelper.getPage(StudentSumVO.class,
+                1, 10, "group by name order by ageSum");
+
+        assert pageData.getTotal() == 30;
+        assert pageData.getData().size() == 10;
+
     }
 
 }

@@ -59,10 +59,12 @@ public class SQLUtils {
 	 * @param clazz
 	 * @param selectOnlyKey 是否只查询key
 	 * @param isSelect1 是否只select 1，不查询实际字段；当该值为true时，selectOnlyKey无效。
+	 * @param features 将dbhelper的特性开关传入，用于处理生成的SQL
+	 * @param postSql 将postSql传入，目前仅用于确定select 1字段的附加computed字段是否加入
 	 * @return
 	 */
 	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1,
-									  Map<FeatureEnum, Boolean> features) {
+									  Map<FeatureEnum, Boolean> features, String postSql) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 
@@ -77,6 +79,16 @@ public class SQLUtils {
 
 			if(isSelect1) {
 			    sql.append("1");
+				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
+						leftTableField.getType(), joinLeftTable.alias() + ".", features, postSql);
+				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+					sql.append(",").append(computedColumnsForCountSelect);
+				}
+				computedColumnsForCountSelect = getComputedColumnsForCountSelect(
+						rightTableField.getType(), joinRightTable.alias() + ".", features, postSql);
+				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+					sql.append(",").append(computedColumnsForCountSelect);
+				}
             } else {
                 List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
                 List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
@@ -99,7 +111,12 @@ public class SQLUtils {
 
 			if(isSelect1) {
 			    sql.append("1");
-            } else {
+				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
+						clazz, null, features, postSql);
+				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+					sql.append(",").append(computedColumnsForCountSelect);
+				}
+			} else {
                 List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
                 sql.append(join(fields, ",", features));
             }
@@ -108,6 +125,31 @@ public class SQLUtils {
 		}
 		
 		return sql.toString();
+	}
+
+	/**
+	 * 获得计算列同时也是postSql中出现的列的Column的集合
+	 */
+	private static String getComputedColumnsForCountSelect(Class<?> clazz, String fieldPrefix,
+													Map<FeatureEnum, Boolean> features, String postSql) {
+		List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, false);
+
+		List<Field> field2 = new ArrayList<>();
+		for (Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if (column != null && !column.computed().trim().isEmpty()) {
+				// 这里用简单的postSql是否出现计算列的字符串来判断计算列是否要加入，属于放宽松的做法，程序不会有bug，但优化有空间
+				if (postSql != null && postSql.contains(column.value())) {
+					field2.add(field);
+				}
+			}
+		}
+
+		if (field2.isEmpty()) {
+			return "";
+		} else {
+			return join(field2, ",", fieldPrefix, features);
+		}
 	}
 	
 	/**
@@ -942,7 +984,7 @@ public class SQLUtils {
         	sb.append(getColumnName(column)).append(sep);
     	}
     	int len = sb.length();
-    	return len == 0 ? "" : sb.toString().substring(0, len - 1);
+    	return len == 0 ? "" : sb.substring(0, len - 1);
 	}
     
     /**

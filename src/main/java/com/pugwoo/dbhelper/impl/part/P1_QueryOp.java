@@ -37,7 +37,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return false;
         }
         Class<?> clazz = t.getClass();
-        StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features));
+        StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features, null));
 
         List<Object> keyValues = new ArrayList<Object>();
         sql.append(SQLUtils.getKeysWhereSQL(t, keyValues));
@@ -74,7 +74,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         SQLAssert.onlyOneKeyColumn(clazz);
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, false, false, features));
+        sql.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
         sql.append(SQLUtils.getKeysWhereSQL(clazz));
 
         List<Object> argsList = new ArrayList<Object>();
@@ -114,7 +114,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, false, false, features));
+        sql.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
         sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 
         log(sql);
@@ -200,7 +200,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         StringBuilder sql = new StringBuilder("SELECT count(*) FROM (");
 
-        sql.append(SQLUtils.getSelectSQL(clazz, false, true, features));
+        sql.append(SQLUtils.getSelectSQL(clazz, false, true, features, postSql));
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
 
         sql.append(") tff305c6");
@@ -477,7 +477,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      String postSql, Object... args) {
 
         StringBuilder sql = new StringBuilder();
-        sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features));
+        sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features, postSql));
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sql.append(SQLUtils.genLimitSQL(offset, limit));
 

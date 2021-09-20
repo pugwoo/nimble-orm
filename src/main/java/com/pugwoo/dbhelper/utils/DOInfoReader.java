@@ -39,7 +39,6 @@ public class DOInfoReader {
 	 * 
 	 * @param clazz
 	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
-	 * @return
 	 */
 	public static Table getTable(Class<?> clazz)
 			throws NoTableAnnotationException {
