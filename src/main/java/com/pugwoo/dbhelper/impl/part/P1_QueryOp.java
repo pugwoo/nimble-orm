@@ -684,9 +684,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 continue;
             }
 
-            Field localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
-            if (localField == null) {
-                LOGGER.error("cannot find localField,db column name:{}", column.localColumn());
+            List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
+            if (localField == null || localField.isEmpty()) {
+                LOGGER.error("cannot find all localField, db column name:{}", column.localColumn());
                 continue;
             }
 
@@ -698,16 +698,15 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 remoteDOClass = field.getType();
             }
 
-            Field remoteField = DOInfoReader.getFieldByDBField(remoteDOClass,
-                    column.remoteColumn());
-            if (remoteField == null) {
+            List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn());
+            if (remoteField == null || remoteField.isEmpty()) {
                 LOGGER.error("cannot find remoteField,db column name:{}", column.remoteColumn());
                 continue;
             }
 
-            Set<Object> values = new HashSet<Object>(); // 用于去重
+            Set<Object> values = new HashSet<Object>(); // 用于去重，同样适用于ArrayList
             for (T t : tList) {
-                Object value = DOInfoReader.getValue(localField, t);
+                Object value = DOInfoReader.getValueForRelatedColumn(localField, t);
                 if (value != null) {
                     values.add(value);
                 }
@@ -737,13 +736,34 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                             clazz, remoteDOClass);
                 }
             } else {
-                Column remoteColumn = remoteField.getAnnotation(Column.class);
                 String whereColumn;
-                if (remoteColumn.computed().trim().isEmpty()) {
-                    whereColumn = "`" + column.remoteColumn() + "`";
+                if (remoteField.size() == 1) {
+                    Column remoteColumn = remoteField.get(0).getAnnotation(Column.class);
+                    if (remoteColumn.computed().trim().isEmpty()) {
+                        whereColumn = "`" + column.remoteColumn() + "`";
+                    } else {
+                        whereColumn = SQLUtils.getComputedColumn(remoteColumn, features);
+                    }
                 } else {
-                    whereColumn = SQLUtils.getComputedColumn(remoteColumn, features);
+                    StringBuilder sb = new StringBuilder("(");
+                    boolean isFirst = true;
+                    for (Field remoteF : remoteField) {
+                        if (!isFirst) {
+                            sb.append(",");
+                        }
+                        isFirst = false;
+
+                        Column remoteColumn = remoteF.getAnnotation(Column.class);
+                        if (remoteColumn.computed().trim().isEmpty()) {
+                            sb.append("`" + column.remoteColumn() + "`");
+                        } else {
+                            sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
+                        }
+                    }
+                    sb.append(")");
+                    whereColumn = sb.toString();
                 }
+
 
                 String inExpr = whereColumn + " in (?)";
                 if (column.extraWhere().trim().isEmpty()) {
@@ -765,7 +785,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<Object, List<Object>> mapRemoteValues = new HashMap<Object, List<Object>>();
                 Map<String, List<Object>> mapRemoteValuesString = new HashMap<String, List<Object>>();
                 for (Object obj : relateValues) {
-                    Object oRemoteValue = DOInfoReader.getValue(remoteField, obj);
+                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue == null) {continue;}
 
                     List<Object> oRemoteValueList = mapRemoteValues.get(oRemoteValue);
@@ -784,7 +804,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
                 for (T t : tList) {
                     List<Object> valueList = new ArrayList<Object>();
-                    Object oLocalValue = DOInfoReader.getValue(localField, t);
+                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue != null) {
                         List<Object> objRemoteList = mapRemoteValues.get(oLocalValue);
                         if (objRemoteList != null) {
@@ -810,14 +830,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<Object, Object> mapRemoteValues = new HashMap<Object, Object>();
                 Map<String, Object> mapRemoteValuesString = new HashMap<String, Object>();
                 for (Object obj : relateValues) {
-                    Object oRemoteValue = DOInfoReader.getValue(remoteField, obj);
+                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue != null && !mapRemoteValues.containsKey(oRemoteValue)) {
                         mapRemoteValues.put(oRemoteValue, obj);
                         mapRemoteValuesString.put(oRemoteValue.toString(), obj);
                     }
                 }
                 for (T t : tList) {
-                    Object oLocalValue = DOInfoReader.getValue(localField, t);
+                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue == null) {continue;}
                     
                     Object objRemote = mapRemoteValues.get(oLocalValue);

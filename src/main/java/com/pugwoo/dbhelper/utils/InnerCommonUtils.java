@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -32,5 +34,27 @@ public class InnerCommonUtils {
 
         return isContain;
     }
+
+    /**
+     * 将字符串str按间隔符sep分隔，返回分隔后的字符串
+     * @param str 字符串
+     * @param sep 间隔符
+     * @return 会自动过滤掉空白(blank)的字符串；并且会自动trim()
+     */
+    public static List<String> split(String str, String sep) {
+        if (str == null || str.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String[] splits = str.split(sep);
+        List<String> result = new ArrayList<>();
+        for (String s : splits) {
+            if (s != null && !s.trim().isEmpty()) {
+                result.add(s.trim());
+            }
+        }
+        return result;
+    }
+
 
 }

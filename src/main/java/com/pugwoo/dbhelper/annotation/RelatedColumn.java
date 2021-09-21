@@ -22,16 +22,12 @@ import java.lang.annotation.Target;
 public @interface RelatedColumn {
 	
 	/**
-	 * 必须，本表关联的表字段名称（不是java属性名）。
-	 * 说明：该字段只支持配置一个，只支持单字段关联。思考后决定不支持多个字段，因为多字段关联本身是不太合理的设计。
-	 *      其次会导致IDBHelperDataService复杂化，而且也已经有了extraWhere的支持。
+	 * 必须，本表关联的表字段名称（不是java属性名）。多个用逗号隔开。
 	 */
 	String localColumn();
 	
 	/**
-	 * 必须，外部关联的表字段名称（不是java属性名）
-	 * 说明：该字段只支持配置一个，只支持单字段关联。思考后决定不支持多个字段，因为多字段关联本身是不太合理的设计。
-	 *      其次会导致IDBHelperDataService复杂化，而且也已经有了extraWhere的支持。
+	 * 必须，外部关联的表字段名称（不是java属性名）。多个用逗号隔开。
 	 */
 	String remoteColumn();
 	

@@ -75,19 +75,32 @@ public class DOInfoReader {
 	
 	/**
 	 * 从db字段名拿字段对象
-	 * @param clazz
-	 * @param dbFieldName
-	 * @return 如果不存在返回null
+	 * @param clazz DO类
+	 * @param dbFieldName 数据库字段名称，多个用逗号隔开
+	 * @return 如果不存在返回空数组，返回的Field的顺序和dbFieldName保持一致；只要有一个dbFieldName找不到，则返回空数组
 	 */
-	public static Field getFieldByDBField(Class<?> clazz, String dbFieldName) {
+	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName) {
+		List<String> dbFieldNameList = InnerCommonUtils.split(dbFieldName, ",");
 		List<Field> fields = getColumns(clazz);
-		for(Field field : fields) {
-			Column column = field.getAnnotation(Column.class);
-			if(column.value().equals(dbFieldName)) {
-				return field;
+		List<Field> result = new ArrayList<>();
+
+		for (String dbField : dbFieldNameList) {
+			boolean isFound = false;
+			for(Field field : fields) {
+				Column column = field.getAnnotation(Column.class);
+				if(column.value().equals(dbField)) {
+					result.add(field);
+					isFound = true;
+					break;
+				}
+			}
+			if (!isFound) {
+				LOGGER.error("cannot found db field:{} in class:{}", dbField, clazz.getName());
+				return new ArrayList<>();
 			}
 		}
-		return null;
+
+		return result;
 	}
 	
 	/**
@@ -353,6 +366,28 @@ public class DOInfoReader {
 			LOGGER.error("method invoke", e);
 			return null;
 		}
+	}
+
+	/**
+	 * 为relatedColumn获得字段的值。这里有特别的逻辑。
+	 * 当fields只有一个时，返回的是对象本身；否则是一个List，里面是按顺序的fields的多个值
+	 * @param fields
+	 * @param object
+	 * @return 当fields为空，返回null
+	 */
+	public static Object getValueForRelatedColumn(List<Field> fields, Object object) {
+		if (fields == null || fields.isEmpty()) {
+			return null;
+		}
+
+		if (fields.size() == 1) {
+			return getValue(fields.get(0), object);
+		}
+		List<Object> result = new ArrayList<>();
+		for (Field field : fields) {
+			result.add(getValue(field, object));
+		}
+		return result;
 	}
 	
 	/**
