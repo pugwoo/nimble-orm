@@ -737,33 +737,24 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
             } else {
                 String whereColumn;
-                if (remoteField.size() == 1) {
-                    Column remoteColumn = remoteField.get(0).getAnnotation(Column.class);
+                boolean isSingleColumn = remoteField.size() == 1;
+                StringBuilder sb = new StringBuilder(isSingleColumn ? "" : "(");
+                boolean isFirst = true;
+                for (Field remoteF : remoteField) {
+                    if (!isFirst) {
+                        sb.append(",");
+                    }
+                    isFirst = false;
+
+                    Column remoteColumn = remoteF.getAnnotation(Column.class);
                     if (remoteColumn.computed().trim().isEmpty()) {
-                        whereColumn = "`" + column.remoteColumn() + "`";
+                        sb.append("`" + remoteColumn.value() + "`");
                     } else {
-                        whereColumn = SQLUtils.getComputedColumn(remoteColumn, features);
+                        sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
                     }
-                } else {
-                    StringBuilder sb = new StringBuilder("(");
-                    boolean isFirst = true;
-                    for (Field remoteF : remoteField) {
-                        if (!isFirst) {
-                            sb.append(",");
-                        }
-                        isFirst = false;
-
-                        Column remoteColumn = remoteF.getAnnotation(Column.class);
-                        if (remoteColumn.computed().trim().isEmpty()) {
-                            sb.append("`" + column.remoteColumn() + "`");
-                        } else {
-                            sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
-                        }
-                    }
-                    sb.append(")");
-                    whereColumn = sb.toString();
                 }
-
+                sb.append(isSingleColumn ? "" : ")");
+                whereColumn = sb.toString();
 
                 String inExpr = whereColumn + " in (?)";
                 if (column.extraWhere().trim().isEmpty()) {
