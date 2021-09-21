@@ -14,6 +14,7 @@ import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -666,14 +667,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         for (Field field : relatedColumns) {
 
             // 只处理指定的field
-            if (relatedColumnProperties != null && relatedColumnProperties.length > 0) {
-                boolean isContain = false;
-                for (String property : relatedColumnProperties) {
-                    if (property != null && property.equals(field.getName())) {
-                        isContain = true;
-                        break;
-                    }
-                }
+            if (InnerCommonUtils.isNotEmpty(relatedColumnProperties)) {
+                boolean isContain = InnerCommonUtils.isContains(field.getName(), relatedColumnProperties);
                 if (!isContain) {
                     continue;
                 }
