@@ -737,9 +737,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     LOGGER.error("dataService is null for {}", column.dataService());
                     relateValues = new ArrayList<Object>();
                 } else {
-                    relateValues = dataService.get(new ArrayList<Object>(values),
-                            clazz, column.localColumn(),
-                            remoteDOClass, column.remoteColumn());
+                    List<Object> valuesList = new ArrayList<>(values);
+                    relateValues = dataService.get(valuesList, column,
+                            clazz, remoteDOClass);
                 }
             } else {
                 Column remoteColumn = remoteField.getAnnotation(Column.class);
