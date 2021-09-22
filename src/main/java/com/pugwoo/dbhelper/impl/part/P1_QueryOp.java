@@ -893,8 +893,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             postSql = postSql.replace('\t', ' ');
         }
 
+        List<Object> param = new ArrayList<>();
+        for (Object obj : values) {
+            if (obj instanceof List) {
+                param.addAll((List)obj);
+            } else {
+                param.add(obj);
+            }
+        }
+
         return _getPage(clazz, false,false,
-                false, null, null, postSql, new ArrayList<>(values).toArray()).getData();
+                false, null, null, postSql, param.toArray()).getData();
     }
 
 }
