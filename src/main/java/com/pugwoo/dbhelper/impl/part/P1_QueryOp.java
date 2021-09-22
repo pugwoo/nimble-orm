@@ -169,7 +169,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             postSql = postSql.replace('\t', ' ');
         }
         int offset = (page - 1) * pageSize;
-        return _getPage(clazz, false, true, offset, pageSize, postSql, args);
+        return _getPage(clazz, true,false, true, offset, pageSize, postSql, args);
     }
 
     @Override
@@ -245,7 +245,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             postSql = postSql.replace('\t', ' ');
         }
         int offset = (page - 1) * pageSize;
-        return _getPage(clazz, false, false, offset, pageSize, postSql, args);
+        return _getPage(clazz, true, false, false, offset, pageSize, postSql, args);
     }
 
     @Override
@@ -255,7 +255,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAll(final Class<T> clazz) {
-        return _getPage(clazz, false, false, null, null, null).getData();
+        return _getPage(clazz, true, false, false, null, null, null).getData();
     }
 
     @Override
@@ -263,7 +263,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
-        return _getPage(clazz, false, false, null, null, postSql, args).getData();
+        return _getPage(clazz, true,false, false, null, null, postSql, args).getData();
     }
 
     @Override
@@ -271,12 +271,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
-        return _getPage(clazz, true, false, null, null, postSql, args).getData();
+        return _getPage(clazz, true, true, false, null, null, postSql, args).getData();
     }
 
     @Override
     public <T> T getOne(Class<T> clazz) {
-        List<T> list = _getPage(clazz, false, false, 0, 1, null).getData();
+        List<T> list = _getPage(clazz, true, false, false, 0, 1, null).getData();
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
@@ -285,7 +285,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
-        List<T> list = _getPage(clazz, false, false, 0, 1, postSql, args).getData();
+        List<T> list = _getPage(clazz, true, false, false,
+                0, 1, postSql, args).getData();
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
@@ -399,7 +400,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
         }
 
-        return (List<T>) _getPage(t.getClass(), false,
+        return (List<T>) _getPage(t.getClass(), true, false,
                 false, null, limit, sql.toString(), args.toArray()).getData();
     }
 
@@ -472,7 +473,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
      * @return
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private <T> PageData<T> _getPage(Class<T> clazz,
+    private <T> PageData<T> _getPage(Class<T> clazz, boolean isUseNamedTemplate,
                                      boolean selectOnlyKey, boolean withCount,
                                      Integer offset, Integer limit,
                                      String postSql, Object... args) {
@@ -496,13 +497,25 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         long start = System.currentTimeMillis();
         List<T> list;
         if (argsList.isEmpty()) {
-            list = namedParameterJdbcTemplate.query(sql.toString(),
-                    new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
+            if (isUseNamedTemplate) {
+                // 因为有in (?)所以用namedParameterJdbcTemplate
+                list = namedParameterJdbcTemplate.query(sql.toString(),
+                        new AnnotationSupportRowMapper(clazz, selectOnlyKey));
+            } else {
+                list = jdbcTemplate.query(sql.toString(),
+                        new AnnotationSupportRowMapper<>(clazz, selectOnlyKey));
+            }
         } else {
-            list = namedParameterJdbcTemplate.query(
-                    NamedParameterUtils.trans(sql.toString(), argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper(clazz, selectOnlyKey)); // 因为有in (?)所以用namedParameterJdbcTemplate
+            if (isUseNamedTemplate) {
+                // 因为有in (?)所以用namedParameterJdbcTemplate
+                list = namedParameterJdbcTemplate.query(
+                        NamedParameterUtils.trans(sql.toString(), argsList),
+                        NamedParameterUtils.transParam(argsList),
+                        new AnnotationSupportRowMapper(clazz, selectOnlyKey));
+            } else {
+                list = jdbcTemplate.query(sql.toString(),
+                        new AnnotationSupportRowMapper(clazz, selectOnlyKey), argsList.toArray());
+            }
         }
 
         long total = -1; // -1 表示没有查询总数，未知
@@ -756,18 +769,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 sb.append(isSingleColumn ? "" : ")");
                 whereColumn = sb.toString();
 
-                String inExpr = whereColumn + " in (?)";
+                String inExpr = whereColumn + " in " + buildQuestionMark(values);
                 if (column.extraWhere().trim().isEmpty()) {
-                    relateValues = getAll(remoteDOClass, "where " + inExpr, values);
+                    relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
                     String where;
                     try {
                         where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
-                        relateValues = getAll(remoteDOClass, where, values);
+                        relateValues = getAllForRelatedColumn(remoteDOClass, where, values);
                     } catch (JSQLParserException e) {
                         LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere",
                                 column.extraWhere());
-                        relateValues = getAll(remoteDOClass, "where " + inExpr, values);
+                        relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                     }
                 }
             }
@@ -845,6 +858,43 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
             }
         }
+    }
+
+    private String buildQuestionMark(Set<Object> values) {
+        StringBuilder sb = new StringBuilder("(");
+        boolean isFirst = true;
+        for (Object obj : values) {
+            if (!isFirst) {
+                sb.append(",");
+            }
+            isFirst = false;
+
+            if (obj instanceof List) {
+                sb.append("(");
+                int size = ((List)obj).size();
+                for (int i = 0; i < size; i++) {
+                    if (i > 0) {
+                        sb.append(",");
+                    }
+                    sb.append("?");
+                }
+                sb.append(")");
+            } else {
+                sb.append("?");
+            }
+
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    private <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
+        if (postSql != null) {
+            postSql = postSql.replace('\t', ' ');
+        }
+
+        return _getPage(clazz, false,false,
+                false, null, null, postSql, new ArrayList<>(values).toArray()).getData();
     }
 
 }
