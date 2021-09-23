@@ -1,3 +1,4 @@
+2021年9月23日
 v1.0.5 - [add] getRaw方法支持转换基本类型，如String.class/Integer.class
        - [add] PageData类增加trans方法，支持转变类型
 
