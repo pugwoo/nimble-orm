@@ -3,6 +3,8 @@ package com.pugwoo.dbhelper.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 2015年4月22日 13:32:30 记录分页数据和总数
@@ -34,6 +36,15 @@ public class PageData<T> implements Serializable {
 		this.total = total;
 		this.data = data;
 		this.pageSize = pageSize;
+	}
+
+	public <R> PageData<R> transform(Function<? super T, ? extends R> mapper) {
+		List<R> dataR = null;
+		if(data != null) {
+			dataR = data.stream().map(mapper).collect(Collectors.toList());
+		}
+
+		return new PageData<>(total, dataR, pageSize);
 	}
 	
 	/**

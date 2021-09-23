@@ -262,6 +262,27 @@ public class TestDBHelper_query {
     }
 
     @Test @Rollback(false)
+    public void testPageDataTransform() {
+        CommonOps.insertBatch(dbHelper,20);
+        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
+        PageData<StudentVO> page2 = page1.transform(o -> {
+            StudentVO studentVO = new StudentVO();
+            studentVO.setId(o.getId());
+            studentVO.setName(o.getName());
+            return studentVO;
+        });
+
+        assert page1.getTotal() == page2.getTotal();
+        assert page1.getPageSize() == page2.getPageSize();
+        assert page1.getData().size() == page2.getData().size();
+
+        for (int i = 0; i < 10; i++) {
+            assert page1.getData().get(i).getId().equals(page2.getData().get(i).getId());
+            assert page1.getData().get(i).getName().equals(page2.getData().get(i).getName());
+        }
+    }
+
+    @Test @Rollback(false)
     public void testGetByExample() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
