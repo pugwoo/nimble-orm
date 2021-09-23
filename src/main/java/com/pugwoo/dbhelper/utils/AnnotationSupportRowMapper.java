@@ -62,6 +62,12 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet rs, int index) throws SQLException {
 		try {
+			// 支持基本的类型
+			TypeAutoCast.BasicTypeResult basicTypeResult = TypeAutoCast.transBasicType(clazz, rs);
+			if (basicTypeResult.isBasicType()) {
+				return (T) basicTypeResult.getValue();
+			}
+
 			T obj = isUseGivenObj ? t : clazz.newInstance();
 			
 			if(isJoinVO) {
@@ -95,7 +101,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			
 			return obj;
 		} catch (Exception e) {
-			LOGGER.error("mapRow exception", e);
+			LOGGER.error("mapRow exception, class:{}", clazz, e);
 			throw new RowMapperFailException(e);
 		}
 	}

@@ -25,6 +25,29 @@ public class TypeAutoCast {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeAutoCast.class);
 
+	public static class BasicTypeResult {
+		// 转换之后的值
+		private Object value;
+		// 是否基本类型
+		private boolean isBasicType;
+
+		public Object getValue() {
+			return value;
+		}
+
+		public void setValue(Object value) {
+			this.value = value;
+		}
+
+		public boolean isBasicType() {
+			return isBasicType;
+		}
+
+		public void setBasicType(boolean basicType) {
+			isBasicType = basicType;
+		}
+	}
+
 	/**
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
 	 * 
@@ -105,6 +128,9 @@ public class TypeAutoCast {
 				return result;
 			}
 			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			if (timestamp == null) {
+				return null;
+			}
 			return timestamp.toLocalDateTime();
 		}
 		if (clazz == LocalDate.class) {
@@ -112,6 +138,9 @@ public class TypeAutoCast {
 				return result;
 			}
 			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			if (timestamp == null) {
+				return null;
+			}
 			return timestamp.toLocalDateTime().toLocalDate();
 		}
 		if (clazz == LocalTime.class) {
@@ -119,6 +148,9 @@ public class TypeAutoCast {
 				return result;
 			}
 			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			if (timestamp == null) {
+				return null;
+			}
 			return timestamp.toLocalDateTime().toLocalTime();
 		}
 		if (clazz == java.sql.Date.class) {
@@ -131,6 +163,105 @@ public class TypeAutoCast {
 			return result instanceof java.sql.Timestamp ? result : rs.getTimestamp(columnIndex);
 		}
 		
+		return result;
+	}
+
+	/**
+	 * 转换基本类型
+	 */
+	public static BasicTypeResult transBasicType(Class<?> clazz, ResultSet rs) throws SQLException {
+		BasicTypeResult result = new BasicTypeResult();
+
+		if(clazz == String.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getString(1));
+		}
+		if(clazz == Integer.class || clazz == int.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getInt(1));
+		}
+		if(clazz == Long.class || clazz == long.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getLong(1));
+		}
+		if(clazz == Boolean.class || clazz == boolean.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getBoolean(1));
+		}
+		if(clazz == Byte.class || clazz == byte.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getByte(1));
+		}
+		if(clazz == byte[].class) {
+			result.setBasicType(true);
+			result.setValue(rs.getBytes(1));
+		}
+		if(clazz == Short.class || clazz == short.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getShort(1));
+		}
+		if(clazz == Float.class || clazz == float.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getFloat(1));
+		}
+		if(clazz == Double.class || clazz == double.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getDouble(1));
+		}
+		if(clazz == BigDecimal.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getBigDecimal(1));
+		}
+		if (clazz == java.util.Date.class) {
+			result.setBasicType(true);
+			Timestamp timestamp = rs.getTimestamp(1);
+			if (timestamp == null) {
+				result.setValue(null);
+			} else {
+				// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
+				result.setValue(new Date(timestamp.getTime()));
+			}
+		}
+		if (clazz == LocalDateTime.class) {
+			result.setBasicType(true);
+			Timestamp timestamp = rs.getTimestamp(1);
+			if (timestamp == null) {
+				result.setValue(null);
+			} else {
+				result.setValue(timestamp.toLocalDateTime());
+			}
+		}
+		if (clazz == LocalDate.class) {
+			result.setBasicType(true);
+			Timestamp timestamp = rs.getTimestamp(1);
+			if (timestamp == null) {
+				result.setValue(null);
+			} else {
+				result.setValue(timestamp.toLocalDateTime().toLocalDate());
+			}
+		}
+		if (clazz == LocalTime.class) {
+			result.setBasicType(true);
+			Timestamp timestamp = rs.getTimestamp(1);
+			if (timestamp == null) {
+				result.setValue(null);
+			} else {
+				result.setValue(timestamp.toLocalDateTime().toLocalTime());
+			}
+		}
+		if (clazz == java.sql.Date.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getDate(1));
+		}
+		if (clazz == java.sql.Time.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getDate(1));
+		}
+		if (clazz == java.sql.Timestamp.class) {
+			result.setBasicType(true);
+			result.setValue(rs.getTimestamp(1));
+		}
+
 		return result;
 	}
 	

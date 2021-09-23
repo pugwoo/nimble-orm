@@ -635,14 +635,20 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (tList == null || tList.isEmpty()) {
             return;
         }
+        Class<?> clazz = getElementClass(tList);
+        if (clazz == null) {
+            return;
+        }
 
-        JoinTable joinTable = DOInfoReader.getJoinTable(tList.get(0).getClass());
+        JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
         if (joinTable != null) { // 处理join的方式
+            SQLAssert.allSameClass(tList);
+
             List<Object> list1 = new ArrayList<Object>();
             List<Object> list2 = new ArrayList<Object>();
 
-            Field joinLeftTableFiled = DOInfoReader.getJoinLeftTable(tList.get(0).getClass());
-            Field joinRightTableFiled = DOInfoReader.getJoinRightTable(tList.get(0).getClass());
+            Field joinLeftTableFiled = DOInfoReader.getJoinLeftTable(clazz);
+            Field joinRightTableFiled = DOInfoReader.getJoinRightTable(clazz);
             for (T t : tList) {
                 Object obj1 = DOInfoReader.getValue(joinLeftTableFiled, t);
                 if (obj1 != null) {
@@ -659,10 +665,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return;
         }
 
-        SQLAssert.allSameClass(tList);
-        Class<?> clazz = tList.get(0).getClass();
-
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
+        if (!relatedColumns.isEmpty()) { // 只有有relatedColumn才进行判断是否全是相同的类型
+            SQLAssert.allSameClass(tList);
+        }
+
         for (Field field : relatedColumns) {
 
             // 只处理指定的field
@@ -839,6 +846,15 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
             }
         }
+    }
+
+    private Class<?> getElementClass(List<?> tList) {
+        for (Object obj : tList) {
+            if (obj != null) {
+                return obj.getClass();
+            }
+        }
+        return null;
     }
 
 }

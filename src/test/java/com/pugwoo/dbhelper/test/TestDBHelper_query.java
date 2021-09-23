@@ -576,6 +576,22 @@ public class TestDBHelper_query {
 
     }
 
+    @Transactional
+    @Test @Rollback(false)
+    public void testGetRawWithBasicType() {
+
+        StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO3 = CommonOps.insertOne(dbHelper);
+
+        List<String> studentNames = dbHelper.getRaw(String.class, "select name from t_student where deleted=0");
+
+        assert studentNames.contains(studentDO1.getName());
+        assert studentNames.contains(studentDO2.getName());
+        assert studentNames.contains(studentDO3.getName());
+
+    }
+
     @Rollback(false)
     @Test
     public void testSum() {
