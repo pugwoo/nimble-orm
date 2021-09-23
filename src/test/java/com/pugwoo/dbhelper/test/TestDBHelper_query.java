@@ -262,6 +262,27 @@ public class TestDBHelper_query {
     }
 
     @Test @Rollback(false)
+    public void testPageDataTransform() {
+        CommonOps.insertBatch(dbHelper,20);
+        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
+        PageData<StudentVO> page2 = page1.transform(o -> {
+            StudentVO studentVO = new StudentVO();
+            studentVO.setId(o.getId());
+            studentVO.setName(o.getName());
+            return studentVO;
+        });
+
+        assert page1.getTotal() == page2.getTotal();
+        assert page1.getPageSize() == page2.getPageSize();
+        assert page1.getData().size() == page2.getData().size();
+
+        for (int i = 0; i < 10; i++) {
+            assert page1.getData().get(i).getId().equals(page2.getData().get(i).getId());
+            assert page1.getData().get(i).getName().equals(page2.getData().get(i).getName());
+        }
+    }
+
+    @Test @Rollback(false)
     public void testGetByExample() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -573,6 +594,22 @@ public class TestDBHelper_query {
         count = dbHelper.getRawCount("select count(*) from t_student where name in (?)",
                 names);
         assert count == 2;
+
+    }
+
+    @Transactional
+    @Test @Rollback(false)
+    public void testGetRawWithBasicType() {
+
+        StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO3 = CommonOps.insertOne(dbHelper);
+
+        List<String> studentNames = dbHelper.getRaw(String.class, "select name from t_student where deleted=0");
+
+        assert studentNames.contains(studentDO1.getName());
+        assert studentNames.contains(studentDO2.getName());
+        assert studentNames.contains(studentDO3.getName());
 
     }
 

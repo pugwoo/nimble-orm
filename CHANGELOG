@@ -1,5 +1,10 @@
+2021年9月23日
 v1.1.0 - [add] 【重要升级和变动】RelatedColumn支持多列进行关联查询；
                 IDBHelperDataService接口定义发生变化，客户端需要变化。
+
+2021年9月23日
+v1.0.5 - [add] getRaw方法支持转换基本类型，如String.class/Integer.class
+       - [add] PageData类增加trans方法，支持转变类型
 
 2021年9月20日
 v1.0.4 - [add] 增加当计算列是sum()时，自动将null转成0的特性，并支持关闭该特性
