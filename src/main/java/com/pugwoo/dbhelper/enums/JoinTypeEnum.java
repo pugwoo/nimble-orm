@@ -15,9 +15,9 @@ public enum JoinTypeEnum {
     /**STRAIGHT_JOIN强制左表为驱动表进行join*/
 	STRAIGHT_JOIN("STRAIGHT_JOIN", "STRAIGHT JOIN ");
 	
-	private String code;
+	private final String code;
 	
-	private String name;
+	private final String name;
 	
 	JoinTypeEnum(String code, String name) {
 		this.code = code;
