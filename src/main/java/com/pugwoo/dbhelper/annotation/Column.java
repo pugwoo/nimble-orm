@@ -87,7 +87,6 @@ public @interface Column {
 	/**
 	 * 当设置为true时，会自动设置Date
 	 * 对应的类型必须是java.util.Date
-	 * @return
 	 */
 	boolean setTimeWhenDelete() default false;
 	
