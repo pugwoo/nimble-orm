@@ -1,8 +1,5 @@
 package com.pugwoo.dbhelper.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -12,8 +9,6 @@ import java.util.Map;
  * 缓存类相关信息
  */
 public class ClassInfoCache {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClassInfoCache.class);
 
     private static final Map<Field, Method> fieldMethodMap = new HashMap<>();
     private static final Map<Field, Boolean> fieldMethodNullMap = new HashMap<>();
@@ -41,8 +36,6 @@ public class ClassInfoCache {
             method = field.getDeclaringClass().getMethod(setMethodName, field.getType());
         } catch (NoSuchMethodException e) {
             // 不需要打log，框架允许没有setter方法
-            // LOGGER.warn("get field method fail, class:{}, methodName:{}",
-            //        field.getDeclaringClass().getName(), setMethodName, e);
         }
 
         if (method == null) {
