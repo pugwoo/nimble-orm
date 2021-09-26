@@ -24,7 +24,7 @@ public class MultiDateDeserializer extends StdDeserializer<Date> {
 	}
 	
 	@Override
-	public Date deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+	public Date deserialize(JsonParser jp, DeserializationContext context) throws IOException {
 		JsonNode node = jp.getCodec().readTree(jp);
 
 		// 针对时间戳做优化
@@ -50,7 +50,7 @@ public class MultiDateDeserializer extends StdDeserializer<Date> {
 			return NimbleOrmDateUtils.parseThrowException(date);
 		} catch (ParseException e) {
 			throw new JsonParseException(jp,
-			    "Unparseable date: \"" + date + "\". Supported formats: " 
+			    "cannot parse date: \"" + date + "\". Supported formats: "
 			    + NimbleOrmDateUtils.DATE_FORMAT_REGEXPS.values());
 		}
 	}

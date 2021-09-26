@@ -13,7 +13,6 @@ public class NimbleOrmDateUtils {
 	/**日期格式**/
 	public final static String FORMAT_DATE = "yyyy-MM-dd";
 
-	@SuppressWarnings("serial")
 	public static final Map<String, String> DATE_FORMAT_REGEXPS = new HashMap<String, String>() {{
 		put("^\\d{6}$", "yyyyMM"); // 201703
 		put("^\\d{8}$", "yyyyMMdd"); // 20170306
@@ -40,8 +39,8 @@ public class NimbleOrmDateUtils {
 
 	/**
 	 * 自动解析，失败抛出异常
-	 * @param date
-	 * @return
+	 * @param date 要解析的日期字符串
+	 * @return 解析后的日期
 	 */
 	public static Date parseThrowException(String date) throws ParseException {
 		if(date == null || date.trim().isEmpty()) {
@@ -56,7 +55,7 @@ public class NimbleOrmDateUtils {
 				return _date;
 			}
 
-			throw new ParseException("Unparseable date: \"" + date +
+			throw new ParseException("cannot parse date: \"" + date +
 					"\". Supported formats: " + DATE_FORMAT_REGEXPS.values(), -1);
 		}
 		return new SimpleDateFormat(pattern).parse(date);
@@ -97,7 +96,7 @@ public class NimbleOrmDateUtils {
 			return (Long) obj;
 		}
 		try {
-			return new Long(obj.toString().trim());
+			return Long.valueOf(obj.toString().trim());
 		} catch (Exception e) {
 			return null;
 		}
@@ -132,8 +131,8 @@ public class NimbleOrmDateUtils {
 
 	/**
 	 * 带上毫秒的时间
-	 * @param date
-	 * @return
+	 * @param date 要格式化的日期
+	 * @return 格式化后的字符串
 	 */
 	public static String formatWithMs(Date date) {
 		return format(date, "yyyy-MM-dd HH:mm:ss.SSS");

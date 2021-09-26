@@ -13,12 +13,12 @@ import java.io.IOException;
  */
 public class NimbleOrmJSON {
 
-	private static ObjectMapper objectMapper = new MyObjectMapper();
+	private static final ObjectMapper objectMapper = new MyObjectMapper();
 
 	/**
 	 * 将对象转换成json字符串
-	 * @param obj
-	 * @return
+	 * @param obj 需要转出json的对象
+	 * @return 转换后的json语句
 	 */
 	public static String toJson(Object obj) {
 		try {
@@ -39,9 +39,8 @@ public class NimbleOrmJSON {
 
 	/**
 	 * 解析泛型的类,只支持1个或2个的泛型类型，不支持3个及以上的
-	 * @param className
+	 * @param className 要解析出泛型的类名
 	 * @return 如果没有泛型，则返回null
-	 * @throws ClassNotFoundException
 	 */
 	private static JavaType parseGenericType(String className)
 			throws ClassNotFoundException {
