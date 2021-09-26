@@ -1,11 +1,11 @@
 package com.pugwoo.dbhelper.sql;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 public class SQLAssert {
 
@@ -33,10 +33,13 @@ public class SQLAssert {
         }
 		Class<?> clazz = null;
 		for(T t : list) {
+			if (t == null) {
+				continue;
+			}
 			if(clazz == null) {
 				clazz = t.getClass();
 			} else {
-				if (!clazz.equals(t.getClass())) {
+				if (clazz != t.getClass()) {
 					return false;
 				}
 			}

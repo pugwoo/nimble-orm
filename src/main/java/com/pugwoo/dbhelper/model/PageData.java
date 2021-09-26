@@ -29,7 +29,7 @@ public class PageData<T> implements Serializable {
 	private List<T> data;
 
 	public PageData() {
-		this.data = new ArrayList<T>();
+		this.data = new ArrayList<>();
 	}
 
 	public PageData(long total, List<T> data, int pageSize) {
