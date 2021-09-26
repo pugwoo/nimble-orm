@@ -7,8 +7,8 @@ public class NoTableAnnotationException extends RuntimeException{
 	public NoTableAnnotationException() {
 	}
 	
-	public NoTableAnnotationException(String errmsg) {
-		super(errmsg);
+	public NoTableAnnotationException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NoTableAnnotationException(Throwable e) {

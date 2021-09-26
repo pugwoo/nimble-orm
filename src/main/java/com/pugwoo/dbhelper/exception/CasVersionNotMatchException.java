@@ -10,8 +10,8 @@ public class CasVersionNotMatchException extends RuntimeException {
     public CasVersionNotMatchException() {
     }
 
-    public CasVersionNotMatchException(String errmsg) {
-        super(errmsg);
+    public CasVersionNotMatchException(String errMsg) {
+        super(errMsg);
     }
 
     public CasVersionNotMatchException(Throwable e) {

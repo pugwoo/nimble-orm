@@ -7,8 +7,8 @@ public class ScriptErrorException extends RuntimeException {
     public ScriptErrorException() {
     }
 
-    public ScriptErrorException(String errmsg) {
-        super(errmsg);
+    public ScriptErrorException(String errMsg) {
+        super(errMsg);
     }
 
     public ScriptErrorException(Throwable e) {

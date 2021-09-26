@@ -10,8 +10,8 @@ public class MustProvideConstructorException extends RuntimeException {
 	public MustProvideConstructorException() {
 	}
 	
-	public MustProvideConstructorException(String errmsg) {
-		super(errmsg);
+	public MustProvideConstructorException(String errMsg) {
+		super(errMsg);
 	}
 
 	public MustProvideConstructorException(Throwable e) {

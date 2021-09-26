@@ -7,8 +7,8 @@ public class NoColumnAnnotationException extends RuntimeException {
 	public NoColumnAnnotationException() {
 	}
 	
-	public NoColumnAnnotationException(String errmsg) {
-		super(errmsg);
+	public NoColumnAnnotationException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NoColumnAnnotationException(Throwable e) {

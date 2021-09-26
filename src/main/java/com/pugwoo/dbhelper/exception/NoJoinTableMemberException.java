@@ -11,8 +11,8 @@ public class NoJoinTableMemberException extends RuntimeException {
 	public NoJoinTableMemberException() {
 	}
 	
-	public NoJoinTableMemberException(String errmsg) {
-		super(errmsg);
+	public NoJoinTableMemberException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NoJoinTableMemberException(Throwable e) {

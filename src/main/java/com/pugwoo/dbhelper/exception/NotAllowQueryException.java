@@ -7,8 +7,8 @@ public class NotAllowQueryException extends RuntimeException {
 	public NotAllowQueryException() {
 	}
 	
-	public NotAllowQueryException(String errmsg) {
-		super(errmsg);
+	public NotAllowQueryException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NotAllowQueryException(Throwable e) {

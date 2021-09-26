@@ -10,8 +10,8 @@ public class NullKeyValueException extends RuntimeException {
 	public NullKeyValueException() {
 	}
 	
-	public NullKeyValueException(String errmsg) {
-		super(errmsg);
+	public NullKeyValueException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NullKeyValueException(Throwable e) {

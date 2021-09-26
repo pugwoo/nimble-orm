@@ -7,8 +7,8 @@ public class NoKeyColumnAnnotationException extends RuntimeException {
 	public NoKeyColumnAnnotationException() {
 	}
 	
-	public NoKeyColumnAnnotationException(String errmsg) {
-		super(errmsg);
+	public NoKeyColumnAnnotationException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NoKeyColumnAnnotationException(Throwable e) {

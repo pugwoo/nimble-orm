@@ -10,8 +10,8 @@ public class RowMapperFailException extends RuntimeException {
 	public RowMapperFailException() {
 	}
 
-	public RowMapperFailException(String errmsg) {
-		super(errmsg);
+	public RowMapperFailException(String errMsg) {
+		super(errMsg);
 	}
 	
 	public RowMapperFailException(Throwable e) {

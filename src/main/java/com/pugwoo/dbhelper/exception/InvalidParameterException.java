@@ -7,8 +7,8 @@ public class InvalidParameterException extends RuntimeException {
 	public InvalidParameterException() {
 	}
 	
-	public InvalidParameterException(String errmsg) {
-		super(errmsg);
+	public InvalidParameterException(String errMsg) {
+		super(errMsg);
 	}
 
 	public InvalidParameterException(Throwable e) {

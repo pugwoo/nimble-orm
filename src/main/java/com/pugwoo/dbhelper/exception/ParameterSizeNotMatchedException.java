@@ -10,8 +10,8 @@ public class ParameterSizeNotMatchedException extends RuntimeException {
 	public ParameterSizeNotMatchedException() {
 	}
 	
-	public ParameterSizeNotMatchedException(String errmsg) {
-		super(errmsg);
+	public ParameterSizeNotMatchedException(String errMsg) {
+		super(errMsg);
 	}
 
 	public ParameterSizeNotMatchedException(Throwable e) {

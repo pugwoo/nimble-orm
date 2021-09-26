@@ -7,8 +7,8 @@ public class NotOnlyOneKeyColumnException extends RuntimeException {
 	public NotOnlyOneKeyColumnException() {
 	}
 	
-	public NotOnlyOneKeyColumnException(String errmsg) {
-		super(errmsg);
+	public NotOnlyOneKeyColumnException(String errMsg) {
+		super(errMsg);
 	}
 
 	public NotOnlyOneKeyColumnException(Throwable e) {

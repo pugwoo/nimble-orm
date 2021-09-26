@@ -7,8 +7,8 @@ public class OnConditionIsNeedException extends RuntimeException {
 	public OnConditionIsNeedException() {
 	}
 	
-	public OnConditionIsNeedException(String errmsg) {
-		super(errmsg);
+	public OnConditionIsNeedException(String errMsg) {
+		super(errMsg);
 	}
 
 	public OnConditionIsNeedException(Throwable e) {

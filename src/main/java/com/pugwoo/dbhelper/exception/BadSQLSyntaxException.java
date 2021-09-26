@@ -7,8 +7,8 @@ public class BadSQLSyntaxException extends RuntimeException {
 	public BadSQLSyntaxException() {
 	}
 	
-	public BadSQLSyntaxException(String errmsg) {
-		super(errmsg);
+	public BadSQLSyntaxException(String errMsg) {
+		super(errMsg);
 	}
 	
 	public BadSQLSyntaxException(Throwable e) {
