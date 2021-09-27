@@ -133,7 +133,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			if(softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, where);
 			} else { // 软删除
-				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, where);
+				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, where, softDelete);
 			}
 			
 			int rows = namedJdbcExecuteUpdate(sql, keys);
@@ -184,7 +184,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			if(softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
 			} else { // 软删除
-				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, postSql);
+				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, postSql, softDelete);
 			}
 			return namedJdbcExecuteUpdate(sql, args);
 		} else { // 配置了拦截器，则先查出key，再删除

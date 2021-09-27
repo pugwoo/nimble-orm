@@ -36,32 +36,29 @@ public class SQLUtils {
 	/**
 	 * 展开子查询SubQuery子句。该方法不支持子查询嵌套，由上一层方法来嵌套调用以实现SubQuery子句嵌套。
 	 * 该方法会自动处理软删除标记。
-	 * @param subQuery
+	 * @param subQuery 子查询DTO
 	 * @param values 带回去的参数列表
-	 * @return
+	 * @return 拼凑完的SQL
 	 */
 	public static String expandSubQuery(SubQuery subQuery, List<Object> values) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT * FROM (SELECT ");
-		sql.append(subQuery.getField());
-		sql.append(" FROM ").append(getTableName(subQuery.getClazz())); // 注意：subQuery这里不用table的alias
-		sql.append(" ").append(SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()));
-		sql.append(") sub ");
-		
 		if(subQuery.getArgs() != null) {
 			values.addAll(Arrays.asList(subQuery.getArgs()));
 		}
-		return sql.toString();
+		return "SELECT * FROM (SELECT " +
+				subQuery.getField() +
+				" FROM " + getTableName(subQuery.getClazz()) + // 注意：subQuery这里不用table的alias
+				" " + SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()) +
+				") sub ";
 	}
 	
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
-	 * @param clazz
+	 * @param clazz 注解了Table的类
 	 * @param selectOnlyKey 是否只查询key
 	 * @param isSelect1 是否只select 1，不查询实际字段；当该值为true时，selectOnlyKey无效。
-	 * @param features 将dbhelper的特性开关传入，用于处理生成的SQL
+	 * @param features 将dbHelper的特性开关传入，用于处理生成的SQL
 	 * @param postSql 将postSql传入，目前仅用于确定select 1字段的附加computed字段是否加入
-	 * @return
+	 * @return 返回拼凑返回的SQL
 	 */
 	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1,
 									  Map<FeatureEnum, Boolean> features, String postSql) {
@@ -154,8 +151,8 @@ public class SQLUtils {
 	
 	/**
 	 * select count(1) from t_table, 不包含where子句及以后的语句
-	 * @param clazz
-	 * @return
+	 * @param clazz 注解了Table的表
+	 * @return 生成的SQL
 	 */
 	public static String getSelectCountSQL(Class<?> clazz) {
 		StringBuilder sql = new StringBuilder();
@@ -190,18 +187,18 @@ public class SQLUtils {
 	/**
 	 * 获得主键where子句，包含where关键字。会自动处理软删除条件
 	 * 
-	 * @param t
+	 * @param t 注解了Table的类的对象
 	 * @param keyValues 返回传入sql的参数，如果提供list则写入
 	 * @return 返回值前面会带空格，以确保安全。
-	 * @throws NoKeyColumnAnnotationException
-	 * @throws NullKeyValueException
+	 * @throws NoKeyColumnAnnotationException 当t的类没有注解任何isKey=true的列时抛出
+	 * @throws NullKeyValueException 当t中的主键都是null时抛出
 	 */
 	public static <T> String getKeysWhereSQL(T t, List<Object> keyValues) 
 	    throws NoKeyColumnAnnotationException, NullKeyValueException {
 		
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
-		List<Object> _keyValues = new ArrayList<Object>();
+		List<Object> _keyValues = new ArrayList<>();
 		String where = joinWhereAndGetValue(keyFields, "AND", _keyValues, t);
 		
 		// 检查主键不允许为null
@@ -221,8 +218,8 @@ public class SQLUtils {
 	/**
 	 * 获得主键where子句，包含where关键字。会自动处理软删除条件
 	 * 
-	 * @param clazz
-	 * @throws NoKeyColumnAnnotationException
+	 * @param clazz 注解了Table的类
+	 * @throws NoKeyColumnAnnotationException 当没有注解isKey=1的列时抛出
 	 */
 	public static String getKeysWhereSQL(Class<?> clazz) 
 			throws NoKeyColumnAnnotationException {
@@ -233,8 +230,8 @@ public class SQLUtils {
 	
 	/**
 	 * 获得主键in(?)的where子句，包含where关键字。会自动处理软删除条件
-	 * @param clazz
-	 * @return
+	 * @param clazz 注解了Table的类
+	 * @return 生成的where子句的SQL
 	 */
 	public static String getKeyInWhereSQL(Class<?> clazz) {
 		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
@@ -244,10 +241,10 @@ public class SQLUtils {
 	
 	/**
 	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
-	 * @param t
-	 * @param values 必须
+	 * @param t 注解了Table的对象
+	 * @param values 必须，要插入的参数值
 	 * @param isWithNullValue 标记是否将null字段放到insert语句中
-	 * @return
+	 * @return 生成的SQL
 	 */
 	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
         StringBuilder sql = new StringBuilder("INSERT INTO ");
@@ -255,7 +252,7 @@ public class SQLUtils {
         List<Field> fields = DOInfoReader.getColumns(t.getClass());
 
         sql.append(getTableName(t.getClass())).append(" (");
-        List<Object> _values = new ArrayList<Object>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
+        List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
         String fieldSql = joinAndGetValue(fields, ",", _values, t, isWithNullValue);
         sql.append(fieldSql);
         sql.append(") VALUES ");
@@ -296,10 +293,10 @@ public class SQLUtils {
 	
 	/**
 	 * 生成insert into (...) select ?,?,? from where not exists (select 1 from where)语句
-	 * @param t
-	 * @param values
-	 * @param whereSql
-	 * @return
+	 * @param t 注解了Table的对象
+	 * @param values 要插入的参数
+	 * @param whereSql 附带的where子句
+	 * @return 生成的SQL
 	 */
 	public static <T> String getInsertWhereNotExistSQL(T t, List<Object> values,
 			boolean isWithNullValue, String whereSql) {
@@ -326,10 +323,10 @@ public class SQLUtils {
 	
 	/**
 	 * 生成update语句
-	 * @param t
-	 * @param values
-	 * @param withNull
-	 * @param postSql
+	 * @param t 注解了Table的对象
+	 * @param values 要更新的值
+	 * @param withNull 是否更新null值
+	 * @param postSql 附带的where子句
 	 * @return 返回值为null表示不需要更新操作，这个是这个方法特别之处
 	 */
 	public static <T> String getUpdateSQL(T t, List<Object> values,
@@ -343,7 +340,7 @@ public class SQLUtils {
 		
 		sql.append(getTableName(t.getClass())).append(" SET ");
 		
-		List<Object> setValues = new ArrayList<Object>();
+		List<Object> setValues = new ArrayList<>();
 		String setSql = joinSetAndGetValue(notKeyFields, setValues, t, withNull);
 		if(setValues.isEmpty()) {
 			return null; // all field is empty, not need to update
@@ -351,7 +348,7 @@ public class SQLUtils {
 		sql.append(setSql);
 		values.addAll(setValues);
 		
-		List<Object> whereValues = new ArrayList<Object>();
+		List<Object> whereValues = new ArrayList<>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
 		// 检查key值是否有null的，不允许有null
 		for(Object v : whereValues) {
@@ -363,9 +360,9 @@ public class SQLUtils {
 
 		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
 		if(casVersionField != null) {
-			List<Field> casVersionFields = new ArrayList<Field>();
+			List<Field> casVersionFields = new ArrayList<>();
 			casVersionFields.add(casVersionField);
-			List<Object> casValues = new ArrayList<Object>();
+			List<Object> casValues = new ArrayList<>();
 			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
 			if(casValues.size() != 1 || casValues.get(0) == null) {
 				throw new CasVersionNotMatchException("casVersion column value is null");
@@ -392,11 +389,11 @@ public class SQLUtils {
 	
 	/**
 	 * 获得批量更新sql
-	 * @param clazz
-	 * @param setSql
-	 * @param whereSql
+	 * @param clazz 注解了Table的类
+	 * @param setSql update的set子句
+	 * @param whereSql 附带的where子句
 	 * @param extraWhereSql 会放在最后，以满足update子select语句的要求
-	 * @return
+	 * @return 生成的SQL
 	 */
 	public static <T> String getUpdateAllSQL(Class<T> clazz, String setSql, String whereSql,
 			String extraWhereSql) {
@@ -438,10 +435,10 @@ public class SQLUtils {
 
 	/**
 	 * 获得自定义更新的sql
-	 * @param t
-	 * @param values
-	 * @param setSql
-	 * @return
+	 * @param t 注解了Table的对象
+	 * @param values 要update的参数值
+	 * @param setSql set子句SQL
+	 * @return 生成的SQL
 	 */
 	public static <T> String getCustomUpdateSQL(T t, List<Object> values, String setSql) {
 		StringBuilder sql = new StringBuilder();
@@ -472,7 +469,7 @@ public class SQLUtils {
 				if(value == null) {
 					throw new CasVersionNotMatchException("casVersion column value is null");
 				}
-				Long _v = null;
+				long _v;
 				if(value instanceof Long) {
 					_v = (Long) value;
 				} else if (value instanceof Integer) {
@@ -493,7 +490,7 @@ public class SQLUtils {
 			}
 		}
 		
-		List<Object> whereValues = new ArrayList<Object>();
+		List<Object> whereValues = new ArrayList<>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
 		
 		for(Object value : whereValues) {
@@ -505,9 +502,9 @@ public class SQLUtils {
 
 		Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
 		if(casVersionField != null) {
-			List<Field> casVersionFields = new ArrayList<Field>();
+			List<Field> casVersionFields = new ArrayList<>();
 			casVersionFields.add(casVersionField);
-			List<Object> casValues = new ArrayList<Object>();
+			List<Object> casValues = new ArrayList<>();
 			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
 			if(casValues.size() != 1 || casValues.get(0) == null) {
 				throw new CasVersionNotMatchException("casVersion column value is null");
@@ -523,13 +520,13 @@ public class SQLUtils {
 	
 	/**
 	 * 获得软删除SQL
-	 * @param t
-	 * @param values
-	 * @return
+	 * @param t 注解了Table的对象
+	 * @param values 要传回给调用方的更新值
+	 * @return 生成的SQL
 	 */
 	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
-		String setSql = getColumnName(softDeleteColumn) + "="
-	                    + softDeleteColumn.softDelete()[1];
+		StringBuilder setSql = new StringBuilder(getColumnName(softDeleteColumn) + "="
+				+ softDeleteColumn.softDelete()[1]);
 
 		// 处理deleteValueScript
         List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
@@ -540,28 +537,19 @@ public class SQLUtils {
             if(!deleteValueScript.isEmpty()) {
                 Object value = DOInfoReader.getValue(field, t);
                 if(value != null) {
-                    setSql = setSql + "," + getColumnName(column)
-                            + "=" + TypeAutoCast.toSqlValueStr(value);
+                    setSql.append(",").append(getColumnName(column))
+							.append("=").append(TypeAutoCast.toSqlValueStr(value));
                 }
             }
         }
 
-		return getCustomDeleteSQL(t, values, setSql);
+		return getCustomDeleteSQL(t, values, setSql.toString());
 	}
 	
 	/**
 	 * 获得自定义删除SQL
-	 * @param clazz
-	 * @param postSql
-	 * @return
 	 */
 	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
-		StringBuilder sql = new StringBuilder();
-
-		sql.append("DELETE FROM ");
-		sql.append(getTableName(clazz));
-		
-		sql.append(autoSetSoftDeleted(postSql, clazz));
 
 		// 物理删除也执行deleteValueScript，但是不关心其返回值
         List<Field> fields = DOInfoReader.getColumns(clazz);
@@ -574,13 +562,14 @@ public class SQLUtils {
             }
         }
 
-        return sql.toString();
+		return "DELETE FROM " +
+				getTableName(clazz) +
+				autoSetSoftDeleted(postSql, clazz);
 	}
 	
-	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql) {
+	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql, Field softDelete) {
 		
 		List<Field> fields = DOInfoReader.getColumns(clazz);
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 		Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 		
 		StringBuilder sql = new StringBuilder();
@@ -615,10 +604,6 @@ public class SQLUtils {
 
 	/**
 	 * 获得自定义更新的sql
-	 * @param t
-	 * @param values
-	 * @param setSql
-	 * @return
 	 */
 	public static <T> String getCustomDeleteSQL(T t, List<Object> values, String setSql) {
 		StringBuilder sql = new StringBuilder();
@@ -644,7 +629,7 @@ public class SQLUtils {
 			}
 		}
 
-		List<Object> whereValues = new ArrayList<Object>();
+		List<Object> whereValues = new ArrayList<>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
 
 		for(Object value : whereValues) {
@@ -662,9 +647,6 @@ public class SQLUtils {
 
 	/**
 	 * 获得硬删除SQL
-	 * @param t
-	 * @param values
-	 * @return
 	 */
 	public static <T> String getDeleteSQL(T t, List<Object> values) {
 		
@@ -675,7 +657,7 @@ public class SQLUtils {
 		sql.append("DELETE FROM ");
 		sql.append(getTableName(t.getClass()));
 		
-		List<Object> _values = new ArrayList<Object>();
+		List<Object> _values = new ArrayList<>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", _values, t);
 		for(Object value : _values) { // 检查key的值是不是null
 			if(value == null) {
@@ -699,7 +681,7 @@ public class SQLUtils {
 	 * @param whereSql 从where起的sql子句，如果有where必须带上where关键字。
 	 * @param condExpression 例如a=?  不带where或and关键字。
 	 * @return 注意返回字符串前面没有空格
-	 * @throws JSQLParserException 
+	 * @throws JSQLParserException SQL解析错误时抛出
 	 */
 	public static String insertWhereAndExpression(String whereSql, String condExpression) 
 			throws JSQLParserException {
@@ -733,7 +715,7 @@ public class SQLUtils {
 		return result.replace(magic, condExpression);
 	}
 
-	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
+	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
 		return autoSetSoftDeleted(whereSql, clazz, "");
 	}
 	
@@ -744,7 +726,7 @@ public class SQLUtils {
 	 * @param extraWhere 附带的where语句，会加进去，不能带where关键字，仅能是where的条件字句，该子句会放到最后
 	 * @return 无论如何前面会加空格，更安全
 	 */
-	public static <T> String autoSetSoftDeleted(String whereSql, Class<?> clazz, String extraWhere) {
+	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz, String extraWhere) {
 		if(whereSql == null) {
 			whereSql = "";
 		}
@@ -782,13 +764,13 @@ public class SQLUtils {
 				Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
 				String columnName = getColumnName(softDeleteColumn);
 				if(joinTable.joinType() == JoinTypeEnum.RIGHT_JOIN) {
-					deletedExpressionSb.append("(").append(joinLeftTable.alias()).append(".").append(
-						columnName + "=" + softDeleteColumn.softDelete()[0])
+					deletedExpressionSb.append("(").append(joinLeftTable.alias()).append(".")
+							.append(columnName).append("=").append(softDeleteColumn.softDelete()[0])
 					   .append(" or ").append(joinLeftTable.alias()).append(".")
 					   .append(columnName).append(" is null)");
 				} else {
-					deletedExpressionSb.append(joinLeftTable.alias()).append(".").append(
-							columnName + "=" + softDeleteColumn.softDelete()[0]);
+					deletedExpressionSb.append(joinLeftTable.alias()).append(".")
+							.append(columnName).append("=").append(softDeleteColumn.softDelete()[0]);
 				}
 			}
 			
@@ -799,13 +781,13 @@ public class SQLUtils {
 				Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
 				String columnName = getColumnName(softDeleteColumn);
 				if(joinTable.joinType() == JoinTypeEnum.LEFT_JOIN) {
-					deletedExpressionSb.append("(").append(joinRightTable.alias()).append(".").append(
-							columnName + "=" + softDeleteColumn.softDelete()[0])
+					deletedExpressionSb.append("(").append(joinRightTable.alias()).append(".")
+							.append(columnName).append("=").append(softDeleteColumn.softDelete()[0])
 					    .append(" or ").append(joinRightTable.alias()).append(".")
 					    .append(columnName).append(" is null)");
 				} else {
-					deletedExpressionSb.append(joinRightTable.alias()).append(".").append(
-							columnName + "=" + softDeleteColumn.softDelete()[0]);
+					deletedExpressionSb.append(joinRightTable.alias()).append(".")
+							.append(columnName).append("=").append(softDeleteColumn.softDelete()[0]);
 				}
 			}
 			
@@ -843,7 +825,7 @@ public class SQLUtils {
 	 * 拼凑limit字句。前面有空格。
 	 * @param offset 可以为null
 	 * @param limit 不能为null
-	 * @return
+	 * @return 生成的SQL
 	 */
 	public static String genLimitSQL(Integer offset, Integer limit) {
 		StringBuilder sb = new StringBuilder();
@@ -879,9 +861,6 @@ public class SQLUtils {
 
     /**
      * 拼凑select的field的语句
-     * @param fields
-     * @param sep
-     * @return
      */
 	private static String join(List<Field> fields, String sep, Map<FeatureEnum, Boolean> features) {
 	    return join(fields, sep, null, features);
@@ -889,10 +868,6 @@ public class SQLUtils {
 	
     /**
      * 拼凑select的field的语句
-     * @param fields
-     * @param sep
-     * @param fieldPrefix
-     * @return
      */
     private static String join(List<Field> fields, String sep, String fieldPrefix,
 							   Map<FeatureEnum, Boolean> features) {
@@ -902,11 +877,9 @@ public class SQLUtils {
 	/**
 	 * 拼凑where子句，并把需要的参数写入到values中。返回sql【不】包含where关键字
 	 * 
-	 * @param fields
+	 * @param fields 注解了Column的field
 	 * @param logicOperate 操作符，例如AND
-	 * @param values
-	 * @param obj
-	 * @return
+	 * @param values where条件的参数值
 	 */
 	private static String joinWhereAndGetValue(List<Field> fields,
 			String logicOperate, List<Object> values, Object obj) {
@@ -929,9 +902,7 @@ public class SQLUtils {
 	
 	/**
 	 * 拼凑where子句。返回sql【不】包含where关键字
-	 * @param fields
 	 * @param logicOperate 操作符，例如AND
-	 * @return
 	 */
 	private static String joinWhere(List<Field> fields, String logicOperate) {
 		StringBuilder sb = new StringBuilder();
@@ -948,12 +919,7 @@ public class SQLUtils {
 
     /**
      * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
-     * @param fields
-     * @param sep
-     * @param values
-     * @param obj
      * @param isWithNullValue 是否把null值放到values中
-     * @return
      */
     private static String joinAndGetValue(List<Field> fields, String sep,
                 List<Object> values, Object obj, boolean isWithNullValue) {
@@ -962,10 +928,6 @@ public class SQLUtils {
     
     /**
      * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
-     * @param fields
-     * @param sep
-     * @param fieldPrefix
-     * @return
      */
 	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix,
 												   Map<FeatureEnum, Boolean> features) {
@@ -989,14 +951,10 @@ public class SQLUtils {
     
     /**
      * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中。会排除掉computed的@Column字段
-     * 
-     * @param fields
-     * @param sep
-     * @param fieldPrefix
+     *
      * @param values 不应该为null
      * @param obj 不应该为null
      * @param isWithNullValue 是否把null值放到values中
-     * @return
      */
 	private static String joinAndGetValueForInsert(List<Field> fields, String sep, String fieldPrefix,
 			List<Object> values, Object obj, boolean isWithNullValue) {
@@ -1030,7 +988,7 @@ public class SQLUtils {
         	sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
     	}
     	int len = sb.length();
-    	return len == 0 ? "" : sb.toString().substring(0, len - 1);
+    	return len == 0 ? "" : sb.substring(0, len - 1);
 	}
 	
 	/**
@@ -1049,25 +1007,20 @@ public class SQLUtils {
     
 	/**
 	 * 拼凑set子句，将会处理casVersion的字段自动+1
-	 * @param fields
-	 * @param values
-	 * @param obj
 	 * @param withNull 当为true时，如果field的值为null，也加入
-	 * @return
 	 */
 	private static String joinSetAndGetValue(List<Field> fields,
 			List<Object> values, Object obj, boolean withNull) {
 		StringBuilder sb = new StringBuilder();
-		int fieldSize = fields.size();
-		for(int i = 0; i < fieldSize; i++) {
-			Column column = fields.get(i).getAnnotation(Column.class);
-			Object value = DOInfoReader.getValue(fields.get(i), obj);
-			if(column.casVersion()) {
-				if(value == null) {
+		for (Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			Object value = DOInfoReader.getValue(field, obj);
+			if (column.casVersion()) {
+				if (value == null) {
 					throw new CasVersionNotMatchException("casVersion column value is null");
 				}
-				Long _v = null;
-				if(value instanceof Long) {
+				long _v;
+				if (value instanceof Long) {
 					_v = (Long) value;
 				} else if (value instanceof Integer) {
 					_v = ((Integer) value).longValue();
@@ -1076,10 +1029,10 @@ public class SQLUtils {
 				}
 				sb.append(getColumnName(column)).append("=").append(_v + 1).append(",");
 			} else {
-				if(value != null && column.isJSON()) {
+				if (value != null && column.isJSON()) {
 					value = NimbleOrmJSON.toJson(value);
 				}
-				if(withNull || value != null) {
+				if (withNull || value != null) {
 					sb.append(getColumnName(column)).append("=?,");
 					values.add(value);
 				}
@@ -1104,8 +1057,6 @@ public class SQLUtils {
 	
 	/**
 	 * 输出类似：'2017-05-25 11:22:33'
-	 * @param date
-	 * @return
 	 */
 	private static String getDateString(Date date) {
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
