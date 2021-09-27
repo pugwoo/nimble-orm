@@ -12,8 +12,8 @@ public class InnerCommonUtils {
     /**
      * 判断给定的数组是否非空
      */
-    public static boolean isNotEmpty(String[] strs) {
-        return strs != null && strs.length > 0;
+    public static boolean isNotEmpty(String[] strings) {
+        return strings != null && strings.length > 0;
     }
 
     /**

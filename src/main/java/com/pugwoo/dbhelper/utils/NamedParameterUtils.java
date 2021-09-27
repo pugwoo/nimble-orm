@@ -24,47 +24,45 @@ public class NamedParameterUtils {
 	
 	@SuppressWarnings("unchecked")
 	public static Map<String, Object> transParam(List<Object> params) {
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new HashMap<>();
 		if(params != null) {
 			int currParamIndex = 1;
 			for(Object param : params) {
 				// 如果参数是数组，同时【不是】byte[]，则转换成List
 				if(param != null && param.getClass().isArray()) {
-					List<Object> p = new ArrayList<Object>();
+					List<Object> p = new ArrayList<>();
 					if(param instanceof char[]) {
 						for(char c : (char[]) param) {
-							p.add(new Character(c));
+							p.add(c);
 						}
 						param = p;
 					} else if(param instanceof short[]) {
 						for(short s : (short[]) param) {
-							p.add(new Short(s));
+							p.add(s);
 						}
 						param = p;
 					} else if(param instanceof int[]) {
 						for(int i : (int[]) param) {
-							p.add(new Integer(i));
+							p.add(i);
 						}
 						param = p;
 					} else if(param instanceof long[]) {
 						for(long l : (long[]) param) {
-							p.add(new Long(l));
+							p.add(l);
 						}
 						param = p;
 					} else if(param instanceof float[]) {
 						for(float f : (float[]) param) {
-							p.add(new Float(f));
+							p.add(f);
 						}
 						param = p;
 					} else if(param instanceof double[]) {
 						for(double d : (double[]) param) {
-							p.add(new Double(d));
+							p.add(d);
 						}
 						param = p;
 					} else if(param instanceof Object[]) {
-						for(Object o : (Object[]) param) {
-							p.add(o);
-						}
+						p.addAll(Arrays.asList((Object[]) param));
 						param = p;
 					}
 				}
@@ -72,11 +70,11 @@ public class NamedParameterUtils {
 				// 转换后，对于param是空的List或Set，则List或Set插入一个很长的不可能被用户撞上的值
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
-						((List<Object>) param).add((Object) MAGIC_FOR_EMPTY_COLLECTION);
+						((List<Object>) param).add(MAGIC_FOR_EMPTY_COLLECTION);
 					}
 				} else if (param instanceof Set<?>) {
 					if(((Set<?>) param).isEmpty()) {
-						((Set<Object>) param).add((Object) MAGIC_FOR_EMPTY_COLLECTION);
+						((Set<Object>) param).add(MAGIC_FOR_EMPTY_COLLECTION);
 					}
 				}
 				
@@ -109,9 +107,6 @@ public class NamedParameterUtils {
 	
 	/**
 	 * 展开参数，主要是处理SubQuery参数
-	 * @param sql
-	 * @param args
-	 * @return
 	 */
 	private static String _expandParam(String sql, List<Object> args) {
 		StringBuilder sb = new StringBuilder();
@@ -119,7 +114,7 @@ public class NamedParameterUtils {
 		boolean isPreSlash = false;
 		char strQuota = 0;
 		int currParamIndex = 0;
-		List<Object> newArgs = new ArrayList<Object>();
+		List<Object> newArgs = new ArrayList<>();
 		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
 			//char ch = sql.charAt(i);
 			
@@ -128,8 +123,8 @@ public class NamedParameterUtils {
 					throw new ParameterSizeNotMatchedException(sql);
 				}
 				Object arg = args.get(currParamIndex);
-				if(arg != null && arg instanceof SubQuery) {
-					List<Object> values = new ArrayList<Object>();
+				if(arg instanceof SubQuery) {
+					List<Object> values = new ArrayList<>();
 					sb.append(SQLUtils.expandSubQuery((SubQuery)arg, values));
 					newArgs.addAll(values);
 				} else {
@@ -165,9 +160,7 @@ public class NamedParameterUtils {
 	/**
 	 * 把?变成:paramN的形式，不包括'?'中的?
 	 * paramN的N从1开始
-	 * @param sql
 	 * @param args 将会操作参数列表
-	 * @return
 	 */
 	public static String trans(String sql, List<Object> args) {
 		if(sql == null || sql.isEmpty()) {
