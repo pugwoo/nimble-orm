@@ -112,7 +112,6 @@ public class NamedParameterUtils {
 		StringBuilder sb = new StringBuilder();
 		boolean isInStr = false;
 		boolean isPreSlash = false;
-		char strQuota = 0;
 		int currParamIndex = 0;
 		List<Object> newArgs = new ArrayList<>();
 		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
@@ -140,11 +139,9 @@ public class NamedParameterUtils {
 			if(ch == '\'') {
 				if(!isInStr) {
 					isInStr = true;
-					strQuota = ch;
 				} else {
-					if(strQuota == ch && !isPreSlash) {
+					if(!isPreSlash) {
 						isInStr = false;
-						strQuota = 0;
 					}
 				}
 			}
@@ -174,7 +171,6 @@ public class NamedParameterUtils {
 		StringBuilder sb = new StringBuilder();
 		boolean isInStr = false;
 		boolean isPreSlash = false;
-		char strQuota = 0;
 		int currParamIndex = 1;
 		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
 			//char ch = sql.charAt(i);
@@ -189,11 +185,9 @@ public class NamedParameterUtils {
 			if(ch == '\'') {
 				if(!isInStr) {
 					isInStr = true;
-					strQuota = ch;
 				} else {
-					if(strQuota == ch && !isPreSlash) {
+					if(!isPreSlash) {
 						isInStr = false;
-						strQuota = 0;
 					}
 				}
 			}
