@@ -22,7 +22,7 @@ public class ScriptUtils {
      */
     public static void setValueFromScript(Object t, Field field,
                                           Boolean ignoreScriptError, String script) {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("t", t);
         try {
             Object value = MVEL.eval(script, vars);
@@ -39,11 +39,9 @@ public class ScriptUtils {
      * 执行mvel脚本，返回脚本执行返回的值
      * @param t 对象
      * @param ignoreScriptError 是否忽略脚本出错，如果忽略，则方法返回null
-     * @param script
-     * @return
      */
     public static Object getValueFromScript(Object t, Boolean ignoreScriptError, String script) {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("t", t);
         try {
             return MVEL.eval(script, vars);
@@ -58,9 +56,6 @@ public class ScriptUtils {
 
     /**
      * 执行mvel脚本，返回脚本执行返回的值
-     * @param ignoreScriptError
-     * @param script
-     * @return
      */
     public static Object getValueFromScript(Boolean ignoreScriptError, String script) {
         try {

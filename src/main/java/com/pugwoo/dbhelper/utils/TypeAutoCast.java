@@ -52,9 +52,6 @@ public class TypeAutoCast {
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
 	 * 
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
-	 * @param rs
-	 * @param columnName
-	 * @return
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field)
 			throws SQLException {
@@ -269,42 +266,41 @@ public class TypeAutoCast {
 	 * 自动转换类型
 	 * @param obj 要转换的对象
 	 * @param clazz 要转换成的类型
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T cast(Object obj, Class<T> clazz) {
 		// 已经是同类型的就不用转
-		if(obj != null && clazz.isInstance(obj)) {
+		if(clazz.isInstance(obj)) {
 			return (T) obj;
 		}
 		
 		// 对于obj是null但是目标clazz是【基础类型】时，转成 0
 		if(clazz == Integer.class || clazz == int.class) {
 			if(obj == null) {
-				return clazz == int.class ? (T) new Integer(0) : null;
+				return clazz == int.class ? (T) Integer.valueOf(0) : null;
 			}
 			if(obj instanceof Integer) {
 				return (T) obj;
 			}
-			return (T) new Integer(obj.toString());
+			return (T) Integer.valueOf(obj.toString());
 		}
 		if(clazz == Long.class || clazz == long.class) {
 			if(obj == null) {
-				return clazz == long.class ? (T) new Long(0L) : null;
+				return clazz == long.class ? (T) Long.valueOf(0L) : null;
 			}
 			if(obj instanceof Long) {
 				return (T) obj;
 			}
-			return (T) new Long(obj.toString());
+			return (T) Long.valueOf(obj.toString());
 		}
 		if(clazz == Byte.class || clazz == byte.class) {
 			if(obj == null) {
-				return clazz == byte.class ? (T) new Byte((byte)0) : null;
+				return clazz == byte.class ? (T) Byte.valueOf((byte) 0) : null;
 			}
 			if(obj instanceof Byte) {
 				return (T) obj;
 			}
-			return (T) new Byte(obj.toString());
+			return (T) Byte.valueOf(obj.toString());
 		}
 		if(clazz == Character.class || clazz == char.class) {
 			if(obj == null) {
@@ -317,24 +313,24 @@ public class TypeAutoCast {
 		}
 		if(clazz == Short.class || clazz == short.class) {
 			if(obj == null) {
-				return clazz == short.class ? (T) new Short((short)0) : null;
+				return clazz == short.class ? (T) Short.valueOf((short) 0) : null;
 			}
 			if(obj instanceof Short) {
 				return (T) obj;
 			}
-			return (T) new Short(obj.toString());
+			return (T) Short.valueOf(obj.toString());
 		}
 		if(clazz == Boolean.class || clazz == boolean.class) {
 			if(obj == null) {
-				return clazz == boolean.class ? (T) new Boolean(false) : null;
+				return clazz == boolean.class ? (T) Boolean.FALSE : null;
 			}
 			if(obj instanceof Boolean) {
 				return (T) obj;
 			}
 			if(obj instanceof Number) {
-				return (T) new Boolean(((Number) obj).intValue() != 0);
+				return (T) Boolean.valueOf(((Number) obj).intValue() != 0);
 			}
-			return (T) new Boolean(obj.toString());
+			return (T) Boolean.valueOf(obj.toString());
 		}
 		if(clazz == Float.class || clazz == float.class) {
 			if(obj == null) {
@@ -381,7 +377,6 @@ public class TypeAutoCast {
 	 * 转换成sql值的字符串形式，带上单引号。
 	 * 例如传入hello，返回'hello'
 	 * @param object 不应该为null，如果为null则返回空字符串''
-	 * @return
 	 */
 	public static String toSqlValueStr(Object object) {
 		if(object == null) {

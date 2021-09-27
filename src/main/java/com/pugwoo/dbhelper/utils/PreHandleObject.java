@@ -35,7 +35,7 @@ public class PreHandleObject {
 			Column column = field.getAnnotation(Column.class);
 
 			// 这个地方不需要处理turnOff软删除，因为它只是写入时设置默认值
-			if(column.softDelete() != null && column.softDelete().length == 2
+			if(column.softDelete().length == 2
 					&& !column.softDelete()[0].trim().isEmpty()
 					&& !column.softDelete()[1].trim().isEmpty()) {
 				Object delete = DOInfoReader.getValue(field, t);
@@ -50,7 +50,7 @@ public class PreHandleObject {
 				}
 			}
 			
-			if(column.insertDefault() != null && !column.insertDefault().isEmpty()) {
+			if(!column.insertDefault().isEmpty()) {
 				if(DOInfoReader.getValue(field, t) == null) {
 					DOInfoReader.setValue(field, t, column.insertDefault());
 				}
