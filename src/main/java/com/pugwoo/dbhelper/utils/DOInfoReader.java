@@ -36,8 +36,7 @@ public class DOInfoReader {
 	
 	/**
 	 * 获取DO的@Table信息，如果子类没有，会往父类查找
-	 * 
-	 * @param clazz
+	 *
 	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
 	 */
 	public static Table getTable(Class<?> clazz)
@@ -51,13 +50,13 @@ public class DOInfoReader {
 			curClass = curClass.getSuperclass();
 		}
 		
-		throw new NoTableAnnotationException("class " + clazz.getName()
-					+ " does not have @Table annotation.");
+		throw new NoTableAnnotationException("class: "
+				+ (clazz == null ? "null" : clazz.getName())
+				+ " does not have @Table annotation.");
 	}
 	
 	/**
 	 * 获得clazz上注解的JoinTable，如果没有则返回null
-	 * @param clazz
 	 * @return 如果没有则返回null
 	 */
 	public static JoinTable getJoinTable(Class<?> clazz) {
@@ -105,19 +104,15 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得泛型的class
-	 * @param field
-	 * @return
 	 */
 	public static Class<?> getGenericFieldType(Field field) {
         ParameterizedType stringListType = (ParameterizedType) field.getGenericType();
-        Class<?> clazz = (Class<?>) stringListType.getActualTypeArguments()[0];
-        return clazz;
+		return (Class<?>) stringListType.getActualTypeArguments()[0];
 	}
 	
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先
-	 * 
-	 * @param clazz
+	 *
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
 	 */
@@ -139,7 +134,6 @@ public class DOInfoReader {
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
 	 * 该方法只用于select读操作。
-	 * @param clazz
 	 * @param selectOnlyKey 是否只select主键
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
@@ -160,15 +154,13 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得注解了@JoinLeftTable的字段，如果没有注解，抛出NoJoinTableMemberException
-	 * @param clazz
-	 * @return
 	 */
 	public static Field getJoinLeftTable(Class<?> clazz) {
 		if(clazz == null) {
 			throw new NoJoinTableMemberException("clazz is null");
 		}
 		List<Field> result = _getAnnotationColumns(clazz, JoinLeftTable.class);
-		if(result == null || result.isEmpty()) {
+		if(result.isEmpty()) {
 			throw new NoJoinTableMemberException("class " + clazz.getName()
 			    + " does not have @JoinLeftTable field");
 		}
@@ -177,15 +169,13 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得注解了@JoinRightTable的字段，如果没有注解，抛出NoJoinTableMemberException
-	 * @param clazz
-	 * @return
 	 */
 	public static Field getJoinRightTable(Class<?> clazz) {
 		if(clazz == null) {
 			throw new NoJoinTableMemberException("clazz is null");
 		}
 		List<Field> result = _getAnnotationColumns(clazz, JoinRightTable.class);
-		if(result == null || result.isEmpty()) {
+		if(result.isEmpty()) {
 			throw new NoJoinTableMemberException("class " + clazz.getName()
 			    + " does not have @JoinRightTable field");
 		}
@@ -194,14 +184,12 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得字段里面的key字段
-	 * @param clazz
-	 * @return
 	 * @throws NoKeyColumnAnnotationException 如果没有key Column，抛出该异常。
 	 */
 	public static List<Field> getKeyColumns(Class<?> clazz) 
 	    throws NoKeyColumnAnnotationException {
 		List<Field> fields = getColumns(clazz);
-		List<Field> keyFields = new ArrayList<Field>();
+		List<Field> keyFields = new ArrayList<>();
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.isKey()) {
@@ -216,7 +204,6 @@ public class DOInfoReader {
 
 	/**
 	 * 获得一个DO类注解的casVersion字段
-	 * @param clazz
 	 * @return 当没有column字段时返回null
 	 * @throws CasVersionNotMatchException 当有2个及2个以上的casVersion字段时抛出该异常
 	 */
@@ -262,7 +249,6 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得软删除标记字段，最多只能返回1个。
-	 * @param clazz
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
@@ -276,8 +262,7 @@ public class DOInfoReader {
 		
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if(column.softDelete() != null && column.softDelete().length == 2
-					&& !column.softDelete()[0].trim().isEmpty()
+			if(column.softDelete().length == 2 && !column.softDelete()[0].trim().isEmpty()
 					&& !column.softDelete()[1].trim().isEmpty()) {
 				return field;
 			}
@@ -287,13 +272,11 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得字段里面的非key字段
-	 * @param clazz
-	 * @return
 	 */
 	public static List<Field> getNotKeyColumns(Class<?> clazz) {
 		List<Field> fields = getColumns(clazz);
 		
-		List<Field> keyFields = new ArrayList<Field>();
+		List<Field> keyFields = new ArrayList<>();
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(!column.isKey()) {
@@ -305,23 +288,22 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得所有有@RelatedColumn注解的列，包括继承的父类中的，顺序父类先
-	 * 
-	 * @param clazz
+	 *
 	 * @return 不会返回null
 	 */
 	public static List<Field> getRelatedColumns(Class<?> clazz) {
 		if(clazz == null) {
-			return new ArrayList<Field>();
+			return new ArrayList<>();
 		}
 		
-		List<Class<?>> classLink = new ArrayList<Class<?>>();
+		List<Class<?>> classLink = new ArrayList<>();
 		Class<?> curClass = clazz;
 		while (curClass != null) {
 			classLink.add(curClass);
 			curClass = curClass.getSuperclass();
 		}
 		// 父类优先
-		List<Field> result = new ArrayList<Field>();
+		List<Field> result = new ArrayList<>();
 		for (int i = classLink.size() - 1; i >= 0; i--) {
 			Field[] fields = classLink.get(i).getDeclaredFields();
 			for (Field field : fields) {
@@ -336,10 +318,6 @@ public class DOInfoReader {
 
 	/**
 	 * 优先通过getter获得值，如果没有getter，则直接获取
-	 * 
-	 * @param field
-	 * @param object
-	 * @return
 	 */
 	public static Object getValue(Field field, Object object) {
 		String fieldName = field.getName();
@@ -348,6 +326,7 @@ public class DOInfoReader {
 		try {
 			method = object.getClass().getMethod(setMethodName);
 		} catch (Exception e) {
+			// ignore
 		}
 		
 		if(method != null) {
@@ -371,8 +350,6 @@ public class DOInfoReader {
 	/**
 	 * 为relatedColumn获得字段的值。这里有特别的逻辑。
 	 * 当fields只有一个时，返回的是对象本身；否则是一个List，里面是按顺序的fields的多个值
-	 * @param fields
-	 * @param object
 	 * @return 当fields为空，返回null
 	 */
 	public static Object getValueForRelatedColumn(List<Field> fields, Object object) {
@@ -393,10 +370,6 @@ public class DOInfoReader {
 	/**
 	 * 先按照setter的约定寻找setter方法(必须严格匹配参数类型或自动转换)<br>
 	 * 如果有则按setter方法，如果没有则直接写入
-	 * 
-	 * @param field
-	 * @param object
-	 * @param value
 	 */
 	public static boolean setValue(Field field, Object object, Object value) {
 		value = TypeAutoCast.cast(value, field.getType());
@@ -424,10 +397,10 @@ public class DOInfoReader {
 	
 	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {
 		if(clazz == null) {
-			return new ArrayList<Field>();
+			return new ArrayList<>();
 		}
 		
-		List<Class<?>> classLink = new ArrayList<Class<?>>();
+		List<Class<?>> classLink = new ArrayList<>();
 		Class<?> curClass = clazz;
 		while (curClass != null) {
 			classLink.add(curClass);
@@ -442,7 +415,7 @@ public class DOInfoReader {
 		
 		List<Field> fields = _getFields(classLink, Column.class);
 		if(selectOnlyKey) {
-			List<Field> keyFields = new ArrayList<Field>();
+			List<Field> keyFields = new ArrayList<>();
 			for(Field field : fields) {
 				if(field.getAnnotation(Column.class).isKey()) {
 					keyFields.add(field);
@@ -456,29 +429,26 @@ public class DOInfoReader {
 	
 	/**
 	 * 获得clazz类的有annotationClazz注解的字段field（包括clazz类及其父类，父类优先，不处理重名）。
-	 * @param clazz
-	 * @param annoClazz
-	 * @return
 	 */
 	private static List<Field> _getAnnotationColumns(Class<?> clazz, 
-			Class<? extends Annotation> annoClazz) {
+			Class<? extends Annotation> annotationClazz) {
 		if(clazz == null) {
-			return new ArrayList<Field>();
+			return new ArrayList<>();
 		}
 		
-		List<Class<?>> classLink = new ArrayList<Class<?>>();
+		List<Class<?>> classLink = new ArrayList<>();
 		Class<?> curClass = clazz;
 		while (curClass != null) {
 			classLink.add(curClass);
 			curClass = curClass.getSuperclass();
 		}
 		
-		return _getFields(classLink, annoClazz);
+		return _getFields(classLink, annotationClazz);
 	}
 	
 	private static List<Field> _getFields(List<Class<?>> classLink,
-			Class<? extends Annotation> annoClazz) {
-		List<Field> result = new ArrayList<Field>();
+			Class<? extends Annotation> annotationClazz) {
+		List<Field> result = new ArrayList<>();
 		if(classLink == null || classLink.isEmpty()) {
 			return result;
 		}
@@ -486,7 +456,7 @@ public class DOInfoReader {
 		for (int i = classLink.size() - 1; i >= 0; i--) {
 			Field[] fields = classLink.get(i).getDeclaredFields();
 			for (Field field : fields) {
-				if (annoClazz != null && field.getAnnotation(annoClazz) != null) {
+				if (annotationClazz != null && field.getAnnotation(annotationClazz) != null) {
 					result.add(field);
 				}
 			}
@@ -499,6 +469,6 @@ public class DOInfoReader {
 			return str;
 		}
 		String firstLetter = str.substring(0, 1).toUpperCase();
-		return firstLetter + str.substring(1, str.length());
+		return firstLetter + str.substring(1);
 	}
 }

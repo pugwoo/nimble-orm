@@ -60,7 +60,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	}
 
 	@Override
-	public T mapRow(ResultSet rs, int index) throws SQLException {
+	public T mapRow(ResultSet rs, int index) {
 		try {
 			// 支持基本的类型
 			TypeAutoCast.BasicTypeResult basicTypeResult = TypeAutoCast.transBasicType(clazz, rs);
