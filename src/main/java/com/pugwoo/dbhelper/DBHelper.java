@@ -78,8 +78,8 @@ public interface DBHelper {
 	 * 为指定的类设置表名，适合于分表场景；
 	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持（例如servlet规范），
 	 *            然后设置完之后要记得调用resetTableNames清除设置
-	 * @param clazz
-	 * @param tableName
+	 * @param clazz 要替换表名的注解了@Table的类
+	 * @param tableName 新的表名
 	 */
 	<T> void setTableName(Class<T> clazz, String tableName);
 
@@ -95,14 +95,14 @@ public interface DBHelper {
 	 * 该设置仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
 	 * 如果需要永久性的移除软删除，请使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
 	 *
-	 * @param clazz
+	 * @param clazz 注解了@Table的类
 	 */
 	void turnOffSoftDelete(Class<?>... clazz);
 
 	/**
 	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete
 	 *
-	 * @param clazz
+	 * @param clazz 注解了@Table的类
 	 */
 	void turnOnSoftDelete(Class<?>... clazz);
 
@@ -341,7 +341,7 @@ public interface DBHelper {
 	 * 插入多条记录，返回数据库实际修改的条数。<br>
 	 * 实际上，这个是int insert(T t)的循环遍历而已。插入性能并不会因多条而提升。<br>
 	 * 【注】只插入非null的值。该方法为一个事务，要么全部插入成功，要么全部插入失败。<br>
-	 * 【特别说明】因为主键和拦截器方面的设计，dbhelper并没有提供真正批量插入的方式。对于插入性能要求高的场景，请以消息队列辅助消峰。
+	 * 【特别说明】因为主键和拦截器方面的设计，DBHelper并没有提供真正批量插入的方式。对于插入性能要求高的场景，请以消息队列辅助消峰。
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */
