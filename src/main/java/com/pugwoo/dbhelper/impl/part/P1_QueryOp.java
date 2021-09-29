@@ -824,7 +824,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                             if (objRemoteStringList != null) {
                                 LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
                                         localField, remoteField);
-                                valueList = objRemoteList;
+                                valueList = objRemoteStringList;
                             }
                         }
                     }
