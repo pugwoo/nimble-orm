@@ -9,16 +9,16 @@ import java.util.Map;
 public class DBHelperContext {
 
     /**自定义表名，适合于分表场景*/
-    private static final ThreadLocal<Map<Class<?>, String>> _tableNames = new ThreadLocal<>();
+    private static final ThreadLocal<Map<Class<?>, String>> tableNames = new ThreadLocal<>();
 
     /**关闭软删除*/
-    private static final ThreadLocal<Map<Class<?>, Boolean>> _turnOffSoftDelete = new ThreadLocal<>();
+    private static final ThreadLocal<Map<Class<?>, Boolean>> turnOffSoftDelete = new ThreadLocal<>();
 
     /**
      * 获得类对应的自定义表名，不存在返回null
      */
     public static String getTableName(Class<?> clazz) {
-        Map<Class<?>, String> tableNames = _tableNames.get();
+        Map<Class<?>, String> tableNames = DBHelperContext.tableNames.get();
         if(tableNames == null) {
             return null;
         }
@@ -39,10 +39,10 @@ public class DBHelperContext {
             return;
         }
 
-        Map<Class<?>, String> tableNames = _tableNames.get();
+        Map<Class<?>, String> tableNames = DBHelperContext.tableNames.get();
         if(tableNames == null) {
             tableNames = new HashMap<>();
-            _tableNames.set(tableNames);
+            DBHelperContext.tableNames.set(tableNames);
         }
         tableNames.put(clazz, tableName);
     }
@@ -51,7 +51,7 @@ public class DBHelperContext {
      * 清空自定义表名
      */
     public static void resetTableName() {
-        _tableNames.set(null);
+        tableNames.set(null);
     }
 
     /**
@@ -61,7 +61,7 @@ public class DBHelperContext {
         if (clazz == null) {
             return false;
         }
-        Map<Class<?>, Boolean> turnoff = _turnOffSoftDelete.get();
+        Map<Class<?>, Boolean> turnoff = turnOffSoftDelete.get();
         if(turnoff == null) {
             return false;
         }
@@ -77,10 +77,10 @@ public class DBHelperContext {
         if (clazz == null) {
             return;
         }
-        Map<Class<?>, Boolean> turnoff = _turnOffSoftDelete.get();
+        Map<Class<?>, Boolean> turnoff = turnOffSoftDelete.get();
         if(turnoff == null) {
             turnoff = new HashMap<>();
-            _turnOffSoftDelete.set(turnoff);
+            turnOffSoftDelete.set(turnoff);
         }
         turnoff.put(clazz, true);
     }
@@ -92,7 +92,7 @@ public class DBHelperContext {
         if (clazz == null) {
             return;
         }
-        Map<Class<?>, Boolean> turnoff = _turnOffSoftDelete.get();
+        Map<Class<?>, Boolean> turnoff = turnOffSoftDelete.get();
         if(turnoff == null) {
             return;
         }
