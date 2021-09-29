@@ -896,7 +896,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<Object> param = new ArrayList<>();
         for (Object obj : values) {
             if (obj instanceof List) {
-                param.addAll((List) obj);
+                param.addAll((List<?>) obj);
             } else {
                 param.add(obj);
             }
