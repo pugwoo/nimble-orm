@@ -17,15 +17,15 @@ public class InnerCommonUtils {
     }
 
     /**
-     * 检查strs中是否包含有checkStr字符串
+     * 检查strings中是否包含有checkStr字符串
      */
-    public static boolean isContains(String checkStr, String[] strs) {
-        if (!isNotEmpty(strs)) {
+    public static boolean isContains(String checkStr, String[] strings) {
+        if (!isNotEmpty(strings)) {
             return false;
         }
 
         boolean isContain = false;
-        for (String str : strs) {
+        for (String str : strings) {
             if (Objects.equals(str, checkStr)) {
                 isContain = true;
                 break;

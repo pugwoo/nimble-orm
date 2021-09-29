@@ -375,7 +375,7 @@ public class TypeAutoCast {
 
 	/**
 	 * 转换成sql值的字符串形式，带上单引号。
-	 * 例如传入hello，返回'hello'
+	 * 例如传入hello, 返回 'hello'
 	 * @param object 不应该为null，如果为null则返回空字符串''
 	 */
 	public static String toSqlValueStr(Object object) {

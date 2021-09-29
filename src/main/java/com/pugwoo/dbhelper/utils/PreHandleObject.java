@@ -122,7 +122,7 @@ public class PreHandleObject {
 			}
 
 			// 这个地方不用处理turnOff软删除，因为它只是更新时自动设置软删除的值
-			if(column.softDelete() != null && column.softDelete().length == 2
+			if(column.softDelete().length == 2
 					&& !column.softDelete()[0].trim().isEmpty()
 					&& !column.softDelete()[1].trim().isEmpty()) {
 				Object delete = DOInfoReader.getValue(field, t);
