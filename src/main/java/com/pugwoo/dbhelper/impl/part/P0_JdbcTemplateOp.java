@@ -39,7 +39,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	protected ApplicationContext applicationContext;
 	
-	protected List<DBHelperInterceptor> interceptors = new ArrayList<DBHelperInterceptor>();
+	protected List<DBHelperInterceptor> interceptors = new ArrayList<>();
 
 	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<FeatureEnum, Boolean>() {{
 		put(FeatureEnum.AUTO_SUM_NULL_TO_ZERO, true);
@@ -124,30 +124,25 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	/**
-	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式 
-	 * @param sql
-	 * @param args
+	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式
 	 * @return 实际修改的行数
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
 		log(sql);
 		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql.toString(), args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
+		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args == null ? new ArrayList<Object>() : Arrays.asList(args));
+		logSlow(cost, sql, args == null ? new ArrayList<>() : Arrays.asList(args));
 		return rows;
 	}
 	
 	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
-	 * @param sql
-	 * @param args
-	 * @return
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
 		log(sql);
 		long start = System.currentTimeMillis();
-		List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {
 			argsList.addAll(Arrays.asList(args));
 		}

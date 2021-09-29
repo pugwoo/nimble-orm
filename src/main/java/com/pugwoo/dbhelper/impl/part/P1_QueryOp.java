@@ -40,7 +40,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         Class<?> clazz = t.getClass();
         StringBuilder sql = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features, null));
 
-        List<Object> keyValues = new ArrayList<Object>();
+        List<Object> keyValues = new ArrayList<>();
         sql.append(SQLUtils.getKeysWhereSQL(t, keyValues));
 
         try {
@@ -78,7 +78,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
         sql.append(SQLUtils.getKeysWhereSQL(clazz));
 
-        List<Object> argsList = new ArrayList<Object>();
+        List<Object> argsList = new ArrayList<>();
         argsList.add(keyValue);
 
         try {
@@ -94,7 +94,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             long cost = System.currentTimeMillis() - start;
 
-            List<Object> args = new ArrayList<Object>();
+            List<Object> args = new ArrayList<>();
             args.add(keyValue);
             logSlow(cost, sql.toString(), args);
 
@@ -111,7 +111,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <T, K> Map<K, T> getByKeyList(Class<T> clazz, List<K> keyValues) {
         if (keyValues == null || keyValues.isEmpty()) {
-            return new HashMap<K, T>();
+            return new HashMap<>();
         }
 
         StringBuilder sql = new StringBuilder();
@@ -119,7 +119,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 
         log(sql);
-        List<Object> argsList = new ArrayList<Object>();
+        List<Object> argsList = new ArrayList<>();
         argsList.add(keyValues);
         doInterceptBeforeQuery(clazz, sql, argsList);
         long start = System.currentTimeMillis();
@@ -136,17 +136,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         // 转换to map
         if (list == null || list.isEmpty()) {
-            return new HashMap<K, T>();
+            return new HashMap<>();
         }
         Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-        Map<K, T> map = new LinkedHashMap<K, T>();
+        Map<K, T> map = new LinkedHashMap<>();
         for (K key : keyValues) {
             if (key == null) {
                 continue;
             }
             for (T t : list) {
                 Object k = DOInfoReader.getValue(keyField, t);
-                if (k != null && key.equals(k)) {
+                if (key.equals(k)) {
                     map.put(key, t);
                     break;
                 }
@@ -208,7 +208,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         log(sql);
 
-        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
@@ -217,7 +217,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         Long rows;
         if (argsList.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql.toString(), new HashMap<String, Object>(),
+            rows = namedParameterJdbcTemplate.queryForObject(sql.toString(), new HashMap<>(),
                     Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
         } else {
             rows = namedParameterJdbcTemplate.queryForObject(
@@ -334,7 +334,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         log(sql);
 
-        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
@@ -356,7 +356,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         postHandleRelatedColumn(list);
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql.toString(), argsList);
+        logSlow(cost, sql, argsList);
 
 
         doInteceptAfterQueryList(clazz, list, -1, sql, argsList);
@@ -416,7 +416,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         Long rows;
         if (args == null || args.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<String, Object>(),
+            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<>(),
                     Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
         } else {
             rows = namedParameterJdbcTemplate.queryForObject(
@@ -437,7 +437,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         log(sql);
 
-        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
@@ -446,7 +446,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         Long rows;
         if (argsList.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<String, Object>(),
+            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<>(),
                     Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
         } else {
             rows = namedParameterJdbcTemplate.queryForObject(
@@ -463,14 +463,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     /**
      * 查询列表
      *
-     * @param clazz
+     * @param clazz 注解了@Table的类
      * @param selectOnlyKey 是否只查询主键，只查询主键时，拦截器不进行拦截，RelatedColumn也不处理
      * @param withCount 是否计算总数
      * @param offset 从0开始，null时不生效；当offset不为null时，要求limit存在
      * @param limit null时不生效
      * @param postSql sql的where/group/order等sql语句
      * @param args 参数
-     * @return
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <T> PageData<T> _getPage(Class<T> clazz, boolean isUseNamedTemplate,
@@ -485,7 +484,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         log(sql);
 
-        List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
@@ -543,7 +542,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             doInteceptAfterQueryList(clazz, list, total, sql, argsList);
         }
 
-        PageData<T> pageData = new PageData<T>();
+        PageData<T> pageData = new PageData<>();
         pageData.setData(list);
         pageData.setTotal(total);
         if (limit != null) {
@@ -590,7 +589,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     /**t为null表示没有记录，因此等价于空list*/
     private <T> T doInterceptAfterQuery(Class<?> clazz, T t, StringBuilder sql, List<Object> args) {
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
         if (t != null) {
             list.add(t);
         }
@@ -638,7 +637,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (t == null) {
             return;
         }
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
         list.add(t);
 
         postHandleRelatedColumn(list, relatedColumnProperties);
@@ -658,8 +657,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (joinTable != null) { // 处理join的方式
             SQLAssert.allSameClass(tList);
 
-            List<Object> list1 = new ArrayList<Object>();
-            List<Object> list2 = new ArrayList<Object>();
+            List<Object> list1 = new ArrayList<>();
+            List<Object> list2 = new ArrayList<>();
 
             Field joinLeftTableFiled = DOInfoReader.getJoinLeftTable(clazz);
             Field joinRightTableFiled = DOInfoReader.getJoinRightTable(clazz);
@@ -705,7 +704,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
-            if (localField == null || localField.isEmpty()) {
+            if (localField.isEmpty()) {
                 LOGGER.error("cannot find all localField, db column name:{}", column.localColumn());
                 continue;
             }
@@ -719,12 +718,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn());
-            if (remoteField == null || remoteField.isEmpty()) {
+            if (remoteField.isEmpty()) {
                 LOGGER.error("cannot find remoteField,db column name:{}", column.remoteColumn());
                 continue;
             }
 
-            Set<Object> values = new HashSet<Object>(); // 用于去重，同样适用于ArrayList
+            Set<Object> values = new HashSet<>(); // 用于去重，同样适用于ArrayList
             for (T t : tList) {
                 Object value = DOInfoReader.getValueForRelatedColumn(localField, t);
                 if (value != null) {
@@ -736,7 +735,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 // 不需要查询数据库，但是对List的，设置空List，确保list不会是null
                 if (field.getType() == List.class) {
                     for (T t : tList) {
-                        DOInfoReader.setValue(field, t, new ArrayList<Object>());
+                        DOInfoReader.setValue(field, t, new ArrayList<>());
                     }
                 }
                 continue;
@@ -749,7 +748,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         applicationContext.getBean(column.dataService());
                 if (dataService == null) {
                     LOGGER.error("dataService is null for {}", column.dataService());
-                    relateValues = new ArrayList<Object>();
+                    relateValues = new ArrayList<>();
                 } else {
                     List<Object> valuesList = new ArrayList<>(values);
                     relateValues = dataService.get(valuesList, column,
@@ -768,7 +767,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
                     Column remoteColumn = remoteF.getAnnotation(Column.class);
                     if (remoteColumn.computed().trim().isEmpty()) {
-                        sb.append("`" + remoteColumn.value() + "`");
+                        sb.append("`").append(remoteColumn.value()).append("`");
                     } else {
                         sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
                     }
@@ -793,28 +792,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             if (field.getType() == List.class) {
-                Map<Object, List<Object>> mapRemoteValues = new HashMap<Object, List<Object>>();
-                Map<String, List<Object>> mapRemoteValuesString = new HashMap<String, List<Object>>();
+                Map<Object, List<Object>> mapRemoteValues = new HashMap<>();
+                Map<String, List<Object>> mapRemoteValuesString = new HashMap<>();
                 for (Object obj : relateValues) {
                     Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue == null) {continue;}
 
                     List<Object> oRemoteValueList = mapRemoteValues.get(oRemoteValue);
                     if (oRemoteValueList == null) {
-                    	oRemoteValueList = new ArrayList<Object>();
+                    	oRemoteValueList = new ArrayList<>();
                         mapRemoteValues.put(oRemoteValue, oRemoteValueList);
                     }
                     oRemoteValueList.add(obj);
                     
                     List<Object> oRemoteValueListString = mapRemoteValuesString.get(oRemoteValue.toString());
                     if (oRemoteValueListString == null) {
-                    	oRemoteValueListString = new ArrayList<Object>();
+                    	oRemoteValueListString = new ArrayList<>();
                         mapRemoteValuesString.put(oRemoteValue.toString(), oRemoteValueListString);
                     }
                     oRemoteValueListString.add(obj);
                 }
                 for (T t : tList) {
-                    List<Object> valueList = new ArrayList<Object>();
+                    List<Object> valueList = new ArrayList<>();
                     Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue != null) {
                         List<Object> objRemoteList = mapRemoteValues.get(oLocalValue);
@@ -838,8 +837,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     }
                 }
             } else {
-                Map<Object, Object> mapRemoteValues = new HashMap<Object, Object>();
-                Map<String, Object> mapRemoteValuesString = new HashMap<String, Object>();
+                Map<Object, Object> mapRemoteValues = new HashMap<>();
+                Map<String, Object> mapRemoteValuesString = new HashMap<>();
                 for (Object obj : relateValues) {
                     Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue != null && !mapRemoteValues.containsKey(oRemoteValue)) {

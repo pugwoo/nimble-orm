@@ -1,6 +1,5 @@
 package com.pugwoo.dbhelper.impl;
 
-import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.part.P5_DeleteOp;
 
 /**
