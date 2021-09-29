@@ -58,8 +58,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             t = doInterceptAfterQuery(clazz, t, sql, keyValues);
             return t != null;
         } catch (EmptyResultDataAccessException e) {
-            t = null;
-            t = doInterceptAfterQuery(clazz, t, sql, keyValues);
+            t = doInterceptAfterQuery(clazz, null, sql, keyValues);
             return t != null;
         }
     }
@@ -100,9 +99,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             t = doInterceptAfterQuery(clazz, t, sql, argsList);
             return t;
         } catch (EmptyResultDataAccessException e) {
-            T t = null;
-            t = doInterceptAfterQuery(clazz, t, sql, argsList);
-            return t;
+            return doInterceptAfterQuery(clazz, null, sql, argsList);
         }
     }
 
