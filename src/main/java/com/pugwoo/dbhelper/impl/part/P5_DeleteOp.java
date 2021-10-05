@@ -186,7 +186,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	////////
-	private <T> int updateForDelete(T t) throws NullKeyValueException {
+	private <T> void updateForDelete(T t) throws NullKeyValueException {
 
 		// 这个if是肯定不会进去的，因为updateForDelete只对软删除有用，此时非key column肯定不会为空
 		//if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
@@ -199,11 +199,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
 
-		int rows = 0;
 		if (sql != null) {
-			rows = namedJdbcExecuteUpdate(sql, values.toArray());
+			namedJdbcExecuteUpdate(sql, values.toArray());
 		}
 
-		return rows;
 	}
 }
