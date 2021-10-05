@@ -7,15 +7,12 @@ import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +22,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	//////// 拦截器 BEGIN
 	private void doInterceptBeforeInsert(Object t) {
-		List<Object> list = new ArrayList<Object>();
+		List<Object> list = new ArrayList<>();
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
@@ -39,17 +36,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	}
 	
 	private void doInterceptAfterInsert(Object t, int rows) {
-		List<Object> list = new ArrayList<Object>();
+		List<Object> list = new ArrayList<>();
 		list.add(t);
 		doInterceptAfterInsertList(list, rows);
 	}
 	private void doInterceptAfterInsertList(final List<Object> list, final int rows) {
-		Runnable runnable = new Runnable() {
-			@Override
-			public void run() {
-				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterInsert(list, rows);
-				}
+		Runnable runnable = () -> {
+			for (int i = interceptors.size() - 1; i >= 0; i--) {
+				interceptors.get(i).afterInsert(list, rows);
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -129,7 +123,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	private <T> int insert(T t, boolean isWithNullValue, boolean withInterceptor) {
 		PreHandleObject.preHandleInsert(t);
 		
-		final List<Object> values = new ArrayList<Object>();
+		final List<Object> values = new ArrayList<>();
 		
 		if(withInterceptor) {
 			doInterceptBeforeInsert(t);
@@ -140,24 +134,26 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		final long start = System.currentTimeMillis();
 
-		int rows = 0;
+		int rows;
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
 		if (autoIncrementField != null) {
 			GeneratedKeyHolder holder = new GeneratedKeyHolder();
-			rows = jdbcTemplate.update(new PreparedStatementCreator() {
-				@Override
-				public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-					PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-					for (int i = 0; i < values.size(); i++) {
-						statement.setObject(i + 1, values.get(i));
-					}
-					return statement;
+			rows = jdbcTemplate.update(con -> {
+				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+				for (int i = 0; i < values.size(); i++) {
+					statement.setObject(i + 1, values.get(i));
 				}
+				return statement;
 			}, holder);
 
 			if(rows > 0) {
-				long primaryKey = holder.getKey().longValue();
-				DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+				Number key = holder.getKey();
+				if (key == null) {
+					DOInfoReader.setValue(autoIncrementField, t, null);
+				} else {
+					long primaryKey = key.longValue();
+					DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+				}
 			}
 
 		} else {
@@ -192,16 +188,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		PreHandleObject.preHandleInsert(t);
 		
-		List<Object> values = new ArrayList<Object>();
+		List<Object> values = new ArrayList<>();
 		
 		doInterceptBeforeInsert(t);
 		
 		String sql = SQLUtils.getInsertWhereNotExistSQL(t, values, isWithNullValue, whereSql);
 		
 		if(args != null) {
-			for(Object arg : args) {
-				values.add(arg);
-			}
+			values.addAll(Arrays.asList(args));
 		}
 		
 		log(sql);
@@ -226,7 +220,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	private int namedJdbcExecuteUpdateWithReturnId(Field autoIncrementField, Object t, String sql, Object... args) {
 		log(sql);
 		long start = System.currentTimeMillis();
-		List<Object> argsList = new ArrayList<Object>(); // 不要直接用Arrays.asList，它不支持clear方法
+		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {
 			argsList.addAll(Arrays.asList(args));
 		}
@@ -239,8 +233,13 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 				keyHolder); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 
 		if(rows > 0) {
-			long primaryKey = keyHolder.getKey().longValue();
-			DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+			Number key = keyHolder.getKey();
+			if (key == null) {
+				DOInfoReader.setValue(autoIncrementField, t, null);
+			} else {
+				long primaryKey = key.longValue();
+				DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+			}
 		}
 
 		long cost = System.currentTimeMillis() - start;
