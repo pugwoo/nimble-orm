@@ -77,7 +77,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 			return 0;
 		}
 		if(dbList == null) {
-			dbList = new ArrayList<T>();
+			dbList = new ArrayList<>();
 		}
 		if(dbList.isEmpty() && newList.isEmpty()) {
 			return 0; // 不需要处理了
@@ -111,23 +111,22 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 	
 	/**
 	 * 判断两个对象的key是否相等,只有都存在所有的key，且key（如多个，则每个）都相等，才返回true
-	 * @param t1
-	 * @param t2
-	 * @param fields
-	 * @return
 	 */
 	private <T> boolean isKeyEquals(T t1, T t2, List<Field> fields) {
 		if(t1 == null || t2 == null || fields == null) {
 			 return false;
 		}
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t1.getClass());
-		if(keyFields == null || keyFields.isEmpty()) {
+		if(keyFields.isEmpty()) {
 			return false;
 		}
-		for(Field keyField : keyFields) {
+		for (Field keyField : keyFields) {
 			Object key1 = DOInfoReader.getValue(keyField, t1);
 			Object key2 = DOInfoReader.getValue(keyField, t2);
-			if(key1 == null || key2 == null || !key1.equals(key2)) {
+			if (key1 == null || key2 == null) {
+				return false;
+			}
+			if (!key1.equals(key2)) {
 				return false;
 			}
 		}
