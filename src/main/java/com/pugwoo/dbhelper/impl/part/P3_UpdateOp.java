@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private <T> void doInterceptBeforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
+	private void doInterceptBeforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
 			if (!isContinue) {
@@ -35,13 +35,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 	}
 	
-	private <T> void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
-		Runnable runnable = new Runnable() {
-			@Override
-			public void run() {
-				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterUpdate(tList, rows);
-				}
+	private void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
+		Runnable runnable = () -> {
+			for (int i = interceptors.size() - 1; i >= 0; i--) {
+				interceptors.get(i).afterUpdate(tList, rows);
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -78,11 +75,8 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
-		
-		List<Object> tmpList = new ArrayList<Object>();
-		for(T t : list) {
-			tmpList.add(t);
-		}
+
+		List<Object> tmpList = new ArrayList<>(list);
 		doInterceptBeforeUpdate(tmpList, null, null);
 		
 		int rows = 0;
@@ -101,11 +95,8 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
-		
-		List<Object> tmpList = new ArrayList<Object>();
-		for(T t : list) {
-			tmpList.add(t);
-		}
+
+		List<Object> tmpList = new ArrayList<>(list);
 		doInterceptBeforeUpdate(tmpList, null, null);
 		
 		int rows = 0;
@@ -128,14 +119,14 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		PreHandleObject.preHandleUpdate(t);
 		
-		List<Object> tList = new ArrayList<Object>();
+		List<Object> tList = new ArrayList<>();
 		tList.add(t);
 		
 		if(withInterceptors) {
 			doInterceptBeforeUpdate(tList, null, null);
 		}
 		
-		List<Object> values = new ArrayList<Object>();
+		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
@@ -156,8 +147,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
      * 后处理casVersion相关内容：
      * 1. 当DO类有注解casVersion但是数据库没有修改时抛出异常。
      * 2. 当DO类有注解casVersion且数据库提交成功时，自动设置casVersion+1
-     * @param t
-     * @param rows
      */
 	private void postHandleCasVersion(Object t, int rows) {
         Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
@@ -173,9 +162,8 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
                 } else if (casVersion instanceof Long) {
                     Long newVersion = ((Long) casVersion) + 1;
                     DOInfoReader.setValue(casVersionField, t, newVersion);
-                } else {
-                    // 其它类型ignore，已经在update之前就断言casVersion必须是Integer或Long类型
                 }
+                // 其它类型ignore，已经在update之前就断言casVersion必须是Integer或Long类型
             }
         }
     }
@@ -187,13 +175,13 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0; // 不需要更新
 		}
 		
-		List<Object> values = new ArrayList<Object>();
+		List<Object> values = new ArrayList<>();
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
 		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
 		
-		List<Object> tList = new ArrayList<Object>();
+		List<Object> tList = new ArrayList<>();
 		tList.add(t);
 		
 		doInterceptBeforeUpdate(tList, setSql, values);
@@ -208,7 +196,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	}
 	
 	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
 		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
@@ -216,21 +203,21 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0; // 不需要更新
 		}
 		
-		List<Object> values = new ArrayList<Object>();
+		List<Object> values;
 
 		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
 		
-		List<String> customsSets = new ArrayList<String>();
-		List<Object> customsParams = new ArrayList<Object>();
+		List<String> customsSets = new ArrayList<>();
+		List<Object> customsParams = new ArrayList<>();
 		
-		List<Object> argsList = new ArrayList<Object>();
+		List<Object> argsList = new ArrayList<>();
 		if(args != null) {
 			argsList.addAll(Arrays.asList(args));
 		}
 		doInterceptBeforeUpdate(clazz, sql, customsSets, customsParams, argsList);
 		
 		if(!customsSets.isEmpty()) { // 处理自定义加入set，需要重新生成sql
-			values = new ArrayList<Object>();
+			values = new ArrayList<>();
 			values.addAll(customsParams);
 			values.addAll(argsList);
 			
@@ -242,13 +229,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			
 			setSql = sbSet.toString();
 		} else {
-			values.addAll(argsList);
+			values = new ArrayList<>(argsList);
 		}
 		
 		sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
-		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 
-		return rows;
+		return namedJdbcExecuteUpdate(sql, values.toArray());
 	}
 	
 }
