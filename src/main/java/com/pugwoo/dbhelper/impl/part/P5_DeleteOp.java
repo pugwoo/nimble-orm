@@ -18,7 +18,7 @@ import java.util.List;
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected <T> void doInterceptBeforeDelete(List<Object> tList) {
+	protected void doInterceptBeforeDelete(List<Object> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
@@ -27,13 +27,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 
-	protected <T> void doInterceptAfterDelete(final List<Object> tList, final int rows) {
-		Runnable runnable = new Runnable() {
-			@Override
-			public void run() {
-				for (int i = interceptors.size() - 1; i >= 0; i--) {
-					interceptors.get(i).afterDelete(tList, rows);
-				}
+	protected void doInterceptAfterDelete(final List<Object> tList, final int rows) {
+		Runnable runnable = () -> {
+			for (int i = interceptors.size() - 1; i >= 0; i--) {
+				interceptors.get(i).afterDelete(tList, rows);
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -49,13 +46,13 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 		
-		List<Object> values = new ArrayList<Object>();
+		List<Object> values = new ArrayList<>();
 
-		List<Object> tList = new ArrayList<Object>();
+		List<Object> tList = new ArrayList<>();
 		tList.add(t);
 		doInterceptBeforeDelete(tList);
 		
-		String sql = null;
+		String sql;
 		
 		if(softDelete == null) { // 物理删除
 			sql = SQLUtils.getDeleteSQL(t, values);
@@ -112,23 +109,20 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
             }
 
 			Class<?> clazz = list.get(0).getClass();
-			List<Object> keys = new ArrayList<Object>();
+			List<Object> keys = new ArrayList<>();
 			for(T t : list) {
 				Object key = DOInfoReader.getValue(keyField, t);
 				if(key != null) {
                     keys.add(key);
                 }
 			}
-			
-			List<Object> listTmp = new ArrayList<Object>();
-			for(T t : list) {
-				listTmp.add(t);
-			}
+
+			List<Object> listTmp = new ArrayList<>(list);
 			doInterceptBeforeDelete(listTmp);
 			
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 			
-			String sql = null;
+			String sql;
 			String where = "where `" + keyField.getAnnotation(Column.class).value() + "` in (?)";
 			if(softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, where);
@@ -159,12 +153,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
 		
 		try {
-			T t = (T) clazz.newInstance();
+			T t = clazz.newInstance();
 			DOInfoReader.setValue(keyField, t, keyValue);
 			return deleteByKey(t);
-		} catch (InstantiationException e) {
-			throw new MustProvideConstructorException();
-		} catch (IllegalAccessException e) {
+		} catch (InstantiationException | IllegalAccessException e) {
 			throw new MustProvideConstructorException();
 		}
 	}
@@ -178,7 +170,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
-		String sql = null;
+		String sql;
 		
 		if(interceptors == null || interceptors.isEmpty()) { // 没有配置拦截器，则直接删除
 			if(softDelete == null) { // 物理删除
@@ -201,10 +193,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		//	return 0; // not need to update
 		//}
 
-		List<Object> tList = new ArrayList<Object>();
+		List<Object> tList = new ArrayList<>();
 		tList.add(t);
 
-		List<Object> values = new ArrayList<Object>();
+		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
 
 		int rows = 0;
