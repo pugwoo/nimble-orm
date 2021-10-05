@@ -127,7 +127,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql.toString(), argsList);
 
-        list = doInteceptAfterQueryList(clazz, list, list.size(), sql, argsList);
+        list = doInterceptorAfterQueryList(clazz, list, list.size(), sql, argsList);
 
         // 转换to map
         if (list == null || list.isEmpty()) {
@@ -315,7 +315,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql, forIntercept);
 
-        doInteceptAfterQueryList(clazz, list, -1, sql, forIntercept);
+        doInterceptorAfterQueryList(clazz, list, -1, sql, forIntercept);
 
         return list;
     }
@@ -354,7 +354,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         logSlow(cost, sql, argsList);
 
 
-        doInteceptAfterQueryList(clazz, list, -1, sql, argsList);
+        doInterceptorAfterQueryList(clazz, list, -1, sql, argsList);
 
         return list;
     }
@@ -533,7 +533,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         logSlow(cost, sql.toString(), argsList);
 
         if (!selectOnlyKey) {
-            doInteceptAfterQueryList(clazz, list, total, sql, argsList);
+            doInterceptorAfterQueryList(clazz, list, total, sql, argsList);
         }
 
         PageData<T> pageData = new PageData<>();
@@ -587,17 +587,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (t != null) {
             list.add(t);
         }
-        list = doInteceptAfterQueryList(clazz, list, 1, sql, args);
+        list = doInterceptorAfterQueryList(clazz, list, 1, sql, args);
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
-    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, long total,
-                                                 StringBuilder sql, List<Object> args) {
-        return doInteceptAfterQueryList(clazz, list, total, sql.toString(), args);
+    private <T> List<T> doInterceptorAfterQueryList(Class<?> clazz, List<T> list, long total,
+                                                    StringBuilder sql, List<Object> args) {
+        return doInterceptorAfterQueryList(clazz, list, total, sql.toString(), args);
     }
 
-    private <T> List<T> doInteceptAfterQueryList(Class<?> clazz, List<T> list, long total,
-                                                 String sql, List<Object> args) {
+    private <T> List<T> doInterceptorAfterQueryList(Class<?> clazz, List<T> list, long total,
+                                                    String sql, List<Object> args) {
         for (int i = interceptors.size() - 1; i >= 0; i--) {
             list = interceptors.get(i).afterSelect(clazz, sql, args, list, total);
         }
@@ -792,18 +792,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue == null) {continue;}
 
-                    List<Object> oRemoteValueList = mapRemoteValues.get(oRemoteValue);
-                    if (oRemoteValueList == null) {
-                    	oRemoteValueList = new ArrayList<>();
-                        mapRemoteValues.put(oRemoteValue, oRemoteValueList);
-                    }
+                    List<Object> oRemoteValueList = mapRemoteValues.computeIfAbsent(
+                            oRemoteValue, k -> new ArrayList<>());
                     oRemoteValueList.add(obj);
-                    
-                    List<Object> oRemoteValueListString = mapRemoteValuesString.get(oRemoteValue.toString());
-                    if (oRemoteValueListString == null) {
-                    	oRemoteValueListString = new ArrayList<>();
-                        mapRemoteValuesString.put(oRemoteValue.toString(), oRemoteValueListString);
-                    }
+
+                    List<Object> oRemoteValueListString = mapRemoteValuesString.computeIfAbsent(
+                            oRemoteValue.toString(), k -> new ArrayList<>());
                     oRemoteValueListString.add(obj);
                 }
                 for (T t : tList) {
@@ -871,7 +865,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             if (obj instanceof List) {
                 sb.append("(");
-                int size = ((List)obj).size();
+                int size = ((List<?>)obj).size();
                 for (int i = 0; i < size; i++) {
                     if (i > 0) {
                         sb.append(",");
