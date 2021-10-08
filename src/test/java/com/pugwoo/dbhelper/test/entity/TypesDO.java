@@ -23,7 +23,7 @@ public class TypesDO {
     private Byte myByte;
 
     @Column("my_short")
-    private Short myShort;
+    private Short s; // 故意用一个字母
 
     @Column("my_float")
     private Float myFloat;
@@ -70,12 +70,12 @@ public class TypesDO {
         this.myByte = myByte;
     }
 
-    public Short getMyShort() {
-        return myShort;
+    public Short getS() {
+        return s;
     }
 
-    public void setMyShort(Short myShort) {
-        this.myShort = myShort;
+    public void setS(Short s) {
+        this.s = s;
     }
 
     public Float getMyFloat() {

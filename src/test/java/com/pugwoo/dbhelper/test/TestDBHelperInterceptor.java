@@ -99,7 +99,7 @@ public class TestDBHelperInterceptor {
 		List<TypesDO> all = dbHelper.getAll(TypesDO.class, "where id1=?", long1);
 		assert all.size() == 3;
 		for(TypesDO typesDO : all) {
-			assert typesDO.getMyShort() == 3;
+			assert typesDO.getS() == 3;
 		}
 
 	}

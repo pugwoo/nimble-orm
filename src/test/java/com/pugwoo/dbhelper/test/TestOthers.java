@@ -78,7 +78,7 @@ public class TestOthers {
         typesDO.setId1(new Random().nextLong());
         typesDO.setId2(new Random().nextLong());
         typesDO.setMyByte(Byte.valueOf("a".getBytes()[0]));
-        typesDO.setMyShort(Short.valueOf("11"));
+        typesDO.setS(Short.valueOf("11"));
         typesDO.setMyFloat(11.1f);
         typesDO.setMyDouble(22.2);
         typesDO.setMyDecimal(new BigDecimal("11.22"));
@@ -97,7 +97,7 @@ public class TestOthers {
 
         dbHelper.getByKey(types2);
         assert types2.getMyByte().equals(typesDO.getMyByte());
-        assert types2.getMyShort().equals(typesDO.getMyShort());
+        assert types2.getS().equals(typesDO.getS());
         assert types2.getMyFloat().equals(typesDO.getMyFloat());
         assert types2.getMyDouble().equals(typesDO.getMyDouble());
         assert types2.getMyDecimal().equals(typesDO.getMyDecimal());
