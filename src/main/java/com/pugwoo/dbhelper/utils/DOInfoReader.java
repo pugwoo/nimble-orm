@@ -321,7 +321,7 @@ public class DOInfoReader {
 	 */
 	public static Object getValue(Field field, Object object) {
 		String fieldName = field.getName();
-		String setMethodName = "get" + firstLetterUpperCase(fieldName);
+		String setMethodName = "get" + InnerCommonUtils.firstLetterUpperCase(fieldName);
 		Method method = null;
 		try {
 			method = object.getClass().getMethod(setMethodName);
@@ -463,12 +463,5 @@ public class DOInfoReader {
 		}
 		return result;
 	}
-	
-	private static String firstLetterUpperCase(String str) {
-		if (str == null || str.length() < 2) {
-			return str;
-		}
-		String firstLetter = str.substring(0, 1).toUpperCase();
-		return firstLetter + str.substring(1);
-	}
+
 }

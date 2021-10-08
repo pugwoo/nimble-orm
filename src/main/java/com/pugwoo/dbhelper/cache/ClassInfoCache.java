@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.cache;
 
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -30,7 +32,7 @@ public class ClassInfoCache {
         }
 
         String fieldName = field.getName();
-        String setMethodName = "set" + firstLetterUpperCase(fieldName);
+        String setMethodName = "set" + InnerCommonUtils.firstLetterUpperCase(fieldName);
 
         try {
             method = field.getDeclaringClass().getMethod(setMethodName, field.getType());
@@ -45,14 +47,6 @@ public class ClassInfoCache {
             fieldMethodMap.put(field, method);
         }
         return method;
-    }
-
-    private static String firstLetterUpperCase(String str) {
-        if (str == null || str.length() < 2) {
-            return str;
-        }
-        String firstLetter = str.substring(0, 1).toUpperCase();
-        return firstLetter + str.substring(1);
     }
 
 }

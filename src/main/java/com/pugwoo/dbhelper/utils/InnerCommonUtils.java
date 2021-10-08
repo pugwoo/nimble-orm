@@ -56,5 +56,12 @@ public class InnerCommonUtils {
         return result;
     }
 
+    public static String firstLetterUpperCase(String str) {
+        if (str == null || str.isEmpty()) {
+            return "";
+        }
+        String firstLetter = str.substring(0, 1).toUpperCase();
+        return firstLetter + str.substring(1);
+    }
 
 }
