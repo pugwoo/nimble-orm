@@ -292,16 +292,8 @@ public class DOInfoReader {
 	 * @return 不会返回null
 	 */
 	public static List<Field> getRelatedColumns(Class<?> clazz) {
-		if(clazz == null) {
-			return new ArrayList<>();
-		}
-		
-		List<Class<?>> classLink = new ArrayList<>();
-		Class<?> curClass = clazz;
-		while (curClass != null) {
-			classLink.add(curClass);
-			curClass = curClass.getSuperclass();
-		}
+		List<Class<?>> classLink = getClassAndParentClasses(clazz, true);
+
 		// 父类优先
 		List<Field> result = new ArrayList<>();
 		for (int i = classLink.size() - 1; i >= 0; i--) {
