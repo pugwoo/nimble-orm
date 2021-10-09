@@ -396,22 +396,7 @@ public class DOInfoReader {
 	}
 	
 	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		if(clazz == null) {
-			return new ArrayList<>();
-		}
-		
-		List<Class<?>> classLink = new ArrayList<>();
-		Class<?> curClass = clazz;
-		while (curClass != null) {
-			classLink.add(curClass);
-
-			ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
-			if(eic != null) {
-				break;
-			}
-
-			curClass = curClass.getSuperclass();
-		}
+		List<Class<?>> classLink = getClassAndParentClasses(clazz);
 		
 		List<Field> fields = _getFields(classLink, Column.class);
 		if(selectOnlyKey) {
@@ -425,6 +410,30 @@ public class DOInfoReader {
 		} else {
 			return fields;
 		}
+	}
+
+	/**
+	 * 获得指定类及其父类的列表，子类在前，父类在后，都受到@ExcludeInheritedColumn注解的约束
+	 */
+	private static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
+		if (clazz == null) {
+			return new ArrayList<>();
+		}
+
+		List<Class<?>> classLink = new ArrayList<>();
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			classLink.add(curClass);
+
+			ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
+			if(eic != null) {
+				break;
+			}
+
+			curClass = curClass.getSuperclass();
+		}
+
+		return classLink;
 	}
 	
 	/**
