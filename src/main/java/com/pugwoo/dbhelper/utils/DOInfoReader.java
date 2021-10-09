@@ -404,12 +404,12 @@ public class DOInfoReader {
 		Class<?> curClass = clazz;
 		while (curClass != null) {
 			classLink.add(curClass);
-			if(!selectOnlyKey) {
-				ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
-				if(eic != null) {
-					break;
-				}
+
+			ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
+			if(eic != null) {
+				break;
 			}
+
 			curClass = curClass.getSuperclass();
 		}
 		
