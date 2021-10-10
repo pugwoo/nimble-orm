@@ -346,7 +346,7 @@ public interface DBHelper {
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */
-	int insert(List<?> list);
+	int insert(Collection<?> list);
 
 	/**
 	 * 批量插入多条记录，返回数据库实际修改的条数. <br>

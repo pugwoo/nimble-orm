@@ -20,9 +20,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 2015年1月13日 11:11:23
@@ -362,7 +360,18 @@ public class TestDBHelper {
 			students.add(stu);
 		}
 		row = dbHelper.insert(students);
-		System.out.println("affected rows:" + row);
+		assert row == 10;
+
+		// 测试批量写入，Set参数
+		Set<StudentDO> studentSet = new HashSet<>();
+		for(int i = 0; i < 10; i++) {
+			StudentDO stu = new StudentDO();
+			stu.setName("test" + i);
+			stu.setAge(i);
+			studentSet.add(stu);
+		}
+		row = dbHelper.insert(studentSet);
+		assert row == 10;
 
 		// 测试random值
         StudentRandomNameDO studentRandomNameDO = new StudentRandomNameDO();

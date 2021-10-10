@@ -16,6 +16,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
@@ -59,19 +60,28 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public int insert(List<?> list) {
+	public int insert(Collection<?> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
-		
-		doInterceptBeforeInsertList((List<Object>) list);
-		
+
+		if (list instanceof List) {
+			doInterceptBeforeInsertList((List<Object>) list);
+		} else {
+			doInterceptBeforeInsertList(new ArrayList<>(list));
+		}
+
 		int sum = 0;
 		for(Object obj : list) {
 			sum += insert(obj, false, false);
 		}
-		
-		doInterceptAfterInsertList((List<Object>)list, sum);
+
+		if (list instanceof List) {
+			doInterceptAfterInsertList((List<Object>)list, sum);
+		} else {
+			doInterceptAfterInsertList(new ArrayList<>(list), sum);
+		}
+
 		return sum;
 	}
 
