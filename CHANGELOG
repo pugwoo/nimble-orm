@@ -1,3 +1,5 @@
+v1.1.1 - [enhance] 对于select的字段，如果已经出现重复的名称，那么子类会覆盖父类；DO的setter同理
+
 2021年9月23日
 v1.1.0 - [add] 【重要升级和变动】RelatedColumn支持多列进行关联查询；
                 IDBHelperDataService接口定义发生变化，客户端需要变化。

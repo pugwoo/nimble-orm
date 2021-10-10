@@ -23,7 +23,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
@@ -448,21 +450,57 @@ public class DOInfoReader {
 		return null;
 	}
 
+	/**
+	 * 获取classLink多个类中，注解了annotationClazz的Field字段。<br>
+	 * 目前annotationClazz的取值有@Column @JoinLeftTable @JoinRightTable <br>
+	 * 对于Column注解，如果子类和父类字段同名，那么子类将代替父类，父类的Field不会加进来；<br>
+	 * 如果子类出现相同的Field，那么也只拿第一个；一旦出现字段同名，那么进行告警log，正常是不建议覆盖和同名操作的，风险很大 <br>
+	 */
 	private static List<Field> _getFields(List<Class<?>> classLink,
 			Class<? extends Annotation> annotationClazz) {
 		List<Field> result = new ArrayList<>();
-		if(classLink == null || classLink.isEmpty()) {
+		if(classLink == null || classLink.isEmpty() || annotationClazz == null) {
 			return result;
 		}
-		// 父类先拿，不处理重名情况
+
+		// 按父类优先的顺序来
+		List<List<Field>> fieldList = new ArrayList<>();
 		for (int i = classLink.size() - 1; i >= 0; i--) {
 			Field[] fields = classLink.get(i).getDeclaredFields();
-			for (Field field : fields) {
-				if (annotationClazz != null && field.getAnnotation(annotationClazz) != null) {
-					result.add(field);
+			fieldList.add(InnerCommonUtils.filter(fields, o -> o.getAnnotation(annotationClazz) != null));
+		}
+
+		// @Column注解的字段，需要按value进行去重
+		if (annotationClazz == Column.class) {
+			Set<String> columnValues = new HashSet<>();
+			// 从子类开始拿
+			List<List<Field>> fieldListTmp = new ArrayList<>();
+			for (int i = fieldList.size() - 1; i >= 0; i--) {
+				List<Field> fields = fieldList.get(i);
+				List<Field> fieldsTmp = new ArrayList<>();
+				for (Field field : fields) {
+					Column column = field.getAnnotation(Column.class);
+					if (columnValues.contains(column.value())) {
+						LOGGER.warn("found duplicate field:{} in class(and its parents):{}, this field is ignored",
+								field.getName(), classLink.get(0).getName());
+						continue;
+					}
+					columnValues.add(column.value());
+
+					fieldsTmp.add(field);
 				}
+				fieldListTmp.add(0, fieldsTmp);
+			}
+
+			for (List<Field> fields : fieldListTmp) {
+				result.addAll(fields);
+			}
+		} else {
+			for (List<Field> fields : fieldList) {
+				result.addAll(fields);
 			}
 		}
+
 		return result;
 	}
 

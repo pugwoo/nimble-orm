@@ -22,6 +22,23 @@ public class InnerCommonUtils {
     }
 
     /**
+     * filter一个数组
+     */
+    public static <T> List<T> filter(T[] array, Predicate<? super T> predicate) {
+        if (array == null || array.length == 0) {
+            return new ArrayList<>();
+        }
+
+        List<T> list = new ArrayList<>();
+        for (T t : array) {
+            if (predicate.test(t)) {
+                list.add(t);
+            }
+        }
+        return list;
+    }
+
+    /**
      * 判断给定的数组是否非空
      */
     public static boolean isNotEmpty(String[] strings) {
