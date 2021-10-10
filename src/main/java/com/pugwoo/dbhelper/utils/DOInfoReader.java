@@ -142,29 +142,35 @@ public class DOInfoReader {
 	 * 获得注解了@JoinLeftTable的字段，如果没有注解，抛出NoJoinTableMemberException
 	 */
 	public static Field getJoinLeftTable(Class<?> clazz) {
-		if(clazz == null) {
-			throw new NoJoinTableMemberException("clazz is null");
-		}
-		List<Field> result = _getAnnotationColumns(clazz, JoinLeftTable.class);
-		if(result.isEmpty()) {
-			throw new NoJoinTableMemberException("class " + clazz.getName()
-			    + " does not have @JoinLeftTable field");
-		}
-		return result.get(0);
+		return getJoinTableField(clazz, JoinLeftTable.class);
 	}
 	
 	/**
 	 * 获得注解了@JoinRightTable的字段，如果没有注解，抛出NoJoinTableMemberException
 	 */
 	public static Field getJoinRightTable(Class<?> clazz) {
-		if(clazz == null) {
+		return getJoinTableField(clazz, JoinRightTable.class);
+	}
+
+	/**
+	 * 用于获取@JoinLeftTable和@JoinRightTable注解的属性Field
+	 */
+	private static Field getJoinTableField(Class<?> clazz,
+										   Class<? extends Annotation> annotationClass) {
+		if (clazz == null) {
 			throw new NoJoinTableMemberException("clazz is null");
 		}
-		List<Field> result = _getAnnotationColumns(clazz, JoinRightTable.class);
-		if(result.isEmpty()) {
+
+		List<Field> result = _getAnnotationColumns(clazz, annotationClass);
+		if (result.isEmpty()) {
 			throw new NoJoinTableMemberException("class " + clazz.getName()
-			    + " does not have @JoinRightTable field");
+					+ " does not have @" + annotationClass.getSimpleName() + " field");
 		}
+		if (result.size() > 1) {
+			LOGGER.warn("class {} has more than one @{} fields, use first one",
+					clazz.getName(), annotationClass.getSimpleName());
+		}
+
 		return result.get(0);
 	}
 	
