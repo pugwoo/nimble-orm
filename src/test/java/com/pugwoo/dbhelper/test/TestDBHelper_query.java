@@ -12,6 +12,7 @@ import com.pugwoo.dbhelper.test.entity.StudentForRawDO;
 import com.pugwoo.dbhelper.test.entity.StudentWithLocalDateTimeDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
+import com.pugwoo.wooutils.json.JSON;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -629,6 +630,21 @@ public class TestDBHelper_query {
         assert pageData.getTotal() == 30;
         assert pageData.getData().size() == 10;
 
+    }
+
+    /**
+     * 测试相同列字段名称的情况
+     */
+    @Rollback(false)
+    @Test
+    public void testSameColumn() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
+        StudentSameColumnNameVO one = dbHelper.getOne(
+                StudentSameColumnNameVO.class, "where name=?", studentDO.getName());
+
+        assert one.getName().endsWith("FFFFFFFF");
+        assert one.getName2() == null;
     }
 
 }
