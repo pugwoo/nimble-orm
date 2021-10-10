@@ -378,16 +378,22 @@ public class DOInfoReader {
 		
 		List<Field> fields = _getFields(classLink, Column.class);
 		if(selectOnlyKey) {
-			List<Field> keyFields = new ArrayList<>();
-			for(Field field : fields) {
-				if(field.getAnnotation(Column.class).isKey()) {
-					keyFields.add(field);
-				}
-			}
-			return keyFields;
+			return InnerCommonUtils.filter(fields,
+					o -> o.getAnnotation(Column.class).isKey());
 		} else {
 			return fields;
 		}
+	}
+
+	/**
+	 * 获得clazz类的有annotationClazz注解的字段field（包括clazz类及其父类，父类优先，不处理重名）。
+	 */
+	private static List<Field> _getAnnotationColumns(Class<?> clazz,
+													 Class<? extends Annotation> annotationClazz) {
+
+		List<Class<?>> classLink = getClassAndParentClasses(clazz, false);
+
+		return _getFields(classLink, annotationClazz);
 	}
 
 	/**
@@ -435,18 +441,7 @@ public class DOInfoReader {
 
 		return null;
 	}
-	
-	/**
-	 * 获得clazz类的有annotationClazz注解的字段field（包括clazz类及其父类，父类优先，不处理重名）。
-	 */
-	private static List<Field> _getAnnotationColumns(Class<?> clazz, 
-			Class<? extends Annotation> annotationClazz) {
 
-		List<Class<?>> classLink = getClassAndParentClasses(clazz, false);
-		
-		return _getFields(classLink, annotationClazz);
-	}
-	
 	private static List<Field> _getFields(List<Class<?>> classLink,
 			Class<? extends Annotation> annotationClazz) {
 		List<Field> result = new ArrayList<>();

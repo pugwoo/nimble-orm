@@ -3,11 +3,23 @@ package com.pugwoo.dbhelper.utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * 内部常用工具类
  */
 public class InnerCommonUtils {
+
+    /**
+     * filter一个list
+     */
+    public static <T> List<T> filter(List<T> list, Predicate<? super T> predicate) {
+        if(list == null) {
+            return new ArrayList<>();
+        }
+        return list.stream().filter(predicate).collect(Collectors.toList());
+    }
 
     /**
      * 判断给定的数组是否非空
