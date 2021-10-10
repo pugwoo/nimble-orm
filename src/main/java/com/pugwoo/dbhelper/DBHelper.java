@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -133,7 +134,7 @@ public interface DBHelper {
      * @param keyValues 查询的主键key值列表
      * @return 返回的值是LinkedHashMap对象，按照keyValues的顺序来，但如果key不存在，那么不会再返回值的map key中
      */
-    <T, K> Map<K, T> getByKeyList(Class<T> clazz, List<K> keyValues);
+    <T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues);
 	
 	/**
 	 * 查询列表，没有查询条件<br>

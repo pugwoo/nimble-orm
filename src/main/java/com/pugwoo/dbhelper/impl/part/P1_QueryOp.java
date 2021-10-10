@@ -20,14 +20,7 @@ import net.sf.jsqlparser.JSQLParserException;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
@@ -104,7 +97,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    public <T, K> Map<K, T> getByKeyList(Class<T> clazz, List<K> keyValues) {
+    public <T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues) {
         if (keyValues == null || keyValues.isEmpty()) {
             return new HashMap<>();
         }

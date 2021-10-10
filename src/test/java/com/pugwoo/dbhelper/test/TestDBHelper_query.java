@@ -187,10 +187,20 @@ public class TestDBHelper_query {
         ids.add(CommonOps.insertOne(dbHelper).getId());
         Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
 
-        Assert.assertTrue(map.size() == 3);
+        Assert.assertEquals(3, map.size());
         for(int i = 0; i < 3; i++) {
-            Assert.assertTrue(map.get(ids.get(i)).getId().equals(ids.get(i)));
+            Assert.assertEquals(map.get(ids.get(i)).getId(), ids.get(i));
         }
+
+        // 测试一下用Set来查询
+        Set<Long> idsSet = new HashSet<>(ids);
+        map = dbHelper.getByKeyList(StudentDO.class, idsSet);
+
+        Assert.assertEquals(3, map.size());
+        for(int i = 0; i < 3; i++) {
+            Assert.assertEquals(map.get(ids.get(i)).getId(), ids.get(i));
+        }
+
 
         List<StudentDO> allKey = dbHelper.getAllKey(StudentDO.class, "where 1=1");
         Assert.assertTrue(allKey.size() >= 3);
