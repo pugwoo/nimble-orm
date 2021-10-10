@@ -689,11 +689,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             RelatedColumn column = field.getAnnotation(RelatedColumn.class);
             if (column.localColumn().trim().isEmpty()) {
-                LOGGER.warn("relatedColumn value is empty, field:{}", field);
+                LOGGER.error("relatedColumn value is empty, field:{}", field);
                 continue;
             }
             if (column.remoteColumn().trim().isEmpty()) {
-                LOGGER.warn("remoteColumn value is empty, field:{}", field);
+                LOGGER.error("remoteColumn value is empty, field:{}", field);
                 continue;
             }
 
@@ -810,7 +810,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         } else {
                             List<Object> objRemoteStringList = mapRemoteValuesString.get(oLocalValue.toString());
                             if (objRemoteStringList != null) {
-                                LOGGER.warn("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
+                                LOGGER.error("@RelatedColumn fields local:{},remote:{} is different classes. Use String compare.",
                                         localField, remoteField);
                                 valueList = objRemoteStringList;
                             }
@@ -845,7 +845,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     }
                     Object objRemoteString = mapRemoteValuesString.get(oLocalValue.toString());
                     if (objRemoteString != null) {
-                        LOGGER.warn("@RelatedColumn fields local:{},remote:{} are different classes. Use String compare.",
+                        LOGGER.error("@RelatedColumn fields local:{},remote:{} are different classes. Use String compare.",
                                 localField, remoteField);
                         DOInfoReader.setValue(field, t, objRemoteString);
                     }

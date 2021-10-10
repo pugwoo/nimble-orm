@@ -169,7 +169,7 @@ public class DOInfoReader {
 					+ " does not have @" + annotationClass.getSimpleName() + " field");
 		}
 		if (result.size() > 1) {
-			LOGGER.warn("class {} has more than one @{} fields, use first one",
+			LOGGER.error("class {} has more than one @{} fields, use first one",
 					clazz.getName(), annotationClass.getSimpleName());
 		}
 
@@ -454,7 +454,7 @@ public class DOInfoReader {
 	 * 获取classLink多个类中，注解了annotationClazz的Field字段。<br>
 	 * 目前annotationClazz的取值有@Column @JoinLeftTable @JoinRightTable <br>
 	 * 对于Column注解，如果子类和父类字段同名，那么子类将代替父类，父类的Field不会加进来；<br>
-	 * 如果子类出现相同的Field，那么也只拿第一个；一旦出现字段同名，那么进行告警log，正常是不建议覆盖和同名操作的，风险很大 <br>
+	 * 如果子类出现相同的Field，那么也只拿第一个；一旦出现字段同名，那么进行error log，正常是不建议覆盖和同名操作的，风险很大 <br>
 	 */
 	private static List<Field> _getFields(List<Class<?>> classLink,
 			Class<? extends Annotation> annotationClazz) {
@@ -481,7 +481,7 @@ public class DOInfoReader {
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
 					if (columnValues.contains(column.value())) {
-						LOGGER.warn("found duplicate field:{} in class(and its parents):{}, this field is ignored",
+						LOGGER.error("found duplicate field:{} in class(and its parents):{}, this field is ignored",
 								field.getName(), classLink.get(0).getName());
 						continue;
 					}
