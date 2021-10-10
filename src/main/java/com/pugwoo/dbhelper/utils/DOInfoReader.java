@@ -39,15 +39,10 @@ public class DOInfoReader {
 	 *
 	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
 	 */
-	public static Table getTable(Class<?> clazz)
-			throws NoTableAnnotationException {
-		Class<?> curClass = clazz;
-		while (curClass != null) {
-			Table table = curClass.getAnnotation(Table.class);
-			if(table != null) {
-				return table;
-			}
-			curClass = curClass.getSuperclass();
+	public static Table getTable(Class<?> clazz) throws NoTableAnnotationException {
+		Table table = getAnnotationClass(clazz, Table.class);
+		if (table != null) {
+			return table;
 		}
 		
 		throw new NoTableAnnotationException("class: "
@@ -60,16 +55,7 @@ public class DOInfoReader {
 	 * @return 如果没有则返回null
 	 */
 	public static JoinTable getJoinTable(Class<?> clazz) {
-		Class<?> curClass = clazz;
-		while (curClass != null) {
-			JoinTable joinTable = curClass.getAnnotation(JoinTable.class);
-			if(joinTable != null) {
-				return joinTable;
-			}
-			curClass = curClass.getSuperclass();
-		}
-		
-		return null;
+		return getAnnotationClass(clazz, JoinTable.class);
 	}
 	
 	/**
@@ -430,6 +416,24 @@ public class DOInfoReader {
 		}
 
 		return classLink;
+	}
+
+	/**
+	 * 从指定类clazz再往其父类查找注解了annotationClass的类，如果已经找到了，就返回对应该注解，不再继续往上找
+	 * @return 找不到返回null
+	 */
+	private static <T extends Annotation> T getAnnotationClass(Class<?> clazz,
+															   Class<T> annotationClass) {
+		Class<?> curClass = clazz;
+		while (curClass != null) {
+			T annotation = curClass.getAnnotation(annotationClass);
+			if(annotation != null) {
+				return annotation;
+			}
+			curClass = curClass.getSuperclass();
+		}
+
+		return null;
 	}
 	
 	/**
