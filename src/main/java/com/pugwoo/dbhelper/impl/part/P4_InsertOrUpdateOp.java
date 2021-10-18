@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
@@ -35,7 +36,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 	}
 	
 	@Override
-	public <T> int insertOrUpdate(List<T> list) {
+	public <T> int insertOrUpdate(Collection<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
@@ -49,7 +50,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 	}
 	
 	@Override
-	public <T> int insertOrUpdateWithNull(List<T> list) {
+	public <T> int insertOrUpdateWithNull(Collection<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
@@ -63,17 +64,17 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 	}
 	
 	@Override
-	public <T> int insertOrUpdateFull(List<T> dbList, List<T> newList) {
+	public <T> int insertOrUpdateFull(Collection<T> dbList, Collection<T> newList) {
 		return insertOrUpdateFull(dbList, newList, false);
 	}
 	
 	@Override
-	public <T> int insertOrUpdateFullWithNull(List<T> dbList, List<T> newList) {
+	public <T> int insertOrUpdateFullWithNull(Collection<T> dbList, Collection<T> newList) {
 		return insertOrUpdateFull(dbList, newList, true);
 	}
 	
-	private <T> int insertOrUpdateFull(List<T> dbList, List<T> newList, boolean withNull) {
-		if(newList == null) {
+	private <T> int insertOrUpdateFull(Collection<T> dbList, Collection<T> newList, boolean withNull) {
+		if(newList == null) { // 异常参数，不会删除数据
 			return 0;
 		}
 		if(dbList == null) {
@@ -82,9 +83,26 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		if(dbList.isEmpty() && newList.isEmpty()) {
 			return 0; // 不需要处理了
 		}
+
+		Class<?> clazz = null;
+		if (!dbList.isEmpty()) {
+			for (T t : dbList) {
+				if (t != null) {
+					clazz = t.getClass();
+					break;
+				}
+			}
+		}
+		if (clazz == null) {
+			for (T t : newList) {
+				if (t != null) {
+					clazz = t.getClass();
+					break;
+				}
+			}
+		}
 		
-		List<Field> fields = DOInfoReader.getColumns(!dbList.isEmpty() ? dbList.get(0).getClass()
-						: newList.get(0).getClass());
+		List<Field> fields = DOInfoReader.getColumns(clazz);
 		
 		int rows = 0;
 		

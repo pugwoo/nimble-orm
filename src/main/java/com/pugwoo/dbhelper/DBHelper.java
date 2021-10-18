@@ -424,14 +424,14 @@ public interface DBHelper {
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 返回数据库实际修改的条数
 	 */
-	<T> int insertOrUpdate(List<T> list);
+	<T> int insertOrUpdate(Collection<T> list);
 	
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。包括null的值会更新或插入。
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 返回数据库实际修改的条数
 	 */
-	<T> int insertOrUpdateWithNull(List<T> list);
+	<T> int insertOrUpdateWithNull(Collection<T> list);
 	
 	/**
 	 * 全量更新指定的列表，只处理非null字段。dbList表示原来的数据，必须都带上key。<br>
@@ -444,7 +444,7 @@ public interface DBHelper {
 	 * @param newList 不能是null，否则该方法什么都不执行
 	 * @return newList成功的值，不包括dbList中删除的
 	 */
-	<T> int insertOrUpdateFull(List<T> dbList, List<T> newList);
+	<T> int insertOrUpdateFull(Collection<T> dbList, Collection<T> newList);
 	
 	/**
 	 * 文档同insertOrUpdateFull，只是会insert or update null值
@@ -452,7 +452,7 @@ public interface DBHelper {
 	 * @param newList 不能是null，否则该方法什么都不执行
 	 * @return newList成功的值，不包括dbList中删除的
 	 */
-	<T> int insertOrUpdateFullWithNull(List<T> dbList, List<T> newList);
+	<T> int insertOrUpdateFullWithNull(Collection<T> dbList, Collection<T> newList);
 		
 	/**
 	 * 更新单个实例数据库记录，必须带上object的key，包含更新null值的字段
