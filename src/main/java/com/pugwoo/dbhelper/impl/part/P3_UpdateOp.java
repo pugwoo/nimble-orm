@@ -12,6 +12,7 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class P3_UpdateOp extends P2_InsertOp {
@@ -71,7 +72,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	}
 	
 	@Override
-	public <T> int updateWithNull(List<T> list) throws NullKeyValueException {
+	public <T> int updateWithNull(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
@@ -91,7 +92,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	}
 	
 	@Override
-	public <T> int update(List<T> list) throws NullKeyValueException {
+	public <T> int update(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}

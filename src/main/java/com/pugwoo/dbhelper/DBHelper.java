@@ -523,7 +523,7 @@ public interface DBHelper {
 	 * @return 实际修改条数
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
 	 */
-	<T> int updateWithNull(List<T> list) throws NullKeyValueException;
+	<T> int updateWithNull(Collection<T> list) throws NullKeyValueException;
 	
 	/**
 	 * 更新数据库记录，返回数据库实际修改条数。
@@ -533,7 +533,7 @@ public interface DBHelper {
 	 * @return 实际修改条数
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
 	 */
-	<T> int update(List<T> list) throws NullKeyValueException;
+	<T> int update(Collection<T> list) throws NullKeyValueException;
 	
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数。
@@ -552,7 +552,7 @@ public interface DBHelper {
 	 * @return 实际删除的条数
 	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
 	 */
-	<T> int deleteByKey(List<T> list) throws NullKeyValueException;
+	<T> int deleteByKey(Collection<T> list) throws NullKeyValueException;
 	
 	/**
 	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况。

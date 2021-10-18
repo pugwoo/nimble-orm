@@ -13,6 +13,7 @@ import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
@@ -73,20 +74,27 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 	
 	@Override
-	public <T> int deleteByKey(List<T> list) throws NullKeyValueException {
+	public <T> int deleteByKey(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
             return 0;
         }
 
+		Class<?> clazz = null; // 当batchDelete时使用
+		for (T t : list) {
+			if (t != null) {
+				clazz = t.getClass();
+			}
+		}
+
 		boolean batchDelete = false; // 当所有list都是一个类型，且key是1个，且没有用到deleteValueScript时
 		Field keyField = null;
 		if(SQLAssert.isAllSameClass(list)) {
-			List<Field> keyFields = DOInfoReader.getKeyColumns(list.get(0).getClass());
+			List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 			if(keyFields.size() == 1) {
 				keyField = keyFields.get(0);
 
 				boolean isUseDeleteValueScript = false;
-                List<Field> fields = DOInfoReader.getColumns(list.get(0).getClass());
+                List<Field> fields = DOInfoReader.getColumns(clazz);
                 for(Field field : fields) {
                     Column column = field.getAnnotation(Column.class);
                     String deleteValueScript = column.deleteValueScript().trim();
@@ -108,7 +116,6 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
                 PreHandleObject.preHandleDelete(t);
             }
 
-			Class<?> clazz = list.get(0).getClass();
 			List<Object> keys = new ArrayList<>();
 			for(T t : list) {
 				Object key = DOInfoReader.getValue(keyField, t);
