@@ -13,10 +13,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -58,6 +55,12 @@ public class TestDBHelper_insert {
         long start = System.currentTimeMillis();
         int rows = dbHelper.insertBatchWithoutReturnId(list);
         long end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+
+        start = System.currentTimeMillis();
+        rows = dbHelper.insertBatchWithoutReturnId(new HashSet<>(list));
+        end = System.currentTimeMillis();
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
     }

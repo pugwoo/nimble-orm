@@ -269,22 +269,31 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> String getInsertSQLForBatch(List<T> list, List<Object[]> values) {
+	public static <T> String getInsertSQLForBatch(Collection<T> list, List<Object[]> values) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
-		List<Field> fields = DOInfoReader.getColumns(list.get(0).getClass());
+		// 获得元素的class，list非空，因此clazz和t肯定有值
+		Class<?> clazz = null;
+		for (T t1 : list) {
+			clazz = t1.getClass();
+			break;
+		}
 
-		sql.append(getTableName(list.get(0).getClass())).append(" (");
+		List<Field> fields = DOInfoReader.getColumns(clazz);
 
-		for (int i = 0; i < list.size(); i++) {
+		sql.append(getTableName(clazz)).append(" (");
+
+		boolean isFirst = true;
+		for (T t : list) {
 			List<Object> _values = new ArrayList<>();
-			String fieldSql = joinAndGetValue(fields, ",", _values, list.get(i), true);
-			if (i == 0) {
+			String fieldSql = joinAndGetValue(fields, ",", _values, t, true);
+			if (isFirst) {
 				sql.append(fieldSql);
 				sql.append(") VALUES ");
 				String dotSql = "(" + join("?", _values.size(), ",") + ")";
 				sql.append(dotSql);
 			}
+			isFirst = false;
 			values.add(_values.toArray());
 		}
 

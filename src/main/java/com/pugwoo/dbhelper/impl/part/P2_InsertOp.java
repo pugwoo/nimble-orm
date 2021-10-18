@@ -86,7 +86,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	}
 
 	@Override
-	public <T> int insertBatchWithoutReturnId(List<T> list) {
+	public <T> int insertBatchWithoutReturnId(Collection<T> list) {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
@@ -96,7 +96,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			PreHandleObject.preHandleInsert(t);
 		}
 
-		doInterceptBeforeInsertList((List<Object>) list);
+		if (list instanceof List) {
+			doInterceptBeforeInsertList((List<Object>) list);
+		} else {
+			doInterceptBeforeInsertList(new ArrayList<>(list));
+		}
 
 		List<Object[]> values = new ArrayList<>();
 		final String sql = SQLUtils.getInsertSQLForBatch(list, values);
@@ -120,7 +124,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlowForBatch(cost, sql, list.size());
 
-		doInterceptAfterInsertList((List<Object>)list, total);
+		if (list instanceof List) {
+			doInterceptAfterInsertList((List<Object>)list, total);
+		} else {
+			doInterceptAfterInsertList(new ArrayList<>(list), total);
+		}
 
 		return total;
 	}

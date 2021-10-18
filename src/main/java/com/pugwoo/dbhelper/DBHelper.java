@@ -358,7 +358,7 @@ public interface DBHelper {
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */
-	<T> int insertBatchWithoutReturnId(List<T> list);
+	<T> int insertBatchWithoutReturnId(Collection<T> list);
 	
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
