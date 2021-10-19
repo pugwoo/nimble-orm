@@ -1,3 +1,4 @@
+2021年10月18日
 v1.1.1 - [enhance] 对于select的字段，如果已经出现重复的名称，那么子类会覆盖父类；DO的setter同理
                    【注意】升级至此版本，请先检查下项目一个DO类及其子类@Column注解有没有出现value重复的情况，确保没有重复
        - [enhance] getByKeyList/insert/update/delete等的接口参数类型由List扩展为Collection
