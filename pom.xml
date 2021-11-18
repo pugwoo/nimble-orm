@@ -4,7 +4,7 @@
 
 	<groupId>com.pugwoo</groupId>
 	<artifactId>nimble-orm</artifactId>
-	<version>1.1.1</version>
+	<version>1.1.2</version>
 	<packaging>jar</packaging>
 
 	<name>nimble-orm</name>
@@ -50,19 +50,19 @@
 		<dependency>
 			<groupId>com.github.jsqlparser</groupId>
 			<artifactId>jsqlparser</artifactId>
-			<version>4.1</version>
+			<version>4.2</version>
 		</dependency>
 		<!-- json -->
 		<dependency>
 		    <groupId>com.fasterxml.jackson.core</groupId>
 		    <artifactId>jackson-databind</artifactId>
-		    <version>2.12.4</version>
+		    <version>2.12.5</version>
 		</dependency>
 		<!-- mvel -->
 		<dependency>
 			<groupId>org.mvel</groupId>
 			<artifactId>mvel2</artifactId>
-			<version>2.4.12.Final</version>
+			<version>2.4.13.Final</version>
 		</dependency>
 
 		<!-- external provided -->
@@ -96,7 +96,7 @@
 		<dependency>
 			<groupId>com.pugwoo</groupId>
 			<artifactId>woo-utils</artifactId>
-			<version>1.0.2</version>
+			<version>1.0.5</version>
 			<scope>test</scope>
 		</dependency>
 		
