@@ -14,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -28,13 +29,28 @@ public class TestJson {
     @Autowired
     private DBHelper dbHelper;
 
-    private long insert(String name, Integer age) {
+    private long insert(String score, Integer age) {
         JsonDO jsonDO = new JsonDO();
-        Map<String, Object> json = new HashMap();
-        json.put("name", name);
-        json.put("age", age);
+        Map<String, List<BigDecimal>> json = new HashMap<>();
+
+        List<BigDecimal> scores = new ArrayList<>();
+        scores.add(new BigDecimal(score));
+        scores.add(BigDecimal.ONE);
+
+        List<BigDecimal> ages = new ArrayList<>();
+        ages.add(new BigDecimal(age));
+        ages.add(BigDecimal.TEN);
+
+        json.put("score", scores);
+        json.put("age", ages);
         json.put(null, null);
         jsonDO.setJson(json);
+
+        Map<String, Object> json2 = new HashMap<>();
+        json2.put("score", score);
+        json2.put("age", age);
+        jsonDO.setJson2(json2);
+
         dbHelper.insert(jsonDO);
         return jsonDO.getId();
     }
@@ -43,30 +59,40 @@ public class TestJson {
     @Rollback(false)
     public void testJsonQuery() {
 
-        String name = UUID.randomUUID().toString();
+        String score = String.valueOf(new Random().nextInt());
         int age = new Random().nextInt();
 
-        long id = insert(name, age);
+        long id = insert(score, age);
         assert id > 0;
 
         JsonDO jsonDO1 = dbHelper.getByKey(JsonDO.class, id);
         assert jsonDO1 != null;
         assert jsonDO1.getId() == id;
-        assert name.equals(jsonDO1.getJson().get("name"));
-        assert new Integer(age).equals(jsonDO1.getJson().get("age"));
+        assert score.equals(jsonDO1.getJson().get("score").get(0).toString());
+        assert String.valueOf(age).equals(jsonDO1.getJson().get("age").get(0).toString());
+
+        // 检查类型
+        for (List<BigDecimal> list : jsonDO1.getJson().values()) {
+            if (list == null) {
+                continue;
+            }
+            for (BigDecimal b : list) {
+                assert b == null || b instanceof BigDecimal;
+            }
+        }
 
         List<JsonDO> list = dbHelper.getAll(JsonDO.class);
         assert list.size() > 0;
 
         // json查询的两种写法
 
-        list = dbHelper.getAll(JsonDO.class, "WHERE JSON->'$.name'=?", name);
+        list = dbHelper.getAll(JsonDO.class, "WHERE json2->'$.score'=?", score);
         assert list.size() == 1;
-        assert name.equals(list.get(0).getJson().get("name"));
+        assert score.equals(list.get(0).getJson2().get("score").toString());
 
-        list = dbHelper.getAll(JsonDO.class, "WHERE JSON_EXTRACT(JSON, '$.name')=?", name);
+        list = dbHelper.getAll(JsonDO.class, "WHERE JSON_EXTRACT(json2, '$.score')=?", score);
         assert list.size() == 1;
-        assert name.equals(list.get(0).getJson().get("name"));
+        assert score.equals(list.get(0).getJson2().get("score").toString());
     }
 
     @Test @Rollback(false)

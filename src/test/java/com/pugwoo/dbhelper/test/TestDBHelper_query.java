@@ -289,7 +289,8 @@ public class TestDBHelper_query {
 
         for (int i = 0; i < 10; i++) {
             assert page1.getData().get(i).getId().equals(page2.getData().get(i).getId());
-            assert page1.getData().get(i).getName().equals(page2.getData().get(i).getName());
+            assert Objects.equals(page1.getData().get(i).getName(),
+                    page2.getData().get(i).getName());
         }
     }
 

@@ -42,6 +42,7 @@ DROP TABLE IF EXISTS `t_json`;
 CREATE TABLE `t_json` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `json` json DEFAULT NULL,
+  `json2` json default null,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
