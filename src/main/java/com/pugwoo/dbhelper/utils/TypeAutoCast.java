@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -67,15 +69,16 @@ public class TypeAutoCast {
 			if(valStr == null || valStr.trim().isEmpty()) {
 				return null;
 			}
-			String typeName = field.getGenericType().toString();
+
+			Type genericType = field.getGenericType();
 			try {
-				if(!typeName.contains("<")) {
+				if (genericType instanceof Class) {
 					return NimbleOrmJSON.parse(valStr, field.getType());
 				} else { // 处理泛型
-					return NimbleOrmJSON.parseGeneric(valStr, typeName);
+				    return NimbleOrmJSON.parseGeneric(valStr, (ParameterizedType) genericType);
 				}
 			} catch(Exception e) {
-				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, typeName, e);
+				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, genericType, e);
 				return valStr; // 作为string返回，交由上一级处理
 			}
 		}
