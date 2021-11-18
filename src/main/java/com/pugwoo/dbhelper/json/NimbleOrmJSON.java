@@ -38,11 +38,6 @@ public class NimbleOrmJSON {
 		return objectMapper.readValue(json, clazz);
 	}
 
-	public static Object parseGeneric(String json, String typeName) throws ClassNotFoundException, IOException {
-		JavaType type = parseGenericType(typeName);
-		return objectMapper.readValue(json, type);
-	}
-
 	public static Object parseGeneric(String json, ParameterizedType type) throws ClassNotFoundException, IOException {
 		JavaType javaType = toJavaType(type);
 		return objectMapper.readValue(json, javaType);
@@ -67,84 +62,6 @@ public class NimbleOrmJSON {
 		}
 
 		return typeFactory.constructParametricType((Class<?>) rawType, javaTypes);
-	}
-
-	/**
-	 * 解析泛型的类,只支持1个或2个的泛型类型，不支持3个及以上的
-	 * @param className 要解析出泛型的类名
-	 * @return 如果没有泛型，则返回null
-	 */
-	private static JavaType parseGenericType(String className)
-			throws ClassNotFoundException {
-
-		TypeFactory typeFactory = objectMapper.getTypeFactory();
-
-		if(className == null) {
-			return null;
-		}
-		int left = className.indexOf("<");
-		if(left < 0) {
-			return typeFactory.constructType(Class.forName(className.trim()));
-		}
-		int right = className.lastIndexOf(">");
-
-		String baseClassName = className.substring(0, left);
-		String genericAll = className.substring(left + 1, right);
-
-		assertLessThan3Dot(genericAll);
-		int dotIndex = getDotIndex(genericAll);
-		if(dotIndex < 0) {
-			return typeFactory.constructParametricType(Class.forName(baseClassName.trim()),
-					parseGenericType(genericAll));
-		} else {
-			String leftClassName = genericAll.substring(0, dotIndex);
-			String rightClassName = genericAll.substring(dotIndex + 1);
-			return typeFactory.constructParametricType(Class.forName(baseClassName.trim()),
-					parseGenericType(leftClassName),
-					parseGenericType(rightClassName));
-		}
-	}
-
-	private static int getDotIndex(String str) {
-		if(str == null) {
-			return -1;
-		}
-		int bracket = 0;
-		for(int i = 0; i < str.length(); i++) {
-			char c = str.charAt(i);
-			if(c == ',' && bracket == 0) {
-				return i;
-			}
-			if(c == '<') {
-				bracket++;
-			} else if(c == '>') {
-				bracket--;
-			}
-		}
-		return -1;
-	}
-
-	private static void assertLessThan3Dot(String str) {
-		if(str == null) {
-			return;
-		}
-		int counts = 0;
-		int bracket = 0;
-		for(char c : str.toCharArray()/*int i = 0; i < str.length(); i++*/) {
-			//char c = str.charAt(i);
-			if(c == ',' && bracket == 0) {
-				counts++;
-			}
-			if(c == '<') {
-				bracket++;
-			} else if(c == '>') {
-				bracket--;
-			}
-		}
-		if(counts > 1) {
-			throw new RuntimeException("nimble-orm not support more than two generic type, found " + (counts+1)
-					+ " for class:" +str);
-		}
 	}
 
 }
