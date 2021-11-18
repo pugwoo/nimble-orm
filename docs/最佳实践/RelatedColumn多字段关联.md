@@ -37,8 +37,4 @@ CREATE TABLE `t_area_location` (
 
 这张表的id是自增id，没有被外部引用。这张表也是使用层级layer_code和区域代号area_code来唯一标识区域。
 
-现在如果我们想构造一个AreaVO，关联出AreaLocationDO，就不好办了。
-
-满足这种需求的做法是使用computed属性，将多个字段的值计算为一个。
-
 详见AreaVO.java和AreaLocationVO.java的做法。
