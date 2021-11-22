@@ -7,24 +7,21 @@ import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 测试各种异常的情况
  */
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestOtherExceptions {
 
     @Autowired
     private DBHelper dbHelper;
 
     @Test
-    @Rollback(false)
+    
     public void deleteEx() {
         boolean ex = false;
         try {

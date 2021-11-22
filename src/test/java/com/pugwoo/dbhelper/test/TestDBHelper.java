@@ -3,22 +3,15 @@ package com.pugwoo.dbhelper.test;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.model.SubQuery;
-import com.pugwoo.dbhelper.test.entity.CasVersionDO;
-import com.pugwoo.dbhelper.test.entity.CasVersionLongDO;
-import com.pugwoo.dbhelper.test.entity.CourseDO;
-import com.pugwoo.dbhelper.test.entity.SchoolDO;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
+import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -27,7 +20,6 @@ import java.util.*;
  */
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestDBHelper {
 	
 	@Autowired
@@ -35,7 +27,7 @@ public class TestDBHelper {
 
 	// ============ JSON test ============================
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testJSON() {
 		StudentDO studentDO = new StudentDO();
 		SchoolDO schoolDO = new SchoolDO();
@@ -74,7 +66,7 @@ public class TestDBHelper {
 	}
 	
 	// ============ UPDATE TEST START ======================
-	@Test @Rollback(false)
+	@Test 
 	public void testUpdateNull() {
 		StudentDO db = CommonOps.insertOne(dbHelper);
 		db.setAge(null);
@@ -100,7 +92,7 @@ public class TestDBHelper {
 	}
 	
 	@Test
-	@Rollback(false)
+	
 	public void testUpdate() {
 		StudentDO db = CommonOps.insertOne(dbHelper);
 		db.setName("nick2");
@@ -131,7 +123,7 @@ public class TestDBHelper {
 	}
 	
 	@Test
-	@Rollback(false)
+	
 	public void testUpdateCustom() {
 		StudentDO db = CommonOps.insertOne(dbHelper);
 		
@@ -155,7 +147,7 @@ public class TestDBHelper {
 	}
 	
 	@Test
-	@Rollback(false)
+	
 	public void testUpdateAll() {
 		CommonOps.insertBatch(dbHelper,101);
 		String newName = "nick" + UUID.randomUUID().toString().replace("-", "");
@@ -175,7 +167,7 @@ public class TestDBHelper {
 	
 	// ============ INSERT_UPDATE TEST START =============
 
-    @Test @Rollback(false)
+    @Test 
 	public void testInsertOrUpdate() {
 		assert dbHelper.insertOrUpdate(null) == 0;
 
@@ -196,7 +188,7 @@ public class TestDBHelper {
 		assert student2.getName().equals(student3.getName());
 	}
 
-	@Test @Rollback(false)
+	@Test 
 	public void testInsertOrUpdateWithNull() {
 		assert dbHelper.insertOrUpdateWithNull(null) == 0;
 
@@ -219,7 +211,7 @@ public class TestDBHelper {
 
 	
 	@Test
-	@Rollback(false)
+	
 	public void testInsertOrUpdateFull() {
 		List<StudentDO> old = CommonOps.insertBatch(dbHelper,20);
 		Assert.assertTrue(old.size() == 20);
@@ -264,7 +256,7 @@ public class TestDBHelper {
 	
 	// ============ DELETE TEST START ====================
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testDelete() throws InterruptedException {
 		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -279,7 +271,7 @@ public class TestDBHelper {
 		Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
 	}
 
-	@Test @Rollback(false)
+	@Test 
 	public void testDeleteList() throws InterruptedException {
 
 		List<StudentDO> studentDOList = new ArrayList<StudentDO>();
@@ -293,7 +285,7 @@ public class TestDBHelper {
 	}
 	
 	// 测试写where条件的自定义删除
-	@Test @Rollback(false)
+	@Test 
 	public void testDeleteWhere() throws InterruptedException {
 		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 		dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName());
@@ -301,7 +293,7 @@ public class TestDBHelper {
 	
 	// ============ DELETE TEST END ======================
 
-	@Test @Rollback(false)
+	@Test 
 	public void testSubQuery() {
 		StudentDO stu1 = CommonOps.insertOne(dbHelper);
 		StudentDO stu2 = CommonOps.insertOne(dbHelper);
@@ -340,7 +332,7 @@ public class TestDBHelper {
 	}
 	
 	@Test
-	@Rollback(false)
+	
 	public void testInsert2() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick888");
@@ -381,7 +373,7 @@ public class TestDBHelper {
 	}
 
 	@Test
-	@Rollback(false)
+	
 	public void testMaxStringLength() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
@@ -401,7 +393,7 @@ public class TestDBHelper {
 	}
 
 	@Test
-    @Rollback(false)
+    
 	public void testCasVersion() {
         CasVersionDO casVersionDO = new CasVersionDO();
         casVersionDO.setName("nick");

@@ -1,26 +1,18 @@
 package com.pugwoo.dbhelper.test;
 
-import com.fasterxml.jackson.annotation.JsonRootName;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.test.entity.CourseDO;
-import com.pugwoo.dbhelper.test.entity.SchoolDO;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.entity.StudentForRawDO;
-import com.pugwoo.dbhelper.test.entity.StudentWithLocalDateTimeDO;
+import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
-import com.pugwoo.wooutils.json.JSON;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -29,13 +21,12 @@ import java.util.*;
  */
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestDBHelper_query {
 
     @Autowired
     private DBHelper dbHelper;
 
-    @Test @Rollback(false)
+    @Test 
     public void testExcludeInheritedColumn() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         StudentCalVO db = dbHelper.getByKey(StudentCalVO.class, studentDO.getId());
@@ -44,7 +35,7 @@ public class TestDBHelper_query {
         Assert.assertTrue(db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi"));
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testRelatedColumn() {
 
         SchoolDO schoolDO = new SchoolDO();
@@ -158,7 +149,7 @@ public class TestDBHelper_query {
         }
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetByKey() {
         Long id = CommonOps.insertOne(dbHelper).getId();
 
@@ -179,7 +170,7 @@ public class TestDBHelper_query {
         assert System.currentTimeMillis() - createTime.getTime() < 10000;
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetByKeyList() {
         List<Long> ids = new ArrayList<Long>();
         ids.add(CommonOps.insertOne(dbHelper).getId());
@@ -206,7 +197,7 @@ public class TestDBHelper_query {
         Assert.assertTrue(allKey.size() >= 3);
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testExists() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         Assert.assertTrue(dbHelper.isExist(StudentDO.class, null));
@@ -218,7 +209,7 @@ public class TestDBHelper_query {
                 "where id=?", studentDO.getId()));
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetList() {
         // 测试获取全部
         List<StudentDO> list = dbHelper.getAll(StudentDO.class);
@@ -246,7 +237,7 @@ public class TestDBHelper_query {
         System.out.println("===============================");
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetPage() {
         CommonOps.insertBatch(dbHelper,100);
 
@@ -272,7 +263,7 @@ public class TestDBHelper_query {
         Assert.assertTrue(total >= 100);
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testPageDataTransform() {
         CommonOps.insertBatch(dbHelper,20);
         PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
@@ -294,7 +285,7 @@ public class TestDBHelper_query {
         }
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetByExample() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -313,7 +304,7 @@ public class TestDBHelper_query {
         assert byExample.get(0).getName().equals(studentDO.getName());
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetByArray() {
         // 但是这种写法容易有歧义，推荐传入List参数值
         List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
@@ -336,7 +327,7 @@ public class TestDBHelper_query {
         assert list.isEmpty();
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testGetJoin() {
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("sysu");
@@ -377,7 +368,7 @@ public class TestDBHelper_query {
 
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testDateTime() {
 
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
@@ -391,7 +382,7 @@ public class TestDBHelper_query {
         assert one.getDeleteTime() != null;
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testCount() {
 
         dbHelper.delete(StudentDO.class, "where 1=1");
@@ -482,7 +473,7 @@ public class TestDBHelper_query {
     }
 
     /**测试软删除DO查询条件中涉及到OR条件的情况*/
-    @Test @Rollback(false)
+    @Test 
     public void testQueryWithDeletedAndOr() {
         // 先清表
         dbHelper.delete(StudentDO.class, "where 1=1");
@@ -502,7 +493,7 @@ public class TestDBHelper_query {
     }
 
     /**测试join真删除的类*/
-    @Test @Rollback(false)
+    @Test 
     public void testJoinTrueDelete() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         StudentSelfTrueDeleteJoinVO joinVO = dbHelper.getOne(StudentSelfTrueDeleteJoinVO.class, "where t1.id=?", studentDO.getId());
@@ -511,7 +502,7 @@ public class TestDBHelper_query {
     }
 
     /**测试慢速记录*/
-    @Test @Rollback(false)
+    @Test 
     public void testSlowLog() {
         final StringBuilder sb = new StringBuilder();
 
@@ -532,7 +523,7 @@ public class TestDBHelper_query {
     }
 
     /**测试分页最大数限制*/
-    @Test @Rollback(false)
+    @Test 
     public void testMaxPageSize() {
         dbHelper.setMaxPageSize(5);
 
@@ -549,33 +540,7 @@ public class TestDBHelper_query {
         dbHelper.setMaxPageSize(1000000);
     }
 
-    /**事务相关测试*/
-    @Transactional
-    @Test @Rollback(false)
-    public void testTransaction() throws InterruptedException {
-        final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
-        final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
-
-        System.out.println("insert ok, id1:" + studentDO1.getId() +
-                ",id2:" + studentDO2.getId());
-
-        dbHelper.executeAfterCommit(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("transaction commit, student1:" + studentDO1.getId()
-                        + ",student2:" + studentDO2.getId());
-            }
-        });
-
-        System.out.println("myTrans end");
-//		dbHelper.rollback(); // org.springframework.transaction.NoTransactionException
-        // throw new RuntimeException(); // 抛出异常也无法让事务回滚
-        // 原因：https://stackoverflow.com/questions/13525106/transactions-doesnt-work-in-junit
-        // 这意味着rollback()这个方法在单元测试中没法测
-    }
-
-    @Transactional
-    @Test @Rollback(false)
+    @Test 
     public void testGetRaw() {
         final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
         final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
@@ -609,8 +574,7 @@ public class TestDBHelper_query {
 
     }
 
-    @Transactional
-    @Test @Rollback(false)
+    @Test 
     public void testGetRawWithBasicType() {
 
         StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
@@ -625,7 +589,7 @@ public class TestDBHelper_query {
 
     }
 
-    @Rollback(false)
+    
     @Test
     public void testSum() {
         // 故意让sum的记录不存在
@@ -646,7 +610,7 @@ public class TestDBHelper_query {
     /**
      * 测试相同列字段名称的情况
      */
-    @Rollback(false)
+    
     @Test
     public void testSameColumn() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);

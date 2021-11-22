@@ -8,22 +8,19 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestDBHelper_insert {
 
     @Autowired
     private DBHelper dbHelper;
 
-    @Test @Rollback(false)
+    @Test 
     public void testInsert() {
         StudentDO studentDO = new StudentDO();
         studentDO.setName("mytestname");
@@ -41,7 +38,7 @@ public class TestDBHelper_insert {
         assert st.getName() == null;
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testBatchInsert() {
         int TOTAL = 10000;
 
@@ -65,7 +62,7 @@ public class TestDBHelper_insert {
         assert rows == TOTAL;
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testInsertId() {
         // 测试插入时，如果自增id 同时 又指定了id，查回id是否正常
         Long id = (long) (new Random().nextInt(100000000) + 100001234);
@@ -82,7 +79,7 @@ public class TestDBHelper_insert {
     }
 
     @Test
-    @Rollback(false)
+    
     public void testInsertWhereNotExists() {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("nick"));

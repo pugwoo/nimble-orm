@@ -5,21 +5,15 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
-import com.pugwoo.dbhelper.test.entity.SchoolDO;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.entity.StudentDeleteSetIdDO;
-import com.pugwoo.dbhelper.test.entity.StudentDeleteSetIdDO2;
-import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
+import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +21,13 @@ import java.util.Random;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestDBHelper_delete {
 
     @Autowired
     private DBHelper dbHelper;
 
     @Test
-    @Rollback(false)
+    
     public void deleteAndSetId() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -55,7 +48,7 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    @Rollback(false)
+    
     public void deleteByKey() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -80,7 +73,7 @@ public class TestDBHelper_delete {
         Assert.assertTrue(rows == 0);
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void batchDelete() {
 
         int random = 10 + new Random().nextInt(10);
@@ -110,7 +103,7 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    @Rollback(false)
+    
     public void testTrueDelete() {
         StudentTrueDeleteDO studentTrueDeleteDO = new StudentTrueDeleteDO();
         studentTrueDeleteDO.setName("john");
@@ -170,7 +163,7 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    @Rollback(false)
+    
     public void testTurnOffSoftDelete() {
         int counts1 = 100 + new Random().nextInt(100);
         CommonOps.insertBatch(dbHelper, counts1);
@@ -208,7 +201,7 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    @Rollback(false)
+    
     public void testDeleteEx() {
         boolean ex = false;
         try {
@@ -232,7 +225,7 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    @Rollback(false)
+    
     public void testBatchDeleteWithDeleteScript() {
         StudentDO stu1 = CommonOps.insertOne(dbHelper);
         StudentDO stu2 = CommonOps.insertOne(dbHelper);

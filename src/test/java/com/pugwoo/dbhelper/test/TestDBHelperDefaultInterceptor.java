@@ -7,23 +7,20 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc-default-interceptor.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestDBHelperDefaultInterceptor {
 
 	@Autowired
 	private DBHelper dbHelper;
 
-	@Test @Rollback(false)
+	@Test 
 	public void testQuery() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -44,7 +41,7 @@ public class TestDBHelperDefaultInterceptor {
 		dbHelper.getOne(StudentDO.class);
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testInsertUpdate() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -69,7 +66,7 @@ public class TestDBHelperDefaultInterceptor {
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testDelete() {
 		StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -90,7 +87,7 @@ public class TestDBHelperDefaultInterceptor {
 
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void batchDelete() {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
 		int rows = dbHelper.deleteByKey(insertBatch);
@@ -101,7 +98,7 @@ public class TestDBHelperDefaultInterceptor {
 		Assert.assertTrue(rows >= 20);
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testCustomsUpdateDelete() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");

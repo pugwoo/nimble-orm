@@ -9,10 +9,8 @@ import com.pugwoo.dbhelper.test.entity.JsonRawDO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -23,7 +21,6 @@ import java.util.*;
  */
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestJson {
 
     @Autowired
@@ -56,7 +53,7 @@ public class TestJson {
     }
 
     @Test
-    @Rollback(false)
+    
     public void testJsonQuery() {
 
         String score = String.valueOf(new Random().nextInt());
@@ -95,7 +92,7 @@ public class TestJson {
         assert score.equals(list.get(0).getJson2().get("score").toString());
     }
 
-    @Test @Rollback(false)
+    @Test 
     public void testJsonRaw() {
         JsonRawDO jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"1960-06-08 12:13:14\"}");

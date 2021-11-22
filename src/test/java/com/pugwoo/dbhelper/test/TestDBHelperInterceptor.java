@@ -9,10 +9,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +18,12 @@ import java.util.Random;
 
 @ContextConfiguration(locations = "classpath:applicationContext-jdbc-interceptor.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
 public class TestDBHelperInterceptor {
 
 	@Autowired
 	private DBHelper dbHelper;
 
-	@Test @Rollback(false)
+	@Test 
 	public void testQuery() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -47,7 +44,7 @@ public class TestDBHelperInterceptor {
 		dbHelper.getOne(StudentDO.class);
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testInsertUpdate() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -72,7 +69,7 @@ public class TestDBHelperInterceptor {
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
 	}
 
-	@Test @Rollback(false)
+	@Test 
 	public void testMultiKeyUpdateAll() {
 		Long long1 = new Random().nextLong();
 		Long long2 = new Random().nextLong();
@@ -104,7 +101,7 @@ public class TestDBHelperInterceptor {
 
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testDelete() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
@@ -116,7 +113,7 @@ public class TestDBHelperInterceptor {
 		dbHelper.delete(StudentDO.class, "where id > ?", 100);
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void batchDelete() {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
 		int rows = dbHelper.deleteByKey(insertBatch);
@@ -127,7 +124,7 @@ public class TestDBHelperInterceptor {
 		Assert.assertTrue(rows >= 20);
 	}
 	
-	@Test @Rollback(false)
+	@Test 
 	public void testCustomsUpdateDelete() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
