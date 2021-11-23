@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test;
+package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;

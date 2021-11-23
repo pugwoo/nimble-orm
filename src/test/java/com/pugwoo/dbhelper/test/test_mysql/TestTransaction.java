@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test;
+package com.pugwoo.dbhelper.test.test_mysql;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
