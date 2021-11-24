@@ -314,6 +314,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    @SuppressWarnings({"unchecked"})
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
         // 解决如果java选择错重载的问题
         if (args != null && args.length == 1 && args[0] instanceof Map) {
@@ -417,6 +418,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    @SuppressWarnings({"unchecked"})
     public long getRawCount(String sql, Object... args) {
         // 解决如果java选择错重载的问题
         if (args != null && args.length == 1 && args[0] instanceof Map) {
@@ -733,14 +735,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     IDBHelperDataService.class.isAssignableFrom(column.dataService())) {
                 IDBHelperDataService dataService = (IDBHelperDataService)
                         applicationContext.getBean(column.dataService());
-                if (dataService == null) {
-                    LOGGER.error("dataService is null for {}", column.dataService());
-                    relateValues = new ArrayList<>();
-                } else {
-                    List<Object> valuesList = new ArrayList<>(values);
-                    relateValues = dataService.get(valuesList, column,
-                            clazz, remoteDOClass);
-                }
+                List<Object> valuesList = new ArrayList<>(values);
+                relateValues = dataService.get(valuesList, column,
+                        clazz, remoteDOClass);
             } else {
                 String whereColumn;
                 boolean isSingleColumn = remoteField.size() == 1;
