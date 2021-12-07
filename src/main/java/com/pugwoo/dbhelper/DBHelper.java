@@ -245,7 +245,9 @@ public interface DBHelper {
 
 	/**
 	 * 执行自行指定的SQL查询语句
-	 * @param clazz 转换回来的DO类，也支持关联查询后处理
+	 *
+	 * @param clazz 转换回来的DO类，也支持关联查询后处理；支持基本类型如Integer/Long/String等;
+	 *              特别说明，对于Long和Integer，如果数据库返回的是null，由于ResultSet的getInt会返回0，所以这里也返回0
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
 	 */
@@ -253,7 +255,9 @@ public interface DBHelper {
 
 	/**
 	 * 执行自行指定的SQL查询语句，支持通过namedParameter的方式传入参数，放到args里面
-	 * @param clazz 转换回来的DO类，也支持关联查询后处理
+	 *
+	 * @param clazz 转换回来的DO类，也支持关联查询后处理；支持基本类型如Integer/Long/String等;
+	 *              特别说明，对于Long和Integer，如果数据库返回的是null，由于ResultSet的getInt会返回0，所以这里也返回0
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
 	 */
