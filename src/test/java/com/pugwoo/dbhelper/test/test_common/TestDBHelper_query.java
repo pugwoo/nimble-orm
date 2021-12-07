@@ -572,6 +572,9 @@ public class TestDBHelper_query {
                 names);
         assert count == 2;
 
+        List<Long> sum = dbHelper.getRaw(Long.class, "select sum(age) from t_student where name=?",
+                UUID.randomUUID().toString());
+        assert sum.get(0) == 0;
     }
 
     @Test 
