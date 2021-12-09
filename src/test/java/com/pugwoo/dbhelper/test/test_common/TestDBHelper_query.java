@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
@@ -370,6 +371,8 @@ public class TestDBHelper_query {
 
     @Test 
     public void testDateTime() {
+
+        dbHelper.turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
 
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         dbHelper.deleteByKey(studentDO);

@@ -43,16 +43,21 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<FeatureEnum, Boolean>() {{
 		put(FeatureEnum.AUTO_SUM_NULL_TO_ZERO, true);
+		put(FeatureEnum.LOG_SQL_AT_INFO_LEVEL, false);
 	}};
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 	
-	protected void log(StringBuilder sql) {
-		log(sql.toString());
+	protected void log(StringBuilder sql, Object keyValues) {
+		log(sql.toString(), keyValues);
 	}
 	
-	protected void log(String sql) {
-		LOGGER.debug("ExecSQL:{}", sql);
+	protected void log(String sql, Object keyValues) {
+		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
+		} else {
+			LOGGER.debug("ExecSQL:{},params:{}", sql, keyValues);
+		}
 	}
 	
 	protected void logSlow(long cost, String sql, List<Object> keyValues) {
@@ -128,7 +133,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * @return 实际修改的行数
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
-		log(sql);
+		log(sql, args);
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
@@ -140,7 +145,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
-		log(sql);
+		log(sql, args);
 		long start = System.currentTimeMillis();
 		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {

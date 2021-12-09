@@ -10,6 +10,12 @@ public enum FeatureEnum {
      *
      * 默认开启
      */
-    AUTO_SUM_NULL_TO_ZERO
+    AUTO_SUM_NULL_TO_ZERO,
+
+    /**
+     * 以info的级别log SQL，默认关闭，默认时用debug级别打印sql
+     */
+    LOG_SQL_AT_INFO_LEVEL
+
 
 }

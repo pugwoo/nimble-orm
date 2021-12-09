@@ -104,7 +104,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 		List<Object[]> values = new ArrayList<>();
 		final String sql = SQLUtils.getInsertSQLForBatch(list, values);
-		log(sql);
+		log(sql, values);
 
 		final long start = System.currentTimeMillis();
 
@@ -148,7 +148,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 		
 		final String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
-		log(sql);
+		log(sql, values);
 		
 		final long start = System.currentTimeMillis();
 
@@ -216,7 +216,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			values.addAll(Arrays.asList(args));
 		}
 		
-		log(sql);
+		log(sql, values);
 		
 		long start = System.currentTimeMillis();
 
@@ -236,12 +236,13 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	}
 
 	private int namedJdbcExecuteUpdateWithReturnId(Field autoIncrementField, Object t, String sql, Object... args) {
-		log(sql);
-		long start = System.currentTimeMillis();
 		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {
 			argsList.addAll(Arrays.asList(args));
 		}
+
+		log(sql, argsList);
+		long start = System.currentTimeMillis();
 
 		KeyHolder keyHolder = new GeneratedKeyHolder();
 

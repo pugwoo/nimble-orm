@@ -37,8 +37,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.getKeysWhereSQL(t, keyValues));
 
         try {
-            log(sql);
             doInterceptBeforeQuery(t.getClass(), sql, keyValues);
+            log(sql, keyValues);
 
             long start = System.currentTimeMillis();
             jdbcTemplate.queryForObject(sql.toString(),
@@ -73,9 +73,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         argsList.add(keyValue);
 
         try {
-            log(sql);
-
             doInterceptBeforeQuery(clazz, sql, argsList);
+            log(sql, argsList);
+
             long start = System.currentTimeMillis();
             T t = jdbcTemplate.queryForObject(sql.toString(),
                     new AnnotationSupportRowMapper<>(clazz),
@@ -106,10 +106,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
         sql.append(SQLUtils.getKeyInWhereSQL(clazz));
 
-        log(sql);
         List<Object> argsList = new ArrayList<>();
         argsList.add(keyValues);
         doInterceptBeforeQuery(clazz, sql, argsList);
+
+        log(sql, argsList);
+
         long start = System.currentTimeMillis();
         List<T> list = namedParameterJdbcTemplate.query(
                 NamedParameterUtils.trans(sql.toString(), argsList),
@@ -171,7 +173,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.getSelectCountSQL(clazz));
         sql.append(SQLUtils.autoSetSoftDeleted("", clazz));
 
-        log(sql);
+        log(sql, null);
         long start = System.currentTimeMillis();
         Long rows = jdbcTemplate.queryForObject(sql.toString(), Long.class);
 
@@ -194,12 +196,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         sql.append(") tff305c6");
 
-        log(sql);
-
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
+
+        log(sql, argsList);
 
         long start = System.currentTimeMillis();
 
@@ -284,8 +286,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, Object> args) {
-        log(sql);
-
         List<Object> forIntercept = new ArrayList<>();
         if (args != null) {
             forIntercept.add(args);
@@ -293,7 +293,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
+        log(sql, forIntercept);
         long start = System.currentTimeMillis();
+
         List<T> list;
         if (args == null || args.isEmpty()) {
             list = namedParameterJdbcTemplate.query(sql,
@@ -321,14 +323,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return getRawByNamedParam(clazz, sql, (Map<String, Object>)(args[0]));
         }
 
-        log(sql);
-
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
 
         doInterceptBeforeQuery(clazz, sql, argsList);
+
+        log(sql, argsList);
 
         long start = System.currentTimeMillis();
         List<T> list;
@@ -399,7 +401,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private long getRowCountByNamedParam(String sql, Map<String, Object> args) {
-        log(sql);
+        log(sql, args);
 
         long start = System.currentTimeMillis();
 
@@ -425,12 +427,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return getRowCountByNamedParam(sql, (Map<String, Object>)(args[0]));
         }
 
-        log(sql);
-
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
+
+        log(sql, argsList);
 
         long start = System.currentTimeMillis();
 
@@ -471,8 +473,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sql.append(SQLUtils.genLimitSQL(offset, limit));
 
-        log(sql);
-
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
@@ -481,6 +481,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (!selectOnlyKey) {
             doInterceptBeforeQuery(clazz, sql, argsList);
         }
+
+        log(sql, argsList);
 
         long start = System.currentTimeMillis();
         List<T> list;
