@@ -1,3 +1,5 @@
+v1.1.4 - [enhance] 当@RelatedColumn的extraWhere SQL语法错误时，抛出异常，原来是忽略extraWhere，可能导致错误
+
 2021年12月8日
 v1.1.3 - [add] 支持手工开启log.info打印实际执行的sql，默认是以log.debug级别打印；
                使用turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)开启

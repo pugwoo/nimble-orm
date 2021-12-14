@@ -5,10 +5,7 @@ import com.pugwoo.dbhelper.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
-import com.pugwoo.dbhelper.exception.InvalidParameterException;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
-import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
-import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -770,9 +767,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
                         relateValues = getAllForRelatedColumn(remoteDOClass, where, values);
                     } catch (JSQLParserException e) {
-                        LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere",
-                                column.extraWhere());
-                        relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
+                        LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
+                        throw new BadSQLSyntaxException(e);
                     }
                 }
             }
