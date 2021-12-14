@@ -14,6 +14,7 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * SQL解析工具类
@@ -867,6 +869,33 @@ public class SQLUtils {
 
 		return computed;
 	}
+
+	/**
+	 * 判断postSql是否包含了limit子句
+	 * @param postSql 从where开始的子句
+	 * @return 是返回true，否返回false；如果解析异常返回false
+	 */
+	public static boolean isContainsLimit(String postSql) {
+		Boolean result = containsLimitCache.get(postSql);
+		if (result != null) {
+			return result;
+		}
+
+		String selectSql = "select * from dual "; // 辅助where sql解析用
+		try {
+			Statement statement = CCJSqlParserUtil.parse(selectSql + postSql);
+			Select selectStatement = (Select) statement;
+			PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+			Limit limit = plainSelect.getLimit();
+			boolean isContainsLimit = limit != null;
+			containsLimitCache.put(postSql, isContainsLimit);
+			return isContainsLimit;
+		} catch (JSQLParserException e) {
+			throw new BadSQLSyntaxException(e);
+		}
+	}
+
+	private static Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
 
     /**
      * 拼凑select的field的语句
