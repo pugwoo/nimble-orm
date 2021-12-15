@@ -735,8 +735,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 IDBHelperDataService dataService = (IDBHelperDataService)
                         applicationContext.getBean(column.dataService());
                 List<Object> valuesList = new ArrayList<>(values);
-                relateValues = dataService.get(valuesList, column,
-                        clazz, remoteDOClass);
+                relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
                 String whereColumn;
                 boolean isSingleColumn = remoteField.size() == 1;
@@ -758,17 +757,29 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 sb.append(isSingleColumn ? "" : ")");
                 whereColumn = sb.toString();
 
-                String inExpr = whereColumn + " in " + buildQuestionMark(values);
                 if (column.extraWhere().trim().isEmpty()) {
+                    String inExpr = whereColumn + " in " + buildQuestionMark(values);
                     relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
-                    String where;
-                    try {
-                        where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
-                        relateValues = getAllForRelatedColumn(remoteDOClass, where, values);
-                    } catch (JSQLParserException e) {
-                        LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
-                        throw new BadSQLSyntaxException(e);
+                    // 如果extraWhere包含limit子句，那么只能降级为逐个处理，否则可以用批量处理的方式提高性能
+                    if (SQLUtils.isContainsLimit(column.extraWhere())) {
+                        try {
+                            String eqExpr = whereColumn + "=?";
+                            String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), eqExpr);
+                            relateValues = getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
+                        } catch (JSQLParserException e) {
+                            LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
+                            throw new BadSQLSyntaxException(e);
+                        }
+                    } else {
+                        try {
+                            String inExpr = whereColumn + " in " + buildQuestionMark(values);
+                            String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
+                            relateValues = getAllForRelatedColumn(remoteDOClass, where, values);
+                        } catch (JSQLParserException e) {
+                            LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
+                            throw new BadSQLSyntaxException(e);
+                        }
                     }
                 }
             }
@@ -886,6 +897,25 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         return _getPage(clazz, false, false,
                 false, null, null, postSql, param.toArray()).getData();
+    }
+
+    private <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
+        if (postSql != null) {
+            postSql = postSql.replace('\t', ' ');
+        }
+
+        List<T> result = new ArrayList<>();
+
+        for (Object value : values) {
+            List<Object> param = new ArrayList<>();
+            param.add(value);
+
+            List<T> results = _getPage(clazz, false, false,
+                    false, null, null, postSql, param.toArray()).getData();
+            result.addAll(results);
+        }
+
+        return result;
     }
 
     private Class<?> getElementClass(List<?> tList) {
