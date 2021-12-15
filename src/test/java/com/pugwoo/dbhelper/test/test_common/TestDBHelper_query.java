@@ -36,6 +36,45 @@ public class TestDBHelper_query {
         Assert.assertTrue(db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi"));
     }
 
+    @Test
+    public void testRelatedColumnWithLimit() {
+
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
+        CourseDO courseDO1 = new CourseDO();
+        courseDO1.setName("math");
+        courseDO1.setStudentId(studentDO.getId());
+        courseDO1.setIsMain(true); // math是主课程
+        dbHelper.insert(courseDO1);
+
+        CourseDO courseDO2 = new CourseDO();
+        courseDO2.setName("eng");
+        courseDO2.setStudentId(studentDO.getId());
+        courseDO2.setIsMain(true); // eng是主课程
+        dbHelper.insert(courseDO2);
+
+        CourseDO courseDO3 = new CourseDO();
+        courseDO3.setName("chinese");
+        courseDO3.setStudentId(studentDO.getId());
+        courseDO3.setIsMain(true); // chinese是主课程
+        dbHelper.insert(courseDO3);
+
+        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+
+        List<StudentLimitVO> all = dbHelper.getAll(StudentLimitVO.class, "where id=? or id=?",
+                studentDO.getId(), studentDO2.getId());
+        for (StudentLimitVO a : all) {
+            if (a.getId().equals(studentDO.getId())) {
+                assert a.getMainCourses().size() == 2;
+                assert a.getMainCourses().get(0).getIsMain();
+                assert a.getMainCourses().get(1).getIsMain();
+            }
+            if (a.getId().equals(studentDO2.getId())) {
+                assert a.getMainCourses().isEmpty();
+            }
+        }
+    }
+
     @Test 
     public void testRelatedColumn() {
 
