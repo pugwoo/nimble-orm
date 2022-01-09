@@ -113,10 +113,11 @@
 		    <version>9.0.22</version>
 		    <scope>test</scope>
 		</dependency>-->
+		<!-- HikariCP 5.x support jdk 11+, so use 4.x -->
 		<dependency>
 			<groupId>com.zaxxer</groupId>
 			<artifactId>HikariCP</artifactId>
-			<version>5.0.0</version>
+			<version>4.0.3</version>
 			<scope>test</scope>
 		</dependency>
 
