@@ -44,6 +44,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<FeatureEnum, Boolean>() {{
 		put(FeatureEnum.AUTO_SUM_NULL_TO_ZERO, true);
 		put(FeatureEnum.LOG_SQL_AT_INFO_LEVEL, false);
+		put(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST, false);
 	}};
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
@@ -248,4 +249,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		features.put(featureEnum, false);
 	}
 
+	public Boolean getFeature(FeatureEnum featureEnum) {
+		return features.get(featureEnum);
+	}
 }
