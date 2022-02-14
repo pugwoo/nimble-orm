@@ -1,3 +1,8 @@
+2022年2月14日
+v1.1.5 - [add] 当DO类注解的列在返回结果中不存在时，由直接报错改成不处理，这种情况只会在getRaw时出现，由用户自行测试处理；
+               也支持通过配置项THROW_EXCEPTION_IF_COLUMN_NOT_EXIST设置为直接报错
+       - [add] getRaw支持传入Map.class，传回Map<String, Object>类型的list
+
 2021年12月15日
 v1.1.4 - [add] 支持@RelatedColumn中写limit子句，明确说明这样走不了批量，性能会显著下降
        - [enhance] 当@RelatedColumn的extraWhere SQL语法错误时，抛出异常，原来是忽略extraWhere，可能导致错误
