@@ -11,12 +11,15 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 2015年8月22日 16:58:48
@@ -260,6 +263,17 @@ public class TypeAutoCast {
 		if (clazz == java.sql.Timestamp.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getTimestamp(1));
+		}
+
+		if (clazz == Map.class) {
+			result.setBasicType(true);
+			ResultSetMetaData md = rs.getMetaData();
+			int columns = md.getColumnCount();
+			Map<String, Object> map = new HashMap<>(columns);
+			for (int i = 1; i <= columns; i++) {
+				map.put(md.getColumnName(i), rs.getObject(i));
+			}
+			result.setValue(map);
 		}
 
 		return result;
