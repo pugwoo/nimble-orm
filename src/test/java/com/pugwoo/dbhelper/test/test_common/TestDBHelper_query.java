@@ -582,6 +582,30 @@ public class TestDBHelper_query {
         dbHelper.setMaxPageSize(1000000);
     }
 
+    @Test
+    public void testGetRawIfColumnNotExist() {
+        final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
+
+        // 这里故意只查回id，而DO类是要收id和name的，默认情况下不会报错
+        List<StudentForRawDO> list = dbHelper.getRaw(StudentForRawDO.class,
+                "select id from t_student where name=?", studentDO1.getName());
+
+        assert list.get(0).getId().equals(studentDO1.getId());
+        assert list.get(0).getName() == null;
+
+        dbHelper.turnOnFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
+        boolean isThrowEx = false;
+        try {
+            list = dbHelper.getRaw(StudentForRawDO.class,
+                    "select id from t_student where name=?", studentDO1.getName());
+        } catch (Exception e) {
+            isThrowEx = true;
+        }
+        assert isThrowEx;
+
+        dbHelper.turnOffFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
+    }
+
     @Test 
     public void testGetRaw() {
         final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
@@ -592,6 +616,11 @@ public class TestDBHelper_query {
 
         assert list.size() == 1;
         assert list.get(0).getName().equals(studentDO1.getName());
+
+        List<Map> list2 = dbHelper.getRaw(Map.class,
+                "select id,name from t_student where name=?", studentDO1.getName());
+        assert list2.size() == 1;
+        assert list2.get(0).get("name").equals(studentDO1.getName());
 
 
         Map<String, Object> params = new HashMap<>();
