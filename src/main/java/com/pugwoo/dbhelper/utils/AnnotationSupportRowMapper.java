@@ -1,10 +1,13 @@
 package com.pugwoo.dbhelper.utils;
 
+import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinLeftTable;
 import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.RowMapperFailException;
+import com.pugwoo.dbhelper.impl.part.P0_JdbcTemplateOp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,6 +27,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationSupportRowMapper.class);
 
+	/**传入对应的dbHelper对象*/
+	private DBHelper dbHelper;
+
 	private Class<T> clazz;
 	private boolean isUseGivenObj = false;
 	private T t;
@@ -34,16 +40,19 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 
 	private boolean selectOnlyKey = false; // 是否只选择主键列，默认false
 	
-	public AnnotationSupportRowMapper(Class<T> clazz) {
+	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz) {
+		this.dbHelper = dbHelper;
 		handleClazz(clazz);
 	}
 	
-	public AnnotationSupportRowMapper(Class<T> clazz, boolean selectOnlyKey) {
+	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, boolean selectOnlyKey) {
+		this.dbHelper = dbHelper;
 		this.selectOnlyKey = selectOnlyKey;
 		handleClazz(clazz);
 	}
 	
-	public AnnotationSupportRowMapper(Class<T> clazz, T t) {
+	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, T t) {
+		this.dbHelper = dbHelper;
 		handleClazz(clazz);
 		this.t = t;
 		this.isUseGivenObj = true;
@@ -93,7 +102,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
 					Object value = TypeAutoCast.cast(
-							TypeAutoCast.getFromRS(rs, column.value(), field), 
+							getFromRS(rs, column.value(), field),
 							field.getType());
 					DOInfoReader.setValue(field, obj, value);
 				}
@@ -103,6 +112,31 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		} catch (Exception e) {
 			LOGGER.error("mapRow exception, class:{}", clazz, e);
 			throw new RowMapperFailException(e);
+		}
+	}
+
+	/**当列不存在时，默认warn log出来，支持配置为抛出异常*/
+	private Object getFromRS(ResultSet rs,
+							 String columnName,
+							 Field field) throws SQLException {
+		if (dbHelper instanceof P0_JdbcTemplateOp) {
+			Boolean throwErrorIfColumnNotExist =
+					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
+			if (throwErrorIfColumnNotExist == null || !throwErrorIfColumnNotExist) {
+				try {
+					return TypeAutoCast.getFromRS(rs, columnName, field);
+				} catch (SQLException e) {
+					String message = e.getMessage();
+					if (!(message.startsWith("Column ") && message.endsWith(" not found."))) {
+						throw e;
+					}
+					return null;
+				}
+			} else {
+				return TypeAutoCast.getFromRS(rs, columnName, field);
+			}
+		} else {
+			return TypeAutoCast.getFromRS(rs, columnName, field);
 		}
 	}
 
@@ -117,7 +151,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				columnName = tableAlias + "." + column.value();
 			}
 			Object value = TypeAutoCast.cast(
-					TypeAutoCast.getFromRS(rs, columnName, field), field.getType());
+					getFromRS(rs, columnName, field), field.getType());
 			if(value != null) {
 				isAllNull = false;
 			}

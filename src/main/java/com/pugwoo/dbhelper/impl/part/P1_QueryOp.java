@@ -39,7 +39,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             long start = System.currentTimeMillis();
             jdbcTemplate.queryForObject(sql.toString(),
-                    new AnnotationSupportRowMapper(t.getClass(), t),
+                    new AnnotationSupportRowMapper(this, t.getClass(), t),
                     keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 
             postHandleRelatedColumn(t);
@@ -75,7 +75,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             long start = System.currentTimeMillis();
             T t = jdbcTemplate.queryForObject(sql.toString(),
-                    new AnnotationSupportRowMapper<>(clazz),
+                    new AnnotationSupportRowMapper<>(this, clazz),
                     argsList.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 
             postHandleRelatedColumn(t);
@@ -113,7 +113,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list = namedParameterJdbcTemplate.query(
                 NamedParameterUtils.trans(sql.toString(), argsList),
                 NamedParameterUtils.transParam(argsList),
-                new AnnotationSupportRowMapper<>(clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
+                new AnnotationSupportRowMapper<>(this, clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 
         postHandleRelatedColumn(list);
         long cost = System.currentTimeMillis() - start;
@@ -296,10 +296,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list;
         if (args == null || args.isEmpty()) {
             list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
         } else {
             list = namedParameterJdbcTemplate.query(sql, args,
-                    new AnnotationSupportRowMapper<>(clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
         }
 
         postHandleRelatedColumn(list);
@@ -333,12 +333,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list;
         if (argsList.isEmpty()) {
             list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
         } else {
             list = namedParameterJdbcTemplate.query(
                     NamedParameterUtils.trans(sql, argsList),
                     NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
         }
 
         postHandleRelatedColumn(list);
@@ -487,10 +487,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             if (isUseNamedTemplate) {
                 // 因为有in (?)所以用namedParameterJdbcTemplate
                 list = namedParameterJdbcTemplate.query(sql.toString(),
-                        new AnnotationSupportRowMapper<>(clazz, selectOnlyKey));
+                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
             } else {
                 list = jdbcTemplate.query(sql.toString(),
-                        new AnnotationSupportRowMapper<>(clazz, selectOnlyKey));
+                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
             }
         } else {
             if (isUseNamedTemplate) {
@@ -498,10 +498,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 list = namedParameterJdbcTemplate.query(
                         NamedParameterUtils.trans(sql.toString(), argsList),
                         NamedParameterUtils.transParam(argsList),
-                        new AnnotationSupportRowMapper<>(clazz, selectOnlyKey));
+                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
             } else {
                 list = jdbcTemplate.query(sql.toString(),
-                        new AnnotationSupportRowMapper<>(clazz, selectOnlyKey), argsList.toArray());
+                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey), argsList.toArray());
             }
         }
 
