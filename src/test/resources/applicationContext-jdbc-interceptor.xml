@@ -31,12 +31,6 @@
 		<property name="dataSource" ref="dataSource" />
 	</bean>
 	
-	<!-- 配置namedParameterTemplate -->
-	<bean id="namedParameterJdbcTemplate" 
-	    class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
-	    <constructor-arg ref="dataSource" />
-	</bean>
-	
 	<!-- 支持事务，包括：Test中@Transactional -->
 	<bean id="transactionManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
@@ -51,7 +45,6 @@
 	<!-- DBHelper -->
 	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
 	    <property name="jdbcTemplate" ref="jdbcTemplate" />
-	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
 	    <property name="timeoutWarningValve" value="1000" /> <!-- 超过1秒的话就告警 -->
 	    <property name="interceptors">
 	        <list>
