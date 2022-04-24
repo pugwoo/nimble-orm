@@ -1,4 +1,5 @@
 v1.2.0 - [del] 去掉namedParameterJdbcTemplate的设置，从1.2起不需要再设置namedParameterJdbcTemplate了
+       - [modify] insertValueScript仅在值为null时才进行设置
 
 2022年2月14日
 v1.1.5 - [add] 当DO类注解的列在返回结果中不存在时，由直接报错改成不处理，这种情况只会在getRaw时出现，由用户自行测试处理；
