@@ -1,3 +1,5 @@
+v1.2.1 - [add] 添加接收JdbcTemplate的DBHelper构造函数
+
 2022年4月24日
 v1.2.0 - [del] 去掉namedParameterJdbcTemplate的设置，从1.2起不需要再设置namedParameterJdbcTemplate了
        - [modify] insertValueScript仅在值为null时才进行设置
