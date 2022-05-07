@@ -729,7 +729,40 @@ public class SQLUtils {
 	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
 		return autoSetSoftDeleted(whereSql, clazz, "");
 	}
-	
+
+	/**
+	 * 移除whereSql中的limit子句
+	 */
+	public static String removeLimit(String whereSql) {
+		// 没有包含limit肯定没有limit子句，不处理，这也是提高性能的处理方式，并不是每个whereSql都需要解析
+		if (whereSql == null || !whereSql.toLowerCase().contains("limit")) {
+			return whereSql;
+		}
+		String selectSql = "SELECT * FROM dual "; // 辅助where sql解析用，这个大小写不能改动！
+		Statement statement = null;
+		try {
+			statement = CCJSqlParserUtil.parse(selectSql + whereSql);
+		} catch (JSQLParserException e) {
+			LOGGER.error("fail to remove limit for sql:{}", whereSql, e);
+			return whereSql;
+		}
+		Select selectStatement = (Select) statement;
+		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+		Limit limit = plainSelect.getLimit();
+		if (limit != null) {
+			plainSelect.setLimit(null);
+			String sql = plainSelect.toString();
+			if (sql.startsWith(selectSql)) {
+				return sql.substring(selectSql.length());
+			} else {
+				LOGGER.error("fail to remove limit for sql:{}", whereSql);
+				return whereSql;
+			}
+		} else {
+			return whereSql;
+		}
+	}
+
 	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
@@ -888,7 +921,7 @@ public class SQLUtils {
 			PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
 			Limit limit = plainSelect.getLimit();
 			boolean isContainsLimit = limit != null;
-			containsLimitCache.put(postSql, isContainsLimit);
+			containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定
 			return isContainsLimit;
 		} catch (JSQLParserException e) {
 			throw new BadSQLSyntaxException(e);
