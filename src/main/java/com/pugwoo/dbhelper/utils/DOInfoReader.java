@@ -365,7 +365,7 @@ public class DOInfoReader {
 			try {
 				method.invoke(object, value);
 			} catch (Exception e) {
-				LOGGER.error("method invoke", e);
+				LOGGER.error("set method:{} invoke fail", method.getName(), e);
 				return false;
 			}
 		} else {
@@ -373,7 +373,7 @@ public class DOInfoReader {
 			try {
 				field.set(object, value);
 			} catch (Exception e) {
-				LOGGER.error("method invoke", e);
+				LOGGER.error("field:{} set fail", field.getName(), e);
 				return false;
 			}
 		}
