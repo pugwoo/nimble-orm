@@ -928,7 +928,7 @@ public class SQLUtils {
 		}
 	}
 
-	private static Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
+	private static final Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
 
     /**
      * 拼凑select的field的语句
