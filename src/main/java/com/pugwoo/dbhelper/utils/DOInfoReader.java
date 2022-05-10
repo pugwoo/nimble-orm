@@ -359,7 +359,7 @@ public class DOInfoReader {
 	 */
 	public static boolean setValue(Field field, Object object, Object value) {
 		value = TypeAutoCast.cast(value, field.getType());
-		Method method = ClassInfoCache.getFieldMethod(field);
+		Method method = ClassInfoCache.getFieldSetMethod(field);
 		
 		if(method != null) {
 			try {
