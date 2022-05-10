@@ -2,9 +2,6 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.entity.TypesDO;
-import com.pugwoo.dbhelper.test.utils.CommonOps;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,53 +75,4 @@ public class TestDBHelper_insert {
         assert studentDO2.getName().equals(name);
     }
 
-    @Test
-    
-    public void testInsertWhereNotExists() {
-        StudentDO studentDO = new StudentDO();
-        studentDO.setName(CommonOps.getRandomName("nick"));
-
-        int row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
-        Assert.assertTrue(row == 1);
-
-        // 这个不会插入，写不写`where`关键字都可以
-        row = dbHelper.insertWhereNotExist(studentDO, "where name=?", studentDO.getName());
-        Assert.assertTrue(row == 0);
-
-        // 这个不会插入
-        row = dbHelper.insertWhereNotExist(studentDO, "name=?", studentDO.getName());
-        Assert.assertTrue(row == 0);
-
-        row = dbHelper.deleteByKey(studentDO);
-        Assert.assertTrue(row == 1);
-
-        // 删除后再插入
-        studentDO.setId(null);
-        row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
-        Assert.assertTrue(row == 1);
-
-        row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
-        Assert.assertTrue(row == 0);
-
-        row = dbHelper.insertWithNullWhereNotExist(studentDO, "name=?", studentDO.getName());
-        Assert.assertTrue(row == 0);
-
-        // 如果没有指定where条件，则等价于插入
-        studentDO = new StudentDO();
-        studentDO.setName(CommonOps.getRandomName("nick"));
-        assert dbHelper.insertWhereNotExist(studentDO, null) == 1;
-        assert studentDO.getId() != null;
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()).getName().equals(studentDO.getName());
-
-        // 测试不需要自增id的情况
-        TypesDO typesDO = new TypesDO();
-        typesDO.setId1(new Random().nextLong());
-        typesDO.setId2(new Random().nextLong());
-        assert dbHelper.insertWhereNotExist(typesDO, "where id1=? and id2=?",
-                typesDO.getId1(), typesDO.getId2()) == 1;
-        assert dbHelper.insertWhereNotExist(typesDO, "where id1=? and id2=?",
-                typesDO.getId1(), typesDO.getId2()) == 0;
-        assert dbHelper.getOne(TypesDO.class, "where id1=? and id2=?",
-                typesDO.getId1(), typesDO.getId2()) != null;
-    }
 }
