@@ -49,4 +49,41 @@ public class ClassInfoCache {
         return method;
     }
 
+    private static final Map<Field, Method> fieldGetMethodMap = new HashMap<>();
+    private static final Map<Field, Boolean> fieldGetMethodNullMap = new HashMap<>();
+
+    /**
+     * 获得field对应的method的缓存数据
+     * @param field 字段
+     * @return 不存在返回null
+     */
+    public synchronized static Method getFieldGetMethod(Field field) {
+        Method method = fieldGetMethodMap.get(field);
+        if (method != null) {
+            return method;
+        }
+
+        Boolean isNull = fieldGetMethodNullMap.get(field);
+        if (isNull != null && isNull) {
+            return null;
+        }
+
+        String fieldName = field.getName();
+        String getMethodName = "get" + InnerCommonUtils.firstLetterUpperCase(fieldName);
+
+        try {
+            method = field.getDeclaringClass().getMethod(getMethodName);
+        } catch (NoSuchMethodException e) {
+            // 不需要打log，框架允许没有getter方法
+        }
+
+        if (method == null) {
+            fieldGetMethodNullMap.put(field, true);
+        } else {
+            method.setAccessible(true);
+            fieldGetMethodMap.put(field, method);
+        }
+        return method;
+    }
+
 }

@@ -306,29 +306,22 @@ public class DOInfoReader {
 	 * 优先通过getter获得值，如果没有getter，则直接获取
 	 */
 	public static Object getValue(Field field, Object object) {
-		String fieldName = field.getName();
-		String setMethodName = "get" + InnerCommonUtils.firstLetterUpperCase(fieldName);
-		Method method = null;
-		try {
-			method = object.getClass().getMethod(setMethodName);
-		} catch (Exception e) {
-			// ignore
-		}
-		
+		Method method = ClassInfoCache.getFieldGetMethod(field);
+
 		if(method != null) {
 			try {
 				method.setAccessible(true);
 				return method.invoke(object);
 			} catch (Exception e) {
-				LOGGER.error("method invoke", e);
+				LOGGER.error("get method:{} invoke fail", method, e);
 			}
 		}
-		
+
 		field.setAccessible(true);
 		try {
 			return field.get(object);
 		} catch (Exception e) {
-			LOGGER.error("method invoke", e);
+			LOGGER.error("field:{} get fail", field, e);
 			return null;
 		}
 	}
