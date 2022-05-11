@@ -255,7 +255,7 @@ public class SQLUtils {
 
         sql.append(getTableName(t.getClass())).append(" (");
         List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
-        String fieldSql = joinAndGetValue(fields, ",", _values, t, isWithNullValue);
+        String fieldSql = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue);
         sql.append(fieldSql);
         sql.append(") VALUES ");
         String dotSql = "(" + join("?", _values.size(), ",") + ")";
@@ -288,7 +288,7 @@ public class SQLUtils {
 		boolean isFirst = true;
 		for (T t : list) {
 			List<Object> _values = new ArrayList<>();
-			String fieldSql = joinAndGetValue(fields, ",", _values, t, true);
+			String fieldSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
 			if (isFirst) {
 				sql.append(fieldSql);
 				sql.append(") VALUES ");
@@ -959,15 +959,6 @@ public class SQLUtils {
 	}
 
     /**
-     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
-     * @param isWithNullValue 是否把null值放到values中
-     */
-    private static String joinAndGetValue(List<Field> fields, String sep,
-                List<Object> values, Object obj, boolean isWithNullValue) {
-	    return joinAndGetValueForInsert(fields, sep, null, values, obj, isWithNullValue);
-    }
-    
-    /**
      * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
      */
 	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix,
@@ -997,13 +988,11 @@ public class SQLUtils {
      * @param obj 不应该为null
      * @param isWithNullValue 是否把null值放到values中
      */
-	private static String joinAndGetValueForInsert(List<Field> fields, String sep, String fieldPrefix,
+	private static String joinAndGetValueForInsert(List<Field> fields, String sep,
 			List<Object> values, Object obj, boolean isWithNullValue) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
 		}
-		
-        fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
 
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
@@ -1026,7 +1015,7 @@ public class SQLUtils {
 				}
 			}
     		
-        	sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
+        	sb.append(getColumnName(column)).append(sep);
     	}
     	int len = sb.length();
     	return len == 0 ? "" : sb.substring(0, len - 1);
