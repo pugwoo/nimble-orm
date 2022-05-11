@@ -206,6 +206,21 @@ public class DOInfoReader {
 	}
 
 	/**
+	 * 获得字段里面的key字段
+	 */
+	public static List<Field> getKeyColumnsNoThrowsException(Class<?> clazz) {
+		List<Field> fields = getColumns(clazz);
+		List<Field> keyFields = new ArrayList<>();
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.isKey()) {
+				keyFields.add(field);
+			}
+		}
+		return keyFields;
+	}
+
+	/**
 	 * 获得一个DO类注解的casVersion字段
 	 * @return 当没有column字段时返回null
 	 * @throws CasVersionNotMatchException 当有2个及2个以上的casVersion字段时抛出该异常

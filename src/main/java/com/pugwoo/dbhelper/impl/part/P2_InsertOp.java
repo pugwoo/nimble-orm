@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.sql.InsertSQLReturn;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -143,8 +144,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsert(t);
 		}
 		
-		final String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
-		log(sql, values);
+		final InsertSQLReturn sqlRet = SQLUtils.getInsertSQL(t, values, isWithNullValue);
+		log(sqlRet.getSql(), values);
 		
 		final long start = System.currentTimeMillis();
 
@@ -153,7 +154,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		if (autoIncrementField != null) {
 			GeneratedKeyHolder holder = new GeneratedKeyHolder();
 			rows = jdbcTemplate.update(con -> {
-				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+				PreparedStatement statement = con.prepareStatement(sqlRet.getSql(), Statement.RETURN_GENERATED_KEYS);
 				for (int i = 0; i < values.size(); i++) {
 					statement.setObject(i + 1, values.get(i));
 				}
@@ -171,11 +172,19 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			}
 
 		} else {
-			rows = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			rows = jdbcTemplate.update(sqlRet.getSql(), values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		}
+
+		// 如果不带null值插入数据库，同时t又有null值，那么可能数据库会初始化默认值，此时反查回t的属性值
+		if (!isWithNullValue && sqlRet.isContainsNullValue()) {
+			List<Field> keyColumns = DOInfoReader.getKeyColumnsNoThrowsException(t.getClass());
+			if (!keyColumns.isEmpty()) {
+				getByKey(t);
+			}
 		}
 
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, values);
+		logSlow(cost, sqlRet.getSql(), values);
 		
 		if(withInterceptor) {
 			doInterceptAfterInsert(t, rows);
