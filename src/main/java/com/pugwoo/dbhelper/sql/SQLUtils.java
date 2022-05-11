@@ -301,37 +301,7 @@ public class SQLUtils {
 
 		return sql.toString();
 	}
-	
-	/**
-	 * 生成insert into (...) select ?,?,? from where not exists (select 1 from where)语句
-	 * @param t 注解了Table的对象
-	 * @param values 要插入的参数
-	 * @param whereSql 附带的where子句
-	 * @return 生成的SQL
-	 */
-	public static <T> String getInsertWhereNotExistSQL(T t, List<Object> values,
-			boolean isWithNullValue, String whereSql) {
-		StringBuilder sql = new StringBuilder("INSERT INTO ");
-		
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		String tableName = getTableName(t.getClass());
-		
-		sql.append(tableName).append(" (");
-		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
-		sql.append(") select ");
-		sql.append(join("?", values.size(), ","));
-		sql.append(" from dual where not exists (select 1 from ");
-		
-		if(!whereSql.trim().toUpperCase().startsWith("WHERE ")) {
-			whereSql = "where " + whereSql;
-		}
-		whereSql = autoSetSoftDeleted(whereSql, t.getClass());
-		
-		sql.append(tableName).append(" ").append(whereSql).append(" limit 1)");
-		
-		return sql.toString();
-	}
-	
+
 	/**
 	 * 生成update语句
 	 * @param t 注解了Table的对象
