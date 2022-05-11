@@ -109,13 +109,22 @@ public class DOInfoReader {
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
-			
-		List<Field> result = _getAnnotationColumns(clazz, Column.class);
-		if (result.isEmpty()) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column fields");
+
+		List<Field> result = ClassInfoCache.getField(clazz);
+		if (result == null) { // 还没有缓存过
+			result = _getAnnotationColumns(clazz, Column.class);
+			ClassInfoCache.putField(clazz, result);
+			if (result.isEmpty()) {
+				throw new NoColumnAnnotationException("class " + clazz.getName()
+						+ " does not have any @Column fields");
+			}
+		} else {
+			if (result.isEmpty()) {
+				throw new NoColumnAnnotationException("class " + clazz.getName()
+						+ " does not have any @Column fields");
+			}
 		}
-		
+
 		return result;
 	}
 	
