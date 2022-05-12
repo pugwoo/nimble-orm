@@ -248,25 +248,22 @@ public class SQLUtils {
 	 * @param isWithNullValue 标记是否将null字段放到insert语句中
 	 * @return 生成的SQL
 	 */
-	public static <T> InsertSQLReturn getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
+	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
         StringBuilder sql = new StringBuilder("INSERT INTO ");
 
         List<Field> fields = DOInfoReader.getColumns(t.getClass());
 
         sql.append(getTableName(t.getClass())).append(" (");
         List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
-		InsertSQLReturn sqlRet = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue);
+		String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue);
 
-		sql.append(sqlRet.getSql());
+		sql.append(insertSql);
         sql.append(") VALUES ");
         String dotSql = "(" + join("?", _values.size(), ",") + ")";
         sql.append(dotSql);
         values.addAll(_values);
 
-		InsertSQLReturn ret = new InsertSQLReturn();
-		ret.setSql(sql.toString());
-		ret.setContainsNullValue(sqlRet.isContainsNullValue());
-        return ret;
+		return sql.toString();
 	}
 
 	/**
@@ -292,9 +289,9 @@ public class SQLUtils {
 		boolean isFirst = true;
 		for (T t : list) {
 			List<Object> _values = new ArrayList<>();
-			InsertSQLReturn sqlRet = joinAndGetValueForInsert(fields, ",", _values, t, true);
+			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
 			if (isFirst) {
-				sql.append(sqlRet.getSql());
+				sql.append(insertSql);
 				sql.append(") VALUES ");
 				String dotSql = "(" + join("?", _values.size(), ",") + ")";
 				sql.append(dotSql);
@@ -992,12 +989,11 @@ public class SQLUtils {
      * @param obj 不应该为null
      * @param isWithNullValue 是否把null值放到values中
      */
-	private static InsertSQLReturn joinAndGetValueForInsert(List<Field> fields, String sep,
+	private static String joinAndGetValueForInsert(List<Field> fields, String sep,
 			List<Object> values, Object obj, boolean isWithNullValue) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
 		}
-		boolean isContainsNullValue = false;
 
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
@@ -1010,7 +1006,6 @@ public class SQLUtils {
 			if(value != null && column.isJSON()) {
 				value = NimbleOrmJSON.toJson(value);
 			}
-			isContainsNullValue = isContainsNullValue || value == null; // 一旦为true，就一直为true
 			if(isWithNullValue) {
 				values.add(value);
 			} else {
@@ -1024,12 +1019,7 @@ public class SQLUtils {
         	sb.append(getColumnName(column)).append(sep);
     	}
     	int len = sb.length();
-    	String sql = len == 0 ? "" : sb.substring(0, len - 1);
-
-		InsertSQLReturn ret = new InsertSQLReturn();
-		ret.setSql(sql);
-		ret.setContainsNullValue(isContainsNullValue);
-		return ret;
+    	return len == 0 ? "" : sb.substring(0, len - 1);
 	}
 	
 	/**
