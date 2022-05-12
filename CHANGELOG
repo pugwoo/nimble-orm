@@ -1,5 +1,7 @@
-v1.3.0 - [del] 移除insertWhereNotExist和insertWithNullWhereNotExist方法
+2022年5月12日
+v1.2.2 - [del] 移除标记为废弃的insertWhereNotExist和insertWithNullWhereNotExist方法
        - [deprecated] 标记废弃Column的insertDefault属性，该属性以后由insertValueScript代替
+       - [enhance] 增加获取Column的缓存以提高性能
 
 2022年5月7日
 v1.2.1 - [add] 添加接收JdbcTemplate的DBHelper构造函数
