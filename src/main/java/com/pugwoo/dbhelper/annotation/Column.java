@@ -92,8 +92,10 @@ public @interface Column {
 	
 	/**
 	 * 当设置了非空的字符串，且原值是null时，自动设置上值<br>
-     * mvel脚本中，可以通过t标识获取当前插入的对象
+     * mvel脚本中，可以通过t标识获取当前插入的对象<br>
+	 * 【废弃】since 1.3 请使用insertValueScript代替
 	 */
+	@Deprecated
 	String insertDefault() default "";
 
 	/**
