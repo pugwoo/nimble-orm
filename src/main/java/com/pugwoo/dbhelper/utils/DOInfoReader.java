@@ -109,13 +109,22 @@ public class DOInfoReader {
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
-			
-		List<Field> result = _getAnnotationColumns(clazz, Column.class);
-		if (result.isEmpty()) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column fields");
+
+		List<Field> result = ClassInfoCache.getField(clazz);
+		if (result == null) { // 还没有缓存过
+			result = _getAnnotationColumns(clazz, Column.class);
+			ClassInfoCache.putField(clazz, result);
+			if (result.isEmpty()) {
+				throw new NoColumnAnnotationException("class " + clazz.getName()
+						+ " does not have any @Column fields");
+			}
+		} else {
+			if (result.isEmpty()) {
+				throw new NoColumnAnnotationException("class " + clazz.getName()
+						+ " does not have any @Column fields");
+			}
 		}
-		
+
 		return result;
 	}
 	
@@ -192,6 +201,21 @@ public class DOInfoReader {
 		}
 		if(keyFields.isEmpty()) {
 			throw new NoKeyColumnAnnotationException();
+		}
+		return keyFields;
+	}
+
+	/**
+	 * 获得字段里面的key字段
+	 */
+	public static List<Field> getKeyColumnsNoThrowsException(Class<?> clazz) {
+		List<Field> fields = getColumns(clazz);
+		List<Field> keyFields = new ArrayList<>();
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.isKey()) {
+				keyFields.add(field);
+			}
 		}
 		return keyFields;
 	}
@@ -306,29 +330,22 @@ public class DOInfoReader {
 	 * 优先通过getter获得值，如果没有getter，则直接获取
 	 */
 	public static Object getValue(Field field, Object object) {
-		String fieldName = field.getName();
-		String setMethodName = "get" + InnerCommonUtils.firstLetterUpperCase(fieldName);
-		Method method = null;
-		try {
-			method = object.getClass().getMethod(setMethodName);
-		} catch (Exception e) {
-			// ignore
-		}
-		
+		Method method = ClassInfoCache.getFieldGetMethod(field);
+
 		if(method != null) {
 			try {
 				method.setAccessible(true);
 				return method.invoke(object);
 			} catch (Exception e) {
-				LOGGER.error("method invoke", e);
+				LOGGER.error("get method:{} invoke fail", method, e);
 			}
 		}
-		
+
 		field.setAccessible(true);
 		try {
 			return field.get(object);
 		} catch (Exception e) {
-			LOGGER.error("method invoke", e);
+			LOGGER.error("field:{} get fail", field, e);
 			return null;
 		}
 	}
@@ -359,13 +376,13 @@ public class DOInfoReader {
 	 */
 	public static boolean setValue(Field field, Object object, Object value) {
 		value = TypeAutoCast.cast(value, field.getType());
-		Method method = ClassInfoCache.getFieldMethod(field);
+		Method method = ClassInfoCache.getFieldSetMethod(field);
 		
 		if(method != null) {
 			try {
 				method.invoke(object, value);
 			} catch (Exception e) {
-				LOGGER.error("method invoke", e);
+				LOGGER.error("set method:{} invoke fail", method.getName(), e);
 				return false;
 			}
 		} else {
@@ -373,7 +390,7 @@ public class DOInfoReader {
 			try {
 				field.set(object, value);
 			} catch (Exception e) {
-				LOGGER.error("method invoke", e);
+				LOGGER.error("field:{} set fail", field.getName(), e);
 				return false;
 			}
 		}

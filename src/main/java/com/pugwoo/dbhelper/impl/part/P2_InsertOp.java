@@ -5,17 +5,13 @@ import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
-import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -184,85 +180,6 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		if(withInterceptor) {
 			doInterceptAfterInsert(t, rows);
 		}
-		return rows;
-	}
-	
-	@Override
-	public <T> int insertWhereNotExist(T t, String whereSql, Object... args) {
-		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
-		return insertWhereNotExist(t, false, whereSql, args);
-	}
-	
-	@Override
-	public <T> int insertWithNullWhereNotExist(T t, String whereSql, Object... args) {
-		if(whereSql != null) {whereSql = whereSql.replace('\t', ' ');}
-		return insertWhereNotExist(t, true, whereSql, args);
-	}
-	
-	private <T> int insertWhereNotExist(T t, boolean isWithNullValue, String whereSql, Object... args) {
-		if(whereSql == null || whereSql.isEmpty()) {
-			return insert(t, isWithNullValue, true);
-		}
-		
-		PreHandleObject.preHandleInsert(t);
-		
-		List<Object> values = new ArrayList<>();
-		
-		doInterceptBeforeInsert(t);
-		
-		String sql = SQLUtils.getInsertWhereNotExistSQL(t, values, isWithNullValue, whereSql);
-		
-		if(args != null) {
-			values.addAll(Arrays.asList(args));
-		}
-		
-		log(sql, values);
-		
-		long start = System.currentTimeMillis();
-
-		int rows;
-		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
-		if (autoIncrementField != null) {
-			rows = namedJdbcExecuteUpdateWithReturnId(autoIncrementField, t, sql, values.toArray());
-		} else {
-			rows = namedJdbcExecuteUpdate(sql, values.toArray());
-		}
-
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, values);
-		
-		doInterceptAfterInsert(t, rows);
-		return rows;
-	}
-
-	private int namedJdbcExecuteUpdateWithReturnId(Field autoIncrementField, Object t, String sql, Object... args) {
-		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-		if(args != null) {
-			argsList.addAll(Arrays.asList(args));
-		}
-
-		log(sql, argsList);
-		long start = System.currentTimeMillis();
-
-		KeyHolder keyHolder = new GeneratedKeyHolder();
-
-		int rows = namedParameterJdbcTemplate.update(
-				NamedParameterUtils.trans(sql, argsList),
-				new MapSqlParameterSource(NamedParameterUtils.transParam(argsList)),
-				keyHolder); // 因为有in (?) 所以使用namedParameterJdbcTemplate
-
-		if(rows > 0) {
-			Number key = keyHolder.getKey();
-			if (key == null) {
-				DOInfoReader.setValue(autoIncrementField, t, null);
-			} else {
-				long primaryKey = key.longValue();
-				DOInfoReader.setValue(autoIncrementField, t, primaryKey);
-			}
-		}
-
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, argsList);
 		return rows;
 	}
 

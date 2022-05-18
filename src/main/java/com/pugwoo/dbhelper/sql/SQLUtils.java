@@ -255,14 +255,15 @@ public class SQLUtils {
 
         sql.append(getTableName(t.getClass())).append(" (");
         List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
-        String fieldSql = joinAndGetValue(fields, ",", _values, t, isWithNullValue);
-        sql.append(fieldSql);
+		String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue);
+
+		sql.append(insertSql);
         sql.append(") VALUES ");
         String dotSql = "(" + join("?", _values.size(), ",") + ")";
         sql.append(dotSql);
         values.addAll(_values);
 
-        return sql.toString();
+		return sql.toString();
 	}
 
 	/**
@@ -288,9 +289,9 @@ public class SQLUtils {
 		boolean isFirst = true;
 		for (T t : list) {
 			List<Object> _values = new ArrayList<>();
-			String fieldSql = joinAndGetValue(fields, ",", _values, t, true);
+			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
 			if (isFirst) {
-				sql.append(fieldSql);
+				sql.append(insertSql);
 				sql.append(") VALUES ");
 				String dotSql = "(" + join("?", _values.size(), ",") + ")";
 				sql.append(dotSql);
@@ -301,37 +302,7 @@ public class SQLUtils {
 
 		return sql.toString();
 	}
-	
-	/**
-	 * 生成insert into (...) select ?,?,? from where not exists (select 1 from where)语句
-	 * @param t 注解了Table的对象
-	 * @param values 要插入的参数
-	 * @param whereSql 附带的where子句
-	 * @return 生成的SQL
-	 */
-	public static <T> String getInsertWhereNotExistSQL(T t, List<Object> values,
-			boolean isWithNullValue, String whereSql) {
-		StringBuilder sql = new StringBuilder("INSERT INTO ");
-		
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		String tableName = getTableName(t.getClass());
-		
-		sql.append(tableName).append(" (");
-		sql.append(joinAndGetValue(fields, ",", values, t, isWithNullValue));
-		sql.append(") select ");
-		sql.append(join("?", values.size(), ","));
-		sql.append(" from dual where not exists (select 1 from ");
-		
-		if(!whereSql.trim().toUpperCase().startsWith("WHERE ")) {
-			whereSql = "where " + whereSql;
-		}
-		whereSql = autoSetSoftDeleted(whereSql, t.getClass());
-		
-		sql.append(tableName).append(" ").append(whereSql).append(" limit 1)");
-		
-		return sql.toString();
-	}
-	
+
 	/**
 	 * 生成update语句
 	 * @param t 注解了Table的对象
@@ -729,7 +700,40 @@ public class SQLUtils {
 	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
 		return autoSetSoftDeleted(whereSql, clazz, "");
 	}
-	
+
+	/**
+	 * 移除whereSql中的limit子句
+	 */
+	public static String removeLimit(String whereSql) {
+		// 没有包含limit肯定没有limit子句，不处理，这也是提高性能的处理方式，并不是每个whereSql都需要解析
+		if (whereSql == null || !whereSql.toLowerCase().contains("limit")) {
+			return whereSql;
+		}
+		String selectSql = "SELECT * FROM dual "; // 辅助where sql解析用，这个大小写不能改动！
+		Statement statement = null;
+		try {
+			statement = CCJSqlParserUtil.parse(selectSql + whereSql);
+		} catch (JSQLParserException e) {
+			LOGGER.error("fail to remove limit for sql:{}", whereSql, e);
+			return whereSql;
+		}
+		Select selectStatement = (Select) statement;
+		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+		Limit limit = plainSelect.getLimit();
+		if (limit != null) {
+			plainSelect.setLimit(null);
+			String sql = plainSelect.toString();
+			if (sql.startsWith(selectSql)) {
+				return sql.substring(selectSql.length());
+			} else {
+				LOGGER.error("fail to remove limit for sql:{}", whereSql);
+				return whereSql;
+			}
+		} else {
+			return whereSql;
+		}
+	}
+
 	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
@@ -888,14 +892,14 @@ public class SQLUtils {
 			PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
 			Limit limit = plainSelect.getLimit();
 			boolean isContainsLimit = limit != null;
-			containsLimitCache.put(postSql, isContainsLimit);
+			containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定
 			return isContainsLimit;
 		} catch (JSQLParserException e) {
 			throw new BadSQLSyntaxException(e);
 		}
 	}
 
-	private static Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
+	private static final Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
 
     /**
      * 拼凑select的field的语句
@@ -956,15 +960,6 @@ public class SQLUtils {
 	}
 
     /**
-     * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中
-     * @param isWithNullValue 是否把null值放到values中
-     */
-    private static String joinAndGetValue(List<Field> fields, String sep,
-                List<Object> values, Object obj, boolean isWithNullValue) {
-	    return joinAndGetValueForInsert(fields, sep, null, values, obj, isWithNullValue);
-    }
-    
-    /**
      * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
      */
 	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix,
@@ -994,13 +989,11 @@ public class SQLUtils {
      * @param obj 不应该为null
      * @param isWithNullValue 是否把null值放到values中
      */
-	private static String joinAndGetValueForInsert(List<Field> fields, String sep, String fieldPrefix,
+	private static String joinAndGetValueForInsert(List<Field> fields, String sep,
 			List<Object> values, Object obj, boolean isWithNullValue) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
 		}
-		
-        fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
 
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
@@ -1023,7 +1016,7 @@ public class SQLUtils {
 				}
 			}
     		
-        	sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
+        	sb.append(getColumnName(column)).append(sep);
     	}
     	int len = sb.length();
     	return len == 0 ? "" : sb.substring(0, len - 1);

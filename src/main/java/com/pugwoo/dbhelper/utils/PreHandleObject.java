@@ -71,7 +71,9 @@ public class PreHandleObject {
 
 			String insertValueScript = column.insertValueScript().trim();
 			if(!insertValueScript.isEmpty()) {
-			    ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
+				if(DOInfoReader.getValue(field, t) == null) {
+					ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
+				}
 			}
 
 			// truncate string should be last

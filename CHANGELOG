@@ -1,3 +1,16 @@
+2022年5月12日
+v1.2.2 - [del] 移除标记为废弃的insertWhereNotExist和insertWithNullWhereNotExist方法
+       - [deprecated] 标记废弃Column的insertDefault属性，该属性以后由insertValueScript代替
+       - [enhance] 增加获取Column的缓存以提高性能
+
+2022年5月7日
+v1.2.1 - [add] 添加接收JdbcTemplate的DBHelper构造函数
+       - [enhance] 自动移除getOne和getPage时，postSql参数中的limit子句
+
+2022年4月24日
+v1.2.0 - [del] 去掉namedParameterJdbcTemplate的设置，从1.2起不需要再设置namedParameterJdbcTemplate了
+       - [modify] insertValueScript仅在值为null时才进行设置
+
 2022年2月14日
 v1.1.5 - [add] 当DO类注解的列在返回结果中不存在时，由直接报错改成不处理，这种情况只会在getRaw时出现，由用户自行测试处理；
                也支持通过配置项THROW_EXCEPTION_IF_COLUMN_NOT_EXIST设置为直接报错
