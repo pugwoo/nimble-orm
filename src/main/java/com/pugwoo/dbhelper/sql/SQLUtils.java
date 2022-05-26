@@ -1085,6 +1085,11 @@ public class SQLUtils {
 	private static String getColumnName(Column column) {
 		return "`" + column.value() + "`";
 	}
+
+	/**返回字段名称，请自行确保field上有注解了@Column*/
+	public static String getColumnName(Field field) {
+		return "`" + field.getAnnotation(Column.class).value() + "`";
+	}
 	
 	/**
 	 * 输出类似：'2017-05-25 11:22:33'
