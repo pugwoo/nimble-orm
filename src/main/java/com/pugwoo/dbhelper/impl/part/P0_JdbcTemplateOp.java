@@ -45,6 +45,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.AUTO_SUM_NULL_TO_ZERO, true);
 		put(FeatureEnum.LOG_SQL_AT_INFO_LEVEL, false);
 		put(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST, false);
+		put(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION, true);
 	}};
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
@@ -254,7 +255,8 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		features.put(featureEnum, false);
 	}
 
-	public Boolean getFeature(FeatureEnum featureEnum) {
-		return features.get(featureEnum);
+	public boolean getFeature(FeatureEnum featureEnum) {
+		Boolean enabled = features.get(featureEnum);
+		return enabled != null && enabled;
 	}
 }
