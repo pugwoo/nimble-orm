@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
@@ -469,7 +470,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sql.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features, postSql));
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
         if (limit != null) {
-            postSql = SQLUtils.removeLimit(postSql);
+            boolean autoAddOrderForPagination = getFeature(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION);
+            postSql = SQLUtils.removeLimitAndAddOrder(postSql, autoAddOrderForPagination, clazz);
         }
         sql.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sql.append(SQLUtils.genLimitSQL(offset, limit));
