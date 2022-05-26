@@ -11,6 +11,23 @@ import java.util.stream.Collectors;
  */
 public class InnerCommonUtils {
 
+    public static boolean isBlank(String str) {
+        if (str == null) {
+            return true;
+        }
+        int len = str.length();
+        for (int i = 0; i < len; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isNotBlank(String str) {
+        return !isBlank(str);
+    }
+
     /**
      * filter一个list
      */
