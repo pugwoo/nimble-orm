@@ -303,6 +303,59 @@ public class TestDBHelper_query {
         Assert.assertTrue(total >= 100);
     }
 
+    @Test
+    public void testGetPageRemoteLimitAddOrder() {
+        String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        CommonOps.insertBatch(dbHelper, 20, prefix);
+
+        // 这里故意加上limit子句，会被自动清除掉
+        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10,
+                "where name like ? group by name, age limit 4,6", prefix + "%");
+        assert page.getData().size() == 10;
+        assert page.getTotal() == 20;
+
+        PageData<StudentDO> page2 = dbHelper.getPage(StudentDO.class, 2, 10,
+                "where name like ? group by name, age limit 4,6", prefix + "%");
+        assert page2.getData().size() == 10;
+        assert page2.getTotal() == 20;
+
+        Set<String> name = new HashSet<>();
+        for (StudentDO stu : page.getData()) {
+            name.add(stu.getName());
+        }
+        for (StudentDO stu : page2.getData()) {
+            name.add(stu.getName());
+        }
+        assert name.size() == 20;
+
+        // ============== 不加group by时自动以id为排序
+        System.out.println("=================================");
+
+        page = dbHelper.getPage(StudentDO.class, 1, 10,
+                "where name like ? limit 4,6", prefix + "%");
+        assert page.getData().size() == 10;
+        assert page.getTotal() == 20;
+
+        page2 = dbHelper.getPage(StudentDO.class, 2, 10,
+                "where name like ? limit 4,6", prefix + "%");
+        assert page2.getData().size() == 10;
+        assert page2.getTotal() == 20;
+
+        name = new HashSet<>();
+        for (StudentDO stu : page.getData()) {
+            name.add(stu.getName());
+        }
+        for (StudentDO stu : page2.getData()) {
+            name.add(stu.getName());
+        }
+        assert name.size() == 20;
+
+        System.out.println("=================================");
+        // 如果用户自行执行的order by没有完全包含group by的字段，则有warning 日志
+        page = dbHelper.getPage(StudentDO.class, 1, 10,
+                "where name like ? group by name,age order by name limit 4,6", prefix + "%"); // 看告警
+    }
+
     @Test 
     public void testPageDataTransform() {
         CommonOps.insertBatch(dbHelper,20);
