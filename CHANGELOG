@@ -1,3 +1,6 @@
+v1.3.0 - [enhance] 对分页查询getPage，如果用户没有指定order by，自动加上order by
+
+
 2022年5月12日
 v1.2.2 - [del] 移除标记为废弃的insertWhereNotExist和insertWithNullWhereNotExist方法
        - [deprecated] 标记废弃Column的insertDefault属性，该属性以后由insertValueScript代替
