@@ -825,7 +825,9 @@ public class SQLUtils {
 							}
 						}
 						if (!isFound) {
-							LOGGER.warn("group by field:{} not in order by, it may cause pagination result not stable", name);
+							LOGGER.warn("class:{} postSql:[{}], group by field:{} not in order by list,"
+											+ " it may cause unstable pagination result.",
+									clazz, whereSql, name);
 						}
 					}
 				}
