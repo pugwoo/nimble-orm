@@ -1,4 +1,5 @@
 v1.3.0 - [enhance] 对分页查询getPage，如果用户没有指定order by，自动加上order by
+       - [del] 移除Column的insertDefault属性，该属性以后由insertValueScript代替
 
 
 2022年5月12日

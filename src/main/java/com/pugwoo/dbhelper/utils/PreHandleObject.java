@@ -49,13 +49,7 @@ public class PreHandleObject {
 					DOInfoReader.setValue(field, t, new Date());
 				}
 			}
-			
-			if(!column.insertDefault().isEmpty()) {
-				if(DOInfoReader.getValue(field, t) == null) {
-					DOInfoReader.setValue(field, t, column.insertDefault());
-				}
-			}
-			
+
 			if(column.setRandomStringWhenInsert()) {
 				if(DOInfoReader.getValue(field, t) == null) {
 					DOInfoReader.setValue(field, t, 

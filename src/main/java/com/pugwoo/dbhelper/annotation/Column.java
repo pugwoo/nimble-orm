@@ -89,14 +89,6 @@ public @interface Column {
 	 * 对应的类型必须是java.util.Date
 	 */
 	boolean setTimeWhenDelete() default false;
-	
-	/**
-	 * 当设置了非空的字符串，且原值是null时，自动设置上值<br>
-     * mvel脚本中，可以通过t标识获取当前插入的对象<br>
-	 * 【废弃】since 1.3 请使用insertValueScript代替
-	 */
-	@Deprecated
-	String insertDefault() default "";
 
 	/**
 	 * 当设置了非空字符串时，在对象插入数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。<br>
