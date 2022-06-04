@@ -37,7 +37,7 @@ public class TestDBHelper_insert {
 
     @Test 
     public void testBatchInsert() {
-        int TOTAL = 10000;
+        int TOTAL = 1000;
 
         List<StudentDO> list = new ArrayList<>();
         for (int i = 0; i < TOTAL; i++) {

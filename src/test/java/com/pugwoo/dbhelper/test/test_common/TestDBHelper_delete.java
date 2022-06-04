@@ -165,20 +165,20 @@ public class TestDBHelper_delete {
     @Test
     
     public void testTurnOffSoftDelete() {
-        int counts1 = 100 + new Random().nextInt(100);
+        int counts1 = 10 + new Random().nextInt(10);
         CommonOps.insertBatch(dbHelper, counts1);
 
         // 先制造点软删除
         dbHelper.delete(StudentDO.class, "Where 1=1");
 
-        int counts2 = 100 + new Random().nextInt(100);
+        int counts2 = 10 + new Random().nextInt(10);
         CommonOps.insertBatch(dbHelper, counts2);
 
         long total = dbHelper.getCount(StudentTrueDeleteDO.class);
         long softTotal = dbHelper.getCount(StudentDO.class);
 
         assert total >= counts1 + counts2;
-        assert total >= softTotal + 100;
+        assert total >= softTotal + 10;
         assert softTotal >= counts2;
 
         dbHelper.turnOnSoftDelete(StudentDO.class); // 测速错误顺序
