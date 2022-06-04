@@ -179,7 +179,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 		String sql;
 		
-		if(interceptors == null || interceptors.isEmpty()) { // 没有配置拦截器，则直接删除
+		if((interceptors == null || interceptors.isEmpty()) && !isUseDeleteValueScript(clazz)) { // 没有配置拦截器，则直接删除
 			if(softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
 			} else { // 软删除
@@ -190,6 +190,16 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			List<T> allKey = getAllKey(clazz, postSql, args);
 			return deleteByKey(allKey);
 		}
+	}
+
+	private static boolean isUseDeleteValueScript(Class<?> clazz) {
+		List<Field> columns = DOInfoReader.getColumns(clazz);
+		for (Field field : columns) {
+			if (InnerCommonUtils.isNotBlank(field.getAnnotation(Column.class).deleteValueScript())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	////////

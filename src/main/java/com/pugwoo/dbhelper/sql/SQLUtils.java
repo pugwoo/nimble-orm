@@ -530,17 +530,6 @@ public class SQLUtils {
 	 * 获得自定义删除SQL
 	 */
 	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
-
-		// 物理删除也执行deleteValueScript，但是不关心其返回值
-        List<Field> fields = DOInfoReader.getColumns(clazz);
-        for(Field field : fields) {
-            Column column = field.getAnnotation(Column.class);
-
-            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
-                ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.deleteValueScript());
-            }
-        }
-
 		return "DELETE FROM " +
 				getTableName(clazz) +
 				autoSetSoftDeleted(postSql, clazz);
@@ -557,21 +546,13 @@ public class SQLUtils {
 		sql.append(" SET ").append(getColumnName(softDeleteColumn));
 		sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		
-		// 特殊处理@Column setTimeWhenDelete时间，还有deleteValueScript
+		// 特殊处理@Column setTimeWhenDelete时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column)).append("='");
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 				sql.append(df.format(new Date())).append("'");
-			}
-
-			if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
-			    Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.deleteValueScript());
-			    if(value != null) {
-			        sql.append(",").append(getColumnName(column)).append("=")
-                       .append(TypeAutoCast.toSqlValueStr(value));
-                }
 			}
 		}
 
