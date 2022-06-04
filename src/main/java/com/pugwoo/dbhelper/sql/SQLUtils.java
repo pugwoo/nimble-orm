@@ -1181,12 +1181,10 @@ public class SQLUtils {
 
 	private static String getTableName(Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
-		if(tableName != null) {
-			return "`" + tableName + "`";
+		if (InnerCommonUtils.isBlank(tableName)) {
+			tableName = DOInfoReader.getTable(clazz).value();
 		}
-
-		Table table = DOInfoReader.getTable(clazz);
-		return "`" + table.value() + "`";
+		return "`" + tableName + "`";
 	}
 
 	private static String getColumnName(Column column) {
