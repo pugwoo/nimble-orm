@@ -130,7 +130,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 			
 			String sql;
-			String where = "where `" + keyField.getAnnotation(Column.class).value() + "` in (?)";
+			String where = "where " + SQLUtils.getColumnName(keyField) + " in (?)";
 			if(softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, where);
 			} else { // 软删除

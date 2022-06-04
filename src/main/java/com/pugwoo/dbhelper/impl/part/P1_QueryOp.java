@@ -383,7 +383,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         int size = cols.size();
         for (int i = 0; i < size; i++) {
-            sql.append("`").append(cols.get(i)).append("`").append("=?");
+            sql.append(SQLUtils.getColumnName(cols.get(i))).append("=?");
             if (i != size - 1) {
                 sql.append(" AND ");
             }
@@ -760,7 +760,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
                     Column remoteColumn = remoteF.getAnnotation(Column.class);
                     if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                        sb.append("`").append(remoteColumn.value()).append("`");
+                        sb.append(SQLUtils.getColumnName(remoteColumn.value()));
                     } else {
                         sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
                     }
