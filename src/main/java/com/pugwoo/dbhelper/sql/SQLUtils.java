@@ -1193,9 +1193,9 @@ public class SQLUtils {
 		return "`" + column.value() + "`";
 	}
 
-	/**返回字段名称，请自行确保field上有注解了@Column*/
+	/**返回字段名称，重要: 请自行确保field上有注解了@Column*/
 	public static String getColumnName(Field field) {
-		return "`" + field.getAnnotation(Column.class).value() + "`";
+		return getColumnName(field.getAnnotation(Column.class));
 	}
 	
 	/**
