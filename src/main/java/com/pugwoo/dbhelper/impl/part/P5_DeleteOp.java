@@ -9,6 +9,7 @@ import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
@@ -97,8 +98,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
                 List<Field> fields = DOInfoReader.getColumns(clazz);
                 for(Field field : fields) {
                     Column column = field.getAnnotation(Column.class);
-                    String deleteValueScript = column.deleteValueScript().trim();
-                    if(!deleteValueScript.isEmpty()) {
+                    if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
                         isUseDeleteValueScript = true;
                         break;
                     }
@@ -171,7 +171,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
-		if(postSql == null || postSql.trim().isEmpty()) { // warning: very dangerous
+		if(InnerCommonUtils.isBlank(postSql)) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请明确传入where 1=1
 			throw new InvalidParameterException("delete postSql is blank. it's very dangerous"); 
 		}

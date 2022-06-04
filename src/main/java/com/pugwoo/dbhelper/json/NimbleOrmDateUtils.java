@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.json;
 
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -43,7 +45,7 @@ public class NimbleOrmDateUtils {
 	 * @return 解析后的日期
 	 */
 	public static Date parseThrowException(String date) throws ParseException {
-		if(date == null || date.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(date)) {
 			return null;
 		}
 		String pattern = determineDateFormat(date);

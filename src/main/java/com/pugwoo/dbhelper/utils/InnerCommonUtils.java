@@ -95,7 +95,7 @@ public class InnerCommonUtils {
         String[] splits = str.split(sep);
         List<String> result = new ArrayList<>();
         for (String s : splits) {
-            if (s != null && !s.trim().isEmpty()) {
+            if (InnerCommonUtils.isNotBlank(s)) {
                 result.add(s.trim());
             }
         }

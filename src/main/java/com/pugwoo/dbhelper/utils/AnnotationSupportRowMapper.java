@@ -145,7 +145,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		for (Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			String columnName;
-			if(!column.computed().trim().isEmpty()) {
+			if(InnerCommonUtils.isNotBlank(column.computed())) {
 				columnName = column.value(); // 计算列用用户自行制定别名
 			} else {
 				columnName = tableAlias + "." + column.value();

@@ -36,8 +36,8 @@ public class PreHandleObject {
 
 			// 这个地方不需要处理turnOff软删除，因为它只是写入时设置默认值
 			if(column.softDelete().length == 2
-					&& !column.softDelete()[0].trim().isEmpty()
-					&& !column.softDelete()[1].trim().isEmpty()) {
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[0])
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[1])) {
 				Object delete = DOInfoReader.getValue(field, t);
 				if(delete == null) {
 					DOInfoReader.setValue(field, t, column.softDelete()[0]);
@@ -63,10 +63,9 @@ public class PreHandleObject {
 				}
 			}
 
-			String insertValueScript = column.insertValueScript().trim();
-			if(!insertValueScript.isEmpty()) {
+			if(InnerCommonUtils.isNotBlank(column.insertValueScript())) {
 				if(DOInfoReader.getValue(field, t) == null) {
-					ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
+					ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), column.insertValueScript());
 				}
 			}
 
@@ -96,9 +95,8 @@ public class PreHandleObject {
         for(Field field : notKeyFields) {
             Column column = field.getAnnotation(Column.class);
 
-            String deleteValueScript = column.deleteValueScript().trim();
-            if(!deleteValueScript.isEmpty()) {
-                ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), deleteValueScript);
+            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+                ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), column.deleteValueScript());
             }
         }
     }
@@ -119,17 +117,16 @@ public class PreHandleObject {
 
 			// 这个地方不用处理turnOff软删除，因为它只是更新时自动设置软删除的值
 			if(column.softDelete().length == 2
-					&& !column.softDelete()[0].trim().isEmpty()
-					&& !column.softDelete()[1].trim().isEmpty()) {
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[0])
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[1])) {
 				Object delete = DOInfoReader.getValue(field, t);
 				if(delete == null) {
 					DOInfoReader.setValue(field, t, column.softDelete()[0]);
 				}
 			}
 
-            String updateValueScript = column.updateValueScript().trim();
-            if(!updateValueScript.isEmpty()) {
-                ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), updateValueScript);
+            if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
+                ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), column.updateValueScript());
             }
 
             // truncate string should be last

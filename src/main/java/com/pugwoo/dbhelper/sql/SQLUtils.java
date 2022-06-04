@@ -80,12 +80,12 @@ public class SQLUtils {
 			    sql.append("1");
 				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
 						leftTableField.getType(), joinLeftTable.alias() + ".", features, postSql);
-				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 				computedColumnsForCountSelect = getComputedColumnsForCountSelect(
 						rightTableField.getType(), joinRightTable.alias() + ".", features, postSql);
-				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
             } else {
@@ -100,10 +100,10 @@ public class SQLUtils {
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
-	        if(joinTable.on().trim().isEmpty()) {
+	        if(InnerCommonUtils.isBlank(joinTable.on())) {
 	        	throw new OnConditionIsNeedException("join table :" + clazz.getName());
 	        }
-	        sql.append(" on ").append(joinTable.on().trim());
+	        sql.append(" on ").append(joinTable.on());
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
@@ -112,7 +112,7 @@ public class SQLUtils {
 			    sql.append("1");
 				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
 						clazz, null, features, postSql);
-				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 			} else {
@@ -136,7 +136,7 @@ public class SQLUtils {
 		List<Field> field2 = new ArrayList<>();
 		for (Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if (column != null && !column.computed().trim().isEmpty()) {
+			if (column != null && InnerCommonUtils.isNotBlank(column.computed())) {
 				// 这里用简单的postSql是否出现计算列的字符串来判断计算列是否要加入，属于放宽松的做法，程序不会有bug，但优化有空间
 				if (postSql != null && postSql.contains(column.value())) {
 					field2.add(field);
@@ -173,10 +173,10 @@ public class SQLUtils {
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
-	        if(joinTable.on().trim().isEmpty()) {
+	        if(InnerCommonUtils.isBlank(joinTable.on())) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
 	        }
-	        sql.append(" on ").append(joinTable.on().trim());
+	        sql.append(" on ").append(joinTable.on());
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
@@ -355,7 +355,7 @@ public class SQLUtils {
 		
 		// 带上postSql
 		if(postSql != null) {
-			postSql = postSql.trim();
+			postSql = postSql.trim(); // 这里必须要trim,因为下面靠startsWith判断是否从where开头
 			if(!postSql.isEmpty()) {
 				if(postSql.startsWith("where")) {
 					postSql = " AND " + postSql.substring(5);
@@ -386,7 +386,7 @@ public class SQLUtils {
 		
 		sql.append(getTableName(clazz)).append(" ");
 		
-		if(setSql.trim().toLowerCase().startsWith("set ")) {
+		if(setSql.trim().toLowerCase().startsWith("set ")) { // 这里必须有trim()
 			sql.append(setSql);
 		} else {
 			sql.append("SET ").append(setSql);
@@ -401,9 +401,8 @@ public class SQLUtils {
 				   .append("=").append(getDateString(new Date()));
 			}
 
-			String updateValueScript = column.updateValueScript().trim();
-			if(!updateValueScript.isEmpty()) {
-				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), updateValueScript);
+			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
+				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.updateValueScript());
 				if(value != null) {
 					sql.append(",").append(getColumnName(column)).append("=")
 							.append(TypeAutoCast.toSqlValueStr(value));
@@ -462,9 +461,8 @@ public class SQLUtils {
 				sql.append(",").append(getColumnName(column)).append("=").append(_v + 1);
 			}
 
-			String updateValueScript = column.updateValueScript().trim();
-			if(!updateValueScript.isEmpty()) {
-				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), updateValueScript);
+			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
+				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), column.updateValueScript());
 				if(value != null) {
 					sql.append(",").append(getColumnName(column)).append("=")
 							.append(TypeAutoCast.toSqlValueStr(value));
@@ -515,8 +513,7 @@ public class SQLUtils {
         for(Field field : notKeyFields) {
             Column column = field.getAnnotation(Column.class);
 
-            String deleteValueScript = column.deleteValueScript().trim();
-            if(!deleteValueScript.isEmpty()) {
+            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
                 Object value = DOInfoReader.getValue(field, t);
                 if(value != null) {
                     setSql.append(",").append(getColumnName(column))
@@ -538,9 +535,8 @@ public class SQLUtils {
         for(Field field : fields) {
             Column column = field.getAnnotation(Column.class);
 
-            String deleteValueScript = column.deleteValueScript().trim();
-            if(!deleteValueScript.isEmpty()) {
-                ScriptUtils.getValueFromScript(column.ignoreScriptError(), deleteValueScript);
+            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+                ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.deleteValueScript());
             }
         }
 
@@ -569,9 +565,8 @@ public class SQLUtils {
 				sql.append(df.format(new Date())).append("'");
 			}
 
-			String deleteValueScript = column.deleteValueScript().trim();
-			if(!deleteValueScript.isEmpty()) {
-			    Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), deleteValueScript);
+			if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+			    Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.deleteValueScript());
 			    if(value != null) {
 			        sql.append(",").append(getColumnName(column)).append("=")
                        .append(TypeAutoCast.toSqlValueStr(value));
@@ -668,10 +663,10 @@ public class SQLUtils {
 	public static String insertWhereAndExpression(String whereSql, String condExpression) 
 			throws JSQLParserException {
 		
-		if(condExpression == null || condExpression.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(condExpression)) {
 			return whereSql == null ? "" : whereSql;
 		}
-		if(whereSql == null || whereSql.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(whereSql)) {
 			return "WHERE " + condExpression;
 		}
 		
@@ -858,8 +853,8 @@ public class SQLUtils {
 		if(whereSql == null) {
 			whereSql = "";
 		}
-		extraWhere = extraWhere == null ? "" : extraWhere.trim();
-		if(!extraWhere.isEmpty()) {
+		extraWhere = extraWhere == null ? "" : extraWhere;
+		if(InnerCommonUtils.isNotBlank(extraWhere)) {
 			extraWhere = "(" + extraWhere + ")";
 		}
 		
@@ -1083,8 +1078,7 @@ public class SQLUtils {
     	for(Field field : fields) {
     		Column column = field.getAnnotation(Column.class);
     		
-    		String computed = column.computed().trim();
-    		if(!computed.isEmpty()) {
+    		if(InnerCommonUtils.isNotBlank(column.computed())) {
     			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ");
     		} else {
     			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
@@ -1111,7 +1105,7 @@ public class SQLUtils {
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
     		Column column = field.getAnnotation(Column.class);
-    		if(!(column.computed().trim().isEmpty())) {
+    		if(InnerCommonUtils.isNotBlank(column.computed())) {
     			continue; // insert不加入computed字段
     		}
 

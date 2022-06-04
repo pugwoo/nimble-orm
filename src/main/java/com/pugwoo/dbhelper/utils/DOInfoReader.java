@@ -280,8 +280,9 @@ public class DOInfoReader {
 		
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if(column.softDelete().length == 2 && !column.softDelete()[0].trim().isEmpty()
-					&& !column.softDelete()[1].trim().isEmpty()) {
+			if(column.softDelete().length == 2
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[0])
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[1])) {
 				return field;
 			}
 		}

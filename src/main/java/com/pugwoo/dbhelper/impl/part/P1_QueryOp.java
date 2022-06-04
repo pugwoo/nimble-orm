@@ -693,11 +693,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             RelatedColumn column = field.getAnnotation(RelatedColumn.class);
-            if (column.localColumn().trim().isEmpty()) {
+            if (InnerCommonUtils.isBlank(column.localColumn())) {
                 LOGGER.error("relatedColumn value is empty, field:{}", field);
                 continue;
             }
-            if (column.remoteColumn().trim().isEmpty()) {
+            if (InnerCommonUtils.isBlank(column.remoteColumn())) {
                 LOGGER.error("remoteColumn value is empty, field:{}", field);
                 continue;
             }
@@ -759,7 +759,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     isFirst = false;
 
                     Column remoteColumn = remoteF.getAnnotation(Column.class);
-                    if (remoteColumn.computed().trim().isEmpty()) {
+                    if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
                         sb.append("`").append(remoteColumn.value()).append("`");
                     } else {
                         sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
@@ -768,7 +768,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 sb.append(isSingleColumn ? "" : ")");
                 whereColumn = sb.toString();
 
-                if (column.extraWhere().trim().isEmpty()) {
+                if (InnerCommonUtils.isBlank(column.extraWhere())) {
                     String inExpr = whereColumn + " in " + buildQuestionMark(values);
                     relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
