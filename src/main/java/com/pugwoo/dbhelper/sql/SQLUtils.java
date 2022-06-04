@@ -1188,14 +1188,18 @@ public class SQLUtils {
 	}
 
 	private static String getColumnName(Column column) {
-		return "`" + column.value() + "`";
+		return getColumnName(column.value());
 	}
 
 	/**返回字段名称，重要: 请自行确保field上有注解了@Column*/
 	public static String getColumnName(Field field) {
 		return getColumnName(field.getAnnotation(Column.class));
 	}
-	
+
+	public static String getColumnName(String columnName) {
+		return "`" + columnName + "`";
+	}
+
 	/**
 	 * 输出类似：'2017-05-25 11:22:33'
 	 */
