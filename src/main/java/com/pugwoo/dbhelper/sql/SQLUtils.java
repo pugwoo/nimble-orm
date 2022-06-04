@@ -514,6 +514,7 @@ public class SQLUtils {
             Column column = field.getAnnotation(Column.class);
 
             if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
                 Object value = DOInfoReader.getValue(field, t);
                 if(value != null) {
                     setSql.append(",").append(getColumnName(column))
