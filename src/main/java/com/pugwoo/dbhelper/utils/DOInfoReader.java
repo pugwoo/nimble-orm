@@ -114,15 +114,10 @@ public class DOInfoReader {
 		if (result == null) { // 还没有缓存过
 			result = _getAnnotationColumns(clazz, Column.class);
 			ClassInfoCache.putField(clazz, result);
-			if (result.isEmpty()) {
-				throw new NoColumnAnnotationException("class " + clazz.getName()
-						+ " does not have any @Column fields");
-			}
-		} else {
-			if (result.isEmpty()) {
-				throw new NoColumnAnnotationException("class " + clazz.getName()
-						+ " does not have any @Column fields");
-			}
+		}
+		if (result.isEmpty()) {
+			throw new NoColumnAnnotationException("class " + clazz.getName()
+					+ " does not have any @Column fields");
 		}
 
 		return result;
