@@ -758,7 +758,7 @@ public class SQLUtils {
 		}
 
 		String selectSql = "SELECT * FROM dual "; // 辅助where sql解析用，这个大小写不能改动！
-		Statement statement = null;
+		Statement statement;
 		try {
 			statement = CCJSqlParserUtil.parse(selectSql + whereSql);
 		} catch (JSQLParserException e) {
