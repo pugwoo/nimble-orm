@@ -38,7 +38,7 @@ public class NimbleOrmJSON {
 		return objectMapper.readValue(json, clazz);
 	}
 
-	public static Object parseGeneric(String json, ParameterizedType type) throws ClassNotFoundException, IOException {
+	public static Object parseGeneric(String json, ParameterizedType type) throws IOException {
 		JavaType javaType = toJavaType(type);
 		return objectMapper.readValue(json, javaType);
 	}
