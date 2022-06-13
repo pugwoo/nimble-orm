@@ -27,6 +27,8 @@ public class WhereSQL {
 
     private List<Object> params;
 
+
+
     /**
      * 空的WhereSQL
      */
@@ -43,9 +45,8 @@ public class WhereSQL {
         if (InnerCommonUtils.isNotBlank(condition)) {
             isOrExpression = isOrExpression(condition);
             this.condition = condition;
-            doAddParam(param);
         }
-        // 如果condition为空，此时也不应该处理param，不存在condition为空但需要设置参数的情况
+        doAddParam(param);
     }
 
     public String getWhereSQL() {
@@ -70,24 +71,21 @@ public class WhereSQL {
     }
 
     public WhereSQL and(String condition, Object... param) {
-        // 如果condition为空，此时也不应该处理param，不存在condition为空但需要设置参数的情况
-        if (InnerCommonUtils.isBlank(condition)) {
-            return this;
-        }
-
-        // 一共四种组合，目的是最小可能地加括号
-        boolean isOrExpression = isOrExpression(condition);
-        condition = isOrExpression ? "(" + condition + ")" : condition;
-        if (this.isOrExpression) {
-            this.condition = "(" + this.condition + ") AND " + condition;
-            this.isOrExpression = false;
-        } else {
-            if (InnerCommonUtils.isBlank(this.condition)) {
-                this.condition = condition;
-                this.isOrExpression = isOrExpression;
-            } else {
-                this.condition = this.condition + " AND " + condition;
+        if (InnerCommonUtils.isNotBlank(condition)) {
+            // 一共四种组合，目的是最小可能地加括号
+            boolean isOrExpression = isOrExpression(condition);
+            condition = isOrExpression ? "(" + condition + ")" : condition;
+            if (this.isOrExpression) {
+                this.condition = "(" + this.condition + ") AND " + condition;
                 this.isOrExpression = false;
+            } else {
+                if (InnerCommonUtils.isBlank(this.condition)) {
+                    this.condition = condition;
+                    this.isOrExpression = isOrExpression;
+                } else {
+                    this.condition = this.condition + " AND " + condition;
+                    this.isOrExpression = false;
+                }
             }
         }
 
@@ -103,13 +101,11 @@ public class WhereSQL {
     }
 
     public WhereSQL or(String condition, Object... param) {
-        // 如果condition为空，此时也不应该处理param，不存在condition为空但需要设置参数的情况
-        if (InnerCommonUtils.isBlank(condition)) {
-            return this;
+        if (InnerCommonUtils.isNotBlank(condition)) {
+            this.condition = (this.condition == null ? "" : (this.condition + " OR ")) + condition;
+            this.isOrExpression = true;
         }
 
-        this.condition = (this.condition == null ? "" : (this.condition + " OR ")) + condition;
-        this.isOrExpression = true;
         doAddParam(param);
         return this;
     }
