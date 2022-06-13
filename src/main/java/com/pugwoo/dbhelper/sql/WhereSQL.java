@@ -27,7 +27,17 @@ public class WhereSQL {
 
     private List<Object> params;
 
+    private List<String> groupBy;
+    private List<Object> groupByParams;
 
+    private String having;
+    private List<Object> havingByParams;
+
+    private List<String> orderBy;
+    private List<Object> orderByParams;
+
+    private Integer offset;
+    private Integer limit;
 
     /**
      * 空的WhereSQL
@@ -52,13 +62,46 @@ public class WhereSQL {
     public String getWhereSQL() {
         StringBuilder sql = new StringBuilder();
         if (InnerCommonUtils.isNotBlank(condition)) {
-            sql.append("WHERE ").append(condition);
+            sql.append(" WHERE ").append(condition);
         }
+        if (groupBy != null && !groupBy.isEmpty()) {
+            sql.append(" GROUP BY ").append(String.join(",", groupBy));
+        }
+        if (InnerCommonUtils.isNotBlank(having)) {
+            sql.append(" HAVING ").append(having);
+        }
+        if (orderBy != null && !orderBy.isEmpty()) {
+            sql.append(" ORDER BY ").append(String.join(",", orderBy));
+        }
+
+        if (limit != null) {
+            sql.append(" LIMIT ");
+            if (offset != null) {
+                sql.append(offset).append(",");
+            }
+            sql.append(limit);
+        }
+
         return sql.toString();
     }
 
     public Object[] getParams() {
-        return params == null ? new Object[0] : params.toArray();
+        List<Object> result = new ArrayList<>();
+
+        if (params != null) {
+            result.addAll(params);
+        }
+        if (groupByParams != null) {
+            result.addAll(groupByParams);
+        }
+        if (havingByParams != null) {
+            result.addAll(havingByParams);
+        }
+        if (orderByParams != null) {
+            result.addAll(orderByParams);
+        }
+
+        return result.toArray();
     }
 
     public WhereSQL not() {
@@ -97,6 +140,7 @@ public class WhereSQL {
      * 功能同addAnd，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
     public WhereSQL and(WhereSQL whereSQL) {
+        // TODO warning check
         return and(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
     }
 
@@ -114,7 +158,114 @@ public class WhereSQL {
      * 功能同addOr，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
     public WhereSQL or(WhereSQL whereSQL) {
+        // TODO warning check
         return or(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
+    }
+
+    public WhereSQL addGroupByWithParam(String groupColumn, Object... params) {
+        if (InnerCommonUtils.isNotBlank(groupColumn)) {
+            if (this.groupBy == null) {
+                this.groupBy = new ArrayList<>();
+            }
+            this.groupBy.add(groupColumn);
+        }
+
+        if (params != null && params.length > 0) {
+            if (this.groupByParams == null) {
+                this.groupByParams = new ArrayList<>();
+            }
+            this.groupByParams.addAll(Arrays.asList(params));
+        }
+
+        return this;
+    }
+
+    public WhereSQL addGroupBy(String... groupByColumn) {
+        if (groupByColumn != null && groupByColumn.length > 0) {
+            if (this.groupBy == null) {
+                this.groupBy = new ArrayList<>();
+            }
+            for (String groupBy : groupByColumn) {
+                if (InnerCommonUtils.isNotBlank(groupBy)) {
+                    this.groupBy.add(groupBy);
+                }
+            }
+        }
+
+        return this;
+    }
+
+    public WhereSQL resetGroupBy() {
+        this.groupBy = null;
+        this.groupByParams = null;
+        return this;
+    }
+
+    /**
+     * 多次调用时，会覆盖前一次调用设置的值。不需要加HAVING关键字。
+     */
+    public WhereSQL having(String having, Object... params) {
+        if (InnerCommonUtils.isNotBlank(this.having) || InnerCommonUtils.isNotEmpty(this.havingByParams)) {
+            LOGGER.warn("having sql [{}] will be covered by [{}]", this.having, having);
+        }
+
+        this.having = having;
+        if (params != null && params.length > 0) {
+            this.havingByParams = new ArrayList<>(Arrays.asList(params));
+        } else {
+            this.havingByParams = null;
+        }
+        return this;
+    }
+
+    public WhereSQL addOrderByWithParam(String orderColumn, Object... params) {
+        if (InnerCommonUtils.isNotBlank(orderColumn)) {
+            if (this.orderBy == null) {
+                this.orderBy = new ArrayList<>();
+            }
+            this.orderBy.add(orderColumn);
+        }
+
+        if (params != null && params.length > 0) {
+            if (this.orderByParams == null) {
+                this.groupByParams = new ArrayList<>();
+            }
+            this.orderByParams.addAll(Arrays.asList(params));
+        }
+
+        return this;
+    }
+
+    public WhereSQL addOrderBy(String... orderByColumn) {
+        if (orderByColumn != null && orderByColumn.length > 0) {
+            if (this.orderBy == null) {
+                this.orderBy = new ArrayList<>();
+            }
+            for (String orderBy : orderByColumn) {
+                if (InnerCommonUtils.isNotBlank(orderBy)) {
+                    this.orderBy.add(orderBy);
+                }
+            }
+        }
+
+        return this;
+    }
+
+    public WhereSQL resetOrderBy() {
+        this.orderBy = null;
+        this.orderByParams = null;
+        return this;
+    }
+
+    public WhereSQL limit(Integer limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    public WhereSQL limit(Integer offset, Integer limit) {
+        this.limit = limit;
+        this.offset = offset;
+        return this;
     }
 
     private void doAddParam(Object[] param) {
