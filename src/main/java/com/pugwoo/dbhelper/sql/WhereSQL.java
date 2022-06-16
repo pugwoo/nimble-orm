@@ -59,7 +59,7 @@ public class WhereSQL {
         doAddParam(param);
     }
 
-    public String getWhereSQL() {
+    public String getSQL() {
         StringBuilder sql = new StringBuilder();
         if (InnerCommonUtils.isNotBlank(condition)) {
             sql.append(" WHERE ").append(condition);
@@ -259,6 +259,7 @@ public class WhereSQL {
 
     public WhereSQL limit(Integer limit) {
         this.limit = limit;
+        this.offset = null;
         return this;
     }
 

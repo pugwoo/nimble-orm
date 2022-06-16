@@ -5,7 +5,9 @@ import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.model.SubQuery;
+import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.test.entity.*;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +17,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * 其它的一些测试，主要为了覆盖代码或最佳实践
@@ -231,6 +235,62 @@ public class TestOthers {
             assert ex.getMessage().equals(errorMsg);
         }
         // test some getter setter
+
+    }
+
+    @Test
+    public void testWhereSQL() {
+        int num1 = 3 + new Random().nextInt(5);
+        String prefix1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        List<StudentDO> student1 = CommonOps.insertBatch(dbHelper, num1, prefix1);
+
+        int num2 = 3 + new Random().nextInt(5);
+        String prefix2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        List<StudentDO> student2 = CommonOps.insertBatch(dbHelper, num2, prefix2);
+
+        WhereSQL whereSQL = new WhereSQL("name like ?", prefix1 + "%");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+
+        whereSQL.or("name like ?", prefix2 + "%");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL = new WhereSQL("name like ? or name like ?", prefix1 + "%", prefix2 + "%");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.addOrderBy("id desc");
+        List<StudentDO> all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == num1 + num2;
+        for (int i = 0; i < all.size() - 1; i++) {
+            assert all.get(i).getId() > all.get(i + 1).getId();
+        }
+
+        whereSQL.addGroupBy("age");
+        assert  dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
+
+        whereSQL.resetGroupBy();
+        whereSQL.addGroupBy("id");
+        whereSQL.having("count(*) = 0");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
+
+        whereSQL.having("count(*) = 1");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.resetOrderBy();
+        whereSQL.addOrderBy("name desc");
+        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == num1 + num2;
+        for (int i = 0; i < all.size() - 1; i++) {
+            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        }
+
+        whereSQL.limit(5);
+
+        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == 5;
+
+        whereSQL.limit(3, 3);
+        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == 3;
 
     }
 
