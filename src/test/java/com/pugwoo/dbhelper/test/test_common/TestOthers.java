@@ -254,6 +254,12 @@ public class TestOthers {
         whereSQL.or("name like ?", prefix2 + "%");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
+        whereSQL.not();
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size()
+                == dbHelper.getCount(StudentDO.class) - (num1 + num2);
+
+        // 重新new WhereSQL
+
         whereSQL = new WhereSQL("name like ? or name like ?", prefix1 + "%", prefix2 + "%");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
@@ -269,10 +275,10 @@ public class TestOthers {
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupBy("id");
-        whereSQL.having("count(*) = 0");
+        whereSQL.having("count(*) = ?", 0);
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
 
-        whereSQL.having("count(*) = 1");
+        whereSQL.having("count(*) > ?", 0);
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetOrderBy();
