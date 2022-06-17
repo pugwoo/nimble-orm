@@ -1,3 +1,6 @@
+2022年6月17日
+v1.2.3 - [fix] 修复当条件为where in (?)且参数为空list，且查询列为数字类型时，查出数据的bug
+
 2022年5月12日
 v1.2.2 - [del] 移除标记为废弃的insertWhereNotExist和insertWithNullWhereNotExist方法
        - [deprecated] 标记废弃Column的insertDefault属性，该属性以后由insertValueScript代替
