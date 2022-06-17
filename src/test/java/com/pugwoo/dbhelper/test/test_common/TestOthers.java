@@ -258,7 +258,13 @@ public class TestOthers {
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size()
                 == dbHelper.getCount(StudentDO.class) - (num1 + num2);
 
-        // 重新new WhereSQL
+        whereSQL.not();
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.and("1=?", 1);
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        // =============================== 重新new WhereSQL
 
         whereSQL = new WhereSQL("name like ? or name like ?", prefix1 + "%", prefix2 + "%");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
