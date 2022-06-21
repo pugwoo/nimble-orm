@@ -255,8 +255,9 @@ public class TestOthers {
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.not();
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size()
-                == dbHelper.getCount(StudentDO.class) - (num1 + num2);
+        int size = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size();
+        long size2 = dbHelper.getCount(StudentDO.class, "where name is not null") - (num1 + num2);
+        assert size == size2;
 
         whereSQL.not();
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
