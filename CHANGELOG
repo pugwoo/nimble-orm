@@ -1,8 +1,12 @@
+
 v1.3.0 - [enhance] 对分页查询getPage，如果用户没有指定order by，自动加上order by
        - [del] 移除Column的insertDefault属性，该属性以后由insertValueScript代替
        - [enhance] 对于delete(Class, String, Object...)方法，使用了deleteValueScript的DO类将使用逐个删除的方式进行，可能会降低批量删除的性能
        - [add] 增加WhereSql构造器，提高构造where查询子句的效率
        - [enhance] 整理和抽取代码,提高代码测试覆盖率
+
+2022年6月17日
+v1.2.3 - [fix] 修复当条件为where in (?)且参数为空list，且查询列为数字类型时，查出数据的bug
 
 2022年5月12日
 v1.2.2 - [del] 移除标记为废弃的insertWhereNotExist和insertWithNullWhereNotExist方法
