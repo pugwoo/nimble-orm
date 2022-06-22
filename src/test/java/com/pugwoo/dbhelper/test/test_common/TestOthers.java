@@ -268,6 +268,9 @@ public class TestOthers {
         whereSQL.and("1=?", 1);
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
+        whereSQL = whereSQL.copy();
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
         // 测试空的not，等于没有约束
         assert dbHelper.getAll(StudentDO.class).size() ==
                 dbHelper.getAll(StudentDO.class, new WhereSQL().not().getSQL()).size();

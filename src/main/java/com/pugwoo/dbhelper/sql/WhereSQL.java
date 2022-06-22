@@ -45,6 +45,26 @@ public class WhereSQL {
     public WhereSQL() {
     }
 
+
+    /**
+     * 复制出一个新的WhereSQL对象，两个对象独立
+     */
+    public WhereSQL copy() {
+        WhereSQL whereSQL = new WhereSQL();
+        whereSQL.condition = this.condition;
+        whereSQL.isOrExpression = this.isOrExpression;
+        whereSQL.params = this.params == null ? null : new ArrayList<>(this.params);
+        whereSQL.groupBy = this.groupBy == null ? null : new ArrayList<>(this.groupBy);
+        whereSQL.groupByParams = this.groupByParams == null ? null : new ArrayList<>(this.groupByParams);
+        whereSQL.having = this.having;
+        whereSQL.havingByParams = this.havingByParams == null ? null : new ArrayList<>(this.havingByParams);
+        whereSQL.orderBy = this.orderBy == null ? null : new ArrayList<>(this.orderBy);
+        whereSQL.orderByParams = this.orderByParams == null ? null : new ArrayList<>(this.orderByParams);
+        whereSQL.offset = this.offset;
+        whereSQL.limit = this.limit;
+        return whereSQL;
+    }
+
     /**
      * 使用条件进行初始化，条件即例如 a=? 这样的表达式，也可以是 a=? or b=? 这样的表达式。<br>
      * 当表达式是or表达式时，工具会自动加上括号。
