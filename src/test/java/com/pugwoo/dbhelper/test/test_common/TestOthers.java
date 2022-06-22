@@ -288,7 +288,11 @@ public class TestOthers {
         assert  dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
 
         whereSQL.resetGroupBy();
-        whereSQL.addGroupBy("id");
+        whereSQL.addGroupBy("id", "name");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.resetGroupBy();
+        whereSQL.addGroupByWithParam("id + ?", 1); // 重复group id效果一样
         whereSQL.having("count(*) = ?", 0);
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
 
