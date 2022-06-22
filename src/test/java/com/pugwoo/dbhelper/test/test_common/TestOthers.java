@@ -251,6 +251,9 @@ public class TestOthers {
         WhereSQL whereSQL = new WhereSQL("name like ?", prefix1 + "%");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
+        whereSQL.and(new WhereSQL()); // 加一个空的，等于没有任何约束
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+
         whereSQL.or("name like ?", prefix2 + "%");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
@@ -264,6 +267,10 @@ public class TestOthers {
 
         whereSQL.and("1=?", 1);
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        // 测试空的not，等于没有约束
+        assert dbHelper.getAll(StudentDO.class).size() ==
+                dbHelper.getAll(StudentDO.class, new WhereSQL().not().getSQL()).size();
 
         // =============================== 重新new WhereSQL
 
@@ -288,13 +295,26 @@ public class TestOthers {
         whereSQL.having("count(*) > ?", 0);
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
+        whereSQL.having("count(*) > 0");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
         whereSQL.resetOrderBy();
-        whereSQL.addOrderBy("name desc");
+        whereSQL.addOrderBy("name desc", "age");
         all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
             assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
         }
+
+        whereSQL.resetOrderBy();
+        whereSQL.addOrderByWithParam("concat(name,?) desc", "abc");
+        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == num1 + num2;
+        for (int i = 0; i < all.size() - 1; i++) {
+            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        }
+
+        // test limit
 
         whereSQL.limit(5);
 

@@ -64,13 +64,13 @@ public class WhereSQL {
         if (InnerCommonUtils.isNotBlank(condition)) {
             sql.append(" WHERE ").append(condition);
         }
-        if (groupBy != null && !groupBy.isEmpty()) {
+        if (InnerCommonUtils.isNotEmpty(groupBy)) {
             sql.append(" GROUP BY ").append(String.join(",", groupBy));
         }
         if (InnerCommonUtils.isNotBlank(having)) {
             sql.append(" HAVING ").append(having);
         }
-        if (orderBy != null && !orderBy.isEmpty()) {
+        if (InnerCommonUtils.isNotEmpty(orderBy)) {
             sql.append(" ORDER BY ").append(String.join(",", orderBy));
         }
 
@@ -228,7 +228,7 @@ public class WhereSQL {
 
         if (params != null && params.length > 0) {
             if (this.orderByParams == null) {
-                this.groupByParams = new ArrayList<>();
+                this.orderByParams = new ArrayList<>();
             }
             this.orderByParams.addAll(Arrays.asList(params));
         }
