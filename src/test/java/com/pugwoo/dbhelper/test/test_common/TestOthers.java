@@ -254,7 +254,7 @@ public class TestOthers {
         whereSQL.and(new WhereSQL()); // 加一个空的，等于没有任何约束
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
-        whereSQL.or("name like ?", prefix2 + "%");
+        whereSQL.or(new WhereSQL("name like ?", prefix2 + "%"));
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.not();
