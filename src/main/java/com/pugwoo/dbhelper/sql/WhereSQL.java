@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.sql;
 
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -22,9 +23,7 @@ public class WhereSQL {
     private static final Logger LOGGER = LoggerFactory.getLogger(WhereSQL.class);
 
     private String condition;
-
     private boolean isOrExpression;
-
     private List<Object> params;
 
     private List<String> groupBy;
@@ -160,7 +159,9 @@ public class WhereSQL {
      * 功能同addAnd，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
     public WhereSQL and(WhereSQL whereSQL) {
-        // TODO warning check
+        if (whereSQL.isNotOnlyHasCondition()) {
+            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
+        }
         return and(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
     }
 
@@ -178,7 +179,9 @@ public class WhereSQL {
      * 功能同addOr，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
     public WhereSQL or(WhereSQL whereSQL) {
-        // TODO warning check
+        if (whereSQL.isNotOnlyHasCondition()) {
+            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
+        }
         return or(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
     }
 
@@ -318,6 +321,14 @@ public class WhereSQL {
             throw new BadSQLSyntaxException(e);
         }
         return expression instanceof OrExpression || expression instanceof AndExpression;
+    }
+
+    private boolean isNotOnlyHasCondition() {
+        return InnerCommonUtils.isNotEmpty(groupBy) || InnerCommonUtils.isNotEmpty(groupByParams)
+                || InnerCommonUtils.isNotBlank(having) || InnerCommonUtils.isNotEmpty(havingByParams)
+                || InnerCommonUtils.isNotEmpty(orderBy) || InnerCommonUtils.isNotEmpty(orderByParams)
+                || offset != null || limit != null;
+
     }
 
 }
