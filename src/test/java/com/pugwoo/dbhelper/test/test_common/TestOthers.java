@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.sql.WhereSQL;
@@ -12,6 +13,7 @@ import com.pugwoo.dbhelper.test.vo.AreaVO;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -30,6 +32,13 @@ public class TestOthers {
 
     @Autowired
     private DBHelper dbHelper;
+
+    @Test
+    public void testNewDBHelper() {
+        JdbcTemplate jdbcTemplate = ((SpringJdbcDBHelper) dbHelper).getJdbcTemplate();
+        DBHelper dbHelper2 = new SpringJdbcDBHelper(jdbcTemplate);
+        assert dbHelper.getAll(StudentDO.class).size() == dbHelper2.getAll(StudentDO.class).size();
+    }
     
     @Test 
     public void testRelateComputedColumn() {
