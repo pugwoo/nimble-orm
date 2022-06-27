@@ -46,6 +46,8 @@ public class TestDBHelper_insert {
             list.add(studentDO);
         }
 
+        dbHelper.setTimeoutWarningValve(1);
+
         long start = System.currentTimeMillis();
         int rows = dbHelper.insertBatchWithoutReturnId(list);
         long end = System.currentTimeMillis();
