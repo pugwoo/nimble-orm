@@ -251,6 +251,9 @@ public class TestOthers {
         WhereSQL whereSQL = new WhereSQL("name like ?", prefix1 + "%");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
+        whereSQL = new WhereSQL().and("name like ?", prefix1 + "%"); // 等价写法
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+
         whereSQL.and(new WhereSQL()); // 加一个空的，等于没有任何约束
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
@@ -278,6 +281,9 @@ public class TestOthers {
         // =============================== 重新new WhereSQL
 
         whereSQL = new WhereSQL("name like ? or name like ?", prefix1 + "%", prefix2 + "%");
+        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.and("1=1");
         assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.addOrderBy("id desc");
