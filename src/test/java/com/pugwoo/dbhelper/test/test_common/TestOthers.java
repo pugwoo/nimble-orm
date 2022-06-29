@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
@@ -17,6 +18,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,7 +104,7 @@ public class TestOthers {
     }
 
     @Test
-    public void testOthers() {
+    public void testOthers() throws NoSuchFieldException, IOException {
 
         // SubQuery
         SubQuery subQuery = new SubQuery("field", StudentDO.class, "postsql", "1");
@@ -138,98 +141,98 @@ public class TestOthers {
         String errorMsg = "err message";
 
         {
-            BadSQLSyntaxException ex;
+            BadSQLSyntaxException ex = new BadSQLSyntaxException(); // for test
             ex = new BadSQLSyntaxException(cause);
             assert ex.getCause().equals(cause);
             ex = new BadSQLSyntaxException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            CasVersionNotMatchException ex;
+            CasVersionNotMatchException ex = new CasVersionNotMatchException(); // for test
             ex = new CasVersionNotMatchException(cause);
             assert ex.getCause().equals(cause);
             ex = new CasVersionNotMatchException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            InvalidParameterException ex;
+            InvalidParameterException ex = new InvalidParameterException(); // for test
             ex = new InvalidParameterException(cause);
             assert ex.getCause().equals(cause);
             ex = new InvalidParameterException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            MustProvideConstructorException ex;
+            MustProvideConstructorException ex = new MustProvideConstructorException();  // for test
             ex = new MustProvideConstructorException(cause);
             assert ex.getCause().equals(cause);
             ex = new MustProvideConstructorException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NoColumnAnnotationException ex;
+            NoColumnAnnotationException ex = new NoColumnAnnotationException();  // for test
             ex = new NoColumnAnnotationException(cause);
             assert ex.getCause().equals(cause);
             ex = new NoColumnAnnotationException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NoJoinTableMemberException ex;
+            NoJoinTableMemberException ex = new NoJoinTableMemberException();  // for test
             ex = new NoJoinTableMemberException(cause);
             assert ex.getCause().equals(cause);
             ex = new NoJoinTableMemberException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NoKeyColumnAnnotationException ex;
+            NoKeyColumnAnnotationException ex = new NoKeyColumnAnnotationException();  // for test
             ex = new NoKeyColumnAnnotationException(cause);
             assert ex.getCause().equals(cause);
             ex = new NoKeyColumnAnnotationException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NoTableAnnotationException ex;
+            NoTableAnnotationException ex = new NoTableAnnotationException();  // for test
             ex = new NoTableAnnotationException(cause);
             assert ex.getCause().equals(cause);
             ex = new NoTableAnnotationException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NotAllowQueryException ex;
+            NotAllowQueryException ex = new NotAllowQueryException();  // for test
             ex = new NotAllowQueryException(cause);
             assert ex.getCause().equals(cause);
             ex = new NotAllowQueryException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NotOnlyOneKeyColumnException ex;
+            NotOnlyOneKeyColumnException ex = new NotOnlyOneKeyColumnException(); // for test
             ex = new NotOnlyOneKeyColumnException(cause);
             assert ex.getCause().equals(cause);
             ex = new NotOnlyOneKeyColumnException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            NullKeyValueException ex;
+            NullKeyValueException ex = new NullKeyValueException();  // for test
             ex = new NullKeyValueException(cause);
             assert ex.getCause().equals(cause);
             ex = new NullKeyValueException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            OnConditionIsNeedException ex;
+            OnConditionIsNeedException ex = new OnConditionIsNeedException(); // for test
             ex = new OnConditionIsNeedException(cause);
             assert ex.getCause().equals(cause);
             ex = new OnConditionIsNeedException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            ParameterSizeNotMatchedException ex;
+            ParameterSizeNotMatchedException ex = new ParameterSizeNotMatchedException();  // for test
             ex = new ParameterSizeNotMatchedException(cause);
             assert ex.getCause().equals(cause);
             ex = new ParameterSizeNotMatchedException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
         {
-            RowMapperFailException ex;
+            RowMapperFailException ex = new RowMapperFailException(); // for test
             ex = new RowMapperFailException(cause);
             assert ex.getCause().equals(cause);
             ex = new RowMapperFailException(errorMsg);
@@ -237,14 +240,25 @@ public class TestOthers {
         }
 
         {
-            ScriptErrorException ex;
+            ScriptErrorException ex = new ScriptErrorException(); // for test
             ex = new ScriptErrorException(cause);
             assert ex.getCause().equals(cause);
             ex = new ScriptErrorException(errorMsg);
             assert ex.getMessage().equals(errorMsg);
         }
+
         // test some getter setter
 
+        // 允许getter和setter为null
+        Field name = SomeDO.class.getDeclaredField("name");
+        assert ClassInfoCache.getFieldGetMethod(name) == null;
+        assert ClassInfoCache.getFieldSetMethod(name) == null;
+        assert ClassInfoCache.getFieldGetMethod(name) == null; // 走cache
+        assert ClassInfoCache.getFieldSetMethod(name) == null; // 走cache
+    }
+
+    public static class SomeDO {
+        private String name;
     }
 
     @Test
