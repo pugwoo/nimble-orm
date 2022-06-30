@@ -3,7 +3,7 @@ v1.3.0 - [add] 增加executeRaw方法，支持执行自定义的SQL
        - [enhance] 对分页查询getPage，如果用户没有指定order by，自动加上order by
        - [add] 增加WhereSql构造器，提高构造where查询子句的效率
        - [del] 移除Column的insertDefault属性，该属性以后由insertValueScript代替
-       - [enhance] 对于delete(Class, String, Object...)方法，使用了deleteValueScript的DO类将使用逐个删除的方式进行，可能会降低批量删除的性能
+       - [enhance] 对于delete(Class, String, Object...)方法，使用了deleteValueScript的DO类将逐个删除，会降低批量删除性能
        - [enhance] 整理和抽取代码,提高代码测试覆盖率
 
 2022年6月17日
