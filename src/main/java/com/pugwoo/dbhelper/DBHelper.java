@@ -542,5 +542,23 @@ public interface DBHelper {
 	 * @return 实际删除的条数
 	 */
 	<T> int delete(Class<T> clazz, String postSql, Object... args);
-	
+
+	/**
+	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
+	 *
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 * @return 返回影响的行数
+	 */
+	int executeRaw(String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL语句，支持通过namedParameter的方式传入参数，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
+	 *
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param paramMap 自定义参数
+	 * @return 返回影响的行数
+	 */
+	int executeRaw(String sql, Map<String, Object> paramMap);
+
 }

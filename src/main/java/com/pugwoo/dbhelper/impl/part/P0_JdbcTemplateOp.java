@@ -76,6 +76,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	protected void logSlowForParamMap(long cost, String sql, Map<String, Object> paramMap) {
+		List<Object> params = new ArrayList<>();
+		params.add(paramMap);
+		logSlow(cost, sql, params);
+	}
+
 	protected void logSlowForBatch(long cost, String sql, int listSize) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
