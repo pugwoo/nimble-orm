@@ -84,25 +84,20 @@ public class TestExecuteRaw {
         assert student == null;
     }
 
-    @Test
-    public void testTruncate() {
-        String name = UUID.randomUUID().toString();
-        dbHelper.executeRaw("insert into t_student(deleted,name) values(0,?)", name);
-
-        int rows = dbHelper.executeRaw("truncate table t_student");
-        System.out.println("truncate affect rows:" + rows); // truncate 返回的是0
-
-        assert dbHelper.getCount(StudentDO.class) == 0;
-    }
-
     @Rollback(false)
     @Test
-    public void testCreateAndDropTable() {
+    public void testCreateTruncateDropTable() {
         String name = UUID.randomUUID().toString().replace("-", "");
 
         dbHelper.executeRaw("create table t_raw_" + name + "(NAME varchar(1024))");
 
         assert dbHelper.executeRaw("insert into t_raw_" + name + "(name)values(?)", name) == 1;
+
+        assert dbHelper.getRawCount("select count(*) from t_raw_" + name) == 1;
+
+        dbHelper.executeRaw("truncate table t_raw_" + name);
+
+        assert dbHelper.getRawCount("select count(*) from t_raw_" + name) == 0;
 
         dbHelper.executeRaw("drop table t_raw_" + name);
     }
