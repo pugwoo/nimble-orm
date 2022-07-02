@@ -277,4 +277,39 @@ public class TestDBHelper_delete {
             this.name = name;
         }
     }
+
+    @Test
+    public void testDelete() throws InterruptedException {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
+        dbHelper.deleteByKey(studentDO);
+
+        Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
+
+        studentDO = CommonOps.insertOne(dbHelper);
+
+        dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
+
+        Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
+    }
+
+    @Test
+    public void testDeleteList() throws InterruptedException {
+
+        List<StudentDO> studentDOList = new ArrayList<StudentDO>();
+        studentDOList.add(CommonOps.insertOne(dbHelper));
+        studentDOList.add(CommonOps.insertOne(dbHelper));
+
+        dbHelper.deleteByKey(studentDOList);
+        for (StudentDO studentDO : studentDOList) {
+            Assert.assertTrue(dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null);
+        }
+    }
+
+    // 测试写where条件的自定义删除
+    @Test
+    public void testDeleteWhere() throws InterruptedException {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName());
+    }
 }
