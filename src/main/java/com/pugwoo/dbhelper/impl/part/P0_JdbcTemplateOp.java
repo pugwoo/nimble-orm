@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}};
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
+
+	/**全局的SQL注释*/
+	private String globalComment;
 	
 	protected void log(StringBuilder sql, Object keyValues) {
 		log(sql.toString(), keyValues);
@@ -141,6 +145,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * @return 实际修改的行数
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
+		sql = addComment(sql);
 		log(sql, args);
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
@@ -153,6 +158,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
+		sql = addComment(sql);
 		log(sql, args);
 		long start = System.currentTimeMillis();
 		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -265,4 +271,32 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		Boolean enabled = features.get(featureEnum);
 		return enabled != null && enabled;
 	}
+
+	@Override
+	public void setGlobalComment(String comment) {
+		this.globalComment = comment;
+	}
+
+	@Override
+	public void setLocalComment(String comment) {
+		DBHelperContext.setComment(comment);
+	}
+
+	/**
+	 * 给sql加上注释，返回加完注释之后的sql
+	 */
+	protected String addComment(String sql) {
+		if (sql == null) {
+			sql = "";
+		}
+		if (InnerCommonUtils.isNotBlank(globalComment)) {
+			sql = "/*" + globalComment + "*/" + sql;
+		}
+		String comment = DBHelperContext.getComment();
+		if (InnerCommonUtils.isNotBlank(comment)) {
+			sql = "/*" + comment + "*/" + sql;
+		}
+		return sql;
+	}
+
 }

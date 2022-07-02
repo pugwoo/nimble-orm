@@ -107,6 +107,20 @@ public interface DBHelper {
 	 */
 	void turnOnSoftDelete(Class<?>... clazz);
 
+	// ================= Set SQL comment ==================================
+
+	/**
+	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	void setGlobalComment(String comment);
+
+	/**
+	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	void setLocalComment(String comment);
+
 	// =============== Query methods START ==================================
 	
 	/**
