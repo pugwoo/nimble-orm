@@ -2,14 +2,19 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.model.SubQuery;
-import com.pugwoo.dbhelper.test.entity.*;
+import com.pugwoo.dbhelper.test.entity.CasVersionDO;
+import com.pugwoo.dbhelper.test.entity.CasVersionLongDO;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -25,46 +30,13 @@ public class TestDBHelper {
 	@Autowired
 	private DBHelper dbHelper;
 
-	// ============ JSON test ============================
-	
-	@Test 
-	public void testJSON() {
-		StudentDO studentDO = new StudentDO();
-		SchoolDO schoolDO = new SchoolDO();
-		schoolDO.setName("SYSU");
-		
-		studentDO.setSchoolSnapshot(schoolDO);
-		
-		List<CourseDO> courses = new ArrayList<CourseDO>();
-		studentDO.setCourseSnapshot(courses);
-		
-		CourseDO course1 = new CourseDO();
-		course1.setName("math");
-		courses.add(course1);
-		
-		CourseDO course2 = new CourseDO();
-		course2.setName("eng");
-		courses.add(course2);
-		
-		dbHelper.insert(studentDO);
-		
-		StudentDO studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-		Assert.assertTrue(studentDB.getSchoolSnapshot() != null);
-		Assert.assertTrue(studentDB.getSchoolSnapshot().getName().equals("SYSU"));
-		
-		Assert.assertTrue(studentDB.getCourseSnapshot() != null);
-		Assert.assertTrue(studentDB.getCourseSnapshot().size() == 2);
-		Assert.assertTrue(studentDB.getCourseSnapshot().get(0).getName().equals("math"));
-		Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("eng"));
-		
-		studentDO.getCourseSnapshot().get(1).setName("english");
-		dbHelper.update(studentDO);
-		
-		studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-		Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("english"));
-		
+	@Test
+	public void testNewDBHelper() {
+		JdbcTemplate jdbcTemplate = ((SpringJdbcDBHelper) dbHelper).getJdbcTemplate();
+		DBHelper dbHelper2 = new SpringJdbcDBHelper(jdbcTemplate);
+		assert dbHelper.getAll(StudentDO.class).size() == dbHelper2.getAll(StudentDO.class).size();
 	}
-	
+
 	// ============ UPDATE TEST START ======================
 	@Test 
 	public void testUpdateNull() {
@@ -393,7 +365,6 @@ public class TestDBHelper {
 	}
 
 	@Test
-    
 	public void testCasVersion() {
         CasVersionDO casVersionDO = new CasVersionDO();
         casVersionDO.setName("nick");
