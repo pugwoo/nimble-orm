@@ -1,6 +1,7 @@
 
 v1.3.0 - [add] 增加executeRaw方法，支持执行自定义的SQL
        - [add] 支持给执行的SQL加注释，全局注释和线程范围注释，便于全链路跟踪
+       - [add] @RelatedColumn增加conditional属性，支持指定条件下不处理该@RelatedColumn
        - [enhance] 对分页查询getPage，如果用户没有指定order by，自动加上order by
        - [add] 增加WhereSql构造器，提高构造where查询子句的效率
        - [del] 移除Column的insertDefault属性，该属性以后由insertValueScript代替

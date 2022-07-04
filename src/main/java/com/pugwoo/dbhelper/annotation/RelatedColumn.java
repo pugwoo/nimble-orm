@@ -46,4 +46,10 @@ public @interface RelatedColumn {
 	 */
 	Class<?> dataService() default void.class;
 
+	/**
+	 * 用于控制该RelateColumn是否启用的mvel脚本，其中使用变量t表示当前DO类实例。<br>
+	 * 当为空或返回true时启用该RelatedColumn属性，当返回false或mvel脚本报错时不启用<br>
+	 */
+	String conditional() default "";
+
 }

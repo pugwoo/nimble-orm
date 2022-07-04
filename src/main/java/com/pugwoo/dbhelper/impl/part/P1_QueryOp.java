@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -15,6 +16,7 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
+import org.mvel2.MVEL;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.lang.reflect.Field;
@@ -661,6 +663,38 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         postHandleRelatedColumn(list, relatedColumnProperties);
     }
 
+    private <T> List<T> filterRelatedColumnConditional(List<T> tList, String conditional) {
+        if (InnerCommonUtils.isBlank(conditional)) {
+            return tList;
+        }
+
+        List<T> result = new ArrayList<>();
+        for (T t : tList) {
+            Map<String, Object> vars = new HashMap<>();
+            vars.put("t", t);
+            try {
+                Object value = MVEL.eval(conditional, vars);
+                if (value == null) {
+                    LOGGER.error("execute conditional return null, script:{}, t:{}",
+                            conditional, NimbleOrmJSON.toJson(t));
+                } else {
+                    if (value instanceof Boolean) {
+                        if ((Boolean) value) {
+                            result.add(t);
+                        }
+                    } else {
+                        LOGGER.error("execute conditional return is not instance of Boolean, script:{}, t:{}",
+                                conditional, NimbleOrmJSON.toJson(t));
+                    }
+                }
+            } catch (Throwable e) {
+                LOGGER.error("execute script fail: {}, t:{}", conditional, NimbleOrmJSON.toJson(t), e);
+            }
+        }
+
+        return result;
+    }
+
     /**批量关联，要求批量操作的都是相同的类*/
     private <T> void postHandleRelatedColumn(List<T> tList, String... relatedColumnProperties) {
         if (tList == null || tList.isEmpty()) {
@@ -699,6 +733,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
         if (!relatedColumns.isEmpty()) { // 只有有relatedColumn才进行判断是否全是相同的类型
             SQLAssert.allSameClass(tList);
+        } else {
+            return; // 不需要处理了
         }
 
         for (Field field : relatedColumns) {
@@ -712,6 +748,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             RelatedColumn column = field.getAnnotation(RelatedColumn.class);
+            // 根据conditional判断该RelatedColumn是否进行处理
+            List<T> tListFiltered = filterRelatedColumnConditional(tList, column.conditional());
+
             if (InnerCommonUtils.isBlank(column.localColumn())) {
                 LOGGER.error("relatedColumn value is empty, field:{}", field);
                 continue;
@@ -742,7 +781,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             Set<Object> values = new HashSet<>(); // 用于去重，同样适用于ArrayList
-            for (T t : tList) {
+            for (T t : tListFiltered) {
                 Object value = DOInfoReader.getValueForRelatedColumn(localField, t);
                 if (value != null) {
                     values.add(value);
@@ -752,7 +791,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             if (values.isEmpty()) {
                 // 不需要查询数据库，但是对List的，设置空List，确保list不会是null
                 if (field.getType() == List.class) {
-                    for (T t : tList) {
+                    for (T t : tListFiltered) {
                         DOInfoReader.setValue(field, t, new ArrayList<>());
                     }
                 }
@@ -829,7 +868,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                             oRemoteValue.toString(), k -> new ArrayList<>());
                     oRemoteValueListString.add(obj);
                 }
-                for (T t : tList) {
+                for (T t : tListFiltered) {
                     List<Object> valueList = new ArrayList<>();
                     Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue != null) {
@@ -863,7 +902,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         mapRemoteValuesString.put(oRemoteValue.toString(), obj);
                     }
                 }
-                for (T t : tList) {
+                for (T t : tListFiltered) {
                     Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue == null) {continue;}
                     
