@@ -663,7 +663,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         postHandleRelatedColumn(list, relatedColumnProperties);
     }
 
-    private <T> List<T> filterRelatedColumnConditional(List<T> tList, String conditional) {
+    private <T> List<T> filterRelatedColumnConditional(List<T> tList, String conditional, Field field) {
         if (InnerCommonUtils.isBlank(conditional)) {
             return tList;
         }
@@ -681,6 +681,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     if (value instanceof Boolean) {
                         if ((Boolean) value) {
                             result.add(t);
+                        } else {
+                            DOInfoReader.setValue(field, t, new ArrayList<>());
                         }
                     } else {
                         LOGGER.error("execute conditional return is not instance of Boolean, script:{}, t:{}",
@@ -749,7 +751,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             RelatedColumn column = field.getAnnotation(RelatedColumn.class);
             // 根据conditional判断该RelatedColumn是否进行处理
-            List<T> tListFiltered = filterRelatedColumnConditional(tList, column.conditional());
+            List<T> tListFiltered = filterRelatedColumnConditional(tList, column.conditional(), field);
 
             if (InnerCommonUtils.isBlank(column.localColumn())) {
                 LOGGER.error("relatedColumn value is empty, field:{}", field);

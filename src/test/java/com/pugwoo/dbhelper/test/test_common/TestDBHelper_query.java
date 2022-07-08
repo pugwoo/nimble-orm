@@ -39,7 +39,6 @@ public class TestDBHelper_query {
 
     @Test
     public void testRelatedColumnWithLimit() {
-
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
         CourseDO courseDO1 = new CourseDO();
@@ -74,6 +73,62 @@ public class TestDBHelper_query {
                 assert a.getMainCourses().isEmpty();
             }
         }
+    }
+
+    @Test
+    public void testRelatedColumnConditional() {
+        // 构造数据：
+        // 课程1 学生1 主课程
+        // 课程1 学生2 非主课程
+        // 课程2 学生1 非主课程
+        // 课程2 学生2 主课程
+        StudentDO student1 = CommonOps.insertOne(dbHelper);
+        StudentDO student2 = CommonOps.insertOne(dbHelper);
+
+        String course1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        String course2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+
+        CourseDO courseDO = new CourseDO();
+        courseDO.setName(course1);
+        courseDO.setStudentId(student1.getId());
+        courseDO.setIsMain(true);
+        dbHelper.insert(courseDO);
+        Long id1 = courseDO.getId();
+
+        courseDO = new CourseDO();
+        courseDO.setName(course1);
+        courseDO.setStudentId(student2.getId());
+        courseDO.setIsMain(false);
+        dbHelper.insert(courseDO);
+        Long id2 = courseDO.getId();
+
+        courseDO = new CourseDO();
+        courseDO.setName(course2);
+        courseDO.setStudentId(student1.getId());
+        courseDO.setIsMain(false);
+        dbHelper.insert(courseDO);
+        Long id3 = courseDO.getId();
+
+        courseDO = new CourseDO();
+        courseDO.setName(course2);
+        courseDO.setStudentId(student2.getId());
+        courseDO.setIsMain(true);
+        dbHelper.insert(courseDO);
+        Long id4 = courseDO.getId();
+
+        CourseVO courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id1);
+        assert courseVO.getMainCourseStudents().size() == 1;
+        assert courseVO.getMainCourseStudents().get(0).getId().equals(student1.getId());
+
+        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id2);
+        assert courseVO.getMainCourseStudents().isEmpty();
+
+        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id3);
+        assert courseVO.getMainCourseStudents().isEmpty();
+
+        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id4);
+        assert courseVO.getMainCourseStudents().size() == 1;
+        assert courseVO.getMainCourseStudents().get(0).getId().equals(student2.getId());
     }
 
     @Test 

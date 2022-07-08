@@ -48,7 +48,8 @@ public @interface RelatedColumn {
 
 	/**
 	 * 用于控制该RelateColumn是否启用的mvel脚本，其中使用变量t表示当前DO类实例。<br>
-	 * 当为空或返回true时启用该RelatedColumn属性，当返回false或mvel脚本报错时不启用<br>
+	 * 当为空或返回true时启用该RelatedColumn属性，当返回false或mvel脚本报错时不启用。<br>
+	 * 说明：当正常返回false时，对于List的属性类型也会设置空List。但对于返回null或报错的情况，List属性值设置为null，更早暴露问题。
 	 */
 	String conditional() default "";
 
