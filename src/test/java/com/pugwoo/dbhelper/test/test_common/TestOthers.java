@@ -10,6 +10,7 @@ import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
+import com.pugwoo.dbhelper.utils.TypeAutoCast;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +20,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 其它的一些测试，主要为了覆盖代码或最佳实践
@@ -351,6 +349,25 @@ public class TestOthers {
         whereSQL.limit(3, 3);
         all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == 3;
+
+    }
+
+    @Test
+    public void testTypeAutoCast() {
+        assert TypeAutoCast.cast(1, Integer.class) == 1;
+        assert TypeAutoCast.cast(1, Long.class) == 1L;
+        assert TypeAutoCast.cast("97", Byte.class).equals(Byte.valueOf("97"));
+
+        assert TypeAutoCast.cast(null, Short.class) == null;
+        assert TypeAutoCast.cast(33, Short.class) == 33;
+        assert TypeAutoCast.cast((short)33, Short.class) == 33;
+        assert TypeAutoCast.cast("33", Short.class) == 33;
+
+        assert TypeAutoCast.cast("hello", String.class).equals("hello");
+        assert TypeAutoCast.cast("123.4", BigDecimal.class).compareTo(new BigDecimal("123.4")) == 0;
+
+        assert TypeAutoCast.cast(new Date(), java.sql.Date.class) instanceof java.sql.Date;
+        assert TypeAutoCast.cast(new Date(), java.sql.Time.class) instanceof java.sql.Time;
 
     }
 
