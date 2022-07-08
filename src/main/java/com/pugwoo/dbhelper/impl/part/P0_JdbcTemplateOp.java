@@ -53,11 +53,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	/**全局的SQL注释*/
 	private String globalComment;
-	
-	protected void log(StringBuilder sql, Object keyValues) {
-		log(sql.toString(), keyValues);
-	}
-	
+
 	protected void log(String sql, Object keyValues) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
