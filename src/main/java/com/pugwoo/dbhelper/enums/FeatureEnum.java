@@ -20,6 +20,11 @@ public enum FeatureEnum {
     /**
      * 当DO类@Column注解的列不在数据库返回的列中时，是否抛出异常，默认是false，即不抛出异常
      */
-    THROW_EXCEPTION_IF_COLUMN_NOT_EXIST
+    THROW_EXCEPTION_IF_COLUMN_NOT_EXIST,
+
+    /**
+     * 分页是否自动加上order by子句，默认是[开启]；分页强烈建议加上order by排序，否则分页结果可能不正确
+     */
+    AUTO_ADD_ORDER_FOR_PAGINATION
 
 }

@@ -20,7 +20,7 @@ public class NamedParameterUtils {
 	
 	// sha256 from Pugwoo Chia's nimble-ORM
 	private final static String MAGIC_FOR_EMPTY_COLLECTION =
-			"A450DB9DF910D25F80428D4A9BAB4FA36F45D0A15F0AC5B83AFC389D386F1AE9C";
+			"KCIN450DB9DF910D25F80428D4A9BAB4FA36F45D0A15F0AC5B83AFC389D386F1AE9C";
 	
 	@SuppressWarnings("unchecked")
 	public static Map<String, Object> transParam(List<Object> params) {

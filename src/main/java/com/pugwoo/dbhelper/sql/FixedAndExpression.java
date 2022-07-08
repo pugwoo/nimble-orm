@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.sql;
 
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
@@ -35,8 +36,9 @@ public class FixedAndExpression extends AndExpression {
 		} else {
 			sb.append(getRightExpression());
 		}
-		
-		return sb.toString().trim().isEmpty() ? " " : "("+ sb +")";
+
+		String sql = sb.toString();
+		return InnerCommonUtils.isBlank(sql) ? " " : "("+ sql +")";
 	}
 	
 }

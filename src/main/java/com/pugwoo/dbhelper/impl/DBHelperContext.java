@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 线程上下文，支持自定义表名等功能
+ * DBHelper线程上下文，支持: <br>
+ * 1. 自定义表名<br>
+ * 2. 开启和关闭指定DO类的软删除<br>
+ * 3. 线程级别的SQL注释
  */
 public class DBHelperContext {
 
@@ -13,6 +16,8 @@ public class DBHelperContext {
 
     /**关闭软删除*/
     private static final ThreadLocal<Map<Class<?>, Boolean>> turnOffSoftDelete = new ThreadLocal<>();
+
+    private static final ThreadLocal<String> comment = new ThreadLocal<>();
 
     /**
      * 获得类对应的自定义表名，不存在返回null
@@ -99,4 +104,17 @@ public class DBHelperContext {
         turnoff.remove(clazz);
     }
 
+    /**
+     * 设置线程上下文的SQL注释
+     */
+    public static void setComment(String comment) {
+        DBHelperContext.comment.set(comment);
+    }
+
+    /**
+     * 获取线程上下文的SQL注释
+     */
+    public static String getComment() {
+        return DBHelperContext.comment.get();
+    }
 }

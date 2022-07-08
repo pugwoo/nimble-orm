@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
@@ -172,7 +173,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	@Override
 	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
 		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
-		if(setSql == null || setSql.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(setSql)) {
 			return 0; // 不需要更新
 		}
 		
@@ -200,7 +201,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	@Override
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
 		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
-		if(setSql == null || setSql.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(setSql)) {
 			return 0; // 不需要更新
 		}
 		

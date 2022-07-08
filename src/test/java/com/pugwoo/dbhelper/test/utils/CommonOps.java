@@ -27,10 +27,14 @@ public class CommonOps {
     }
 
     public static List<StudentDO> insertBatch(DBHelper dbHelper, int num) {
+        return insertBatch(dbHelper, num, "nick");
+    }
+
+    public static List<StudentDO> insertBatch(DBHelper dbHelper, int num, String prefix) {
         List<StudentDO> list = new ArrayList<StudentDO>();
         for(int i = 0; i < num; i++) {
             StudentDO studentDO = new StudentDO();
-            studentDO.setName(getRandomName("nick"));
+            studentDO.setName(getRandomName(prefix));
             list.add(studentDO);
         }
 
@@ -39,5 +43,6 @@ public class CommonOps {
 
         return list;
     }
+
 
 }

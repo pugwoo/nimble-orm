@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.ScriptErrorException;
 import com.pugwoo.dbhelper.test.entity.StudentScriptDO;
+import com.pugwoo.dbhelper.utils.ScriptUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +103,31 @@ public class TestScripts {
         int i = 0;
         try {
             dbHelper.insert(student);
+        } catch (Exception e) {
+            assert e instanceof ScriptErrorException;
+            i = 1;
+        }
+        assert i == 1;
+
+
+        Object value = ScriptUtils.getValueFromScript(new StudentScriptDO(), true, "xxxx");
+        assert value == null;
+
+        i = 0;
+        try {
+            ScriptUtils.getValueFromScript(new StudentScriptDO(), false, "xxxx");
+        } catch (Exception e) {
+            assert e instanceof ScriptErrorException;
+            i = 1;
+        }
+        assert i == 1;
+
+        value = ScriptUtils.getValueFromScript(true, "xxxx");
+        assert value == null;
+
+        i = 0;
+        try {
+            ScriptUtils.getValueFromScript(false, "xxxx");
         } catch (Exception e) {
             assert e instanceof ScriptErrorException;
             i = 1;

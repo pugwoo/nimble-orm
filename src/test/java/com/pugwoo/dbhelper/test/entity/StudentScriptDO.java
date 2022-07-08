@@ -9,7 +9,7 @@ public class StudentScriptDO extends IdableSoftDeleteBaseDO {
     @Column(value = "name", insertValueScript = "1+'1'+1", updateValueScript = "2+'2'+2", deleteValueScript = "3+'3'+3")
     private String name;
 
-    @Column(value = "age", insertDefault = "0")
+    @Column(value = "age", insertValueScript = "0")
     private Integer age;
 
     public String getName() {

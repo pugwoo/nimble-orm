@@ -5,7 +5,7 @@ import com.pugwoo.dbhelper.annotation.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.LocalTime;
 
 @Table("t_student")
 public class StudentWithLocalDateTimeDO {
@@ -20,7 +20,7 @@ public class StudentWithLocalDateTimeDO {
     private LocalDate updateTime;
 
     @Column(value = "delete_time", setTimeWhenDelete = true)
-    private Date deleteTime;
+    private LocalTime deleteTime;
 
     public Long getId() {
         return id;
@@ -46,11 +46,11 @@ public class StudentWithLocalDateTimeDO {
         this.updateTime = updateTime;
     }
 
-    public Date getDeleteTime() {
+    public LocalTime getDeleteTime() {
         return deleteTime;
     }
 
-    public void setDeleteTime(Date deleteTime) {
+    public void setDeleteTime(LocalTime deleteTime) {
         this.deleteTime = deleteTime;
     }
 }

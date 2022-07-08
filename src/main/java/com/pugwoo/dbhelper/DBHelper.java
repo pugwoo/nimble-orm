@@ -107,6 +107,20 @@ public interface DBHelper {
 	 */
 	void turnOnSoftDelete(Class<?>... clazz);
 
+	// ================= Set SQL comment ==================================
+
+	/**
+	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	void setGlobalComment(String comment);
+
+	/**
+	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	void setLocalComment(String comment);
+
 	// =============== Query methods START ==================================
 	
 	/**
@@ -535,12 +549,30 @@ public interface DBHelper {
 
 	/**
 	 * 自定义条件删除数据，该操作【会】自动使用软删除标记。
-	 * 该方法的实现是先根据条件查出数据，再批量删除，一遍拦截器可以记录下实际被删的数据
+	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
 	 * @param clazz 必须有默认构造方法
 	 * @param postSql 必须提供，必须写where，【不允许】留空
 	 * @param args postSql的参数
 	 * @return 实际删除的条数
 	 */
 	<T> int delete(Class<T> clazz, String postSql, Object... args);
-	
+
+	/**
+	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
+	 *
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 * @return 返回影响的行数
+	 */
+	int executeRaw(String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL语句，支持通过namedParameter的方式传入参数，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
+	 *
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param paramMap 自定义参数
+	 * @return 返回影响的行数
+	 */
+	int executeRaw(String sql, Map<String, Object> paramMap);
+
 }
