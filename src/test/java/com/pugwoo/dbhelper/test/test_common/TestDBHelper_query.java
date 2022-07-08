@@ -16,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -769,6 +773,51 @@ public class TestDBHelper_query {
         assert studentNames.contains(studentDO1.getName());
         assert studentNames.contains(studentDO2.getName());
         assert studentNames.contains(studentDO3.getName());
+
+        List<Integer> count = dbHelper.getRaw(Integer.class, "select count(*) from t_student where deleted=0");
+        assert count.get(0) >= 3;
+
+        List<Boolean> bools = dbHelper.getRaw(Boolean.class, "select 1");
+        assert bools.get(0);
+        bools = dbHelper.getRaw(Boolean.class, "select 0");
+        assert !bools.get(0);
+
+        List<Byte> bytes = dbHelper.getRaw(Byte.class, "select 'a'");
+        assert bytes.get(0) == 97;
+
+        List<byte[]> bytes2 = dbHelper.getRaw(byte[].class, "select 'a'");
+        assert bytes2.get(0)[0] == 97;
+
+        List<Short> count2 = dbHelper.getRaw(Short.class, "select count(*) from t_student where deleted=0");
+        assert count2.get(0) >= 3;
+
+        List<Float> count3 = dbHelper.getRaw(Float.class, "select count(*) from t_student where deleted=0");
+        assert count3.get(0) >= 3;
+
+        List<Double> count4 = dbHelper.getRaw(Double.class, "select count(*) from t_student where deleted=0");
+        assert count4.get(0) >= 3;
+
+        List<BigDecimal> count5 = dbHelper.getRaw(BigDecimal.class, "select count(*) from t_student where deleted=0");
+        assert count5.get(0).compareTo(BigDecimal.valueOf(3)) >= 0;
+
+        List<Date> dates = dbHelper.getRaw(Date.class, "select now()");
+        assert dates.get(0) != null;
+
+        List<LocalDateTime> dates2 = dbHelper.getRaw(LocalDateTime.class, "select now()");
+        assert dates2.get(0) != null;
+
+        List<LocalDate> dates3 = dbHelper.getRaw(LocalDate.class, "select now()");
+        assert dates3.get(0) != null;
+
+        List<LocalTime> dates4 = dbHelper.getRaw(LocalTime.class, "select now()");
+        assert dates4.get(0) != null;
+
+        List<java.sql.Date> dates5 = dbHelper.getRaw(java.sql.Date.class, "select now()");
+        assert dates5.get(0) != null;
+        List<java.sql.Time> dates6 = dbHelper.getRaw(java.sql.Time.class, "select now()");
+        assert dates6.get(0) != null;
+        List<java.sql.Timestamp> dates7 = dbHelper.getRaw(java.sql.Timestamp.class, "select now()");
+        assert dates7.get(0) != null;
 
     }
 
