@@ -10,6 +10,8 @@ import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
+import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.TypeAutoCast;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -244,6 +246,19 @@ public class TestOthers {
         assert ClassInfoCache.getFieldSetMethod(name) == null;
         assert ClassInfoCache.getFieldGetMethod(name) == null; // 走cache
         assert ClassInfoCache.getFieldSetMethod(name) == null; // 走cache
+
+        SomeDO someDO = new SomeDO();
+        someDO.name = "helloname";
+        assert DOInfoReader.getValue(name, someDO).equals("helloname");
+
+        // utils
+        assert InnerCommonUtils.isEmpty(new ArrayList<>());
+        List<String> list = null;
+        assert InnerCommonUtils.filter(list, o -> true).isEmpty();
+
+        assert !InnerCommonUtils.isContains("hello", null);
+        assert !InnerCommonUtils.isContains("hello", new String[0]);
+
     }
 
     public static class SomeDO {
