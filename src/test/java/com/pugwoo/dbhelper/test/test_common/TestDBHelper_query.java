@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
@@ -15,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -38,7 +43,6 @@ public class TestDBHelper_query {
 
     @Test
     public void testRelatedColumnWithLimit() {
-
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
         CourseDO courseDO1 = new CourseDO();
@@ -73,6 +77,62 @@ public class TestDBHelper_query {
                 assert a.getMainCourses().isEmpty();
             }
         }
+    }
+
+    @Test
+    public void testRelatedColumnConditional() {
+        // 构造数据：
+        // 课程1 学生1 主课程
+        // 课程1 学生2 非主课程
+        // 课程2 学生1 非主课程
+        // 课程2 学生2 主课程
+        StudentDO student1 = CommonOps.insertOne(dbHelper);
+        StudentDO student2 = CommonOps.insertOne(dbHelper);
+
+        String course1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        String course2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+
+        CourseDO courseDO = new CourseDO();
+        courseDO.setName(course1);
+        courseDO.setStudentId(student1.getId());
+        courseDO.setIsMain(true);
+        dbHelper.insert(courseDO);
+        Long id1 = courseDO.getId();
+
+        courseDO = new CourseDO();
+        courseDO.setName(course1);
+        courseDO.setStudentId(student2.getId());
+        courseDO.setIsMain(false);
+        dbHelper.insert(courseDO);
+        Long id2 = courseDO.getId();
+
+        courseDO = new CourseDO();
+        courseDO.setName(course2);
+        courseDO.setStudentId(student1.getId());
+        courseDO.setIsMain(false);
+        dbHelper.insert(courseDO);
+        Long id3 = courseDO.getId();
+
+        courseDO = new CourseDO();
+        courseDO.setName(course2);
+        courseDO.setStudentId(student2.getId());
+        courseDO.setIsMain(true);
+        dbHelper.insert(courseDO);
+        Long id4 = courseDO.getId();
+
+        CourseVO courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id1);
+        assert courseVO.getMainCourseStudents().size() == 1;
+        assert courseVO.getMainCourseStudents().get(0).getId().equals(student1.getId());
+
+        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id2);
+        assert courseVO.getMainCourseStudents().isEmpty();
+
+        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id3);
+        assert courseVO.getMainCourseStudents().isEmpty();
+
+        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id4);
+        assert courseVO.getMainCourseStudents().size() == 1;
+        assert courseVO.getMainCourseStudents().get(0).getId().equals(student2.getId());
     }
 
     @Test 
@@ -301,6 +361,59 @@ public class TestDBHelper_query {
 
         total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
         Assert.assertTrue(total >= 100);
+    }
+
+    @Test
+    public void testGetPageRemoteLimitAddOrder() {
+        String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        CommonOps.insertBatch(dbHelper, 20, prefix);
+
+        // 这里故意加上limit子句，会被自动清除掉
+        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10,
+                "where name like ? group by name, age limit 4,6", prefix + "%");
+        assert page.getData().size() == 10;
+        assert page.getTotal() == 20;
+
+        PageData<StudentDO> page2 = dbHelper.getPage(StudentDO.class, 2, 10,
+                "where name like ? group by name, age limit 4,6", prefix + "%");
+        assert page2.getData().size() == 10;
+        assert page2.getTotal() == 20;
+
+        Set<String> name = new HashSet<>();
+        for (StudentDO stu : page.getData()) {
+            name.add(stu.getName());
+        }
+        for (StudentDO stu : page2.getData()) {
+            name.add(stu.getName());
+        }
+        assert name.size() == 20;
+
+        // ============== 不加group by时自动以id为排序
+        System.out.println("=================================");
+
+        page = dbHelper.getPage(StudentDO.class, 1, 10,
+                "where name like ? limit 4,6", prefix + "%");
+        assert page.getData().size() == 10;
+        assert page.getTotal() == 20;
+
+        page2 = dbHelper.getPage(StudentDO.class, 2, 10,
+                "where name like ? limit 4,6", prefix + "%");
+        assert page2.getData().size() == 10;
+        assert page2.getTotal() == 20;
+
+        name = new HashSet<>();
+        for (StudentDO stu : page.getData()) {
+            name.add(stu.getName());
+        }
+        for (StudentDO stu : page2.getData()) {
+            name.add(stu.getName());
+        }
+        assert name.size() == 20;
+
+        System.out.println("=================================");
+        // 如果用户自行执行的order by没有完全包含group by的字段，则有warning 日志
+        page = dbHelper.getPage(StudentDO.class, 1, 10,
+                "where name like ? group by name,age order by name limit 4,6", prefix + "%"); // 看告警
     }
 
     @Test 
@@ -661,6 +774,51 @@ public class TestDBHelper_query {
         assert studentNames.contains(studentDO2.getName());
         assert studentNames.contains(studentDO3.getName());
 
+        List<Integer> count = dbHelper.getRaw(Integer.class, "select count(*) from t_student where deleted=0");
+        assert count.get(0) >= 3;
+
+        List<Boolean> bools = dbHelper.getRaw(Boolean.class, "select 1");
+        assert bools.get(0);
+        bools = dbHelper.getRaw(Boolean.class, "select 0");
+        assert !bools.get(0);
+
+        List<Byte> bytes = dbHelper.getRaw(Byte.class, "select 'a'");
+        assert bytes.get(0) == 97;
+
+        List<byte[]> bytes2 = dbHelper.getRaw(byte[].class, "select 'a'");
+        assert bytes2.get(0)[0] == 97;
+
+        List<Short> count2 = dbHelper.getRaw(Short.class, "select count(*) from t_student where deleted=0");
+        assert count2.get(0) >= 3;
+
+        List<Float> count3 = dbHelper.getRaw(Float.class, "select count(*) from t_student where deleted=0");
+        assert count3.get(0) >= 3;
+
+        List<Double> count4 = dbHelper.getRaw(Double.class, "select count(*) from t_student where deleted=0");
+        assert count4.get(0) >= 3;
+
+        List<BigDecimal> count5 = dbHelper.getRaw(BigDecimal.class, "select count(*) from t_student where deleted=0");
+        assert count5.get(0).compareTo(BigDecimal.valueOf(3)) >= 0;
+
+        List<Date> dates = dbHelper.getRaw(Date.class, "select now()");
+        assert dates.get(0) != null;
+
+        List<LocalDateTime> dates2 = dbHelper.getRaw(LocalDateTime.class, "select now()");
+        assert dates2.get(0) != null;
+
+        List<LocalDate> dates3 = dbHelper.getRaw(LocalDate.class, "select now()");
+        assert dates3.get(0) != null;
+
+        List<LocalTime> dates4 = dbHelper.getRaw(LocalTime.class, "select now()");
+        assert dates4.get(0) != null;
+
+        List<java.sql.Date> dates5 = dbHelper.getRaw(java.sql.Date.class, "select now()");
+        assert dates5.get(0) != null;
+        List<java.sql.Time> dates6 = dbHelper.getRaw(java.sql.Time.class, "select now()");
+        assert dates6.get(0) != null;
+        List<java.sql.Timestamp> dates7 = dbHelper.getRaw(java.sql.Timestamp.class, "select now()");
+        assert dates7.get(0) != null;
+
     }
 
     
@@ -694,6 +852,45 @@ public class TestDBHelper_query {
 
         assert one.getName().endsWith("FFFFFFFF");
         assert one.getName2() == null;
+    }
+
+
+    @Test
+    public void testSubQuery() {
+        StudentDO stu1 = CommonOps.insertOne(dbHelper);
+        StudentDO stu2 = CommonOps.insertOne(dbHelper);
+        StudentDO stu3 = CommonOps.insertOne(dbHelper);
+
+        List<Long> ids = new ArrayList<Long>();
+        ids.add(stu1.getId());
+        ids.add(stu2.getId());
+        ids.add(stu3.getId());
+
+        SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
+
+        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery);
+        Assert.assertTrue(all.size() == 3);
+        for(StudentDO stu : all) {
+            Assert.assertTrue(ids.contains(stu.getId()));
+        }
+
+        all = dbHelper.getAll(StudentDO.class, "where id in (?) and id > ?" +
+                " and name != '\\''", subQuery, 0); // 测试subQuery和参数混合
+        Assert.assertTrue(all.size() == 3);
+        for(StudentDO stu : all) {
+            Assert.assertTrue(ids.contains(stu.getId()));
+        }
+
+        // 测试3层subQuery
+        SubQuery subQuery1 = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
+        SubQuery subQuery2 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery1);
+        SubQuery subQuery3 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery2);
+
+        all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery3);
+        Assert.assertTrue(all.size() == 3);
+        for(StudentDO stu : all) {
+            Assert.assertTrue(ids.contains(stu.getId()));
+        }
     }
 
 }

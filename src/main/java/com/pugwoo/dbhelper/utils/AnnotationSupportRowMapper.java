@@ -28,7 +28,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationSupportRowMapper.class);
 
 	/**传入对应的dbHelper对象*/
-	private DBHelper dbHelper;
+	private final DBHelper dbHelper;
 
 	private Class<T> clazz;
 	private boolean isUseGivenObj = false;
@@ -120,9 +120,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 							 String columnName,
 							 Field field) throws SQLException {
 		if (dbHelper instanceof P0_JdbcTemplateOp) {
-			Boolean throwErrorIfColumnNotExist =
+			boolean throwErrorIfColumnNotExist =
 					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
-			if (throwErrorIfColumnNotExist == null || !throwErrorIfColumnNotExist) {
+			if (!throwErrorIfColumnNotExist) {
 				try {
 					return TypeAutoCast.getFromRS(rs, columnName, field);
 				} catch (SQLException e) {
@@ -145,7 +145,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		for (Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			String columnName;
-			if(!column.computed().trim().isEmpty()) {
+			if(InnerCommonUtils.isNotBlank(column.computed())) {
 				columnName = column.value(); // 计算列用用户自行制定别名
 			} else {
 				columnName = tableAlias + "." + column.value();

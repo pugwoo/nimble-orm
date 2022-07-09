@@ -114,15 +114,10 @@ public class DOInfoReader {
 		if (result == null) { // 还没有缓存过
 			result = _getAnnotationColumns(clazz, Column.class);
 			ClassInfoCache.putField(clazz, result);
-			if (result.isEmpty()) {
-				throw new NoColumnAnnotationException("class " + clazz.getName()
-						+ " does not have any @Column fields");
-			}
-		} else {
-			if (result.isEmpty()) {
-				throw new NoColumnAnnotationException("class " + clazz.getName()
-						+ " does not have any @Column fields");
-			}
+		}
+		if (result.isEmpty()) {
+			throw new NoColumnAnnotationException("class " + clazz.getName()
+					+ " does not have any @Column fields");
 		}
 
 		return result;
@@ -280,8 +275,9 @@ public class DOInfoReader {
 		
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if(column.softDelete().length == 2 && !column.softDelete()[0].trim().isEmpty()
-					&& !column.softDelete()[1].trim().isEmpty()) {
+			if(column.softDelete().length == 2
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[0])
+					&& InnerCommonUtils.isNotBlank(column.softDelete()[1])) {
 				return field;
 			}
 		}

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -10,6 +11,31 @@ import java.util.stream.Collectors;
  * 内部常用工具类
  */
 public class InnerCommonUtils {
+
+    public static boolean isBlank(String str) {
+        if (str == null) {
+            return true;
+        }
+        int len = str.length();
+        for (int i = 0; i < len; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isNotBlank(String str) {
+        return !isBlank(str);
+    }
+
+    public static boolean isEmpty(Collection<?> collection) {
+        return collection == null || collection.isEmpty();
+    }
+
+    public static boolean isNotEmpty(Collection<?> collection) {
+        return collection != null && !collection.isEmpty();
+    }
 
     /**
      * filter一个list
@@ -78,7 +104,7 @@ public class InnerCommonUtils {
         String[] splits = str.split(sep);
         List<String> result = new ArrayList<>();
         for (String s : splits) {
-            if (s != null && !s.trim().isEmpty()) {
+            if (InnerCommonUtils.isNotBlank(s)) {
                 result.add(s.trim());
             }
         }

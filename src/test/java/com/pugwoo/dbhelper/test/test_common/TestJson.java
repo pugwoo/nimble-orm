@@ -3,9 +3,8 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
-import com.pugwoo.dbhelper.test.entity.JsonAsTeacherDO;
-import com.pugwoo.dbhelper.test.entity.JsonDO;
-import com.pugwoo.dbhelper.test.entity.JsonRawDO;
+import com.pugwoo.dbhelper.test.entity.*;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,44 @@ public class TestJson {
 
     @Autowired
     private DBHelper dbHelper;
+
+    @Test
+    public void testJSON() {
+        StudentDO studentDO = new StudentDO();
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("SYSU");
+
+        studentDO.setSchoolSnapshot(schoolDO);
+
+        List<CourseDO> courses = new ArrayList<CourseDO>();
+        studentDO.setCourseSnapshot(courses);
+
+        CourseDO course1 = new CourseDO();
+        course1.setName("math");
+        courses.add(course1);
+
+        CourseDO course2 = new CourseDO();
+        course2.setName("eng");
+        courses.add(course2);
+
+        dbHelper.insert(studentDO);
+
+        StudentDO studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        Assert.assertTrue(studentDB.getSchoolSnapshot() != null);
+        Assert.assertTrue(studentDB.getSchoolSnapshot().getName().equals("SYSU"));
+
+        Assert.assertTrue(studentDB.getCourseSnapshot() != null);
+        Assert.assertTrue(studentDB.getCourseSnapshot().size() == 2);
+        Assert.assertTrue(studentDB.getCourseSnapshot().get(0).getName().equals("math"));
+        Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("eng"));
+
+        studentDO.getCourseSnapshot().get(1).setName("english");
+        dbHelper.update(studentDO);
+
+        studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        Assert.assertTrue(studentDB.getCourseSnapshot().get(1).getName().equals("english"));
+
+    }
 
     private long insert(String score, Integer age) {
         JsonDO jsonDO = new JsonDO();
@@ -53,7 +90,6 @@ public class TestJson {
     }
 
     @Test
-    
     public void testJsonQuery() {
 
         String score = String.valueOf(new Random().nextInt());

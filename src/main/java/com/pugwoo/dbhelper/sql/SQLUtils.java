@@ -8,15 +8,15 @@ import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.ScriptUtils;
 import com.pugwoo.dbhelper.utils.TypeAutoCast;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.select.Limit;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,12 +80,12 @@ public class SQLUtils {
 			    sql.append("1");
 				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
 						leftTableField.getType(), joinLeftTable.alias() + ".", features, postSql);
-				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 				computedColumnsForCountSelect = getComputedColumnsForCountSelect(
 						rightTableField.getType(), joinRightTable.alias() + ".", features, postSql);
-				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
             } else {
@@ -100,10 +100,10 @@ public class SQLUtils {
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
-	        if(joinTable.on().trim().isEmpty()) {
+	        if(InnerCommonUtils.isBlank(joinTable.on())) {
 	        	throw new OnConditionIsNeedException("join table :" + clazz.getName());
 	        }
-	        sql.append(" on ").append(joinTable.on().trim());
+	        sql.append(" on ").append(joinTable.on());
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
@@ -112,7 +112,7 @@ public class SQLUtils {
 			    sql.append("1");
 				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
 						clazz, null, features, postSql);
-				if (!computedColumnsForCountSelect.trim().isEmpty()) {
+				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 			} else {
@@ -136,7 +136,7 @@ public class SQLUtils {
 		List<Field> field2 = new ArrayList<>();
 		for (Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if (column != null && !column.computed().trim().isEmpty()) {
+			if (column != null && InnerCommonUtils.isNotBlank(column.computed())) {
 				// 这里用简单的postSql是否出现计算列的字符串来判断计算列是否要加入，属于放宽松的做法，程序不会有bug，但优化有空间
 				if (postSql != null && postSql.contains(column.value())) {
 					field2.add(field);
@@ -173,10 +173,10 @@ public class SQLUtils {
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
-	        if(joinTable.on().trim().isEmpty()) {
+	        if(InnerCommonUtils.isBlank(joinTable.on())) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
 	        }
-	        sql.append(" on ").append(joinTable.on().trim());
+	        sql.append(" on ").append(joinTable.on());
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
@@ -355,7 +355,7 @@ public class SQLUtils {
 		
 		// 带上postSql
 		if(postSql != null) {
-			postSql = postSql.trim();
+			postSql = postSql.trim(); // 这里必须要trim,因为下面靠startsWith判断是否从where开头
 			if(!postSql.isEmpty()) {
 				if(postSql.startsWith("where")) {
 					postSql = " AND " + postSql.substring(5);
@@ -386,7 +386,7 @@ public class SQLUtils {
 		
 		sql.append(getTableName(clazz)).append(" ");
 		
-		if(setSql.trim().toLowerCase().startsWith("set ")) {
+		if(setSql.trim().toLowerCase().startsWith("set ")) { // 这里必须有trim()
 			sql.append(setSql);
 		} else {
 			sql.append("SET ").append(setSql);
@@ -401,9 +401,8 @@ public class SQLUtils {
 				   .append("=").append(getDateString(new Date()));
 			}
 
-			String updateValueScript = column.updateValueScript().trim();
-			if(!updateValueScript.isEmpty()) {
-				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), updateValueScript);
+			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
+				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.updateValueScript());
 				if(value != null) {
 					sql.append(",").append(getColumnName(column)).append("=")
 							.append(TypeAutoCast.toSqlValueStr(value));
@@ -462,9 +461,8 @@ public class SQLUtils {
 				sql.append(",").append(getColumnName(column)).append("=").append(_v + 1);
 			}
 
-			String updateValueScript = column.updateValueScript().trim();
-			if(!updateValueScript.isEmpty()) {
-				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), updateValueScript);
+			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
+				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), column.updateValueScript());
 				if(value != null) {
 					sql.append(",").append(getColumnName(column)).append("=")
 							.append(TypeAutoCast.toSqlValueStr(value));
@@ -515,8 +513,8 @@ public class SQLUtils {
         for(Field field : notKeyFields) {
             Column column = field.getAnnotation(Column.class);
 
-            String deleteValueScript = column.deleteValueScript().trim();
-            if(!deleteValueScript.isEmpty()) {
+            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
                 Object value = DOInfoReader.getValue(field, t);
                 if(value != null) {
                     setSql.append(",").append(getColumnName(column))
@@ -532,18 +530,6 @@ public class SQLUtils {
 	 * 获得自定义删除SQL
 	 */
 	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
-
-		// 物理删除也执行deleteValueScript，但是不关心其返回值
-        List<Field> fields = DOInfoReader.getColumns(clazz);
-        for(Field field : fields) {
-            Column column = field.getAnnotation(Column.class);
-
-            String deleteValueScript = column.deleteValueScript().trim();
-            if(!deleteValueScript.isEmpty()) {
-                ScriptUtils.getValueFromScript(column.ignoreScriptError(), deleteValueScript);
-            }
-        }
-
 		return "DELETE FROM " +
 				getTableName(clazz) +
 				autoSetSoftDeleted(postSql, clazz);
@@ -560,22 +546,13 @@ public class SQLUtils {
 		sql.append(" SET ").append(getColumnName(softDeleteColumn));
 		sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		
-		// 特殊处理@Column setTimeWhenDelete时间，还有deleteValueScript
+		// 特殊处理@Column setTimeWhenDelete时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
 				sql.append(",").append(getColumnName(column)).append("='");
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 				sql.append(df.format(new Date())).append("'");
-			}
-
-			String deleteValueScript = column.deleteValueScript().trim();
-			if(!deleteValueScript.isEmpty()) {
-			    Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), deleteValueScript);
-			    if(value != null) {
-			        sql.append(",").append(getColumnName(column)).append("=")
-                       .append(TypeAutoCast.toSqlValueStr(value));
-                }
 			}
 		}
 
@@ -668,10 +645,10 @@ public class SQLUtils {
 	public static String insertWhereAndExpression(String whereSql, String condExpression) 
 			throws JSQLParserException {
 		
-		if(condExpression == null || condExpression.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(condExpression)) {
 			return whereSql == null ? "" : whereSql;
 		}
-		if(whereSql == null || whereSql.trim().isEmpty()) {
+		if(InnerCommonUtils.isBlank(whereSql)) {
 			return "WHERE " + condExpression;
 		}
 		
@@ -701,36 +678,149 @@ public class SQLUtils {
 		return autoSetSoftDeleted(whereSql, clazz, "");
 	}
 
-	/**
-	 * 移除whereSql中的limit子句
-	 */
-	public static String removeLimit(String whereSql) {
-		// 没有包含limit肯定没有limit子句，不处理，这也是提高性能的处理方式，并不是每个whereSql都需要解析
-		if (whereSql == null || !whereSql.toLowerCase().contains("limit")) {
-			return whereSql;
+	private static String _getDefaultOrderBy(Class<?> clazz, String prefix) {
+		List<Field> orderColumn = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
+		if (orderColumn.isEmpty()) { // 如果没有主键，那么全字段排序
+			orderColumn = DOInfoReader.getColumns(clazz);
 		}
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < orderColumn.size(); i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			sb.append(prefix).append(getColumnName(orderColumn.get(i)));
+		}
+		return sb.toString();
+	}
+
+	private static String getDefaultOrderBy(Class<?> clazz) {
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if (joinTable == null) {
+			return "ORDER BY " + _getDefaultOrderBy(clazz, "");
+		} else {
+			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
+			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
+			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
+			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
+			String orderBy1 = _getDefaultOrderBy(leftTableField.getType(), joinLeftTable.alias() + ".");
+			String orderBy2 = _getDefaultOrderBy(rightTableField.getType(), joinRightTable.alias() + ".");
+			return "ORDER BY " + orderBy1 + "," + orderBy2;
+		}
+	}
+
+	private static List<OrderByElement> _getDefaultOrderByElement(Class<?> clazz, String prefix) {
+		List<Field> orderColumn = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
+		if (orderColumn.isEmpty()) { // 如果没有主键，那么全字段排序
+			orderColumn = DOInfoReader.getColumns(clazz);
+		}
+		List<OrderByElement> list = new ArrayList<>();
+		for (Field field : orderColumn) {
+			OrderByElement ele = new OrderByElement();
+			ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(field)));
+			list.add(ele);
+		}
+		return list;
+	}
+
+	private static List<OrderByElement> getDefaultOrderByElement(Class<?> clazz) {
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if (joinTable == null) {
+			return _getDefaultOrderByElement(clazz, "");
+		} else {
+			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
+			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
+			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
+			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
+			List<OrderByElement> list = new ArrayList<>();
+			list.addAll(_getDefaultOrderByElement(leftTableField.getType(), joinLeftTable.alias() + "."));
+			list.addAll(_getDefaultOrderByElement(rightTableField.getType(), joinRightTable.alias() + "."));
+			return list;
+		}
+	}
+
+	private static List<OrderByElement> getDefaultOrderByGroup(List<Expression> groupByList) {
+		List<OrderByElement> list = new ArrayList<>();
+		for (Expression expression : groupByList) {
+			OrderByElement ele = new OrderByElement();
+			ele.setExpression(new net.sf.jsqlparser.schema.Column(expression.getASTNode().jjtGetValue().toString()));
+			list.add(ele);
+		}
+		return list;
+	}
+
+	/**
+	 * 移除whereSql中的limit子句；检查并加上order by子句
+	 */
+	public static String removeLimitAndAddOrder(String whereSql, boolean autoAddOrderForPagination, Class<?> clazz) {
+		// 当查询条件是空字符串时，默认带上order by主键
+		if (InnerCommonUtils.isBlank(whereSql) && autoAddOrderForPagination) {
+			return getDefaultOrderBy(clazz);
+		}
+
 		String selectSql = "SELECT * FROM dual "; // 辅助where sql解析用，这个大小写不能改动！
-		Statement statement = null;
+		Statement statement;
 		try {
 			statement = CCJSqlParserUtil.parse(selectSql + whereSql);
 		} catch (JSQLParserException e) {
-			LOGGER.error("fail to remove limit for sql:{}", whereSql, e);
+			LOGGER.error("fail to parse sql:{}", whereSql, e);
 			return whereSql;
 		}
+		boolean isChange = false;
 		Select selectStatement = (Select) statement;
 		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+
+		// 移除limit
 		Limit limit = plainSelect.getLimit();
 		if (limit != null) {
 			plainSelect.setLimit(null);
+			isChange = true;
+		}
+
+		// 自动加order by
+		if (autoAddOrderForPagination) {
+			List<OrderByElement> orderBy = plainSelect.getOrderByElements();
+			GroupByElement groupBy = plainSelect.getGroupBy();
+			ExpressionList groupBys = groupBy == null ? null : groupBy.getGroupByExpressionList();
+			List<Expression> groupByList = groupBys == null ? null : groupBys.getExpressions();
+			if (orderBy == null || orderBy.isEmpty()) {
+				if (groupByList == null || groupByList.isEmpty()) {
+					plainSelect.setOrderByElements(getDefaultOrderByElement(clazz));
+				} else {
+					plainSelect.setOrderByElements(getDefaultOrderByGroup(groupByList));
+				}
+				isChange = true;
+			} else { // 如果用户自己指定了order by，那么不处理
+				if (groupByList != null) {
+					// 对于有group的情况，检查一下order by字段是否完成包含了group by字段
+					for (Expression groupName : groupByList) {
+						String name = groupName.getASTNode().jjtGetValue().toString();
+						boolean isFound = false;
+						for (OrderByElement order : orderBy) {
+							if (order.getExpression().getASTNode().getClass().toString().equals(name)) {
+								isFound = true;
+								break;
+							}
+						}
+						if (!isFound) {
+							LOGGER.warn("class:{} postSql:[{}], group by field:{} not in order by list,"
+											+ " it may cause unstable pagination result.",
+									clazz, whereSql, name);
+						}
+					}
+				}
+			}
+		}
+
+		if (isChange) {
 			String sql = plainSelect.toString();
 			if (sql.startsWith(selectSql)) {
 				return sql.substring(selectSql.length());
 			} else {
-				LOGGER.error("fail to remove limit for sql:{}", whereSql);
+				LOGGER.error("fail to remove limit and handle order by for sql:{}", whereSql);
 				return whereSql;
 			}
 		} else {
-			return whereSql;
+			return whereSql; // 没变化
 		}
 	}
 
@@ -745,8 +835,8 @@ public class SQLUtils {
 		if(whereSql == null) {
 			whereSql = "";
 		}
-		extraWhere = extraWhere == null ? "" : extraWhere.trim();
-		if(!extraWhere.isEmpty()) {
+		extraWhere = extraWhere == null ? "" : extraWhere;
+		if(InnerCommonUtils.isNotBlank(extraWhere)) {
 			extraWhere = "(" + extraWhere + ")";
 		}
 		
@@ -970,8 +1060,7 @@ public class SQLUtils {
     	for(Field field : fields) {
     		Column column = field.getAnnotation(Column.class);
     		
-    		String computed = column.computed().trim();
-    		if(!computed.isEmpty()) {
+    		if(InnerCommonUtils.isNotBlank(column.computed())) {
     			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ");
     		} else {
     			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
@@ -998,7 +1087,7 @@ public class SQLUtils {
     	StringBuilder sb = new StringBuilder();
     	for(Field field : fields) {
     		Column column = field.getAnnotation(Column.class);
-    		if(!(column.computed().trim().isEmpty())) {
+    		if(InnerCommonUtils.isNotBlank(column.computed())) {
     			continue; // insert不加入computed字段
     		}
 
@@ -1074,18 +1163,25 @@ public class SQLUtils {
 
 	private static String getTableName(Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
-		if(tableName != null) {
-			return "`" + tableName + "`";
+		if (InnerCommonUtils.isBlank(tableName)) {
+			tableName = DOInfoReader.getTable(clazz).value();
 		}
-
-		Table table = DOInfoReader.getTable(clazz);
-		return "`" + table.value() + "`";
+		return "`" + tableName + "`";
 	}
 
 	private static String getColumnName(Column column) {
-		return "`" + column.value() + "`";
+		return getColumnName(column.value());
 	}
-	
+
+	/**返回字段名称，重要: 请自行确保field上有注解了@Column*/
+	public static String getColumnName(Field field) {
+		return getColumnName(field.getAnnotation(Column.class));
+	}
+
+	public static String getColumnName(String columnName) {
+		return "`" + columnName + "`";
+	}
+
 	/**
 	 * 输出类似：'2017-05-25 11:22:33'
 	 */

@@ -99,7 +99,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		List<Object[]> values = new ArrayList<>();
-		final String sql = SQLUtils.getInsertSQLForBatch(list, values);
+		String sql = SQLUtils.getInsertSQLForBatch(list, values);
+		sql = addComment(sql);
 		log(sql, values);
 
 		final long start = System.currentTimeMillis();
@@ -143,7 +144,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsert(t);
 		}
 		
-		final String sql = SQLUtils.getInsertSQL(t, values, isWithNullValue);
+		String sql1 = SQLUtils.getInsertSQL(t, values, isWithNullValue);
+		final String sql = addComment(sql1);
 		log(sql, values);
 		
 		final long start = System.currentTimeMillis();

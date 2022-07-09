@@ -16,7 +16,7 @@ public class StudentNoTableNameDO extends IdableSoftDeleteBaseDO {
 //	@Column("type")
 //	private StudentTypeEnum type;
 	
-	@Column(value = "age", insertDefault = "0")
+	@Column(value = "age", insertValueScript = "0")
 	private Integer age;
 	
 	@Column("intro") // 支持byte[]类型
