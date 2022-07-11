@@ -1,3 +1,6 @@
+2022年7月11日
+v1.3.1 - [enhance] 移除当@RelatedColumn使用conditional属性时，关联不上对象时打印的error日志(不影响结果正确性)
+
 2022年7月8日
 v1.3.0 - [add] 增加executeRaw方法，支持执行自定义的SQL
        - [add] 支持给执行的SQL加注释，全局注释和线程范围注释，便于全链路跟踪
