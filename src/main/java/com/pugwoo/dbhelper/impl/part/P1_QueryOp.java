@@ -682,7 +682,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         if ((Boolean) value) {
                             result.add(t);
                         } else {
-                            DOInfoReader.setValue(field, t, new ArrayList<>());
+                            if (field.getType() == List.class) {
+                                DOInfoReader.setValue(field, t, new ArrayList<>());
+                            }
                         }
                     } else {
                         LOGGER.error("execute conditional return is not instance of Boolean, script:{}, t:{}",
