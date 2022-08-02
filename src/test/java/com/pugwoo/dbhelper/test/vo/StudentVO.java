@@ -1,7 +1,5 @@
 package com.pugwoo.dbhelper.test.vo;
 
-import java.util.List;
-
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
@@ -9,13 +7,16 @@ import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
 
+import java.util.List;
+
 /**
  * 关联上schoolDO
  * @author NICK
  */
 public class StudentVO extends StudentDO {
-	
-	@RelatedColumn(localColumn = "school_id", remoteColumn = "id")
+
+	/**特别说明：dbHelperBean可以不用指定，这里只是测试指定DBHelper*/
+	@RelatedColumn(localColumn = "school_id", remoteColumn = "id", dbHelperBean = "dbHelper")
 	private SchoolDO schoolDO;
 	
 	// @RelatedColumn(localColumn = "id", remoteColumn = "student_id")
