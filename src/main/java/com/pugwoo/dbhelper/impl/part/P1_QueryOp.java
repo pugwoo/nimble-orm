@@ -811,17 +811,27 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
                 String whereColumn = getWhereColumnForRelated(remoteField);
+                P1_QueryOp _dbHelper = this;
+                if (InnerCommonUtils.isNotBlank(column.dbHelperBean())) {
+                    Object bean = applicationContext.getBean(column.dbHelperBean());
+                    if (!(bean instanceof P1_QueryOp)) {
+                        LOGGER.error("cannot find DBHelper bean:{} or it is not type of SpringJdbcDBHelper",
+                                column.dbHelperBean());
+                    } else {
+                        _dbHelper = (P1_QueryOp) bean;
+                    }
+                }
 
                 if (InnerCommonUtils.isBlank(column.extraWhere())) {
                     String inExpr = whereColumn + " in " + buildQuestionMark(values);
-                    relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
+                    relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
                     // 如果extraWhere包含limit子句，那么只能降级为逐个处理，否则可以用批量处理的方式提高性能
                     if (SQLUtils.isContainsLimit(column.extraWhere())) {
                         try {
                             String eqExpr = whereColumn + "=?";
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), eqExpr);
-                            relateValues = getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
+                            relateValues = _dbHelper.getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
                         } catch (JSQLParserException e) {
                             LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
                             throw new BadSQLSyntaxException(e);
@@ -830,13 +840,16 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         try {
                             String inExpr = whereColumn + " in " + buildQuestionMark(values);
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
-                            relateValues = getAllForRelatedColumn(remoteDOClass, where, values);
+                            relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, where, values);
                         } catch (JSQLParserException e) {
                             LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
                             throw new BadSQLSyntaxException(e);
                         }
                     }
                 }
+            }
+            if (relateValues == null) {
+                relateValues = new ArrayList<>();
             }
 
             if (field.getType() == List.class) {
