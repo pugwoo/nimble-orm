@@ -810,25 +810,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 List<Object> valuesList = new ArrayList<>(values);
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
-                String whereColumn;
-                boolean isSingleColumn = remoteField.size() == 1;
-                StringBuilder sb = new StringBuilder(isSingleColumn ? "" : "(");
-                boolean isFirst = true;
-                for (Field remoteF : remoteField) {
-                    if (!isFirst) {
-                        sb.append(",");
-                    }
-                    isFirst = false;
-
-                    Column remoteColumn = remoteF.getAnnotation(Column.class);
-                    if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                        sb.append(SQLUtils.getColumnName(remoteColumn.value()));
-                    } else {
-                        sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
-                    }
-                }
-                sb.append(isSingleColumn ? "" : ")");
-                whereColumn = sb.toString();
+                String whereColumn = getWhereColumnForRelated(remoteField);
 
                 if (InnerCommonUtils.isBlank(column.extraWhere())) {
                     String inExpr = whereColumn + " in " + buildQuestionMark(values);
@@ -924,6 +906,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
             }
         }
+    }
+
+    /**获得用于查询remoteColumn的列，如果多个列时用加上()*/
+    private String getWhereColumnForRelated(List<Field> remoteField) {
+        boolean isSingleColumn = remoteField.size() == 1;
+        StringBuilder sb = new StringBuilder(isSingleColumn ? "" : "(");
+        boolean isFirst = true;
+        for (Field remoteF : remoteField) {
+            if (!isFirst) {
+                sb.append(",");
+            }
+            isFirst = false;
+
+            Column remoteColumn = remoteF.getAnnotation(Column.class);
+            if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
+                sb.append(SQLUtils.getColumnName(remoteColumn.value()));
+            } else {
+                sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
+            }
+        }
+        sb.append(isSingleColumn ? "" : ")");
+        return sb.toString();
     }
 
     private String buildQuestionMark(Set<Object> values) {
