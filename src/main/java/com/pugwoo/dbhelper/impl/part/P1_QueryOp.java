@@ -810,36 +810,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 List<Object> valuesList = new ArrayList<>(values);
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
-                String whereColumn;
-                boolean isSingleColumn = remoteField.size() == 1;
-                StringBuilder sb = new StringBuilder(isSingleColumn ? "" : "(");
-                boolean isFirst = true;
-                for (Field remoteF : remoteField) {
-                    if (!isFirst) {
-                        sb.append(",");
-                    }
-                    isFirst = false;
-
-                    Column remoteColumn = remoteF.getAnnotation(Column.class);
-                    if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                        sb.append(SQLUtils.getColumnName(remoteColumn.value()));
+                String whereColumn = getWhereColumnForRelated(remoteField);
+                P1_QueryOp _dbHelper = this;
+                if (InnerCommonUtils.isNotBlank(column.dbHelperBean())) {
+                    Object bean = applicationContext.getBean(column.dbHelperBean());
+                    if (!(bean instanceof P1_QueryOp)) {
+                        LOGGER.error("cannot find DBHelper bean:{} or it is not type of SpringJdbcDBHelper",
+                                column.dbHelperBean());
                     } else {
-                        sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
+                        _dbHelper = (P1_QueryOp) bean;
                     }
                 }
-                sb.append(isSingleColumn ? "" : ")");
-                whereColumn = sb.toString();
 
                 if (InnerCommonUtils.isBlank(column.extraWhere())) {
                     String inExpr = whereColumn + " in " + buildQuestionMark(values);
-                    relateValues = getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
+                    relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
                     // 如果extraWhere包含limit子句，那么只能降级为逐个处理，否则可以用批量处理的方式提高性能
                     if (SQLUtils.isContainsLimit(column.extraWhere())) {
                         try {
                             String eqExpr = whereColumn + "=?";
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), eqExpr);
-                            relateValues = getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
+                            relateValues = _dbHelper.getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
                         } catch (JSQLParserException e) {
                             LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
                             throw new BadSQLSyntaxException(e);
@@ -848,13 +840,16 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         try {
                             String inExpr = whereColumn + " in " + buildQuestionMark(values);
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
-                            relateValues = getAllForRelatedColumn(remoteDOClass, where, values);
+                            relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, where, values);
                         } catch (JSQLParserException e) {
                             LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
                             throw new BadSQLSyntaxException(e);
                         }
                     }
                 }
+            }
+            if (relateValues == null) {
+                relateValues = new ArrayList<>();
             }
 
             if (field.getType() == List.class) {
@@ -924,6 +919,28 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
             }
         }
+    }
+
+    /**获得用于查询remoteColumn的列，如果多个列时用加上()*/
+    private String getWhereColumnForRelated(List<Field> remoteField) {
+        boolean isSingleColumn = remoteField.size() == 1;
+        StringBuilder sb = new StringBuilder(isSingleColumn ? "" : "(");
+        boolean isFirst = true;
+        for (Field remoteF : remoteField) {
+            if (!isFirst) {
+                sb.append(",");
+            }
+            isFirst = false;
+
+            Column remoteColumn = remoteF.getAnnotation(Column.class);
+            if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
+                sb.append(SQLUtils.getColumnName(remoteColumn.value()));
+            } else {
+                sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
+            }
+        }
+        sb.append(isSingleColumn ? "" : ")");
+        return sb.toString();
     }
 
     private String buildQuestionMark(Set<Object> values) {
