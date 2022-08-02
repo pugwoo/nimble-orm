@@ -1,4 +1,7 @@
+2022年8月2日
 v1.3.2 - [add] @RelatedColumn支持指定DBHelper的bean名称来指定不同的数据源
+       - [add] @Column @RelatedColumn @Table @JoinTable 增加comment注释属性
+       - [upgrade] 升级jsqlparser到4.5
 
 2022年7月11日
 v1.3.1 - [enhance] 移除当@RelatedColumn使用conditional属性时，关联不上对象时打印的error日志(不影响结果正确性)
