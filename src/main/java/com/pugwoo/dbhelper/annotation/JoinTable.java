@@ -1,11 +1,11 @@
 package com.pugwoo.dbhelper.annotation;
 
+import com.pugwoo.dbhelper.enums.JoinTypeEnum;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 
 /**
  * Join表的注解
@@ -28,5 +28,10 @@ public @interface JoinTable {
 	 * join的关联条件，必须，left表别名为t1，right表别名为t2
 	 */
 	String on();
+
+	/**
+	 * 表注释
+	 */
+	String comment() default "";
 	
 }

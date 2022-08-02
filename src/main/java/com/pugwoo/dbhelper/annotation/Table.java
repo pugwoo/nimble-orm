@@ -22,5 +22,9 @@ public @interface Table {
 	 * 表别名，默认是t，该别名目前仅对查询操作生效
 	 */
 	String alias() default "t";
-	
+
+	/**
+	 * 表注释
+	 */
+	String comment() default "";
 }

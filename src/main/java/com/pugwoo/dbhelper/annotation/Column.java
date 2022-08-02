@@ -17,6 +17,11 @@ public @interface Column {
 	 * 列名
 	 */
 	String value();
+
+	/**
+	 * 列注释
+	 */
+	String comment() default "";
 	
 	/**
 	 * 标记该列是否转成json字符串存入数据库，此时数据库列的类型必须可以存放字符串
