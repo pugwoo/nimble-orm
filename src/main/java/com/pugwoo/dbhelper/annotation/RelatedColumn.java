@@ -30,6 +30,13 @@ public @interface RelatedColumn {
 	 * 必须，外部关联的表字段名称（不是java属性名）。多个用逗号隔开。
 	 */
 	String remoteColumn();
+
+	/**
+	 * 用于控制该RelateColumn是否启用的mvel脚本，其中使用变量t表示当前DO类实例。<br>
+	 * 当为空或返回true时启用该RelatedColumn属性，当返回false或mvel脚本报错时不启用。<br>
+	 * 说明：当正常返回false时，对于List的属性类型也会设置空List。但对于返回null或报错的情况，List属性值设置为null，更早暴露问题。
+	 */
+	String conditional() default "";
 	
 	/**
 	 * 当使用remoteColumn关联查询时，可以额外指定查询条件，
@@ -45,12 +52,5 @@ public @interface RelatedColumn {
 	 * 外部查询数据接口，该接口必须继承实现IDBHelperDataService
 	 */
 	Class<?> dataService() default void.class;
-
-	/**
-	 * 用于控制该RelateColumn是否启用的mvel脚本，其中使用变量t表示当前DO类实例。<br>
-	 * 当为空或返回true时启用该RelatedColumn属性，当返回false或mvel脚本报错时不启用。<br>
-	 * 说明：当正常返回false时，对于List的属性类型也会设置空List。但对于返回null或报错的情况，List属性值设置为null，更早暴露问题。
-	 */
-	String conditional() default "";
 
 }
