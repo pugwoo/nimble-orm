@@ -756,19 +756,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             List<T> tListFiltered = filterRelatedColumnConditional(tList, column.conditional(), field);
 
             if (InnerCommonUtils.isBlank(column.localColumn())) {
-                LOGGER.error("relatedColumn value is empty, field:{}", field);
-                continue;
+                throw new RelatedColumnFieldNotFoundException("field:" + field.getName() + " localColumn is blank");
             }
             if (InnerCommonUtils.isBlank(column.remoteColumn())) {
-                LOGGER.error("remoteColumn value is empty, field:{}", field);
-                continue;
+                throw new RelatedColumnFieldNotFoundException("field:" + field.getName() + " remoteColumn is blank");
             }
 
             List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
-            if (localField.isEmpty()) {
-                LOGGER.error("cannot find all localField, db column name:{}", column.localColumn());
-                continue;
-            }
 
             // 批量查询数据库，提高效率的关键
             Class<?> remoteDOClass;
@@ -779,10 +773,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
 
             List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn());
-            if (remoteField.isEmpty()) {
-                LOGGER.error("cannot find remoteField,db column name:{}", column.remoteColumn());
-                continue;
-            }
 
             Set<Object> values = new HashSet<>(); // 用于去重，同样适用于ArrayList
             for (T t : tListFiltered) {
@@ -813,10 +803,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 String whereColumn = getWhereColumnForRelated(remoteField);
                 P1_QueryOp _dbHelper = this;
                 if (InnerCommonUtils.isNotBlank(column.dbHelperBean())) {
-                    Object bean = applicationContext.getBean(column.dbHelperBean());
+                    String beanName = column.dbHelperBean().trim();
+                    Object bean = applicationContext.getBean(beanName);
                     if (!(bean instanceof P1_QueryOp)) {
-                        LOGGER.error("cannot find DBHelper bean:{} or it is not type of SpringJdbcDBHelper",
-                                column.dbHelperBean());
+                        throw new SpringBeanNotMatchException("cannot find DBHelper bean: " + beanName
+                                 + " or it is not type of SpringJdbcDBHelper");
                     } else {
                         _dbHelper = (P1_QueryOp) bean;
                     }

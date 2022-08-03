@@ -1,19 +1,8 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.annotation.ExcludeInheritedColumn;
-import com.pugwoo.dbhelper.annotation.JoinLeftTable;
-import com.pugwoo.dbhelper.annotation.JoinRightTable;
-import com.pugwoo.dbhelper.annotation.JoinTable;
-import com.pugwoo.dbhelper.annotation.RelatedColumn;
-import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
-import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
-import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
-import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
-import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,8 +71,8 @@ public class DOInfoReader {
 				}
 			}
 			if (!isFound) {
-				LOGGER.error("cannot found db field:{} in class:{}", dbField, clazz.getName());
-				return new ArrayList<>();
+				throw new RelatedColumnFieldNotFoundException("class: " + clazz.getName() +
+						" localColumn/remoteColumn: " + dbField + " not found");
 			}
 		}
 
