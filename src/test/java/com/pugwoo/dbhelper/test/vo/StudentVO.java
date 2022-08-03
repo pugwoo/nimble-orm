@@ -15,16 +15,17 @@ import java.util.List;
  */
 public class StudentVO extends StudentDO {
 
-	/**特别说明：dbHelperBean可以不用指定，这里只是测试指定DBHelper*/
-	@RelatedColumn(localColumn = "school_id", remoteColumn = "id", dbHelperBean = "dbHelper")
+	/**特别说明：dbHelperBean可以不用指定，这里只是测试指定DBHelper；这里remoteColumn故意用大写，也是可以自动匹配上的*/
+	@RelatedColumn(localColumn = "school_id", remoteColumn = "ID", dbHelperBean = "dbHelper")
 	private SchoolDO schoolDO;
 	
 	// @RelatedColumn(localColumn = "id", remoteColumn = "student_id")
 	@RelatedColumn(localColumn = "id", remoteColumn = "student_id", /*一定要写remoteColumn*/
 			dataService = IGetCourseByStudentIdDataService.class)
 	private List<CourseDO> courses;
-	
-	@RelatedColumn(localColumn = "id", remoteColumn = "student_id", extraWhere = "where is_main=1")
+
+	/**localColumn/remoteColumn故意用大写*/
+	@RelatedColumn(localColumn = "ID", remoteColumn = "Student_Id", extraWhere = "where is_main=1")
 	private List<CourseDO> mainCourses;
 	
 	// 计算列示例，生成的select字段为：CONCAT(name,'hi') AS nameWithHi
