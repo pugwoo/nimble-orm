@@ -64,14 +64,15 @@ public class DOInfoReader {
 			boolean isFound = false;
 			for(Field field : fields) {
 				Column column = field.getAnnotation(Column.class);
-				if(column.value().equals(dbField)) {
+				if(column.value().trim().equalsIgnoreCase(dbField)) {
 					result.add(field);
 					isFound = true;
 					break;
 				}
 			}
 			if (!isFound) {
-				throw new RelatedColumnFieldNotFoundException("@RelatedColumn field:"
+				throw new RelatedColumnFieldNotFoundException(relatedColumnField.getDeclaringClass().getName()
+						+ " @RelatedColumn field:"
 						+ relatedColumnField.getName() +
 						", column: " + dbField + " not found in class " + clazz.getName());
 			}
