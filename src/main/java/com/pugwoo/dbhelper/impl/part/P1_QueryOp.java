@@ -762,7 +762,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 throw new RelatedColumnFieldNotFoundException("field:" + field.getName() + " remoteColumn is blank");
             }
 
-            List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn());
+            List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn(), field);
 
             // 批量查询数据库，提高效率的关键
             Class<?> remoteDOClass;
@@ -772,7 +772,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 remoteDOClass = field.getType();
             }
 
-            List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn());
+            List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn(), field);
 
             Set<Object> values = new HashSet<>(); // 用于去重，同样适用于ArrayList
             for (T t : tListFiltered) {

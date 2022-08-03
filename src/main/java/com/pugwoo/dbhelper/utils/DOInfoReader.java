@@ -55,7 +55,7 @@ public class DOInfoReader {
 	 * @param dbFieldName 数据库字段名称，多个用逗号隔开
 	 * @return 如果不存在返回空数组，返回的Field的顺序和dbFieldName保持一致；只要有一个dbFieldName找不到，则返回空数组
 	 */
-	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName) {
+	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName, Field relatedColumnField) {
 		List<String> dbFieldNameList = InnerCommonUtils.split(dbFieldName, ",");
 		List<Field> fields = getColumns(clazz);
 		List<Field> result = new ArrayList<>();
@@ -71,8 +71,9 @@ public class DOInfoReader {
 				}
 			}
 			if (!isFound) {
-				throw new RelatedColumnFieldNotFoundException("class: " + clazz.getName() +
-						" localColumn/remoteColumn: " + dbField + " not found");
+				throw new RelatedColumnFieldNotFoundException("@RelatedColumn field:"
+						+ relatedColumnField.getName() +
+						", column: " + dbField + " not found in class " + clazz.getName());
 			}
 		}
 
