@@ -1,19 +1,8 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.annotation.ExcludeInheritedColumn;
-import com.pugwoo.dbhelper.annotation.JoinLeftTable;
-import com.pugwoo.dbhelper.annotation.JoinRightTable;
-import com.pugwoo.dbhelper.annotation.JoinTable;
-import com.pugwoo.dbhelper.annotation.RelatedColumn;
-import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
-import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
-import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
-import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
-import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
-import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +55,7 @@ public class DOInfoReader {
 	 * @param dbFieldName 数据库字段名称，多个用逗号隔开
 	 * @return 如果不存在返回空数组，返回的Field的顺序和dbFieldName保持一致；只要有一个dbFieldName找不到，则返回空数组
 	 */
-	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName) {
+	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName, Field relatedColumnField) {
 		List<String> dbFieldNameList = InnerCommonUtils.split(dbFieldName, ",");
 		List<Field> fields = getColumns(clazz);
 		List<Field> result = new ArrayList<>();
@@ -75,15 +64,17 @@ public class DOInfoReader {
 			boolean isFound = false;
 			for(Field field : fields) {
 				Column column = field.getAnnotation(Column.class);
-				if(column.value().equals(dbField)) {
+				if(column.value().trim().equalsIgnoreCase(dbField)) {
 					result.add(field);
 					isFound = true;
 					break;
 				}
 			}
 			if (!isFound) {
-				LOGGER.error("cannot found db field:{} in class:{}", dbField, clazz.getName());
-				return new ArrayList<>();
+				throw new RelatedColumnFieldNotFoundException(relatedColumnField.getDeclaringClass().getName()
+						+ " @RelatedColumn field:"
+						+ relatedColumnField.getName() +
+						", column: " + dbField + " not found in class " + clazz.getName());
 			}
 		}
 
