@@ -907,4 +907,16 @@ public class TestDBHelper_query {
         }
     }
 
+    @Test
+    public void testReadIfNull() {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName(null);
+        dbHelper.insert(schoolDO);
+
+        SchoolForReadNullDO one = dbHelper.getOne(SchoolForReadNullDO.class, "where id=?", schoolDO.getId());
+        assert one.getId().equals(schoolDO.getId());
+        assert schoolDO.getName() == null;
+        assert one.getName().equals("myname");
+    }
+
 }

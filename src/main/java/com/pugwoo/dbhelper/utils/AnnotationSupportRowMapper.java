@@ -105,6 +105,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 //							getFromRS(rs, column.value(), field),
 //							field.getType());
 					Object value = getFromRS(rs, column.value(), field);
+					if (value == null && InnerCommonUtils.isNotBlank(column.readIfNullScript())) {
+						value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.readIfNullScript());
+					}
 
 					DOInfoReader.setValue(field, obj, value);
 				}
@@ -155,8 +158,11 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 //			Object value = TypeAutoCast.cast(
 //					getFromRS(rs, columnName, field), field.getType());
 			Object value = getFromRS(rs, columnName, field);
-			if(value != null) {
+			if(value != null) { // 这个值是否为null直接来自于数据库，不受是否设置了column.readIfNullScript()的影响
 				isAllNull = false;
+			}
+			if (value == null && InnerCommonUtils.isNotBlank(column.readIfNullScript())) {
+				value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.readIfNullScript());
 			}
 			DOInfoReader.setValue(field, t, value);
 		}
