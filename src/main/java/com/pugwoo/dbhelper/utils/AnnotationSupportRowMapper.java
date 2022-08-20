@@ -101,9 +101,11 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
-					Object value = TypeAutoCast.cast(
-							getFromRS(rs, column.value(), field),
-							field.getType());
+//					Object value = TypeAutoCast.cast(
+//							getFromRS(rs, column.value(), field),
+//							field.getType());
+					Object value = getFromRS(rs, column.value(), field);
+
 					DOInfoReader.setValue(field, obj, value);
 				}
 			}
@@ -150,8 +152,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			} else {
 				columnName = tableAlias + "." + column.value();
 			}
-			Object value = TypeAutoCast.cast(
-					getFromRS(rs, columnName, field), field.getType());
+//			Object value = TypeAutoCast.cast(
+//					getFromRS(rs, columnName, field), field.getType());
+			Object value = getFromRS(rs, columnName, field);
 			if(value != null) {
 				isAllNull = false;
 			}
