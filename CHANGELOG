@@ -1,3 +1,6 @@
+
+v1.3.4 - [add] DBHelper增加getRawOne方法，支持只读取第一行
+
 2022年8月3日
 v1.3.3 - [enhance] 当RelatedColumn的localColumn和remoteColumn属性值有错时抛出异常，代替原来的error日志
        - [enhance] RelatedColumn的localColumn和remoteColumn属性不区分大小写
