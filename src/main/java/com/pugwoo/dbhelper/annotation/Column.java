@@ -96,6 +96,11 @@ public @interface Column {
 	boolean setTimeWhenDelete() default false;
 
 	/**
+	 * 设置当字段从数据库读取的值为null时，设置为该脚本返回的值
+	 */
+	String readIfNullScript() default "";
+
+	/**
 	 * 当设置了非空字符串时，在对象插入数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。<br>
 	 * mvel脚本中，可以通过t标识获取当前插入的对象。<br>
 	 * 从1.2版本起，仅当原值是null时，才自动执行脚本并设置脚本返回的值。
@@ -121,7 +126,7 @@ public @interface Column {
 	String deleteValueScript() default "";
 
 	/**
-	 * 当新增、修改、删除的mvel脚本执行出错时，是否忽略该错误，默认忽略。
+	 * 当查询、新增、修改、删除的mvel脚本执行出错时，是否忽略该错误，默认忽略并返回null。
 	 * 如果设置为不忽略，则会在脚本执行出错时，抛出异常ScriptErrorException。
 	 */
 	boolean ignoreScriptError() default true;
