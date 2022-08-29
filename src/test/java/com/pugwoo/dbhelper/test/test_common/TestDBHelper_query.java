@@ -9,6 +9,7 @@ import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
+import com.pugwoo.wooutils.collect.MapUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -764,6 +765,15 @@ public class TestDBHelper_query {
         List<Long> sum = dbHelper.getRaw(Long.class, "select sum(age) from t_student where name=?",
                 UUID.randomUUID().toString());
         assert sum.get(0) == 0;
+
+        // test get rawOne
+        Long sum2 = dbHelper.getRawOne(Long.class, "select sum(age) from t_student where name=?",
+                UUID.randomUUID().toString());
+        assert sum2 == 0;
+
+        sum2 = dbHelper.getRawOne(Long.class, "select sum(age) from t_student where name=:name",
+                MapUtils.of("name", UUID.randomUUID().toString()));
+        assert sum2 == 0;
     }
 
     @Test 
@@ -825,7 +835,6 @@ public class TestDBHelper_query {
         assert dates7.get(0) != null;
 
     }
-
     
     @Test
     public void testSum() {
@@ -896,6 +905,18 @@ public class TestDBHelper_query {
         for(StudentDO stu : all) {
             Assert.assertTrue(ids.contains(stu.getId()));
         }
+    }
+
+    @Test
+    public void testReadIfNull() {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName(null);
+        dbHelper.insert(schoolDO);
+
+        SchoolForReadNullDO one = dbHelper.getOne(SchoolForReadNullDO.class, "where id=?", schoolDO.getId());
+        assert one.getId().equals(schoolDO.getId());
+        assert schoolDO.getName() == null;
+        assert one.getName().equals("myname");
     }
 
 }

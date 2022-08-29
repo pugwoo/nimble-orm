@@ -371,6 +371,24 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public <T> T getRawOne(Class<T> clazz, String sql, Object... args) {
+        List<T> raw = getRaw(clazz, sql, args);
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        return raw.get(0);
+    }
+
+    @Override
+    public <T> T getRawOne(Class<T> clazz, String sql, Map<String, Object> args) {
+        List<T> raw = getRaw(clazz, sql, args);
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        return raw.get(0);
+    }
+
+    @Override
     @SuppressWarnings({"unchecked"})
     public <T> List<T> getByExample(T t, int limit) {
         Map<Field, String> filed2column = new HashMap<>();
