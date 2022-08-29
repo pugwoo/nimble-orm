@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,6 +39,8 @@ public class MyObjectMapper extends ObjectMapper {
 		module.addDeserializer(Date.class, deserializer);
 		
 		registerModule(module);
+
+		registerModule(new JavaTimeModule()); // 解析LocalDate等
 	}
 	
 }
