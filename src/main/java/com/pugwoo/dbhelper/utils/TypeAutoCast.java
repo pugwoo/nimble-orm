@@ -12,7 +12,6 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -188,7 +187,7 @@ public class TypeAutoCast {
 	/**
 	 * 转换基本类型
 	 */
-	public static BasicTypeResult transBasicType(Class<?> clazz, ResultSet rs) throws SQLException {
+	public static BasicTypeResult transBasicType(Class<?> clazz, ResultSet rs) throws Exception {
 		BasicTypeResult result = new BasicTypeResult();
 
 		if(clazz == String.class) {
@@ -233,39 +232,34 @@ public class TypeAutoCast {
 		}
 		if (clazz == java.util.Date.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
-				result.setValue(null);
-			} else {
-				// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
-				result.setValue(new Date(timestamp.getTime()));
-			}
+			Date date = getDate(rs, 1);
+			result.setValue(date);
 		}
 		if (clazz == LocalDateTime.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
+			Date date = getDate(rs, 1);
+			if (date == null) {
 				result.setValue(null);
 			} else {
-				result.setValue(timestamp.toLocalDateTime());
+				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 			}
 		}
 		if (clazz == LocalDate.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
+			Date date = getDate(rs, 1);
+			if (date == null) {
 				result.setValue(null);
 			} else {
-				result.setValue(timestamp.toLocalDateTime().toLocalDate());
+				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
 			}
 		}
 		if (clazz == LocalTime.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
+			Date date = getDate(rs, 1);
+			if (date == null) {
 				result.setValue(null);
 			} else {
-				result.setValue(timestamp.toLocalDateTime().toLocalTime());
+				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime());
 			}
 		}
 		if (clazz == java.sql.Date.class) {
