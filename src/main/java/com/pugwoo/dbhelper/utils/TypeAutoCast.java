@@ -58,8 +58,7 @@ public class TypeAutoCast {
 	 * 
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
-	public static Object getFromRS(ResultSet rs, String columnName, Field field)
-			throws SQLException {
+	public static Object getFromRS(ResultSet rs, String columnName, Field field) throws Exception {
 		int columnIndex = rs.findColumn(columnName);
 		Object result = rs.getObject(columnIndex);
 		if(result == null) { // 保证null会返回null值
@@ -119,12 +118,7 @@ public class TypeAutoCast {
 			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.util.Date.class) {
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
-				return null;
-			}
-			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
-			return new Date(timestamp.getTime());
+			return getDate(rs, columnIndex);
 		}
 		if (clazz == LocalDateTime.class) {
 			if (result instanceof LocalDateTime) {
@@ -167,6 +161,24 @@ public class TypeAutoCast {
 		}
 		
 		return result;
+	}
+
+	private static Date getDate(ResultSet rs, int columnIndex) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			if (timestamp == null) {
+				return null;
+			}
+			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
+			return new Date(timestamp.getTime());
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnIndex);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseThrowException(str.trim());
+		}
 	}
 
 	/**
