@@ -17,6 +17,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -118,37 +119,40 @@ public class TypeAutoCast {
 			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.util.Date.class) {
+			if (result instanceof java.util.Date) {
+				return result;
+			}
 			return getDate(rs, columnIndex);
 		}
 		if (clazz == LocalDateTime.class) {
 			if (result instanceof LocalDateTime) {
 				return result;
 			}
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
+			Date date = getDate(rs, columnIndex);
+			if (date == null) {
 				return null;
 			}
-			return timestamp.toLocalDateTime();
+			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 		}
 		if (clazz == LocalDate.class) {
 			if (result instanceof LocalDate) {
 				return result;
 			}
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
+			Date date = getDate(rs, columnIndex);
+			if (date == null) {
 				return null;
 			}
-			return timestamp.toLocalDateTime().toLocalDate();
+			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 		}
 		if (clazz == LocalTime.class) {
 			if (result instanceof LocalTime) {
 				return result;
 			}
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
+			Date date = getDate(rs, columnIndex);
+			if (date == null) {
 				return null;
 			}
-			return timestamp.toLocalDateTime().toLocalTime();
+			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
 		}
 		if (clazz == java.sql.Date.class) {
 			return result instanceof java.sql.Date ? result : rs.getDate(columnIndex);
