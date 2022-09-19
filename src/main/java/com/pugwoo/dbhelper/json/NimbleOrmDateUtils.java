@@ -63,7 +63,15 @@ public class NimbleOrmDateUtils {
 			throw new ParseException("cannot parse date: \"" + date +
 					"\". Supported formats: " + DATE_FORMAT_REGEXPS.values(), -1);
 		}
-		return new SimpleDateFormat(pattern).parse(date);
+
+		try {
+			return new SimpleDateFormat(pattern).parse(date);
+		} catch (Exception e) {
+			if ("0000-00-00 00:00:00".equals(date) || "0000-00-00".equals(date)) {
+				return null;
+			}
+			throw e;
+		}
 	}
 
 	private static Date tryParseTimestamp(String date) {

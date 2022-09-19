@@ -101,9 +101,6 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 				for (Field field : fields) {
 					Column column = field.getAnnotation(Column.class);
-//					Object value = TypeAutoCast.cast(
-//							getFromRS(rs, column.value(), field),
-//							field.getType());
 					Object value = getFromRS(rs, column.value(), field);
 					if (value == null && InnerCommonUtils.isNotBlank(column.readIfNullScript())) {
 						value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.readIfNullScript());
@@ -123,7 +120,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	/**当列不存在时，默认warn log出来，支持配置为抛出异常*/
 	private Object getFromRS(ResultSet rs,
 							 String columnName,
-							 Field field) throws SQLException {
+							 Field field) throws Exception {
 		if (dbHelper instanceof P0_JdbcTemplateOp) {
 			boolean throwErrorIfColumnNotExist =
 					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
@@ -145,7 +142,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
-	private boolean handleFieldAndIsAllFieldNull(List<Field> fields, String tableAlias, Object t, ResultSet rs) throws SQLException{
+	private boolean handleFieldAndIsAllFieldNull(List<Field> fields, String tableAlias, Object t, ResultSet rs) throws Exception{
 		boolean isAllNull = true;
 		for (Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
@@ -155,8 +152,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			} else {
 				columnName = tableAlias + "." + column.value();
 			}
-//			Object value = TypeAutoCast.cast(
-//					getFromRS(rs, columnName, field), field.getType());
+
 			Object value = getFromRS(rs, columnName, field);
 			if(value != null) { // 这个值是否为null直接来自于数据库，不受是否设置了column.readIfNullScript()的影响
 				isAllNull = false;

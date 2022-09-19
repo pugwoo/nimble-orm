@@ -12,11 +12,11 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,8 +58,7 @@ public class TypeAutoCast {
 	 * 
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
-	public static Object getFromRS(ResultSet rs, String columnName, Field field)
-			throws SQLException {
+	public static Object getFromRS(ResultSet rs, String columnName, Field field) throws Exception {
 		int columnIndex = rs.findColumn(columnName);
 		Object result = rs.getObject(columnIndex);
 		if(result == null) { // 保证null会返回null值
@@ -119,42 +118,40 @@ public class TypeAutoCast {
 			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.util.Date.class) {
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
-				return null;
+			if (result instanceof java.util.Date) {
+				return result;
 			}
-			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
-			return new Date(timestamp.getTime());
+			return getDate(rs, columnIndex);
 		}
 		if (clazz == LocalDateTime.class) {
 			if (result instanceof LocalDateTime) {
 				return result;
 			}
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
+			Date date = getDate(rs, columnIndex);
+			if (date == null) {
 				return null;
 			}
-			return timestamp.toLocalDateTime();
+			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 		}
 		if (clazz == LocalDate.class) {
 			if (result instanceof LocalDate) {
 				return result;
 			}
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
+			Date date = getDate(rs, columnIndex);
+			if (date == null) {
 				return null;
 			}
-			return timestamp.toLocalDateTime().toLocalDate();
+			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 		}
 		if (clazz == LocalTime.class) {
 			if (result instanceof LocalTime) {
 				return result;
 			}
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
-			if (timestamp == null) {
+			Date date = getDate(rs, columnIndex);
+			if (date == null) {
 				return null;
 			}
-			return timestamp.toLocalDateTime().toLocalTime();
+			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
 		}
 		if (clazz == java.sql.Date.class) {
 			return result instanceof java.sql.Date ? result : rs.getDate(columnIndex);
@@ -169,10 +166,28 @@ public class TypeAutoCast {
 		return result;
 	}
 
+	private static Date getDate(ResultSet rs, int columnIndex) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			if (timestamp == null) {
+				return null;
+			}
+			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
+			return new Date(timestamp.getTime());
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnIndex);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseThrowException(str.trim());
+		}
+	}
+
 	/**
 	 * 转换基本类型
 	 */
-	public static BasicTypeResult transBasicType(Class<?> clazz, ResultSet rs) throws SQLException {
+	public static BasicTypeResult transBasicType(Class<?> clazz, ResultSet rs) throws Exception {
 		BasicTypeResult result = new BasicTypeResult();
 
 		if(clazz == String.class) {
@@ -217,39 +232,34 @@ public class TypeAutoCast {
 		}
 		if (clazz == java.util.Date.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
-				result.setValue(null);
-			} else {
-				// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
-				result.setValue(new Date(timestamp.getTime()));
-			}
+			Date date = getDate(rs, 1);
+			result.setValue(date);
 		}
 		if (clazz == LocalDateTime.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
+			Date date = getDate(rs, 1);
+			if (date == null) {
 				result.setValue(null);
 			} else {
-				result.setValue(timestamp.toLocalDateTime());
+				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 			}
 		}
 		if (clazz == LocalDate.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
+			Date date = getDate(rs, 1);
+			if (date == null) {
 				result.setValue(null);
 			} else {
-				result.setValue(timestamp.toLocalDateTime().toLocalDate());
+				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
 			}
 		}
 		if (clazz == LocalTime.class) {
 			result.setBasicType(true);
-			Timestamp timestamp = rs.getTimestamp(1);
-			if (timestamp == null) {
+			Date date = getDate(rs, 1);
+			if (date == null) {
 				result.setValue(null);
 			} else {
-				result.setValue(timestamp.toLocalDateTime().toLocalTime());
+				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime());
 			}
 		}
 		if (clazz == java.sql.Date.class) {
@@ -271,7 +281,7 @@ public class TypeAutoCast {
 			int columns = md.getColumnCount();
 			Map<String, Object> map = new HashMap<>(columns);
 			for (int i = 1; i <= columns; i++) {
-				map.put(md.getColumnName(i), rs.getObject(i));
+				map.put(md.getColumnLabel(i), rs.getObject(i));
 			}
 			result.setValue(map);
 		}
