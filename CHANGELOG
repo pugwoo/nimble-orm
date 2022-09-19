@@ -1,4 +1,5 @@
-v1.3.5 - [enhance] 对不支持rs.getTimestamp的驱动，增加orm解析Date的支持
+v1.3.5 - [fix] 修复getRaw传递Map.class时，无法拿到字段as别名的bug
+       - [enhance] 对不支持rs.getTimestamp的驱动，增加orm解析Date的支持
        - [enhance] 支持全为0000-00-00 00:00:00的日期的解析，低版本java可能解析失败
 
 2022年8月29日

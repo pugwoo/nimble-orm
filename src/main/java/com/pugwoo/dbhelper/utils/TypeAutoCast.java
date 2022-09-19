@@ -281,7 +281,7 @@ public class TypeAutoCast {
 			int columns = md.getColumnCount();
 			Map<String, Object> map = new HashMap<>(columns);
 			for (int i = 1; i <= columns; i++) {
-				map.put(md.getColumnName(i), rs.getObject(i));
+				map.put(md.getColumnLabel(i), rs.getObject(i));
 			}
 			result.setValue(map);
 		}
