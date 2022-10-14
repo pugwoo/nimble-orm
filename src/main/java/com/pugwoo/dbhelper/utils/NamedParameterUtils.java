@@ -70,11 +70,15 @@ public class NamedParameterUtils {
 				// 转换后，对于param是空的List或Set，则List或Set插入一个很长的不可能被用户撞上的值
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
-						((List<Object>) param).add(MAGIC_FOR_EMPTY_COLLECTION);
+						List<String> list = new ArrayList<>(1);
+						list.add(MAGIC_FOR_EMPTY_COLLECTION);
+						param = list;
 					}
 				} else if (param instanceof Set<?>) {
 					if(((Set<?>) param).isEmpty()) {
-						((Set<Object>) param).add(MAGIC_FOR_EMPTY_COLLECTION);
+						Set<String> set = new HashSet<>(1);
+						set.add(MAGIC_FOR_EMPTY_COLLECTION);
+						param = set;
 					}
 				}
 				
