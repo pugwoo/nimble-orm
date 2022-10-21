@@ -1,4 +1,5 @@
 v1.3.6 - [enhance] 对空List的SQL参数进行自动处理时，不改变原List的值
+       - [enhance] 对于字段是java.util.Date类型，明确转换为java.util.Date类型，不再使用其子类例如java.sql.Date
 
 2022年9月19日
 v1.3.5 - [fix] 修复getRaw传递Map.class时，无法拿到字段as别名的bug
