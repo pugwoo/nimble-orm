@@ -1,3 +1,8 @@
+2022年10月21日
+v1.3.6 - [enhance] 对空List的SQL参数进行自动处理时，不改变原List的值
+       - [enhance] 对于字段是java.util.Date类型，明确转换为java.util.Date类型，不再使用其子类例如java.sql.Date
+       - [enhance] 对于where in的空list查询，自动补充null，代替魔数，此方案对clickhouse的类型兼容性更好
+
 2022年9月19日
 v1.3.5 - [fix] 修复getRaw传递Map.class时，无法拿到字段as别名的bug
        - [enhance] 对不支持rs.getTimestamp的驱动，增加orm解析Date的支持

@@ -20,6 +20,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 2015年8月22日 16:58:48
@@ -118,7 +119,8 @@ public class TypeAutoCast {
 			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.util.Date.class) {
-			if (result instanceof java.util.Date) {
+			// 说明：这里要严格匹配，因为java.sql.Date是java.util.Date的子类，但行为不同
+			if (Objects.equals(result.getClass(), java.util.Date.class)) {
 				return result;
 			}
 			return getDate(rs, columnIndex);
