@@ -18,10 +18,6 @@ public class NamedParameterUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NamedParameterUtils.class);
 	
-	// sha256 from Pugwoo Chia's nimble-ORM
-	private final static String MAGIC_FOR_EMPTY_COLLECTION =
-			"KCIN450DB9DF910D25F80428D4A9BAB4FA36F45D0A15F0AC5B83AFC389D386F1AE9C";
-	
 	@SuppressWarnings("unchecked")
 	public static Map<String, Object> transParam(List<Object> params) {
 		Map<String, Object> map = new HashMap<>();
@@ -67,14 +63,18 @@ public class NamedParameterUtils {
 					}
 				}
 				
-				// 转换后，对于param是空的List或Set，则List或Set插入一个很长的不可能被用户撞上的值
+				// 转换后，对于param是空的List或Set，则List或Set插入null
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
-						((List<Object>) param).add(MAGIC_FOR_EMPTY_COLLECTION);
+						List<String> list = new ArrayList<>(1);
+						list.add(null);
+						param = list;
 					}
 				} else if (param instanceof Set<?>) {
 					if(((Set<?>) param).isEmpty()) {
-						((Set<Object>) param).add(MAGIC_FOR_EMPTY_COLLECTION);
+						Set<String> set = new HashSet<>(1);
+						set.add(null);
+						param = set;
 					}
 				}
 				
