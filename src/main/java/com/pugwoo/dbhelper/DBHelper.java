@@ -8,6 +8,7 @@ import com.pugwoo.dbhelper.model.PageData;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * 2015年8月17日 18:18:57
@@ -46,6 +47,12 @@ public interface DBHelper {
 	 * @param maxPageSize 允许的每页最大的个数
 	 */
 	void setMaxPageSize(int maxPageSize);
+
+	/**
+	 * 对于流式Stream获取数据的，可以指定fetchSize大小，默认1000
+	 * @param fetchSize fetchSize
+	 */
+	void setFetchSize(int fetchSize);
 	
 	/**
 	 * 设置SQL执行超时回调，可用于自行实现将慢sql存放到db
@@ -220,6 +227,17 @@ public interface DBHelper {
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz);
+
+	/**
+	 * 查询列表，查询所有记录，以Stream形式返回<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 * 说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @return 返回不会是null
+	 */
+	<T> Stream<T> getAllForStream(Class<T> clazz);
 	
 	/**
 	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。<br>
@@ -229,7 +247,19 @@ public interface DBHelper {
 	 * @return 返回不会是null
 	 */
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
-	
+
+	/**
+	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。以Stream形式返回<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 *  说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param postSql where及后续语句，可包含order by,group by,limit等语句
+	 * @return 返回不会是null
+	 */
+	<T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args);
+
 	/**
 	 * 查询列表，但只查询主键出来，postSql指定查询where及order by limit等后续语句。<br>
 	 * 【会自动处理软删除记录】
@@ -278,6 +308,28 @@ public interface DBHelper {
 	<T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args);
 
 	/**
+	 * 执行自行指定的SQL查询语句，以流Stream的形式返回。<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 * 说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * @param clazz 转换回来的DO类，也支持关联查询后处理；支持基本类型如Integer/Long/String等; 特别说明，对于Long和Integer，如果数据库返回的是null，由于ResultSet的getInt会返回0，所以这里也返回0
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 */
+	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL查询语句，支持通过namedParameter的方式传入参数，放到args里面，以流Stream的形式返回。<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 * 说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * @param clazz 转换回来的DO类，也支持关联查询后处理；支持基本类型如Integer/Long/String等; 特别说明，对于Long和Integer，如果数据库返回的是null，由于ResultSet的getInt会返回0，所以这里也返回0
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 */
+	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, Object> args);
+
+	/**
 	 * 执行自行指定的SQL查询语句，只返回第一行
 	 * （特别说明，当有多行时也只返回第一行而不会失败或告警）
 	 *
@@ -304,6 +356,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
 	 */
+	@Deprecated
 	long getRawCount(String sql, Object... args);
 
 	/**
@@ -311,6 +364,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
 	 */
+	@Deprecated
 	long getRawCount(String sql, Map<String, Object> args);
 
 	/**

@@ -37,6 +37,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
+	protected int fetchSize = 1000; // Stream流式获取数据的fetchSize大小，默认1000（一般jdbc各数据库驱动的默认值是10，过小了）
 	
 	protected ApplicationContext applicationContext;
 	
@@ -198,6 +199,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	@Override
 	public void setMaxPageSize(int maxPageSize) {
 		this.maxPageSize = maxPageSize;
+	}
+
+	@Override
+	public void setFetchSize(int fetchSize) {
+		this.fetchSize = fetchSize;
 	}
 
 	@Override
