@@ -9,6 +9,7 @@
 
 	<modules>
         <module>nimble-orm</module>
+		<module>nimble-orm-test-mysql</module>
 	</modules>
 
 </project>
