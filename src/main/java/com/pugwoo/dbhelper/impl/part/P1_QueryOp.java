@@ -21,6 +21,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Stream;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
@@ -262,6 +263,62 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public <T> Stream<T> getAllForStream(Class<T> clazz) {
+        return getAllForStream(clazz, "");
+    }
+
+    @Override
+    public <T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args) {
+        jdbcTemplate.setFetchSize(fetchSize);
+
+        StringBuilder sqlSB = new StringBuilder();
+        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, postSql));
+        sqlSB.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
+
+        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
+        if (args != null) {
+            argsList.addAll(Arrays.asList(args));
+        }
+
+        doInterceptBeforeQuery(clazz, sqlSB, argsList);
+
+        String sql = sqlSB.toString();
+        sql = addComment(sql);
+        log(sql, argsList);
+
+        long start = System.currentTimeMillis();
+
+        Stream<T> list;
+
+        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz);
+        if (argsList.isEmpty()) {
+            list = jdbcTemplate.queryForStream(sql, mapper);
+        } else {
+            // 因为有in (?)所以用namedParameterJdbcTemplate
+            list = namedParameterJdbcTemplate.queryForStream(
+                    NamedParameterUtils.trans(sql, argsList),
+                    NamedParameterUtils.transParam(argsList),
+                    mapper);
+        }
+
+        Stream<T> result;
+        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
+        if (!relatedColumns.isEmpty()) {
+            result = InnerCommonUtils.partition(list, fetchSize)
+                    .peek(this::handleRelatedColumn)
+                    .flatMap(Collection::stream);
+        } else {
+            result = list;
+        }
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql, argsList);
+
+        // stream方式不支持doInterceptorAfterQueryList
+        return result;
+    }
+
+    @Override
     public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
@@ -298,12 +355,56 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return getRawByNamedParam(clazz, sql, args);
     }
 
+    @Override
+    public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, Object> args) {
+        return getRawByNamedParamForStream(clazz, sql, args);
+    }
+
+    private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, Object> args) {
+        jdbcTemplate.setFetchSize(fetchSize);
+
+        List<Object> forIntercept = new ArrayList<>();
+        if (args != null) {
+            forIntercept.add(args);
+        }
+        doInterceptBeforeQuery(clazz, sql, forIntercept);
+
+        sql = addComment(sql);
+        log(sql, forIntercept);
+        long start = System.currentTimeMillis();
+
+
+        Stream<T> stream;
+        if (args == null || args.isEmpty()) {
+            stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
+        } else {
+            stream = namedParameterJdbcTemplate.queryForStream(sql, args,
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
+        }
+
+        Stream<T> result;
+        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
+        if (!relatedColumns.isEmpty()) {
+            result = InnerCommonUtils.partition(stream, fetchSize)
+                    .peek(this::handleRelatedColumn)
+                    .flatMap(Collection::stream);
+        } else {
+            result = stream;
+        }
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql, forIntercept);
+
+        // stream方式不支持doInterceptorAfterQueryList
+        return result;
+    }
+
     private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, Object> args) {
         List<Object> forIntercept = new ArrayList<>();
         if (args != null) {
             forIntercept.add(args);
         }
-
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
         sql = addComment(sql);
@@ -330,6 +431,53 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args) {
+        // 解决如果java选择错重载的问题
+        if (args != null && args.length == 1 && args[0] instanceof Map) {
+            return getRawByNamedParamForStream(clazz, sql, (Map<String, Object>)(args[0]));
+        }
+
+        jdbcTemplate.setFetchSize(fetchSize);
+
+        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
+        if (args != null) {
+            argsList.addAll(Arrays.asList(args));
+        }
+        doInterceptBeforeQuery(clazz, sql, argsList);
+
+        sql = addComment(sql);
+        log(sql, argsList);
+
+        long start = System.currentTimeMillis();
+        Stream<T> stream;
+        if (argsList.isEmpty()) {
+            stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
+        } else {
+            stream = namedParameterJdbcTemplate.queryForStream(
+                    NamedParameterUtils.trans(sql, argsList),
+                    NamedParameterUtils.transParam(argsList),
+                    new AnnotationSupportRowMapper<>(this, clazz, false));
+        }
+
+        Stream<T> result;
+        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
+        if (!relatedColumns.isEmpty()) {
+            result = InnerCommonUtils.partition(stream, fetchSize)
+                    .peek(this::handleRelatedColumn)
+                    .flatMap(Collection::stream);
+        } else {
+            result = stream;
+        }
+
+        long cost = System.currentTimeMillis() - start;
+        logSlow(cost, sql, argsList);
+
+        // stream方式不支持doInterceptorAfterQueryList
+        return result;
+    }
+
+    @Override
     @SuppressWarnings({"unchecked"})
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
         // 解决如果java选择错重载的问题
@@ -341,7 +489,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
-
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         sql = addComment(sql);

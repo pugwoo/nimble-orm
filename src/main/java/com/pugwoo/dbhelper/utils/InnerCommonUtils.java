@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 内部常用工具类
@@ -62,6 +63,19 @@ public class InnerCommonUtils {
             }
         }
         return list;
+    }
+
+    public static <T> Stream<List<T>> partition(Stream<T> stream, int groupNum) {
+        List<List<T>> currentBatch = new ArrayList<>(); //just to make it mutable
+        currentBatch.add(new ArrayList<>(groupNum));
+        return Stream.concat(stream
+                .sequential()
+                .map(t -> {
+                    currentBatch.get(0).add(t);
+                    return currentBatch.get(0).size() == groupNum ? currentBatch.set(0,new ArrayList<>(groupNum)) : null;
+                }), Stream.generate(() -> currentBatch.get(0).isEmpty() ? null : currentBatch.get(0))
+                .limit(1)
+        ).filter(Objects::nonNull);
     }
 
     /**
