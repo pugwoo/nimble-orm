@@ -10,6 +10,7 @@
 	<modules>
         <module>nimble-orm</module>
 		<module>nimble-orm-test-mysql</module>
+		<module>nimble-orm-test-clickhouse</module>
 	</modules>
 
 </project>
