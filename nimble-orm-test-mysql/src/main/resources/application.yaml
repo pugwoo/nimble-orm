@@ -1,6 +1,3 @@
 spring:
-  datasource:
-    url: jdbc:mysql://192.168.0.111:3306/nimbleorm?rewriteBatchedStatements=TRUE&useCursorFetch=true
-    username: dev
-    password: devdev
-    driver-class-name: com.mysql.cj.jdbc.Driver
+  profiles:
+    active: mysql
