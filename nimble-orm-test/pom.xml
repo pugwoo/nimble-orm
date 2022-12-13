@@ -12,10 +12,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.pugwoo</groupId>
-	<artifactId>nimble-orm-test-mysql</artifactId>
+	<artifactId>nimble-orm-test</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>nimble-orm-test-mysql</name>
-	<description>nimble-orm-test-mysql</description>
+	<name>nimble-orm-test</name>
+	<description>nimble-orm-test</description>
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
