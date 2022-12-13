@@ -62,6 +62,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			LOGGER.debug("ExecSQL:{},params:{}", sql, keyValues);
 		}
 	}
+
+	protected void logForBatchInsert(String sql, int listSize, Object[] firstRow) {
+		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+			LOGGER.info("ExecSQL:{},batch insert list size:{}, first row is:{}", sql, listSize, firstRow);
+		} else {
+			LOGGER.debug("ExecSQL:{},batch insert list size:{}, first row is:{}", sql, listSize, firstRow);
+		}
+	}
 	
 	protected void logSlow(long cost, String sql, List<Object> keyValues) {
 		if(cost > timeoutWarningValve) {

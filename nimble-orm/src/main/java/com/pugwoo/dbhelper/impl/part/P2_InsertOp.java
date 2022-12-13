@@ -101,7 +101,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		List<Object[]> values = new ArrayList<>();
 		String sql = SQLUtils.getInsertSQLForBatch(list, values);
 		sql = addComment(sql);
-		log(sql, values);
+		logForBatchInsert(sql, values.size(), values.isEmpty() ? null : values.get(0));
 
 		final long start = System.currentTimeMillis();
 

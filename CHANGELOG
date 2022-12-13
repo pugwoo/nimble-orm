@@ -1,3 +1,5 @@
+v1.3.8 - [enhance] 优化批量插入的SQL log
+
 2022年10月28日
 v1.3.7 - [add] 支持Stream流式查询方法：getAllForStream和getRawForStream方法
        - [deprecated] 标记废弃getRawCount方法

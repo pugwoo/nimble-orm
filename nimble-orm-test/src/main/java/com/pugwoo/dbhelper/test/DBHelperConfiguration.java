@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,7 @@ public class DBHelperConfiguration {
     public DBHelper dbHelper(JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
         dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
         return dbHelper;
     }
 
