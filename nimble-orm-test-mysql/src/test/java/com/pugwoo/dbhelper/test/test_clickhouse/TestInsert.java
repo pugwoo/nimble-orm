@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.test_clickhouse.entity.StudentDO;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -19,6 +20,7 @@ public class TestInsert {
     private DBHelper dbHelper;
 
     @Test
+    @EnabledIfSystemProperty(named = "spring.profiles.active", matches = "clickhouse")
     public void testInsert() {
         StudentDO student = new StudentDO();
         student.setId(new Random().nextLong());
@@ -31,6 +33,7 @@ public class TestInsert {
     }
 
     @Test
+    @EnabledIfSystemProperty(named = "spring.profiles.active", matches = "clickhouse")
     public void testBatch() {
         List<StudentDO> list = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
