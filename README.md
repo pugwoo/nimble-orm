@@ -27,7 +27,7 @@
 
 ## Get Started 示例
 
-把代码下载后，可以以Maven项目方式导入到IDE中，数据库链接配置在`src/test/resources/jdbc.properties`中，数据库测试建表语句在`create-table.sql`中。建好数据库和表之后，就可以执行`TestDBHelper.java`中的例子。
+把代码下载后，可以以Maven项目方式导入到IDE中，数据库链接配置在`src/test/resources/jdbc.properties`中，数据库测试建表语句在`create-table-mysql.sql`中。建好数据库和表之后，就可以执行`TestDBHelper.java`中的例子。
 
 在Java DAO层，一般一个DO对象和一张数据库表是一一对应的。你只需要为DO对象加上一些注解，主要注解哪个表和哪些列，就可以方便地使用DBHelper进行增删改查了。
 
@@ -67,7 +67,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>1.3.7</version>
+    <version>1.4.0</version>
 </dependency>
 ```
 

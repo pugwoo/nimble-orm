@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: mysql
+
+# 是否运行压测测试
+runBenchmarkTest: false
+# 是否运行异常测试
+runExceptionTest: false
