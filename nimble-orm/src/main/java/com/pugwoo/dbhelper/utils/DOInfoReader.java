@@ -33,6 +33,13 @@ public class DOInfoReader {
 	public static Table getTable(Class<?> clazz) throws NoTableAnnotationException {
 		Table table = getAnnotationClass(clazz, Table.class);
 		if (table != null) {
+			if (table.sameTableNameAs() != void.class) {
+				if (InnerCommonUtils.isNotBlank(table.value())) {
+					LOGGER.warn("class:{} @Table annotation value:{} is ignored because @Table.sameTableNameAs is not void.class, it is {}",
+							clazz, table.value(), table.sameTableNameAs());
+				}
+				return getTable(table.sameTableNameAs());
+			}
 			return table;
 		}
 		
