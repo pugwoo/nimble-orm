@@ -1,4 +1,5 @@
-v1.4.1 - [deprecated] 标记废除@ExcludeInheritedColumn，推荐使用@Table的sameTableNameAs指定表名或直接指定表名
+v1.4.1 - [add] 支持JoinTable中写@RelatedColumn
+       - [deprecated] 标记废除@ExcludeInheritedColumn，推荐使用@Table的sameTableNameAs指定表名或直接指定表名
 
 2022年12月14日
 v1.4.0 - [enhance] 将单元测试代码独立出来

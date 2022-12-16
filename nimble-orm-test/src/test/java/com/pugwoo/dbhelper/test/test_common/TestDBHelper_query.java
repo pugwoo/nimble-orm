@@ -9,6 +9,7 @@ import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
+import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -482,7 +483,7 @@ public class TestDBHelper_query {
         assert list.isEmpty();
     }
 
-    @Test 
+    @Test
     public void testGetJoin() {
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("sysu");
@@ -501,6 +502,14 @@ public class TestDBHelper_query {
         for(StudentSchoolJoinVO vo : pageData.getData()) {
             assert vo.getStudentDO() != null;
         }
+
+        List<StudentSchoolJoinVO> all = dbHelper.getAll(StudentSchoolJoinVO.class, "where t1.id in (?)",
+                ListUtils.newList(studentDO.getId(), studentDO2.getId()));
+        assert all.size() == 2;
+        assert all.get(0).getSchoolDO2().getId().equals(schoolDO.getId());
+        assert all.get(1).getSchoolDO2().getId().equals(schoolDO.getId());
+        assert all.get(0).getSchoolDO().getId().equals(schoolDO.getId());
+        assert all.get(1).getSchoolDO().getId().equals(schoolDO.getId());
 
         pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
                 "where t1.name like ?", "nick%");

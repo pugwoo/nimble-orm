@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.utils;
 
 import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
+import com.pugwoo.dbhelper.enums.JoinTableEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import org.slf4j.Logger;
@@ -57,14 +58,35 @@ public class DOInfoReader {
 	}
 	
 	/**
-	 * 从db字段名拿字段对象
+	 * 从db字段名拿字段对象。<br>
+	 * 新增支持@JoinTable的支持，可以获得JoinTable类中的对象的Field
 	 * @param clazz DO类
 	 * @param dbFieldName 数据库字段名称，多个用逗号隔开
 	 * @return 如果不存在返回空数组，返回的Field的顺序和dbFieldName保持一致；只要有一个dbFieldName找不到，则返回空数组
 	 */
-	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName, Field relatedColumnField) {
+	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName, Field relatedColumnField,
+												JoinTableEnum joinTableEnum) {
 		List<String> dbFieldNameList = InnerCommonUtils.split(dbFieldName, ",");
-		List<Field> fields = getColumns(clazz);
+		List<Field> fields =  null;
+		if (joinTableEnum == null || joinTableEnum == JoinTableEnum.NOT_USE) {
+			fields = getColumns(clazz);
+		} else {
+			Field joinField = null;
+			if (joinTableEnum == JoinTableEnum.LEFT) {
+				joinField = DOInfoReader.getJoinLeftTable(clazz);
+			} else if (joinTableEnum == JoinTableEnum.RIGHT) {
+				joinField = DOInfoReader.getJoinRightTable(clazz);
+			}
+			if (joinField == null) {
+				throw new RelatedColumnFieldNotFoundException(relatedColumnField.getDeclaringClass().getName()
+						+ " @RelatedColumn field:"
+						+ relatedColumnField.getName() +
+						", join table field not found in class " + clazz.getName());
+			} else {
+				fields = getColumns(joinField.getType());
+			}
+		}
+
 		List<Field> result = new ArrayList<>();
 
 		for (String dbField : dbFieldNameList) {
@@ -349,9 +371,25 @@ public class DOInfoReader {
 	 * 当fields只有一个时，返回的是对象本身；否则是一个List，里面是按顺序的fields的多个值
 	 * @return 当fields为空，返回null
 	 */
-	public static Object getValueForRelatedColumn(List<Field> fields, Object object) {
+	public static Object getValueForRelatedColumn(List<Field> fields, Object object, JoinTableEnum joinTableEnum) {
 		if (fields == null || fields.isEmpty()) {
 			return null;
+		}
+
+		// 支持joinTable从join左表或右表中拿到对应field的值
+		if (joinTableEnum != null && joinTableEnum != JoinTableEnum.NOT_USE) {
+			Field joinField = null;
+			if (joinTableEnum == JoinTableEnum.LEFT) {
+				joinField = DOInfoReader.getJoinLeftTable(object.getClass());
+			} else if (joinTableEnum == JoinTableEnum.RIGHT) {
+				joinField = DOInfoReader.getJoinRightTable(object.getClass());
+			}
+			if (joinField == null) {
+				throw new RelatedColumnFieldNotFoundException(object.getClass().getName()
+						+ " cannot get " + joinTableEnum.getCode() + " join table field");
+			} else {
+				object = getValue(joinField, object);
+			}
 		}
 
 		if (fields.size() == 1) {

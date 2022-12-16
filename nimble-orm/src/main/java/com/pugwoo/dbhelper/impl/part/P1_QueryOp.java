@@ -49,7 +49,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     new AnnotationSupportRowMapper(this, t.getClass(), t),
                     keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 
-            postHandleRelatedColumn(t);
+            handleRelatedColumn(t);
             logSlow(System.currentTimeMillis() - start, sql, keyValues);
 
             t = doInterceptAfterQuery(clazz, t, sqlSB, keyValues);
@@ -88,13 +88,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     new AnnotationSupportRowMapper<>(this, clazz),
                     argsList.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 
-            postHandleRelatedColumn(t);
+            handleRelatedColumn(t);
 
             long cost = System.currentTimeMillis() - start;
 
             List<Object> args = new ArrayList<>();
             args.add(keyValue);
-            logSlow(cost, sql.toString(), args);
+            logSlow(cost, sql, args);
 
             t = doInterceptAfterQuery(clazz, t, sqlSB, argsList);
             return t;
@@ -127,7 +127,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 NamedParameterUtils.transParam(argsList),
                 new AnnotationSupportRowMapper<>(this, clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
 
-        postHandleRelatedColumn(list);
+        handleRelatedColumn(list);
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql, argsList);
 
@@ -420,7 +420,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     new AnnotationSupportRowMapper<>(this, clazz, false));
         }
 
-        postHandleRelatedColumn(list);
+        handleRelatedColumn(list);
 
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql, forIntercept);
@@ -506,7 +506,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     new AnnotationSupportRowMapper<>(this, clazz, false));
         }
 
-        postHandleRelatedColumn(list);
+        handleRelatedColumn(list);
 
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql, argsList);
@@ -717,7 +717,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         if (!selectOnlyKey) {
-            postHandleRelatedColumn(list);
+            handleRelatedColumn(list);
         }
 
         long cost = System.currentTimeMillis() - start;
@@ -799,33 +799,33 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> void handleRelatedColumn(T t) {
-        postHandleRelatedColumn(t);
+        postHandleRelatedColumnSingle(t);
     }
 
     @Override
     public <T> void handleRelatedColumn(T t, String... relatedColumnProperties) {
-        postHandleRelatedColumn(t, relatedColumnProperties);
+        postHandleRelatedColumnSingle(t, relatedColumnProperties);
     }
 
     @Override
     public <T> void handleRelatedColumn(List<T> list) {
-        postHandleRelatedColumn(list);
+        postHandleRelatedColumn(list, false);
     }
 
     @Override
     public <T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties) {
-        postHandleRelatedColumn(list, relatedColumnProperties);
+        postHandleRelatedColumn(list, false, relatedColumnProperties);
     }
 
     /**单个关联*/
-    private <T> void postHandleRelatedColumn(T t, String... relatedColumnProperties) {
+    private <T> void postHandleRelatedColumnSingle(T t, String... relatedColumnProperties) {
         if (t == null) {
             return;
         }
         List<T> list = new ArrayList<>();
         list.add(t);
 
-        postHandleRelatedColumn(list, relatedColumnProperties);
+        postHandleRelatedColumn(list, false, relatedColumnProperties);
     }
 
     private <T> List<T> filterRelatedColumnConditional(List<T> tList, String conditional, Field field) {
@@ -865,7 +865,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     /**批量关联，要求批量操作的都是相同的类*/
-    private <T> void postHandleRelatedColumn(List<T> tList, String... relatedColumnProperties) {
+    private <T> void postHandleRelatedColumn(List<T> tList, boolean isFromJoin, String... relatedColumnProperties) {
         if (tList == null || tList.isEmpty()) {
             return;
         }
@@ -875,7 +875,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
-        if (joinTable != null) { // 处理join的方式
+        if (joinTable != null && !isFromJoin) { // 处理join的方式
             SQLAssert.allSameClass(tList);
 
             List<Object> list1 = new ArrayList<>();
@@ -894,8 +894,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
             }
 
-            postHandleRelatedColumn(list1);
-            postHandleRelatedColumn(list2);
+            postHandleRelatedColumn(list1, false);
+            postHandleRelatedColumn(list2, false);
+            postHandleRelatedColumn(tList, true);
             return;
         }
 
@@ -927,7 +928,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 throw new RelatedColumnFieldNotFoundException("field:" + field.getName() + " remoteColumn is blank");
             }
 
-            List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn(), field);
+            List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn(), field,
+                    column.localColumnFromJoinTable());
 
             // 批量查询数据库，提高效率的关键
             Class<?> remoteDOClass;
@@ -937,11 +939,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 remoteDOClass = field.getType();
             }
 
-            List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn(), field);
+            List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn(), field, null);
 
             Set<Object> values = new HashSet<>(); // 用于去重，同样适用于ArrayList
             for (T t : tListFiltered) {
-                Object value = DOInfoReader.getValueForRelatedColumn(localField, t);
+                Object value = DOInfoReader.getValueForRelatedColumn(localField, t, column.localColumnFromJoinTable());
                 if (value != null) {
                     values.add(value);
                 }
@@ -1012,7 +1014,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<Object, List<Object>> mapRemoteValues = new HashMap<>();
                 Map<String, List<Object>> mapRemoteValuesString = new HashMap<>();
                 for (Object obj : relateValues) {
-                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
+                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj, null);
                     if (oRemoteValue == null) {continue;}
 
                     List<Object> oRemoteValueList = mapRemoteValues.computeIfAbsent(
@@ -1025,7 +1027,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
                 for (T t : tListFiltered) {
                     List<Object> valueList = new ArrayList<>();
-                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
+                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t, column.localColumnFromJoinTable());
                     if (oLocalValue != null) {
                         List<Object> objRemoteList = mapRemoteValues.get(oLocalValue);
                         if (objRemoteList != null) {
@@ -1051,14 +1053,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<Object, Object> mapRemoteValues = new HashMap<>();
                 Map<String, Object> mapRemoteValuesString = new HashMap<>();
                 for (Object obj : relateValues) {
-                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
+                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj, null);
                     if (oRemoteValue != null && !mapRemoteValues.containsKey(oRemoteValue)) {
                         mapRemoteValues.put(oRemoteValue, obj);
                         mapRemoteValuesString.put(oRemoteValue.toString(), obj);
                     }
                 }
                 for (T t : tListFiltered) {
-                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
+                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t, column.localColumnFromJoinTable());
                     if (oLocalValue == null) {continue;}
                     
                     Object objRemote = mapRemoteValues.get(oLocalValue);
