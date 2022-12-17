@@ -1,7 +1,6 @@
 package com.pugwoo.dbhelper.test.vo;
 
 import com.pugwoo.dbhelper.annotation.*;
-import com.pugwoo.dbhelper.enums.JoinTableEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
@@ -18,7 +17,7 @@ public class StudentSchoolJoinVO {
 		private String nameWithHi;
 	}
 
-	@RelatedColumn(localColumn = "school_id", localColumnFromJoinTable = JoinTableEnum.LEFT, remoteColumn = "id")
+	@RelatedColumn(localColumn = "t1.school_id", remoteColumn = "id")
 	private SchoolDO schoolDO2;
 
 	@JoinLeftTable

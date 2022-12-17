@@ -2,7 +2,6 @@ package com.pugwoo.dbhelper.utils;
 
 import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
-import com.pugwoo.dbhelper.enums.JoinTableEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import org.slf4j.Logger;
@@ -56,47 +55,95 @@ public class DOInfoReader {
 	public static JoinTable getJoinTable(Class<?> clazz) {
 		return getAnnotationClass(clazz, JoinTable.class);
 	}
-	
+
+	public static class RelatedField {
+		public Field field;
+		/**0=普通field; 1=leftJoinTable; 2=rightJoinTable*/
+		public int fieldType;
+		/**当fieldType==1或2时，存放表的别名前缀*/
+		public String fieldPrefix;
+
+		public RelatedField(Field field, int fieldType, String fieldPrefix) {
+			this.field = field;
+			this.fieldType = fieldType;
+			this.fieldPrefix = fieldPrefix;
+		}
+	}
+
 	/**
 	 * 从db字段名拿字段对象。<br>
 	 * 新增支持@JoinTable的支持，可以获得JoinTable类中的对象的Field
 	 * @param clazz DO类
-	 * @param dbFieldName 数据库字段名称，多个用逗号隔开
+	 * @param dbFieldName 数据库字段名称，多个用逗号隔开；支持joinTable的字段，必须用别名表示，例如t1.id
 	 * @return 如果不存在返回空数组，返回的Field的顺序和dbFieldName保持一致；只要有一个dbFieldName找不到，则返回空数组
 	 */
-	public static List<Field> getFieldByDBField(Class<?> clazz, String dbFieldName, Field relatedColumnField,
-												JoinTableEnum joinTableEnum) {
+	public static List<RelatedField> getFieldByDBField(Class<?> clazz, String dbFieldName, Field relatedColumnField) {
 		List<String> dbFieldNameList = InnerCommonUtils.split(dbFieldName, ",");
-		List<Field> fields =  null;
-		if (joinTableEnum == null || joinTableEnum == JoinTableEnum.NOT_USE) {
-			fields = getColumns(clazz);
-		} else {
-			Field joinField = null;
-			if (joinTableEnum == JoinTableEnum.LEFT) {
-				joinField = DOInfoReader.getJoinLeftTable(clazz);
-			} else if (joinTableEnum == JoinTableEnum.RIGHT) {
-				joinField = DOInfoReader.getJoinRightTable(clazz);
+		List<RelatedField> fields =  new ArrayList<>();
+
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		Field joinLeftTableFiled = null;
+		Field joinRightTableFiled = null;
+		String leftTablePrefix = "";
+		String rightTablePrefix = "";
+		if (joinTable == null) {
+			List<Field> fs = getColumns(clazz);
+			for (Field f : fs) {
+				fields.add(new RelatedField(f, 0, ""));
 			}
-			if (joinField == null) {
-				throw new RelatedColumnFieldNotFoundException(relatedColumnField.getDeclaringClass().getName()
-						+ " @RelatedColumn field:"
-						+ relatedColumnField.getName() +
-						", join table field not found in class " + clazz.getName());
-			} else {
-				fields = getColumns(joinField.getType());
+		} else {
+			joinLeftTableFiled = DOInfoReader.getJoinLeftTable(clazz);
+			joinRightTableFiled = DOInfoReader.getJoinRightTable(clazz);
+			leftTablePrefix = joinLeftTableFiled.getAnnotation(JoinLeftTable.class).alias() + ".";
+			rightTablePrefix = joinRightTableFiled.getAnnotation(JoinRightTable.class).alias() + ".";
+			List<Field> leftFs = getColumns(joinLeftTableFiled.getType());
+			List<Field> rightFs = getColumns(joinRightTableFiled.getType());
+			for (Field f : leftFs) {
+				fields.add(new RelatedField(f, 1, leftTablePrefix));
+			}
+			for (Field f : rightFs) {
+				fields.add(new RelatedField(f, 2, rightTablePrefix));
 			}
 		}
 
-		List<Field> result = new ArrayList<>();
+		List<RelatedField> result = new ArrayList<>();
 
 		for (String dbField : dbFieldNameList) {
 			boolean isFound = false;
-			for(Field field : fields) {
-				Column column = field.getAnnotation(Column.class);
-				if(column.value().trim().equalsIgnoreCase(dbField)) {
-					result.add(field);
-					isFound = true;
-					break;
+			for(RelatedField field : fields) {
+				if (joinTable == null) {
+					Column column = field.field.getAnnotation(Column.class);
+					if(column.value().trim().equalsIgnoreCase(dbField)) {
+						result.add(field);
+						isFound = true;
+						break;
+					}
+				} else {
+					if (dbField.startsWith(leftTablePrefix)) {
+						if (field.fieldType == 1) {
+							Column column = field.field.getAnnotation(Column.class);
+							if(column.value().trim().equalsIgnoreCase(dbField.substring(leftTablePrefix.length()))) {
+								result.add(field);
+								isFound = true;
+								break;
+							}
+						}
+					} else if (dbField.startsWith(rightTablePrefix)) {
+						if (field.fieldType == 2) {
+							Column column = field.field.getAnnotation(Column.class);
+							if(column.value().trim().equalsIgnoreCase(dbField.substring(rightTablePrefix.length()))) {
+								result.add(field);
+								isFound = true;
+								break;
+							}
+						}
+					} else {
+						throw new RelatedColumnFieldNotFoundException(relatedColumnField.getDeclaringClass().getName()
+								+ " @RelatedColumn field:"
+								+ relatedColumnField.getName() +
+								", column: " + dbField + " should start with "
+								+ leftTablePrefix + " or " + rightTablePrefix);
+					}
 				}
 			}
 			if (!isFound) {
@@ -371,35 +418,27 @@ public class DOInfoReader {
 	 * 当fields只有一个时，返回的是对象本身；否则是一个List，里面是按顺序的fields的多个值
 	 * @return 当fields为空，返回null
 	 */
-	public static Object getValueForRelatedColumn(List<Field> fields, Object object, JoinTableEnum joinTableEnum) {
+	public static Object getValueForRelatedColumn(List<DOInfoReader.RelatedField> fields, Object object) {
 		if (fields == null || fields.isEmpty()) {
 			return null;
 		}
 
-		// 支持joinTable从join左表或右表中拿到对应field的值
-		if (joinTableEnum != null && joinTableEnum != JoinTableEnum.NOT_USE) {
-			Field joinField = null;
-			if (joinTableEnum == JoinTableEnum.LEFT) {
-				joinField = DOInfoReader.getJoinLeftTable(object.getClass());
-			} else if (joinTableEnum == JoinTableEnum.RIGHT) {
-				joinField = DOInfoReader.getJoinRightTable(object.getClass());
-			}
-			if (joinField == null) {
-				throw new RelatedColumnFieldNotFoundException(object.getClass().getName()
-						+ " cannot get " + joinTableEnum.getCode() + " join table field");
-			} else {
-				object = getValue(joinField, object);
+		List<Object> result = new ArrayList<>();
+		for (RelatedField relatedField : fields) {
+			if (relatedField.fieldType == 0) {
+				result.add(getValue(relatedField.field, object));
+			} else if (relatedField.fieldType == 1) {
+				Field joinLeftTableField = DOInfoReader.getJoinLeftTable(object.getClass());
+				Object obj1 = DOInfoReader.getValue(joinLeftTableField, object);
+				result.add(getValue(relatedField.field, obj1));
+			} else if (relatedField.fieldType == 2) {
+				Field joinRightTableField = DOInfoReader.getJoinRightTable(object.getClass());
+				Object obj2 = DOInfoReader.getValue(joinRightTableField, object);
+				result.add(getValue(relatedField.field, obj2));
 			}
 		}
 
-		if (fields.size() == 1) {
-			return getValue(fields.get(0), object);
-		}
-		List<Object> result = new ArrayList<>();
-		for (Field field : fields) {
-			result.add(getValue(field, object));
-		}
-		return result;
+		return result.size() == 1 ? result.get(0) : result;
 	}
 	
 	/**

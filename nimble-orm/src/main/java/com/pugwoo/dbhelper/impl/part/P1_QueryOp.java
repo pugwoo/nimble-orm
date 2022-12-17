@@ -881,14 +881,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             List<Object> list1 = new ArrayList<>();
             List<Object> list2 = new ArrayList<>();
 
-            Field joinLeftTableFiled = DOInfoReader.getJoinLeftTable(clazz);
-            Field joinRightTableFiled = DOInfoReader.getJoinRightTable(clazz);
+            Field joinLeftTableField = DOInfoReader.getJoinLeftTable(clazz);
+            Field joinRightTableField = DOInfoReader.getJoinRightTable(clazz);
             for (T t : tList) {
-                Object obj1 = DOInfoReader.getValue(joinLeftTableFiled, t);
+                Object obj1 = DOInfoReader.getValue(joinLeftTableField, t);
                 if (obj1 != null) {
                     list1.add(obj1);
                 }
-                Object obj2 = DOInfoReader.getValue(joinRightTableFiled, t);
+                Object obj2 = DOInfoReader.getValue(joinRightTableField, t);
                 if (obj2 != null) {
                     list2.add(obj2);
                 }
@@ -928,8 +928,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 throw new RelatedColumnFieldNotFoundException("field:" + field.getName() + " remoteColumn is blank");
             }
 
-            List<Field> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn(), field,
-                    column.localColumnFromJoinTable());
+            List<DOInfoReader.RelatedField> localField = DOInfoReader.getFieldByDBField(clazz, column.localColumn(), field);
 
             // 批量查询数据库，提高效率的关键
             Class<?> remoteDOClass;
@@ -939,11 +938,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 remoteDOClass = field.getType();
             }
 
-            List<Field> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn(), field, null);
+            List<DOInfoReader.RelatedField> remoteField = DOInfoReader.getFieldByDBField(remoteDOClass, column.remoteColumn(), field);
 
             Set<Object> values = new HashSet<>(); // 用于去重，同样适用于ArrayList
             for (T t : tListFiltered) {
-                Object value = DOInfoReader.getValueForRelatedColumn(localField, t, column.localColumnFromJoinTable());
+                Object value = DOInfoReader.getValueForRelatedColumn(localField, t);
                 if (value != null) {
                     values.add(value);
                 }
@@ -1014,7 +1013,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<Object, List<Object>> mapRemoteValues = new HashMap<>();
                 Map<String, List<Object>> mapRemoteValuesString = new HashMap<>();
                 for (Object obj : relateValues) {
-                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj, null);
+                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue == null) {continue;}
 
                     List<Object> oRemoteValueList = mapRemoteValues.computeIfAbsent(
@@ -1027,7 +1026,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 }
                 for (T t : tListFiltered) {
                     List<Object> valueList = new ArrayList<>();
-                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t, column.localColumnFromJoinTable());
+                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue != null) {
                         List<Object> objRemoteList = mapRemoteValues.get(oLocalValue);
                         if (objRemoteList != null) {
@@ -1053,14 +1052,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Map<Object, Object> mapRemoteValues = new HashMap<>();
                 Map<String, Object> mapRemoteValuesString = new HashMap<>();
                 for (Object obj : relateValues) {
-                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj, null);
+                    Object oRemoteValue = DOInfoReader.getValueForRelatedColumn(remoteField, obj);
                     if (oRemoteValue != null && !mapRemoteValues.containsKey(oRemoteValue)) {
                         mapRemoteValues.put(oRemoteValue, obj);
                         mapRemoteValuesString.put(oRemoteValue.toString(), obj);
                     }
                 }
                 for (T t : tListFiltered) {
-                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t, column.localColumnFromJoinTable());
+                    Object oLocalValue = DOInfoReader.getValueForRelatedColumn(localField, t);
                     if (oLocalValue == null) {continue;}
                     
                     Object objRemote = mapRemoteValues.get(oLocalValue);
@@ -1080,19 +1079,19 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     /**获得用于查询remoteColumn的列，如果多个列时用加上()*/
-    private String getWhereColumnForRelated(List<Field> remoteField) {
+    private String getWhereColumnForRelated(List<DOInfoReader.RelatedField> remoteField) {
         boolean isSingleColumn = remoteField.size() == 1;
         StringBuilder sb = new StringBuilder(isSingleColumn ? "" : "(");
         boolean isFirst = true;
-        for (Field remoteF : remoteField) {
+        for (DOInfoReader.RelatedField remoteF : remoteField) {
             if (!isFirst) {
                 sb.append(",");
             }
             isFirst = false;
 
-            Column remoteColumn = remoteF.getAnnotation(Column.class);
+            Column remoteColumn = remoteF.field.getAnnotation(Column.class);
             if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                sb.append(SQLUtils.getColumnName(remoteColumn.value()));
+                sb.append(SQLUtils.getColumnName(remoteF.fieldPrefix + remoteColumn.value()));
             } else {
                 sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
             }

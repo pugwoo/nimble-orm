@@ -1,7 +1,5 @@
 package com.pugwoo.dbhelper.annotation;
 
-import com.pugwoo.dbhelper.enums.JoinTableEnum;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -65,10 +63,5 @@ public @interface RelatedColumn {
 	 * 外部查询数据接口，该接口必须继承实现IDBHelperDataService
 	 */
 	Class<?> dataService() default void.class;
-
-	/**
-	 * 本表关联的表字段名称是否来自于join表，如果是，则指定是来自于左表还是右表
-	 */
-	JoinTableEnum localColumnFromJoinTable() default JoinTableEnum.NOT_USE;
 
 }
