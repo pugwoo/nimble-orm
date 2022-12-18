@@ -510,6 +510,10 @@ public class TestDBHelper_query {
         assert all.get(1).getSchoolDO2().getId().equals(schoolDO.getId());
         assert all.get(0).getSchoolDO().getId().equals(schoolDO.getId());
         assert all.get(1).getSchoolDO().getId().equals(schoolDO.getId());
+        assert all.get(0).getSchoolDO3().getId().equals(schoolDO.getId());
+        assert all.get(1).getSchoolDO3().getId().equals(schoolDO.getId());
+        assert all.get(0).getVo2().getSchoolDO().getId().equals(schoolDO.getId());
+        assert all.get(1).getVo2().getSchoolDO().getId().equals(schoolDO.getId());
 
         pageData = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10,
                 "where t1.name like ?", "nick%");

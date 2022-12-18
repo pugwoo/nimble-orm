@@ -1091,7 +1091,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             Column remoteColumn = remoteF.field.getAnnotation(Column.class);
             if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                sb.append(SQLUtils.getColumnName(remoteF.fieldPrefix + remoteColumn.value()));
+                sb.append(remoteF.fieldPrefix + SQLUtils.getColumnName(remoteColumn.value()));
             } else {
                 sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
             }

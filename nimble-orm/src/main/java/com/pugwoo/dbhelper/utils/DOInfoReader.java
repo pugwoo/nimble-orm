@@ -430,11 +430,19 @@ public class DOInfoReader {
 			} else if (relatedField.fieldType == 1) {
 				Field joinLeftTableField = DOInfoReader.getJoinLeftTable(object.getClass());
 				Object obj1 = DOInfoReader.getValue(joinLeftTableField, object);
-				result.add(getValue(relatedField.field, obj1));
+				if (obj1 == null) {
+					result.add(null);
+				} else {
+					result.add(getValue(relatedField.field, obj1));
+				}
 			} else if (relatedField.fieldType == 2) {
 				Field joinRightTableField = DOInfoReader.getJoinRightTable(object.getClass());
 				Object obj2 = DOInfoReader.getValue(joinRightTableField, object);
-				result.add(getValue(relatedField.field, obj2));
+				if (obj2 == null) {
+					result.add(null);
+				} else {
+					result.add(getValue(relatedField.field, obj2));
+				}
 			}
 		}
 

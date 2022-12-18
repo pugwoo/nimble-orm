@@ -17,13 +17,32 @@ public class StudentSchoolJoinVO {
 		private String nameWithHi;
 	}
 
+
+	@RelatedColumn(localColumn = "t1.id", remoteColumn = "t1.id")
+	private InnerStudentSchoolJoinVO vo2;
+
 	@RelatedColumn(localColumn = "t1.school_id", remoteColumn = "id")
 	private SchoolDO schoolDO2;
+
+	@RelatedColumn(localColumn = "t2.id", remoteColumn = "id")
+	private SchoolDO schoolDO3;
+
 
 	@JoinLeftTable
 	private StudentVO studentDO;
 	
 	@JoinRightTable
 	private SchoolDO schoolDO;
+
+	// 这个仅用来测试RelatedColumn的远程类是JoinTable的情况
+	@Data
+	@JoinTable(joinType = JoinTypeEnum.LEFT_JOIN, on = "t1.school_id=t2.id")
+	public static class InnerStudentSchoolJoinVO {
+		@JoinLeftTable
+		private StudentVO studentDO;
+
+		@JoinRightTable
+		private SchoolDO schoolDO;
+	}
 
 }
