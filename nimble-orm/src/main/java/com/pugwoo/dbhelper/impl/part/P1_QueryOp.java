@@ -1093,6 +1093,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
                 sb.append(remoteF.fieldPrefix + SQLUtils.getColumnName(remoteColumn.value()));
             } else {
+                // 对于有remoteF.fieldPrefix的，由于计算列是用户自己写的，所以需要自己确保有fieldPrefix，如果没有，在这里告警
+                if (InnerCommonUtils.isNotBlank(remoteF.fieldPrefix)) {
+                    if (!remoteColumn.computed().contains(remoteF.fieldPrefix)) {
+                        LOGGER.warn("remote column computed:{} should contain fieldPrefix:{}",
+                                remoteColumn.computed(), remoteF.fieldPrefix);
+                    }
+                }
                 sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
             }
         }
