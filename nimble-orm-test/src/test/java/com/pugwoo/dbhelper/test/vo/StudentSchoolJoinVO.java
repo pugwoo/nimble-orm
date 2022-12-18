@@ -21,6 +21,9 @@ public class StudentSchoolJoinVO {
 	@RelatedColumn(localColumn = "t1.id", remoteColumn = "t1.id")
 	private InnerStudentSchoolJoinVO vo2;
 
+	@RelatedColumn(localColumn = "t1.id,t2.id", remoteColumn = "t1.id,t2.id")
+	private InnerStudentSchoolJoinVO vo3;
+
 	@RelatedColumn(localColumn = "t1.school_id", remoteColumn = "id")
 	private SchoolDO schoolDO2;
 
