@@ -605,65 +605,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 false, null, limit, sql.toString(), args.toArray()).getData();
     }
 
-    @Override
-    public long getRawCount(String sql, Map<String, Object> args) {
-        return getRowCountByNamedParam(sql, args);
-    }
-
-    private long getRowCountByNamedParam(String sql, Map<String, Object> args) {
-        sql = addComment(sql);
-        log(sql, args);
-
-        long start = System.currentTimeMillis();
-
-        Long rows;
-        if (args == null || args.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<>(),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        } else {
-            rows = namedParameterJdbcTemplate.queryForObject(
-                    sql, args, Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, null);
-        return rows == null ? 0 : rows;
-    }
-
-    @Override
-    @SuppressWarnings({"unchecked"})
-    public long getRawCount(String sql, Object... args) {
-        // 解决如果java选择错重载的问题
-        if (args != null && args.length == 1 && args[0] instanceof Map) {
-            return getRowCountByNamedParam(sql, (Map<String, Object>)(args[0]));
-        }
-
-        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-        if (args != null) {
-            argsList.addAll(Arrays.asList(args));
-        }
-
-        sql = addComment(sql);
-        log(sql, argsList);
-
-        long start = System.currentTimeMillis();
-
-        Long rows;
-        if (argsList.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<>(),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        } else {
-            rows = namedParameterJdbcTemplate.queryForObject(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, null);
-        return rows == null ? 0 : rows;
-    }
-
     /**
      * 查询列表
      *

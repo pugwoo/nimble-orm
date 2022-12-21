@@ -762,14 +762,14 @@ public class TestDBHelper_query {
         assert list.size() == 1;
         assert list.get(0).getName().equals(studentDO1.getName());
 
-        long count = dbHelper.getRawCount("select count(*) from t_student where name=:name",
+        long count = dbHelper.getRawOne(Long.class, "select count(*) from t_student where name=:name",
                 params);
         assert count == 1;
 
         List<String> names = new ArrayList<String>();
         names.add(studentDO1.getName());
         names.add(studentDO2.getName());
-        count = dbHelper.getRawCount("select count(*) from t_student where name in (?)",
+        count = dbHelper.getRawOne(Long.class, "select count(*) from t_student where name in (?)",
                 names);
         assert count == 2;
 
