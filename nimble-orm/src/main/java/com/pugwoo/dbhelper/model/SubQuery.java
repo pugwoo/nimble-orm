@@ -13,6 +13,7 @@ package com.pugwoo.dbhelper.model;
  * 
  * ref: https://stackoverflow.com/questions/6135376/mysql-select-where-field-in-subquery-extremely-slow-why
  */
+@Deprecated
 public class SubQuery {
 
 	/**查询字段，仅支持一个*/

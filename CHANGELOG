@@ -1,5 +1,8 @@
-v1.4.1 - [add] 支持JoinTable中写@RelatedColumn
+v1.4.1 - [add] 支持JoinTable中写@RelatedColumn直接关联DO/JoinTable类
+       - [add] 增加@Table的virtualTable支持手工写表SQL
+       - [add] 增加@Table的sameTableNameAs指定表名
        - [deprecated] 标记废除@ExcludeInheritedColumn，推荐使用@Table的sameTableNameAs指定表名或直接指定表名
+       - [deprecated] 标记废除SubQuery
 
 2022年12月14日
 v1.4.0 - [enhance] 将单元测试代码独立出来

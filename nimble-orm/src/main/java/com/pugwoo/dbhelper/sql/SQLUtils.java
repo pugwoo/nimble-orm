@@ -107,6 +107,13 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
+			if (InnerCommonUtils.isNotBlank(table.virtualTable())) {
+				if (InnerCommonUtils.isNotBlank(table.value())) {
+					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTable has value:{}",
+							clazz, table.value(), table.virtualTable());
+				}
+				return table.virtualTable();
+			}
 
 			if(isSelect1) {
 			    sql.append("1");
@@ -180,6 +187,15 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
+			if (InnerCommonUtils.isNotBlank(table.virtualTable())) {
+				if (InnerCommonUtils.isNotBlank(table.value())) {
+					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTable has value:{}",
+							clazz, table.value(), table.virtualTable());
+				}
+				sql.append(" FROM ( ").append(table.virtualTable()).append(" )");
+				return sql.toString();
+			}
+
 			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
 		}
 		
@@ -825,14 +841,17 @@ public class SQLUtils {
 	}
 
 	/**
-	 * 自动为【最后】where sql字句加上软删除查询字段
+	 * 自动为【最后】where sql字句加上软删除查询字段。
+	 *
+	 * 说明：不支持virtualTable虚拟表。
+	 *
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以
 	 * @param clazz 要操作的DO类
 	 * @param extraWhere 附带的where语句，会加进去，不能带where关键字，仅能是where的条件字句，该子句会放到最后
 	 * @return 无论如何前面会加空格，更安全
 	 */
 	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz, String extraWhere) {
-		if(whereSql == null) {
+		if (whereSql == null) {
 			whereSql = "";
 		}
 		extraWhere = extraWhere == null ? "" : extraWhere;

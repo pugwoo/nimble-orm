@@ -32,6 +32,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return false;
         }
         Class<?> clazz = t.getClass();
+
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
+
         StringBuilder sqlSB = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features, null));
 
         List<Object> keyValues = new ArrayList<>();
@@ -63,6 +69,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
             NotOnlyOneKeyColumnException {
+
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
 
         if (keyValue == null) {
             throw new NullKeyValueException();
@@ -105,6 +116,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
+
         if (keyValues == null || keyValues.isEmpty()) {
             return new HashMap<>();
         }
@@ -178,9 +194,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> long getCount(Class<T> clazz) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+
         StringBuilder sqlSB = new StringBuilder();
         sqlSB.append(SQLUtils.getSelectCountSQL(clazz));
-        sqlSB.append(SQLUtils.autoSetSoftDeleted("", clazz));
+        sqlSB.append(isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
 
         String sql = sqlSB.toString();
         sql = addComment(sql);
@@ -197,6 +215,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     // 为了解决group by的计数问题，将计数转换成select count(*) from (子select语句) 的形式
     @Override
     public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
@@ -204,7 +224,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         StringBuilder sqlSB = new StringBuilder("SELECT count(*) FROM (");
 
         sqlSB.append(SQLUtils.getSelectSQL(clazz, false, true, features, postSql));
-        sqlSB.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
+        sqlSB.append(isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz));
 
         sqlSB.append(") tff305c6");
 
@@ -328,6 +348,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
+
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
         }
@@ -538,6 +563,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     @SuppressWarnings({"unchecked"})
     public <T> List<T> getByExample(T t, int limit) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(t.getClass());
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
+
         Map<Field, String> filed2column = new HashMap<>();
         List<Field> declaredFields = DOInfoReader.getColumns(t.getClass());
         for (Field declaredField : declaredFields) {
@@ -650,10 +680,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      Integer offset, Integer limit,
                                      String postSql, Object... args) {
 
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+
         StringBuilder sqlSB = new StringBuilder();
         sqlSB.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features, postSql));
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
-        if (limit != null) {
+        if (limit != null && !isVirtualTable) {
             try {
                 boolean autoAddOrderForPagination = getFeature(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION);
                 postSql = SQLUtils.removeLimitAndAddOrder(postSql, autoAddOrderForPagination, clazz);
@@ -662,7 +694,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         clazz, postSql, e);
             }
         }
-        sqlSB.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
+        sqlSB.append(isVirtualTable ? (" " + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sqlSB.append(SQLUtils.genLimitSQL(offset, limit));
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法

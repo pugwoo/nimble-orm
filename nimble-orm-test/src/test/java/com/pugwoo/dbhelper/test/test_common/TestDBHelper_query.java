@@ -930,4 +930,46 @@ public class TestDBHelper_query {
         assert one.getName().equals("myname");
     }
 
+    @Test
+    public void testVirtualTable() {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("collageA");
+        dbHelper.insert(schoolDO);
+
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        studentDO.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO);
+
+        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+        studentDO2.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO2);
+
+        // get all
+
+        List<StudentVirtualTableVO> all = dbHelper.getAll(StudentVirtualTableVO.class,
+                "and t1.id in (?) order by t1.id",
+                ListUtils.newList(studentDO.getId(), studentDO2.getId()));
+        assert all.size() == 2;
+        assert all.get(0).getId().equals(studentDO.getId());
+        assert all.get(1).getId().equals(studentDO2.getId());
+        assert all.get(0).getName().equals(studentDO.getName());
+        assert all.get(1).getName().equals(studentDO2.getName());
+        assert all.get(0).getSchoolName().equals(schoolDO.getName());
+        assert all.get(1).getSchoolName().equals(schoolDO.getName());
+
+        // get page
+        PageData<StudentVirtualTableVO> page = dbHelper.getPage(StudentVirtualTableVO.class, 1, 10,
+                "and t1.id in (?) order by t1.id",
+                ListUtils.newList(studentDO.getId(), studentDO2.getId()));
+        assert page.getTotal() == 2;
+        assert page.getData().size() == 2;
+        assert page.getData().get(0).getId().equals(studentDO.getId());
+        assert page.getData().get(1).getId().equals(studentDO2.getId());
+        assert page.getData().get(0).getName().equals(studentDO.getName());
+        assert page.getData().get(1).getName().equals(studentDO2.getName());
+        assert page.getData().get(0).getSchoolName().equals(schoolDO.getName());
+        assert page.getData().get(1).getSchoolName().equals(schoolDO.getName());
+
+    }
+
 }

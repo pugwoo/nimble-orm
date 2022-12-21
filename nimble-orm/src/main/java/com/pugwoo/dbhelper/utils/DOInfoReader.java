@@ -56,6 +56,15 @@ public class DOInfoReader {
 		return getAnnotationClass(clazz, JoinTable.class);
 	}
 
+	/**
+	 * 判断一个Table是否是虚拟表
+	 */
+	public static boolean isVirtualTable(Class<?> clazz) {
+		return DOInfoReader.getJoinTable(clazz) == null &&
+				InnerCommonUtils.isNotBlank(DOInfoReader.getTable(clazz).virtualTable());
+	}
+
+
 	public static class RelatedField {
 		public Field field;
 		/**0=普通field; 1=leftJoinTable; 2=rightJoinTable*/

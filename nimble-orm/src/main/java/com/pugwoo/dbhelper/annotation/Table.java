@@ -24,6 +24,15 @@ public @interface Table {
 	Class<?> sameTableNameAs() default void.class;
 
 	/**
+	 * 虚拟表SQL，从select开始的完整SQL，该方式只对查询操作有效。当非空时有效，此时value()表名失效。<br>
+	 * 该方式适用于自定义表，接近于getRaw方法，有以下约束：<br>
+	 * 1) getPage不会自动移除limit和加order by
+	 * 2) 不支持自动处理软删除softDelete标记
+	 * 3) 不支持getByKey/getByKeyList/getAllKey/getByExample
+	 */
+	String virtualTable() default "";
+
+	/**
 	 * 表别名，默认是t，该别名目前仅对查询操作生效
 	 */
 	String alias() default "t";
