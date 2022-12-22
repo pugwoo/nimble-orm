@@ -107,12 +107,19 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			if (InnerCommonUtils.isNotBlank(table.virtualTable())) {
+			if (InnerCommonUtils.isNotBlank(table.virtualTableSQL())) {
 				if (InnerCommonUtils.isNotBlank(table.value())) {
-					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTable has value:{}",
-							clazz, table.value(), table.virtualTable());
+					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTableSQL has value:{}",
+							clazz, table.value(), table.virtualTableSQL());
 				}
-				return table.virtualTable();
+				return table.virtualTableSQL();
+			}
+			if (InnerCommonUtils.isNotBlank(table.virtualTablePath())) {
+				if (InnerCommonUtils.isNotBlank(table.value())) {
+					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTablePath has value:{}",
+							clazz, table.value(), table.virtualTableSQL());
+				}
+				return InnerCommonUtils.readClasspathResourceAsString(table.virtualTablePath());
 			}
 
 			if(isSelect1) {
@@ -187,12 +194,21 @@ public class SQLUtils {
 	        
 		} else {
 			Table table = DOInfoReader.getTable(clazz);
-			if (InnerCommonUtils.isNotBlank(table.virtualTable())) {
+			if (InnerCommonUtils.isNotBlank(table.virtualTableSQL())) {
 				if (InnerCommonUtils.isNotBlank(table.value())) {
 					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTable has value:{}",
-							clazz, table.value(), table.virtualTable());
+							clazz, table.value(), table.virtualTableSQL());
 				}
-				sql.append(" FROM ( ").append(table.virtualTable()).append(" )");
+				sql.append(" FROM ( ").append(table.virtualTableSQL()).append(" )");
+				return sql.toString();
+			}
+			if (InnerCommonUtils.isNotBlank(table.virtualTablePath())) {
+				if (InnerCommonUtils.isNotBlank(table.value())) {
+					LOGGER.warn("table DO class:{} table name:{} is ignored because virtualTablePath has value:{}",
+							clazz, table.value(), table.virtualTablePath());
+				}
+				String vSQL = InnerCommonUtils.readClasspathResourceAsString(table.virtualTablePath());
+				sql.append(" FROM ( ").append(vSQL).append(" )");
 				return sql.toString();
 			}
 

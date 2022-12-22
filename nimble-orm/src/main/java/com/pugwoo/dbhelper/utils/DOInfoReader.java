@@ -60,8 +60,13 @@ public class DOInfoReader {
 	 * 判断一个Table是否是虚拟表
 	 */
 	public static boolean isVirtualTable(Class<?> clazz) {
-		return DOInfoReader.getJoinTable(clazz) == null &&
-				InnerCommonUtils.isNotBlank(DOInfoReader.getTable(clazz).virtualTable());
+		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
+		if (joinTable != null) {
+			return false;
+		}
+		Table table = DOInfoReader.getTable(clazz);
+		return InnerCommonUtils.isNotBlank(table.virtualTableSQL())
+				|| InnerCommonUtils.isNotBlank(table.virtualTablePath());
 	}
 
 
