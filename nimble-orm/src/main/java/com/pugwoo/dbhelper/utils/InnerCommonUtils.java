@@ -1,9 +1,8 @@
 package com.pugwoo.dbhelper.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -131,6 +130,61 @@ public class InnerCommonUtils {
         }
         String firstLetter = str.substring(0, 1).toUpperCase();
         return firstLetter + str.substring(1);
+    }
+
+    /**
+     * 读取classpath目录下的资源，返回为String，默认是utf-8编码。
+     * 如果需要其它编码，请获得byte[]之后自行转换。
+     * 说明：当有多个同名的资源时，会返回第一个加载到jvm的资源内容，因此这里具有随机性。
+     * @param path 路径，例如：abc.txt
+     * @return 文件不存在返回null
+     */
+    public static String readClasspathResourceAsString(String path) {
+        InputStream in = readClasspathResourceInputStream(path);
+        if (in == null) {
+            throw new RuntimeException(new FileNotFoundException(path));
+        }
+        return readAll(in, "UTF-8");
+    }
+
+    /**
+     * 读取classpath目录下的资源，返回为InputStream。
+     * 说明：当有多个同名的资源时，会返回第一个加载到jvm的资源内容，因此这里具有随机性。
+     * @param path 路径，例如：abc.txt
+     * @return 文件不存在返回null
+     */
+    private static InputStream readClasspathResourceInputStream(String path) {
+        if (isBlank(path)) {
+            return null;
+        }
+        // 分为以/开头和没有以/开头的path进行尝试，优先没有/开头的，以为classLoader的方式不需要/开头
+        boolean beginWithSlash = path.startsWith("/");
+        String noSlash = beginWithSlash ? path.substring(1) : path;
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(noSlash);
+        if (in != null) {
+            return in;
+        }
+
+        // 尝试再用/开头的进行
+        String withSlash = beginWithSlash ? path : "/" + path;
+        return Thread.currentThread().getContextClassLoader().getResourceAsStream(withSlash);
+    }
+
+    /**
+     * 读取input所有数据到String中，可用于读取文件内容到String。
+     * @param in 读取完后in不会关闭
+     */
+    private static String readAll(InputStream in, String charset) {
+        Scanner scanner = new Scanner(in, charset);
+
+        try {
+            String content = scanner.useDelimiter("\\Z").next();
+            return content;
+        } catch (NoSuchElementException e) {
+            return ""; // file is empty, ignore exception
+        } finally {
+            scanner.close();
+        }
     }
 
 }

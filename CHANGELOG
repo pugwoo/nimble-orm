@@ -1,3 +1,11 @@
+2022年12月24日
+v1.4.1 - [add] 支持JoinTable中写@RelatedColumn直接关联DO/JoinTable类
+       - [add] 增加@Table的virtualTableSQL/virtualTablePath属性，支持手工写表SQL并表现为一个DO类
+       - [add] 增加@Table的sameTableNameAs指定表名
+       - [deprecated] 标记废除@ExcludeInheritedColumn，推荐使用@Table的sameTableNameAs指定表名或直接指定表名
+       - [deprecated] 标记废除SubQuery
+       - [del] 删除getRawCount方法
+
 2022年12月14日
 v1.4.0 - [enhance] 将单元测试代码独立出来
        - [enhance] 优化批量插入的SQL log

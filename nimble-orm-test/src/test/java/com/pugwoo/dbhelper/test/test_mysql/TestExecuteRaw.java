@@ -94,11 +94,11 @@ public class TestExecuteRaw {
 
         assert dbHelper.executeRaw("insert into t_raw_" + name + "(name)values(?)", name) == 1;
 
-        assert dbHelper.getRawCount("select count(*) from t_raw_" + name) == 1;
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_raw_" + name) == 1;
 
         dbHelper.executeRaw("truncate table t_raw_" + name);
 
-        assert dbHelper.getRawCount("select count(*) from t_raw_" + name) == 0;
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_raw_" + name) == 0;
 
         dbHelper.executeRaw("drop table t_raw_" + name);
     }

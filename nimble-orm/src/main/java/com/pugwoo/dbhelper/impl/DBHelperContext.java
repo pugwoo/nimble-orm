@@ -20,7 +20,7 @@ public class DBHelperContext {
     private static final ThreadLocal<String> comment = new ThreadLocal<>();
 
     /**
-     * 获得类对应的自定义表名，不存在返回null
+     * 动态获得类对应的自定义表名，不存在返回null
      */
     public static String getTableName(Class<?> clazz) {
         Map<Class<?>, String> tableNames = DBHelperContext.tableNames.get();
