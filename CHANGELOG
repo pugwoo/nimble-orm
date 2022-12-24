@@ -1,3 +1,4 @@
+2022年12月24日
 v1.4.1 - [add] 支持JoinTable中写@RelatedColumn直接关联DO/JoinTable类
        - [add] 增加@Table的virtualTableSQL/virtualTablePath属性，支持手工写表SQL并表现为一个DO类
        - [add] 增加@Table的sameTableNameAs指定表名
