@@ -485,6 +485,7 @@ public interface DBHelper {
 	 * @param newList 不能是null，否则该方法什么都不执行
 	 * @return newList成功的值，不包括dbList中删除的
 	 */
+	@Deprecated
 	<T> int insertOrUpdateFull(Collection<T> dbList, Collection<T> newList);
 	
 	/**
@@ -493,8 +494,9 @@ public interface DBHelper {
 	 * @param newList 不能是null，否则该方法什么都不执行
 	 * @return newList成功的值，不包括dbList中删除的
 	 */
+	@Deprecated
 	<T> int insertOrUpdateFullWithNull(Collection<T> dbList, Collection<T> newList);
-		
+
 	/**
 	 * 更新单个实例数据库记录，必须带上object的key，包含更新null值的字段
 	 * @param t 更新的对象实例
