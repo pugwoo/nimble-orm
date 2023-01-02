@@ -3,10 +3,11 @@ package com.pugwoo.dbhelper.test.test_clickhouse;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.test_clickhouse.entity.StudentDO;
 
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ public class TestInsert {
     private DBHelper dbHelper;
 
     @Test
-    @EnabledIfSystemProperty(named = "spring.profiles.active", matches = "clickhouse")
+    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testInsert() {
         StudentDO student = new StudentDO();
         student.setId(new Random().nextLong());
@@ -33,10 +34,12 @@ public class TestInsert {
     }
 
     @Test
-    @EnabledIfSystemProperty(named = "spring.profiles.active", matches = "clickhouse")
+    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testBatch() {
+        int total = 1000;
+
         List<StudentDO> list = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < total; i++) {
             StudentDO student = new StudentDO();
             student.setId(new Random().nextLong());
             student.setName("nick" + UUID.randomUUID());
@@ -46,7 +49,12 @@ public class TestInsert {
             list.add(student);
         }
 
-        dbHelper.insert(list);
+        int row = dbHelper.insertBatchWithoutReturnId(list);
+        assert row == total;
+
+        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where name in (?)",
+                ListUtils.transform(list, o -> o.getName()));
+        assert all.size() == total;
     }
 
 }

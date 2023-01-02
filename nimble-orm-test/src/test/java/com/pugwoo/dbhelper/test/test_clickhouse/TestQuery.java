@@ -5,9 +5,9 @@ import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.test_clickhouse.entity.StudentDO;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 
 @SpringBootTest
 public class TestQuery {
@@ -16,7 +16,7 @@ public class TestQuery {
     private DBHelper dbHelper;
 
     @Test
-    @EnabledIfSystemProperty(named = "spring.profiles.active", matches = "clickhouse")
+    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testGetRaw() {
 
         CkCommonOps.insertSome(dbHelper, 100);

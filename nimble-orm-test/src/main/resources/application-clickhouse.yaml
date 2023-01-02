@@ -3,4 +3,4 @@ spring:
     url: jdbc:clickhouse://192.168.0.111:8123/nimbleorm
     username: root
     password: 123456
-    driver-class-name: ru.yandex.clickhouse.ClickHouseDriver
+    driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
