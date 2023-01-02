@@ -1,4 +1,6 @@
-v1.4.2 - [deprecated] 标记废弃insertOrUpdateFull和insertOrUpdateFullWithNull方法
+v1.4.2 - [add] 批量插入支持数据库默认值(即当插入为null时使用数据库默认值)，此外mysql不需要再设置rewriteBatchedStatements=TRUE参数
+       - [enhance] 优化批量插入日志和不插入不需要的字段，提升50+%批量插入性能
+       - [deprecated] 标记废弃insertOrUpdateFull和insertOrUpdateFullWithNull方法
 
 2022年12月24日
 v1.4.1 - [add] 支持JoinTable中写@RelatedColumn直接关联DO/JoinTable类

@@ -63,11 +63,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-	protected void logForBatchInsert(String sql, int listSize, Object[] firstRow) {
+	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
+		sql = sql.substring(0, Math.min(300, sql.length()));
+		values = values.subList(0, Math.min(30, values.size()));
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("ExecSQL:{},batch insert list size:{}, first row is:{}", sql, listSize, firstRow);
+			LOGGER.info("Batch ExecSQL:{}; batch insert list size:{}, the first 30 params are:{}", sql, listSize, values);
 		} else {
-			LOGGER.debug("ExecSQL:{},batch insert list size:{}, first row is:{}", sql, listSize, firstRow);
+			LOGGER.debug("Batch ExecSQL:{}; batch insert list size:{}, the first 30 params are:{}", sql, listSize, values);
 		}
 	}
 	
@@ -93,6 +95,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	protected void logSlowForBatch(long cost, String sql, int listSize) {
 		if(cost > timeoutWarningValve) {
+			sql = sql.substring(0, Math.min(300, sql.length()));
 			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
 			try {
 				if(slowSqlCallback != null) {

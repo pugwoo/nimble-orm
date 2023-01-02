@@ -304,35 +304,56 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> String getInsertSQLForBatch(Collection<T> list, List<Object[]> values) {
+	public static <T> String getInsertSQLForBatch(Collection<T> list, List<Object> values) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
-		Class<?> clazz = null;
-		for (T t1 : list) {
-			clazz = t1.getClass();
-			break;
-		}
-
+		Class<?> clazz = list.iterator().next().getClass();
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 
-		sql.append(getTableName(clazz)).append(" (");
+		// TODO 根据list的值，只留下有值的field
+
+		appendTableName(sql, clazz);
+		appendInsertColumnSql(sql, fields);
 
 		boolean isFirst = true;
 		for (T t : list) {
-			List<Object> _values = new ArrayList<>();
-			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
-			if (isFirst) {
-				sql.append(insertSql);
-				sql.append(") VALUES ");
-				String dotSql = "(" + join("?", _values.size(), ",") + ")";
-				sql.append(dotSql);
-			}
+			sql.append(isFirst ? "VALUES" : ",");
+			appendValueForBatchInsert(sql, fields, values, t);
 			isFirst = false;
-			values.add(_values.toArray());
 		}
 
 		return sql.toString();
+	}
+
+	private static void appendValueForBatchInsert(StringBuilder sb, List<Field> fields, List<Object> values, Object obj) {
+		if(values == null || obj == null) {
+			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
+		}
+
+		sb.append("(");
+		for(int i = 0; i < fields.size(); i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			Field field = fields.get(i);
+			Column column = field.getAnnotation(Column.class);
+			if(InnerCommonUtils.isNotBlank(column.computed())) {
+				continue; // insert不加入computed字段
+			}
+
+			Object value = DOInfoReader.getValue(field, obj);
+			if(value != null && column.isJSON()) {
+				value = NimbleOrmJSON.toJson(value);
+			}
+			if (value == null) {
+				sb.append("default");
+			} else {
+				sb.append("?");
+				values.add(value);
+			}
+		}
+		sb.append(")");
 	}
 
 	/**
@@ -1105,6 +1126,30 @@ public class SQLUtils {
     	int len = sb.length();
     	return len == 0 ? "" : sb.substring(0, len - 1);
 	}
+
+	/**
+	 * 获得指定字段拼凑而成的插入列，例如(name,age)。会排除掉computed的@Column字段。
+	 */
+	private static void appendInsertColumnSql(StringBuilder sb, List<Field> fields) {
+		sb.append("(");
+		if (fields != null) {
+			for(int i = 0; i < fields.size(); i++) {
+				if (i > 0) {
+					sb.append(",");
+				}
+				Field field = fields.get(i);
+				Column column = field.getAnnotation(Column.class);
+				if (column == null) {
+					continue;
+				}
+				if(InnerCommonUtils.isNotBlank(column.computed())) {
+					continue; // insert不加入computed字段
+				}
+				appendColumnName(sb, column.value());
+			}
+		}
+		sb.append(")");
+	}
     
     /**
      * 拼凑字段逗号,分隔子句（用于insert），并把参数obj的值放到values中。会排除掉computed的@Column字段
@@ -1204,6 +1249,14 @@ public class SQLUtils {
 		return "`" + tableName + "`";
 	}
 
+	private static void appendTableName(StringBuilder sb, Class<?> clazz) {
+		String tableName = DBHelperContext.getTableName(clazz);
+		if (InnerCommonUtils.isBlank(tableName)) {
+			tableName = DOInfoReader.getTable(clazz).value();
+		}
+		sb.append("`").append(tableName).append("`");
+	}
+
 	private static String getColumnName(Column column) {
 		return getColumnName(column.value());
 	}
@@ -1215,6 +1268,10 @@ public class SQLUtils {
 
 	public static String getColumnName(String columnName) {
 		return "`" + columnName + "`";
+	}
+
+	private static void appendColumnName(StringBuilder sb, String columnName) {
+		sb.append("`").append(columnName).append("`");
 	}
 
 	/**

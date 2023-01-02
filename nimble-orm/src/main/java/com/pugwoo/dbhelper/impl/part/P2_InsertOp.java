@@ -23,9 +23,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
-	private void doInterceptBeforeInsertList(List<Object> list) {
+	private void doInterceptBeforeInsertList(Collection<?> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeInsert(list);
+			boolean isContinue;
+			if (list instanceof List) {
+				isContinue = interceptor.beforeInsert((List<Object>) list);
+			} else {
+				isContinue = interceptor.beforeInsert(new ArrayList<>(list));
+			}
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -37,10 +42,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsertList(list, rows);
 	}
-	private void doInterceptAfterInsertList(final List<Object> list, final int rows) {
+	private void doInterceptAfterInsertList(final Collection<?> list, final int rows) {
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
-				interceptors.get(i).afterInsert(list, rows);
+				if (list instanceof List) {
+					interceptors.get(i).afterInsert((List<Object>)list, rows);
+				} else {
+					interceptors.get(i).afterInsert(new ArrayList<>(list), rows);
+				}
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -87,46 +96,22 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			return 0;
 		}
 		SQLAssert.allSameClass(list);
-
 		for (T t : list) {
 			PreHandleObject.preHandleInsert(t);
 		}
+		doInterceptBeforeInsertList(list);
 
-		if (list instanceof List) {
-			doInterceptBeforeInsertList((List<Object>) list);
-		} else {
-			doInterceptBeforeInsertList(new ArrayList<>(list));
-		}
-
-		List<Object[]> values = new ArrayList<>();
+		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getInsertSQLForBatch(list, values);
 		sql = addComment(sql);
-		logForBatchInsert(sql, values.size(), values.isEmpty() ? null : values.get(0));
+		logForBatchInsert(sql, list.size(), values);
 
-		final long start = System.currentTimeMillis();
-
-		int[] rows = jdbcTemplate.batchUpdate(sql, values);
-
-		int total = 0;
-		for (int row : rows) {
-			int result = row;
-			if (row == -2) {
-				result = 1; // -2 means Statement.SUCCESS_NO_INFO
-			} else if (row < 0) {
-				result = 0; // not success
-			}
-			total += result;
-		}
-
+		long start = System.currentTimeMillis();
+		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
 		logSlowForBatch(cost, sql, list.size());
 
-		if (list instanceof List) {
-			doInterceptAfterInsertList((List<Object>)list, total);
-		} else {
-			doInterceptAfterInsertList(new ArrayList<>(list), total);
-		}
-
+		doInterceptAfterInsertList(list, total);
 		return total;
 	}
 

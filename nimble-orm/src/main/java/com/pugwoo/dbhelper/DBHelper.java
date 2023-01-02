@@ -420,19 +420,16 @@ public interface DBHelper {
 	 * 插入多条记录，返回数据库实际修改的条数。<br>
 	 * 实际上，这个是int insert(T t)的循环遍历而已。插入性能并不会因多条而提升。<br>
 	 * 【注】只插入非null的值。该方法没有事务，请在外层加事务。<br>
-	 * 【特别说明】因为主键和拦截器方面的设计，DBHelper并没有提供真正批量插入的方式。对于插入性能要求高的场景，请以消息队列辅助消峰。
+	 * 【特别说明】因为需要获取自增主键，DBHelper并没有提供真正批量插入。对于插入性能要求高的场景，请使用insertBatchWithoutReturnId。
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */
 	int insert(Collection<?> list);
 
 	/**
-	 * 批量插入多条记录，返回数据库实际修改的条数. <br>
+	 * 批量插入多条记录，返回数据库实际修改的条数。<br>
 	 * <br>
-	 * 【重点】但不会自动设置插入数据的返回自增ID（拦截器里也拿不到ID），也不会设置回数据库的默认值<br>
-	 * 【重要】批量插入只能默认插入null值，因为每个DO实例其null值属性不同；因此如果数据库非null，那么DO一定要设置值<br>
-	 * <br>
-	 * 说明：为了实际达到批量插入的性能，请确保mysql url带上rewriteBatchedStatements=TRUE
+	 * 【重点】不会自动设置插入数据的返回自增ID（拦截器里也拿不到ID），也不会设置回数据库的默认值<br>
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */
