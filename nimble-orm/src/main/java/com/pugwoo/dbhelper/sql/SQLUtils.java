@@ -311,7 +311,8 @@ public class SQLUtils {
 		Class<?> clazz = list.iterator().next().getClass();
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 
-		// TODO 根据list的值，只留下有值的field
+		// 根据list的值，只留下有值的field和非computed的列
+		fields = filterFieldWithValue(fields, list);
 
 		appendTableName(sql, clazz);
 		appendInsertColumnSql(sql, fields);
@@ -324,6 +325,31 @@ public class SQLUtils {
 		}
 
 		return sql.toString();
+	}
+
+	private static <T> List<Field> filterFieldWithValue(List<Field> fields, Collection<T> list) {
+		fields = InnerCommonUtils.filter(fields, o -> {
+			Column column = o.getAnnotation(Column.class);
+			return column != null && InnerCommonUtils.isBlank(column.computed());
+		});
+
+		int totalSize = fields.size();
+		Set<Field> result = new HashSet<>();
+		int current = 0;
+		for (T t : list) {
+			for (Field field : fields) {
+				if (DOInfoReader.getValue(field, t) != null) {
+					if (!result.contains(field)) {
+						result.add(field);
+						current++;
+						if (current == totalSize) {
+							return new ArrayList<>(result);
+						}
+					}
+				}
+			}
+		}
+		return new ArrayList<>(result);
 	}
 
 	private static void appendValueForBatchInsert(StringBuilder sb, List<Field> fields, List<Object> values, Object obj) {
@@ -1128,7 +1154,8 @@ public class SQLUtils {
 	}
 
 	/**
-	 * 获得指定字段拼凑而成的插入列，例如(name,age)。会排除掉computed的@Column字段。
+	 * 获得指定字段拼凑而成的插入列，例如(name,age)。
+	 * @param fields 由调用方保证有Column注解且没有computed值
 	 */
 	private static void appendInsertColumnSql(StringBuilder sb, List<Field> fields) {
 		sb.append("(");
@@ -1139,12 +1166,6 @@ public class SQLUtils {
 				}
 				Field field = fields.get(i);
 				Column column = field.getAnnotation(Column.class);
-				if (column == null) {
-					continue;
-				}
-				if(InnerCommonUtils.isNotBlank(column.computed())) {
-					continue; // insert不加入computed字段
-				}
 				appendColumnName(sb, column.value());
 			}
 		}
