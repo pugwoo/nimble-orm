@@ -417,10 +417,9 @@ public interface DBHelper {
 	<T> int insert(T t);
 	
 	/**
-	 * 插入多条记录，返回数据库实际修改的条数。<br>
-	 * 实际上，这个是int insert(T t)的循环遍历而已。插入性能并不会因多条而提升。<br>
-	 * 【注】只插入非null的值。该方法没有事务，请在外层加事务。<br>
-	 * 【特别说明】因为需要获取自增主键，DBHelper并没有提供真正批量插入。对于插入性能要求高的场景，请使用insertBatchWithoutReturnId。
+	 * 批量插入多条记录，返回数据库实际修改的条数。<br>
+	 * 【说明】该方法没有事务，请在外层加事务。<br>
+	 * 【特别说明】因为需要获取自增主键，对于有自增id的插入，会降级为逐条插入，如果想提升性能，请使用insertBatchWithoutReturnId方法。
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 实际修改的条数
 	 */

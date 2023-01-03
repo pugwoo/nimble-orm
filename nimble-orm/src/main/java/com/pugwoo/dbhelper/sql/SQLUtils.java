@@ -304,7 +304,7 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> String getInsertSQLForBatch(Collection<T> list, List<Object> values) {
+	public static <T> InsertSQLForBatchDTO getInsertSQLForBatch(Collection<T> list, List<Object> values) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
@@ -317,14 +317,20 @@ public class SQLUtils {
 		appendTableName(sql, clazz);
 		appendInsertColumnSql(sql, fields);
 
+		int sqlLogEndIndex = 0;
+		int paramLogEndIndex = 0;
 		boolean isFirst = true;
 		for (T t : list) {
 			sql.append(isFirst ? "VALUES" : ",");
 			appendValueForBatchInsert(sql, fields, values, t);
+			if (isFirst) {
+				sqlLogEndIndex = sql.length();
+				paramLogEndIndex = values.size();
+			}
 			isFirst = false;
 		}
 
-		return sql.toString();
+		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
 	}
 
 	private static <T> List<Field> filterFieldWithValue(List<Field> fields, Collection<T> list) {

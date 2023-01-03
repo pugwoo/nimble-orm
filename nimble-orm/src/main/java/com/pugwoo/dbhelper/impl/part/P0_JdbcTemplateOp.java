@@ -64,12 +64,10 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
-		sql = sql.substring(0, Math.min(300, sql.length()));
-		values = values.subList(0, Math.min(30, values.size()));
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert list size:{}, the first 30 params are:{}", sql, listSize, values);
+			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
 		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert list size:{}, the first 30 params are:{}", sql, listSize, values);
+			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
 		}
 	}
 	

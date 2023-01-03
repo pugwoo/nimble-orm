@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -70,11 +71,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			return 0;
 		}
 
-		if (list instanceof List) {
-			doInterceptBeforeInsertList((List<Object>) list);
-		} else {
-			doInterceptBeforeInsertList(new ArrayList<>(list));
-		}
+		doInterceptBeforeInsertList(list);
 
 		int sum = 0;
 		for(Object obj : list) {
@@ -92,7 +89,16 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	@Override
 	public <T> int insertBatchWithoutReturnId(Collection<T> list) {
-		if(list == null || list.isEmpty()) {
+		/*
+		 * 批量插入的主要优化点：
+		 * 1）直接使用sql insert values的多个values作为批量插入方式，因为对于null要使用default关键字，
+		 *    使用prepare statement的批量插入方式，使用不了default关键字。
+		 *    同时，这样做的好处可以不用要求mysql的链接参数加上rewriteBatchedStatements=TRUE
+		 * 2）对于批量插入全是null的字段，不需要在insert列里出现，此项节省约10%~50%的插入时间（取决于null值的列的数量）
+		 * 3）为了避免sql注入风险，参数还是用?的方式表达，此项对性能的影响比较有限，但安全性足够高，因此不再自己拼凑sql值
+		 * 4）对于大量插入，log需要优化，不要打印太多的信息，否则性能会受到较大的影响。
+		 */
+		if (list == null || list.isEmpty()) {
 			return 0;
 		}
 		SQLAssert.allSameClass(list);
@@ -102,14 +108,15 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		doInterceptBeforeInsertList(list);
 
 		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getInsertSQLForBatch(list, values);
-		sql = addComment(sql);
-		logForBatchInsert(sql, list.size(), values);
+		InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values);
+		String sql = addComment(sqlDTO.getSql());
+		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
+		logForBatchInsert(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
 
 		long start = System.currentTimeMillis();
 		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlowForBatch(cost, sql, list.size());
+		logSlowForBatch(cost, sqlForLog, list.size());
 
 		doInterceptAfterInsertList(list, total);
 		return total;
