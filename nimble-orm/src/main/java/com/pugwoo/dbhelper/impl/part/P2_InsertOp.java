@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
@@ -64,31 +65,41 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return insert(t, false, true);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public int insert(Collection<?> list) {
-		if(list == null || list.isEmpty()) {
+		list = InnerCommonUtils.removeNull(list);
+		if (list == null || list.isEmpty()) {
 			return 0;
 		}
 
 		doInterceptBeforeInsertList(list);
 
+		// 判断是否可以转成批量：所有的类相同，且插入主键有值
+		boolean canBatchInsert = false;
+		boolean isSameClass = SQLAssert.isAllSameClass(list);
+		if (isSameClass && isAllHaveKeyValue(list)) {
+			canBatchInsert = true;
+		}
+
 		int sum = 0;
-		for(Object obj : list) {
-			sum += insert(obj, false, false);
-		}
-
-		if (list instanceof List) {
-			doInterceptAfterInsertList((List<Object>)list, sum);
+		if (canBatchInsert) {
+			sum = insertBatchWithoutReturnId(list, false);
 		} else {
-			doInterceptAfterInsertList(new ArrayList<>(list), sum);
+			for(Object obj : list) {
+				sum += insert(obj, false, false);
+			}
 		}
 
+		doInterceptAfterInsertList(list, sum);
 		return sum;
 	}
 
 	@Override
 	public <T> int insertBatchWithoutReturnId(Collection<T> list) {
+		return insertBatchWithoutReturnId(list, true);
+	}
+
+	private <T> int insertBatchWithoutReturnId(Collection<T> list, boolean withInterceptor) {
 		/*
 		 * 批量插入的主要优化点：
 		 * 1）直接使用sql insert values的多个values作为批量插入方式，因为对于null要使用default关键字，
@@ -101,11 +112,15 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		if (list == null || list.isEmpty()) {
 			return 0;
 		}
+		list = InnerCommonUtils.removeNull(list);
+
 		SQLAssert.allSameClass(list);
 		for (T t : list) {
 			PreHandleObject.preHandleInsert(t);
 		}
-		doInterceptBeforeInsertList(list);
+		if (withInterceptor) {
+			doInterceptBeforeInsertList(list);
+		}
 
 		List<Object> values = new ArrayList<>();
 		InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values);
@@ -118,7 +133,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long cost = System.currentTimeMillis() - start;
 		logSlowForBatch(cost, sqlForLog, list.size());
 
-		doInterceptAfterInsertList(list, total);
+		if (withInterceptor) {
+			doInterceptAfterInsertList(list, total);
+		}
 		return total;
 	}
 
@@ -177,4 +194,27 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return rows;
 	}
 
+	/**
+	 * 判断list里的元素是否【没有主键】或者【有主键且有值】，调用该方法之前需要确定list都是相同的class
+	 */
+	private boolean isAllHaveKeyValue(Collection<?> list) {
+		if (list == null || list.isEmpty()) {
+			return true;
+		}
+		Class<?> clazz = list.iterator().next().getClass();
+		List<Field> fields = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
+		if (fields.isEmpty()) {
+			return true; // 没有key也认为是
+		}
+
+		for (Object obj : list) {
+			for (Field field : fields) {
+				if (DOInfoReader.getValue(field, obj) == null) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
 }
