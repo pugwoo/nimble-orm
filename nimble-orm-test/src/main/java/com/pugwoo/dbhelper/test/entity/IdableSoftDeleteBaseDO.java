@@ -1,12 +1,16 @@
 package com.pugwoo.dbhelper.test.entity;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import lombok.Data;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
  * 支持继承的方式
  */
+@Data
 public class IdableSoftDeleteBaseDO {
 
 	@Column(value = "id", isKey = true, isAutoIncrement = true)
@@ -22,48 +26,9 @@ public class IdableSoftDeleteBaseDO {
 	private Date createTime;
 	
 	@Column(value = "update_time", setTimeWhenUpdate = true, setTimeWhenInsert = true)
-	private Date updateTime;
+	private LocalDateTime updateTime;
 
 	@Column(value = "delete_time", setTimeWhenDelete = true)
-	private Date deleteTime;
+	private Timestamp deleteTime;
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Boolean getDeleted() {
-		return deleted;
-	}
-
-	public void setDeleted(Boolean deleted) {
-		this.deleted = deleted;
-	}
-
-	public Date getCreateTime() {
-		return createTime;
-	}
-
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
-	}
-
-	public Date getUpdateTime() {
-		return updateTime;
-	}
-
-	public void setUpdateTime(Date updateTime) {
-		this.updateTime = updateTime;
-	}
-
-	public Date getDeleteTime() {
-		return deleteTime;
-	}
-
-	public void setDeleteTime(Date deleteTime) {
-		this.deleteTime = deleteTime;
-	}
 }

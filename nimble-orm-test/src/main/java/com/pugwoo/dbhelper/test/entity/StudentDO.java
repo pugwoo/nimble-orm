@@ -4,12 +4,14 @@ package com.pugwoo.dbhelper.test.entity;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import lombok.Data;
 
 import java.util.List;
 
 /**
  * 2015年1月12日 15:20:09 这个是有注解的DO
  */
+@Data
 @Table("t_student")
 public class StudentDO extends IdableSoftDeleteBaseDO {
 		
@@ -40,52 +42,4 @@ public class StudentDO extends IdableSoftDeleteBaseDO {
 		return "id:" + getId() + ",name:" + name + ",age:" + age;
 	};
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Integer getAge() {
-		return age;
-	}
-
-	public void setAge(Integer age) {
-		this.age = age;
-	}
-
-	public byte[] getIntro() {
-		return intro;
-	}
-
-	public void setIntro(byte[] intro) {
-		this.intro = intro;
-	}
-
-	public Long getSchoolId() {
-		return schoolId;
-	}
-
-	public void setSchoolId(Long schoolId) {
-		this.schoolId = schoolId;
-	}
-
-	public SchoolDO getSchoolSnapshot() {
-		return schoolSnapshot;
-	}
-
-	public void setSchoolSnapshot(SchoolDO schoolSnapshot) {
-		this.schoolSnapshot = schoolSnapshot;
-	}
-
-	public List<CourseDO> getCourseSnapshot() {
-		return courseSnapshot;
-	}
-
-	public void setCourseSnapshot(List<CourseDO> courseSnapshot) {
-		this.courseSnapshot = courseSnapshot;
-	}
-	
 }

@@ -7,10 +7,7 @@ import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.SubQuery;
-import com.pugwoo.dbhelper.utils.DOInfoReader;
-import com.pugwoo.dbhelper.utils.InnerCommonUtils;
-import com.pugwoo.dbhelper.utils.ScriptUtils;
-import com.pugwoo.dbhelper.utils.TypeAutoCast;
+import com.pugwoo.dbhelper.utils.*;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
@@ -481,9 +478,12 @@ public class SQLUtils {
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 
-			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
-				sql.append(",").append(getColumnName(column))
-				   .append("=").append(getDateString(new Date()));
+			if(column.setTimeWhenUpdate()) {
+				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
+				if (nowDateTime != null) {
+					sql.append(",").append(getColumnName(column))
+						.append("='").append(nowDateTime).append("'");
+				}
 			}
 
 			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
@@ -525,9 +525,12 @@ public class SQLUtils {
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 
-			if(column.setTimeWhenUpdate() && Date.class.isAssignableFrom(field.getType())) {
-				sql.append(",").append(getColumnName(column))
-				   .append("=").append(getDateString(new Date()));
+			if(column.setTimeWhenUpdate()) {
+				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
+				if (nowDateTime != null) {
+					sql.append(",").append(getColumnName(column))
+							.append("='").append(nowDateTime).append("'");
+				}
 			}
 
 			if(column.casVersion()) {
@@ -634,10 +637,12 @@ public class SQLUtils {
 		// 特殊处理@Column setTimeWhenDelete时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
-				sql.append(",").append(getColumnName(column)).append("='");
-				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-				sql.append(df.format(new Date())).append("'");
+			if(column.setTimeWhenDelete()) {
+				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
+				if (nowDateTime != null) {
+					sql.append(",").append(getColumnName(column)).append("='");
+					sql.append(nowDateTime).append("'");
+				}
 			}
 		}
 
@@ -667,9 +672,12 @@ public class SQLUtils {
 		// 加上删除时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
-			if(column.setTimeWhenDelete() && Date.class.isAssignableFrom(field.getType())) {
-				sql.append(",").append(getColumnName(column))
-						.append("=").append(getDateString(new Date()));
+			if(column.setTimeWhenDelete()) {
+				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
+				if (nowDateTime != null) {
+					sql.append(",").append(getColumnName(column))
+							.append("='").append(nowDateTime).append("'");
+				}
 			}
 		}
 
@@ -1299,14 +1307,6 @@ public class SQLUtils {
 
 	private static void appendColumnName(StringBuilder sb, String columnName) {
 		sb.append("`").append(columnName).append("`");
-	}
-
-	/**
-	 * 输出类似：'2017-05-25 11:22:33'
-	 */
-	private static String getDateString(Date date) {
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-		return "'" + df.format(date) + "'";
 	}
 
 }
