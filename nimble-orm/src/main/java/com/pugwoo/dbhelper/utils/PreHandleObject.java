@@ -9,6 +9,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -148,8 +149,6 @@ public class PreHandleObject {
 
 	/**
 	 * 返回对应的类型的时间日期字符串，返回null表示不支持该clazz
-	 * @param clazz
-	 * @return
 	 */
 	public static String getNowDateTime(Class<?> clazz) {
 		if (clazz == Date.class || clazz == LocalDateTime.class || clazz == java.sql.Date.class
@@ -171,25 +170,27 @@ public class PreHandleObject {
 		Class<?> clazz = field.getType();
 		Object value = null;
 		if (clazz == Date.class) {
-			value = new Date();
+			value = new Date(System.currentTimeMillis() / 1000 * 1000);
 		} else if (clazz == LocalDateTime.class) {
-			value = LocalDateTime.now();
+			value = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 		} else if (clazz == LocalDate.class) {
 			value = LocalDate.now();
 		} else if (clazz == java.sql.Date.class) {
-			value = new java.sql.Date(System.currentTimeMillis());
+			value = new java.sql.Date(System.currentTimeMillis() / 1000 * 1000);
 		} else if (clazz == Timestamp.class) {
 			value = new Timestamp(System.currentTimeMillis());
 		} else if (clazz == LocalTime.class) {
-			value = LocalTime.now();
+			value = LocalTime.now().truncatedTo(ChronoUnit.SECONDS);
 		} else if (clazz == Time.class) {
-			value = new Time(System.currentTimeMillis());
+			value = new Time(System.currentTimeMillis() / 1000 * 1000);
 		} else if (clazz == Calendar.class) {
-			value = Calendar.getInstance();
+			Calendar cal = Calendar.getInstance();
+			cal.setTimeInMillis(System.currentTimeMillis() / 1000 * 1000);
+			value = cal;
 		} else if (clazz == Instant.class) {
-			value = Instant.now();
+			value = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 		} else if (clazz == ZonedDateTime.class) {
-			value = ZonedDateTime.now();
+			value = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 		} else {
 			LOGGER.error("fail to set now date time for class:{}", clazz);
 		}

@@ -77,17 +77,17 @@ public @interface Column {
 	String[] softDelete() default "";
 	
 	/**
-	 * 当设置为true时，且原值为null时，更新时会自动设置当前日期时间，对应的类型必须是以下其中一种：<br>
-	 * java.util.Date<br>
-	 * java.sql.Date<br>
-	 * java.sql.Timestamp<br>
-	 * java.sql.Time<br>
-	 * java.time.LocalDateTime<br>
-	 * java.time.LocalDate<br>
-	 * java.time.LocalTime<br>
-	 * java.util.Calendar<br>
-	 * java.time.Instant<br>
-	 * java.time.ZonedDateTime
+	 * 当设置为true时，且原值为null时，更新时会自动设置当前日期时间，对应的类型必须是以下其中一种，对应精度约定如下：<br>
+	 * java.util.Date 精度：秒<br>
+	 * java.sql.Date 精度：秒<br>
+	 * java.sql.Timestamp 精度：毫秒<br>
+	 * java.sql.Time 精度：秒<br>
+	 * java.time.LocalDateTime 精度：秒<br>
+	 * java.time.LocalDate 精度：天<br>
+	 * java.time.LocalTime 精度：秒<br>
+	 * java.util.Calendar 精度：秒<br>
+	 * java.time.Instant 精度：秒<br>
+	 * java.time.ZonedDateTime 精度：秒
 	 */
 	boolean setTimeWhenInsert() default false;
 	
@@ -95,33 +95,33 @@ public @interface Column {
 	 * 当设置为true时，无论改值是不是null都会更新时会自动设置当前日期时间，
 	 * （这是因为，从数据库全量查出来的updateTime是有值的，只能强制设置Date）<br>
 	 * 特别的，软删除时，会设置该值为删除时的时间。<br>
-	 * 对应的类型必须是以下其中一种：<br>
-	 * java.util.Date<br>
-	 * java.sql.Date<br>
-	 * java.sql.Timestamp<br>
-	 * java.sql.Time<br>
-	 * java.time.LocalDateTime<br>
-	 * java.time.LocalDate<br>
-	 * java.time.LocalTime<br>
-	 * java.util.Calendar<br>
-	 * java.time.Instant<br>
-	 * java.time.ZonedDateTime
+	 * 对应的类型必须是以下其中一种，对应精度约定如下：<br>
+	 * java.util.Date 精度：秒<br>
+	 * java.sql.Date 精度：秒<br>
+	 * java.sql.Timestamp 精度：毫秒<br>
+	 * java.sql.Time 精度：秒<br>
+	 * java.time.LocalDateTime 精度：秒<br>
+	 * java.time.LocalDate 精度：天<br>
+	 * java.time.LocalTime 精度：秒<br>
+	 * java.util.Calendar 精度：秒<br>
+	 * java.time.Instant 精度：秒<br>
+	 * java.time.ZonedDateTime 精度：秒
 	 */
 	boolean setTimeWhenUpdate() default false;
 
 	/**
 	 * 当设置为true时，会自动设置当前日期时间<br>
-	 * 对应的类型必须是以下其中一种：<br>
-	 * java.util.Date<br>
-	 * java.sql.Date<br>
-	 * java.sql.Timestamp<br>
-	 * java.sql.Time<br>
-	 * java.time.LocalDateTime<br>
-	 * java.time.LocalDate<br>
-	 * java.time.LocalTime<br>
-	 * java.util.Calendar<br>
-	 * java.time.Instant<br>
-	 * java.time.ZonedDateTime
+	 * 对应的类型必须是以下其中一种，对应精度约定如下：<br>
+	 * java.util.Date 精度：秒<br>
+	 * java.sql.Date 精度：秒<br>
+	 * java.sql.Timestamp 精度：毫秒<br>
+	 * java.sql.Time 精度：秒<br>
+	 * java.time.LocalDateTime 精度：秒<br>
+	 * java.time.LocalDate 精度：天<br>
+	 * java.time.LocalTime 精度：秒<br>
+	 * java.util.Calendar 精度：秒<br>
+	 * java.time.Instant 精度：秒<br>
+	 * java.time.ZonedDateTime 精度：秒
 	 */
 	boolean setTimeWhenDelete() default false;
 
