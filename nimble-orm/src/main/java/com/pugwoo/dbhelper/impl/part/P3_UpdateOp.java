@@ -71,27 +71,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _update(t, true, true, postSql, args);
 	}
-	
-	@Override
-	public <T> int updateWithNull(Collection<T> list) throws NullKeyValueException {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
 
-		List<Object> tmpList = new ArrayList<>(list);
-		doInterceptBeforeUpdate(tmpList, null, null);
-		
-		int rows = 0;
-		for(T t : list) {
-			if(t != null) {
-				rows += _update(t, true, false, null);
-			}
-		}
-		
-		doInterceptAfterUpdate(tmpList, rows);
-		return rows;
-	}
-	
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {

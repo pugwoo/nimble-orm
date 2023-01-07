@@ -462,37 +462,6 @@ public interface DBHelper {
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdate(Collection<T> list);
-	
-	/**
-	 * 如果t有主键，则更新值；否则插入记录。包括null的值会更新或插入。
-	 * @param list 需要插入的DO对象实例列表
-	 * @return 返回数据库实际修改的条数
-	 */
-	@Deprecated
-	<T> int insertOrUpdateWithNull(Collection<T> list);
-	
-	/**
-	 * 全量更新指定的列表，只处理非null字段。dbList表示原来的数据，必须都带上key。<br>
-	 * newList表示新的数据，可以带有key也可以没有。<br>
-	 * 对于dbList有的key但是newList中没有的key，将被删除。<br>
-	 * 对于dbList有的key且newList也有的key，将被更新。<br>
-	 * 对于dbList没有的key，但newList中有的key，将被更新。<br>
-	 * 对于dbList没有的key，但newList也没有key的对象，将被插入。<br>
-	 * @param dbList 可以是null，等同于空list
-	 * @param newList 不能是null，否则该方法什么都不执行
-	 * @return newList成功的值，不包括dbList中删除的
-	 */
-	@Deprecated
-	<T> int insertOrUpdateFull(Collection<T> dbList, Collection<T> newList);
-	
-	/**
-	 * 文档同insertOrUpdateFull，只是会insert or update null值
-	 * @param dbList 可以是null，等同于空list
-	 * @param newList 不能是null，否则该方法什么都不执行
-	 * @return newList成功的值，不包括dbList中删除的
-	 */
-	@Deprecated
-	<T> int insertOrUpdateFullWithNull(Collection<T> dbList, Collection<T> newList);
 
 	/**
 	 * 更新单个实例数据库记录，必须带上object的key，包含更新null值的字段
@@ -555,17 +524,7 @@ public interface DBHelper {
 	 * @return 实际修改条数
 	 */
 	<T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args);
-	
-	/**
-	 * 更新数据库记录，更新包含null的字段，返回数据库实际修改条数。
-	 * 【注】批量更新的方法并不会比程序中循环调用int updateNotNull(T t)更快
-	 * @param list 要更新的对象列表
-	 * @return 实际修改条数
-	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
-	 */
-	@Deprecated
-	<T> int updateWithNull(Collection<T> list) throws NullKeyValueException;
-	
+
 	/**
 	 * 更新数据库记录，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int update(T t)更快

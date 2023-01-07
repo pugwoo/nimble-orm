@@ -36,13 +36,6 @@ public class TestDBHelper_update {
 
         db = dbHelper.getByKey(StudentDO.class, db.getId());
         assert db.getAge() == null;
-
-        List<StudentDO> list = new ArrayList<StudentDO>();
-        list.add(db);
-        db.setName(null);
-        dbHelper.updateWithNull(list);
-        db = dbHelper.getByKey(StudentDO.class, db.getId());
-        assert db.getName() == null;
     }
 
     @Test

@@ -137,47 +137,6 @@ public class TestDBHelper_insert {
     }
 
     @Test
-    public void testInsertOrUpdateFull() {
-        List<StudentDO> old = CommonOps.insertBatch(dbHelper,20);
-        assert old.size() == 20;
-
-        List<StudentDO> newlist =
-                dbHelper.getAll(StudentDO.class, "where id >= ? and id <= ?",
-                        old.get(10).getId(), old.get(19).getId());
-
-        StudentDO studentDO = new StudentDO();
-        studentDO.setName("hahahaha");
-        newlist.add(studentDO);
-
-        dbHelper.insertOrUpdateFull(old, newlist);
-
-        assert studentDO.getId() != null;
-
-        for(int i = 0; i < 10; i++) {
-            StudentDO s = dbHelper.getByKey(StudentDO.class, old.get(i).getId());
-            assert s == null;
-        }
-
-        for(int i = 10; i < 20; i++) {
-            StudentDO s = dbHelper.getByKey(StudentDO.class, old.get(i).getId());
-            assert s != null;
-        }
-
-        dbHelper.insertOrUpdateFullWithNull(old, newlist);
-
-
-        // 异常参数的情况
-        assert dbHelper.insertOrUpdateFull(null, null) == 0;
-        assert dbHelper.insertOrUpdateFull(null, new ArrayList<StudentDO>()) == 0;
-
-        StudentDO new1 = new StudentDO();
-        new1.setName(CommonOps.getRandomName("tom"));
-        assert dbHelper.insertOrUpdateFull(null, ListUtils.newArrayList(new1)) == 1;
-        assert new1.getId() != null;
-        assert dbHelper.getByKey(StudentDO.class, new1.getId()).getName().equals(new1.getName());
-    }
-
-    @Test
     public void testInsertOrUpdateWithNull() {
         assert dbHelper.insertOrUpdateWithNull(null) == 0;
 
