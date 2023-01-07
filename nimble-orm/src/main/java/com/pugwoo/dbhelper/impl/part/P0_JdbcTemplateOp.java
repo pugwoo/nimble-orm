@@ -184,9 +184,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	/**
-	 * 废弃，不需要设置了 since 1.2
+	 * 可选，非必须
+	 * since 1.2
 	 */
-	@Deprecated
 	public void setNamedParameterJdbcTemplate(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
