@@ -109,10 +109,10 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 * 3）为了避免sql注入风险，参数还是用?的方式表达，此项对性能的影响比较有限，但安全性足够高，因此不再自己拼凑sql值
 		 * 4）对于大量插入，log需要优化，不要打印太多的信息，否则性能会受到较大的影响。
 		 */
+		list = InnerCommonUtils.removeNull(list);
 		if (list == null || list.isEmpty()) {
 			return 0;
 		}
-		list = InnerCommonUtils.removeNull(list);
 
 		SQLAssert.allSameClass(list);
 		for (T t : list) {
