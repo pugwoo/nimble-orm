@@ -63,11 +63,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-	protected void logForBatchInsert(String sql, int listSize, Object[] firstRow) {
+	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("ExecSQL:{},batch insert list size:{}, first row is:{}", sql, listSize, firstRow);
+			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
 		} else {
-			LOGGER.debug("ExecSQL:{},batch insert list size:{}, first row is:{}", sql, listSize, firstRow);
+			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
 		}
 	}
 	

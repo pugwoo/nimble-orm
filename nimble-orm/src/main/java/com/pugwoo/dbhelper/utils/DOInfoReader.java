@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,6 @@ import java.util.Set;
 
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
- * 
  * 1. 继承的类的信息读取，父类先读取，请保证@Column注解没有重复的字段。
  */
 public class DOInfoReader {
@@ -96,8 +96,8 @@ public class DOInfoReader {
 		List<RelatedField> fields =  new ArrayList<>();
 
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
-		Field joinLeftTableFiled = null;
-		Field joinRightTableFiled = null;
+		Field joinLeftTableFiled;
+		Field joinRightTableFiled;
 		String leftTablePrefix = "";
 		String rightTablePrefix = "";
 		if (joinTable == null) {
@@ -265,16 +265,8 @@ public class DOInfoReader {
 	 * 获得字段里面的key字段
 	 * @throws NoKeyColumnAnnotationException 如果没有key Column，抛出该异常。
 	 */
-	public static List<Field> getKeyColumns(Class<?> clazz) 
-	    throws NoKeyColumnAnnotationException {
-		List<Field> fields = getColumns(clazz);
-		List<Field> keyFields = new ArrayList<>();
-		for(Field field : fields) {
-			Column column = field.getAnnotation(Column.class);
-			if(column.isKey()) {
-				keyFields.add(field);
-			}
-		}
+	public static List<Field> getKeyColumns(Class<?> clazz) throws NoKeyColumnAnnotationException {
+		List<Field> keyFields = getKeyColumnsNoThrowsException(clazz);
 		if(keyFields.isEmpty()) {
 			throw new NoKeyColumnAnnotationException();
 		}
@@ -465,9 +457,10 @@ public class DOInfoReader {
 	
 	/**
 	 * 先按照setter的约定寻找setter方法(必须严格匹配参数类型或自动转换)<br>
-	 * 如果有则按setter方法，如果没有则直接写入
+	 * 如果有则按setter方法，如果没有则直接写入<br>
+	 * 如果写入失败，会log error但不会抛出异常。
 	 */
-	public static boolean setValue(Field field, Object object, Object value) {
+	public static void setValue(Field field, Object object, Object value) {
 		value = TypeAutoCast.cast(value, field.getType());
 		Method method = ClassInfoCache.getFieldSetMethod(field);
 		
@@ -475,20 +468,18 @@ public class DOInfoReader {
 			try {
 				method.invoke(object, value);
 			} catch (Exception e) {
-				LOGGER.error("set method:{} invoke fail", method.getName(), e);
-				return false;
+				LOGGER.error("set method:{} invoke fail, object:{}, value:{}", method.getName(),
+						NimbleOrmJSON.toJson(object), value, e);
 			}
 		} else {
 			field.setAccessible(true);
 			try {
 				field.set(object, value);
 			} catch (Exception e) {
-				LOGGER.error("field:{} set fail", field.getName(), e);
-				return false;
+				LOGGER.error("field:{} set fail, object:{}, value:{}", field.getName(),
+						NimbleOrmJSON.toJson(object), value, e);
 			}
 		}
-		
-		return true;
 	}
 	
 	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {

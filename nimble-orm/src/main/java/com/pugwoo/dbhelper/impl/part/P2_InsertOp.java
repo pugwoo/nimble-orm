@@ -2,9 +2,11 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
@@ -23,9 +25,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
-	private void doInterceptBeforeInsertList(List<Object> list) {
+	private void doInterceptBeforeInsertList(Collection<?> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeInsert(list);
+			boolean isContinue;
+			if (list instanceof List) {
+				isContinue = interceptor.beforeInsert((List<Object>) list);
+			} else {
+				isContinue = interceptor.beforeInsert(new ArrayList<>(list));
+			}
 			if (!isContinue) {
 				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
 			}
@@ -37,10 +44,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsertList(list, rows);
 	}
-	private void doInterceptAfterInsertList(final List<Object> list, final int rows) {
+	private void doInterceptAfterInsertList(final Collection<?> list, final int rows) {
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
-				interceptors.get(i).afterInsert(list, rows);
+				if (list instanceof List) {
+					interceptors.get(i).afterInsert((List<Object>)list, rows);
+				} else {
+					interceptors.get(i).afterInsert(new ArrayList<>(list), rows);
+				}
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -54,79 +65,77 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return insert(t, false, true);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public int insert(Collection<?> list) {
-		if(list == null || list.isEmpty()) {
+		list = InnerCommonUtils.removeNull(list);
+		if (list == null || list.isEmpty()) {
 			return 0;
 		}
 
-		if (list instanceof List) {
-			doInterceptBeforeInsertList((List<Object>) list);
-		} else {
-			doInterceptBeforeInsertList(new ArrayList<>(list));
+		doInterceptBeforeInsertList(list);
+
+		// 判断是否可以转成批量：所有的类相同，且插入主键有值
+		boolean canBatchInsert = false;
+		boolean isSameClass = SQLAssert.isAllSameClass(list);
+		if (isSameClass && isAllHaveKeyValue(list)) {
+			canBatchInsert = true;
 		}
 
 		int sum = 0;
-		for(Object obj : list) {
-			sum += insert(obj, false, false);
-		}
-
-		if (list instanceof List) {
-			doInterceptAfterInsertList((List<Object>)list, sum);
+		if (canBatchInsert) {
+			sum = insertBatchWithoutReturnId(list, false);
 		} else {
-			doInterceptAfterInsertList(new ArrayList<>(list), sum);
+			for(Object obj : list) {
+				sum += insert(obj, false, false);
+			}
 		}
 
+		doInterceptAfterInsertList(list, sum);
 		return sum;
 	}
 
 	@Override
 	public <T> int insertBatchWithoutReturnId(Collection<T> list) {
-		if(list == null || list.isEmpty()) {
+		return insertBatchWithoutReturnId(list, true);
+	}
+
+	private <T> int insertBatchWithoutReturnId(Collection<T> list, boolean withInterceptor) {
+		/*
+		 * 批量插入的主要优化点：
+		 * 1）直接使用sql insert values的多个values作为批量插入方式，因为对于null要使用default关键字，
+		 *    使用prepare statement的批量插入方式，使用不了default关键字。
+		 *    同时，这样做的好处可以不用要求mysql的链接参数加上rewriteBatchedStatements=TRUE
+		 * 2）对于批量插入全是null的字段，不需要在insert列里出现，此项节省约10%~50%的插入时间（取决于null值的列的数量）
+		 * 3）为了避免sql注入风险，参数还是用?的方式表达，此项对性能的影响比较有限，但安全性足够高，因此不再自己拼凑sql值
+		 * 4）对于大量插入，log需要优化，不要打印太多的信息，否则性能会受到较大的影响。
+		 */
+		list = InnerCommonUtils.removeNull(list);
+		if (list == null || list.isEmpty()) {
 			return 0;
 		}
-		SQLAssert.allSameClass(list);
 
+		SQLAssert.allSameClass(list);
 		for (T t : list) {
 			PreHandleObject.preHandleInsert(t);
 		}
-
-		if (list instanceof List) {
-			doInterceptBeforeInsertList((List<Object>) list);
-		} else {
-			doInterceptBeforeInsertList(new ArrayList<>(list));
+		if (withInterceptor) {
+			doInterceptBeforeInsertList(list);
 		}
 
-		List<Object[]> values = new ArrayList<>();
-		String sql = SQLUtils.getInsertSQLForBatch(list, values);
-		sql = addComment(sql);
-		logForBatchInsert(sql, values.size(), values.isEmpty() ? null : values.get(0));
+		List<Object> values = new ArrayList<>();
+		InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values);
+		String sql = addComment(sqlDTO.getSql());
+		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
+		logForBatchInsert(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
 
-		final long start = System.currentTimeMillis();
-
-		int[] rows = jdbcTemplate.batchUpdate(sql, values);
-
-		int total = 0;
-		for (int row : rows) {
-			int result = row;
-			if (row == -2) {
-				result = 1; // -2 means Statement.SUCCESS_NO_INFO
-			} else if (row < 0) {
-				result = 0; // not success
-			}
-			total += result;
-		}
-
+		long start = System.currentTimeMillis();
+		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlowForBatch(cost, sql, list.size());
+		logSlowForBatch(cost, sqlForLog, list.size());
 
-		if (list instanceof List) {
-			doInterceptAfterInsertList((List<Object>)list, total);
-		} else {
-			doInterceptAfterInsertList(new ArrayList<>(list), total);
+		if (withInterceptor) {
+			doInterceptAfterInsertList(list, total);
 		}
-
 		return total;
 	}
 
@@ -185,4 +194,27 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return rows;
 	}
 
+	/**
+	 * 判断list里的元素是否【没有主键】或者【有主键且有值】，调用该方法之前需要确定list都是相同的class
+	 */
+	private boolean isAllHaveKeyValue(Collection<?> list) {
+		if (list == null || list.isEmpty()) {
+			return true;
+		}
+		Class<?> clazz = list.iterator().next().getClass();
+		List<Field> fields = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
+		if (fields.isEmpty()) {
+			return true; // 没有key也认为是
+		}
+
+		for (Object obj : list) {
+			for (Field field : fields) {
+				if (DOInfoReader.getValue(field, obj) == null) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
 }

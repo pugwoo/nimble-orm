@@ -30,15 +30,15 @@
 			<artifactId>mysql-connector-java</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>ru.yandex.clickhouse</groupId>
+			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
-			<version>0.3.2</version>
+			<version>0.3.2-patch11</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.pugwoo</groupId>
 			<artifactId>nimble-orm</artifactId>
-			<version>1.4.1</version>
+			<version>1.4.2</version>
 		</dependency>
 
 		<dependency>

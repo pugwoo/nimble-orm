@@ -11,7 +11,6 @@ import java.util.List;
 public class SQLAssert {
 
 	public static void onlyOneKeyColumn(Class<?> clazz) {
-		
 		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 
 		if (keyFields.size() != 1) {
@@ -19,25 +18,24 @@ public class SQLAssert {
 					"must have only one key column, actually has "
 							+ keyFields.size() + " key columns");
 		}
-		
 	}
 	
 	public static <T> void allSameClass(Collection<T> list) throws InvalidParameterException {
-		if(!isAllSameClass(list)) {
+		if (!isAllSameClass(list)) {
 			throw new InvalidParameterException("list elements must be same class");
 		}
 	}
 	
 	public static <T> boolean isAllSameClass(Collection<T> list) {
-		if(list == null || list.isEmpty()) {
+		if (list == null || list.isEmpty()) {
             return true;
         }
 		Class<?> clazz = null;
-		for(T t : list) {
+		for (T t : list) {
 			if (t == null) {
 				continue;
 			}
-			if(clazz == null) {
+			if (clazz == null) {
 				clazz = t.getClass();
 			} else {
 				if (clazz != t.getClass()) {

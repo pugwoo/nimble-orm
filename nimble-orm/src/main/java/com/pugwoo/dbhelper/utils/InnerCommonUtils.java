@@ -37,10 +37,23 @@ public class InnerCommonUtils {
         return collection != null && !collection.isEmpty();
     }
 
+    public static <T> Collection<T> removeNull(Collection<T> list) {
+        if (list == null) {
+            return null;
+        }
+        for (T t : list) {
+            if (t == null) {
+                // 因为list中出现null是小概率事件，所以这里不会每次都产生新list
+                return filter(list, Objects::nonNull);
+            }
+        }
+        return list;
+    }
+
     /**
      * filter一个list
      */
-    public static <T> List<T> filter(List<T> list, Predicate<? super T> predicate) {
+    public static <T> List<T> filter(Collection<T> list, Predicate<? super T> predicate) {
         if(list == null) {
             return new ArrayList<>();
         }
