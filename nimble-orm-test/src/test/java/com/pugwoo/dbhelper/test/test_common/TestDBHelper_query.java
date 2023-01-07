@@ -31,11 +31,10 @@ public class TestDBHelper_query {
     private DBHelper dbHelper;
 
     @Test 
-    public void testExcludeInheritedColumn() {
+    public void testSameTableNameAs() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         StudentCalVO db = dbHelper.getOne(StudentCalVO.class, "where id=?", studentDO.getId());
         assert db != null;
-       // assert db.getId() == null;
         assert db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi");
     }
 
