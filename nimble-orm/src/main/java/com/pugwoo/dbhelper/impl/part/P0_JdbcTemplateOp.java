@@ -93,7 +93,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	protected void logSlowForBatch(long cost, String sql, int listSize) {
 		if(cost > timeoutWarningValve) {
-			sql = sql.substring(0, Math.min(300, sql.length()));
 			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
 			try {
 				if(slowSqlCallback != null) {
