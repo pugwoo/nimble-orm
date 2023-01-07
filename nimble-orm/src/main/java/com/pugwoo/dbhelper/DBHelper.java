@@ -468,6 +468,7 @@ public interface DBHelper {
 	 * @param list 需要插入的DO对象实例列表
 	 * @return 返回数据库实际修改的条数
 	 */
+	@Deprecated
 	<T> int insertOrUpdateWithNull(Collection<T> list);
 	
 	/**
@@ -562,6 +563,7 @@ public interface DBHelper {
 	 * @return 实际修改条数
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
 	 */
+	@Deprecated
 	<T> int updateWithNull(Collection<T> list) throws NullKeyValueException;
 	
 	/**
