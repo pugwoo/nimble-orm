@@ -5,7 +5,6 @@ import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
@@ -876,45 +875,6 @@ public class TestDBHelper_query {
 
         assert one.getName().endsWith("FFFFFFFF");
         assert one.getName2() == null;
-    }
-
-
-    @Test
-    public void testSubQuery() {
-        StudentDO stu1 = CommonOps.insertOne(dbHelper);
-        StudentDO stu2 = CommonOps.insertOne(dbHelper);
-        StudentDO stu3 = CommonOps.insertOne(dbHelper);
-
-        List<Long> ids = new ArrayList<Long>();
-        ids.add(stu1.getId());
-        ids.add(stu2.getId());
-        ids.add(stu3.getId());
-
-        SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
-
-        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery);
-        assert all.size() == 3;
-        for(StudentDO stu : all) {
-            assert ids.contains(stu.getId());
-        }
-
-        all = dbHelper.getAll(StudentDO.class, "where id in (?) and id > ?" +
-                " and name != '\\''", subQuery, 0); // 测试subQuery和参数混合
-        assert all.size() == 3;
-        for(StudentDO stu : all) {
-            assert ids.contains(stu.getId());
-        }
-
-        // 测试3层subQuery
-        SubQuery subQuery1 = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
-        SubQuery subQuery2 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery1);
-        SubQuery subQuery3 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery2);
-
-        all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery3);
-        assert all.size() == 3;
-        for(StudentDO stu : all) {
-            assert ids.contains(stu.getId());
-        }
     }
 
     @Test

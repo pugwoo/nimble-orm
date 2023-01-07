@@ -5,7 +5,6 @@ import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -93,18 +92,6 @@ public class TestOthers {
 
     @Test
     public void testOthers() throws NoSuchFieldException, IOException {
-
-        // SubQuery
-        SubQuery subQuery = new SubQuery("field", StudentDO.class, "postsql", "1");
-        subQuery.setField("field1");
-        assert subQuery.getField().equals("field1");
-        subQuery.setClazz(SchoolDO.class);
-        assert subQuery.getClazz().equals(SchoolDO.class);
-        subQuery.setPostSql("sql");
-        assert subQuery.getPostSql().equals("sql");
-        subQuery.setArgs(new Object[]{"1", "2", "3"});
-        assert subQuery.getArgs().length == 3;
-
         // JoinTypeEnum
         assert !JoinTypeEnum.JOIN.getName().isEmpty();
 

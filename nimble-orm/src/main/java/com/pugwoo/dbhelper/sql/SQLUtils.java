@@ -6,7 +6,6 @@ import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.utils.*;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -31,25 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SQLUtils {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SQLUtils.class);
-	
-	/**
-	 * 展开子查询SubQuery子句。该方法不支持子查询嵌套，由上一层方法来嵌套调用以实现SubQuery子句嵌套。
-	 * 该方法会自动处理软删除标记。
-	 * @param subQuery 子查询DTO
-	 * @param values 带回去的参数列表
-	 * @return 拼凑完的SQL
-	 */
-	public static String expandSubQuery(SubQuery subQuery, List<Object> values) {
-		if(subQuery.getArgs() != null) {
-			values.addAll(Arrays.asList(subQuery.getArgs()));
-		}
-		return "SELECT * FROM (SELECT " +
-				subQuery.getField() +
-				" FROM " + getTableName(subQuery.getClazz()) + // 注意：subQuery这里不用table的alias
-				" " + SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()) +
-				") sub ";
-	}
-	
+
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
 	 * @param clazz 注解了Table的类
