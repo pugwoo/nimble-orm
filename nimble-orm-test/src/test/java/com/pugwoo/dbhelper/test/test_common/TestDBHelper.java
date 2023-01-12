@@ -36,7 +36,7 @@ public class TestDBHelper {
 		final DBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
 
 		String globalComment = UUID.randomUUID().toString();
-		dbHelper.setGlobalComment(globalComment);
+		DBHelper.setGlobalComment(globalComment);
 
 		AtomicBoolean isWithComment = new AtomicBoolean(false);
 		Thread thread = new Thread(() -> {
@@ -71,7 +71,7 @@ public class TestDBHelper {
 		final DBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
 
 		String localComment = UUID.randomUUID().toString();
-		dbHelper.setLocalComment(localComment);
+		DBHelper.setLocalComment(localComment);
 
 		AtomicBoolean isWithComment = new AtomicBoolean(false);
 		Thread thread = new Thread(() -> {

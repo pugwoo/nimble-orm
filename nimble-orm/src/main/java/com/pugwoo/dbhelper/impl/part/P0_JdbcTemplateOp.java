@@ -52,9 +52,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
-	/**全局的SQL注释*/
-	private String globalComment;
-
 	protected void log(String sql, Object keyValues) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
@@ -282,16 +279,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return enabled != null && enabled;
 	}
 
-	@Override
-	public void setGlobalComment(String comment) {
-		this.globalComment = comment;
-	}
-
-	@Override
-	public void setLocalComment(String comment) {
-		DBHelperContext.setComment(comment);
-	}
-
 	/**
 	 * 给sql加上注释，返回加完注释之后的sql
 	 */
@@ -299,10 +286,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		if (sql == null) {
 			sql = "";
 		}
+		String globalComment = DBHelperContext.getGlobalComment();
 		if (InnerCommonUtils.isNotBlank(globalComment)) {
 			sql = "/*" + globalComment + "*/" + sql;
 		}
-		String comment = DBHelperContext.getComment();
+		String comment = DBHelperContext.getThreadLocalComment();
 		if (InnerCommonUtils.isNotBlank(comment)) {
 			sql = "/*" + comment + "*/" + sql;
 		}

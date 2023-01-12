@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
 
 import java.util.Collection;
@@ -117,16 +118,22 @@ public interface DBHelper {
 	// ================= Set SQL comment ==================================
 
 	/**
-	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行
+	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行。<br>
+	 * 说明：该方法会对所有的DBHelper实例生效。
 	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
 	 */
-	void setGlobalComment(String comment);
+	static void setGlobalComment(String comment) {
+		DBHelperContext.setGlobalComment(comment);
+	}
 
 	/**
-	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行
+	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行。<br>
+	 * 说明：该方法会对所有的DBHelper实例生效。
 	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
 	 */
-	void setLocalComment(String comment);
+	static void setLocalComment(String comment) {
+		DBHelperContext.setThreadLocalComment(comment);
+	}
 
 	// =============== Query methods START ==================================
 	

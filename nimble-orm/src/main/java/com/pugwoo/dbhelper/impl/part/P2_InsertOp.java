@@ -108,6 +108,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 * 2）对于批量插入全是null的字段，不需要在insert列里出现，此项节省约10%~50%的插入时间（取决于null值的列的数量）
 		 * 3）为了避免sql注入风险，参数还是用?的方式表达，此项对性能的影响比较有限，但安全性足够高，因此不再自己拼凑sql值
 		 * 4）对于大量插入，log需要优化，不要打印太多的信息，否则性能会受到较大的影响。
+		 *
+		 * 说明：还有一种方式是多条insert values的代码通过批量的方式提交给数据库执行，这种方式不是真的批量，性能很差。
 		 */
 		list = InnerCommonUtils.removeNull(list);
 		if (list == null || list.isEmpty()) {
