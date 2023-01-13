@@ -84,36 +84,42 @@ public interface DBHelper {
 	// =============== Dynamic Table Name ===================================
 
 	/**
-	 * 为指定的类设置表名，适合于分表场景；
-	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持（例如servlet规范），
-	 *            然后设置完之后要记得调用resetTableNames清除设置
+	 * 为指定的类设置表名，适合于分表场景；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
+	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持，然后设置完之后要记得调用resetTableNames清除设置。
 	 * @param clazz 要替换表名的注解了@Table的类
 	 * @param tableName 新的表名
 	 */
-	<T> void setTableName(Class<T> clazz, String tableName);
+	static <T> void setTableName(Class<T> clazz, String tableName) {
+		DBHelperContext.setTableName(clazz, tableName);
+	}
 
 	/**
-	 * 清除setTableName设置的表名信息
+	 * 清除setTableName设置的表名信息；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
 	 */
-	void resetTableNames();
+	static void resetTableNames() {
+		DBHelperContext.resetTableName();
+	}
 
 	// ================ Disable soft delete ================================
 
 	/**
-	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都会进行物理删除。<br>
-	 * 该设置仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
-	 * 如果需要永久性的移除软删除，请使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
-	 *
+	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都等价于没有注解。<br>
+	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
+	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
 	 * @param clazz 注解了@Table的类
 	 */
-	void turnOffSoftDelete(Class<?>... clazz);
+	static void turnOffSoftDelete(Class<?>... clazz) {
+		DBHelperContext.turnOffSoftDelete(clazz);
+	}
 
 	/**
-	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete
-	 *
+	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete。<br>
+	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
 	 * @param clazz 注解了@Table的类
 	 */
-	void turnOnSoftDelete(Class<?>... clazz);
+	static void turnOnSoftDelete(Class<?>... clazz) {
+		DBHelperContext.turnOnSoftDelete(clazz);
+	}
 
 	// ================= Set SQL comment ==================================
 
@@ -383,8 +389,7 @@ public interface DBHelper {
 	 * @param args postSql中的参数列表
 	 * @return 如果存在则返回true，否则返回false
 	 */
-	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
-			String postSql, Object... args);
+	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz, String postSql, Object... args);
 	
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了

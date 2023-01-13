@@ -37,7 +37,7 @@ public class TestDynamic {
     @Test
     public void test2() {
 
-        dbHelper.setTableName(StudentNoTableNameDO.class, "t_student");
+        DBHelper.setTableName(StudentNoTableNameDO.class, "t_student");
 
         StudentNoTableNameDO studentNoTableNameDO = new StudentNoTableNameDO();
         studentNoTableNameDO.setName("nick");
@@ -50,7 +50,7 @@ public class TestDynamic {
         assert student2.getId().equals(studentNoTableNameDO.getId());
         assert student2.getName().equals(studentNoTableNameDO.getName());
 
-        dbHelper.resetTableNames(); // 清空
+        DBHelper.resetTableNames(); // 清空
 
         // 应该抛出异常
         boolean ex = false;

@@ -81,7 +81,16 @@ public class DBHelperContext {
     /**
      * 关闭指定类的软删除设置，仅对当前线程有效
      */
-    public static void turnOffSoftDelete(Class<?> clazz) {
+    public static void turnOffSoftDelete(Class<?> ...clazz) {
+        if (clazz == null) {
+            return;
+        }
+        for (Class<?> c : clazz) {
+            turnOffSoftDelete(c);
+        }
+    }
+
+    private static void turnOffSoftDelete(Class<?> clazz) {
         if (clazz == null) {
             return;
         }
@@ -96,7 +105,16 @@ public class DBHelperContext {
     /**
      * 打开指定类的软删除设置
      */
-    public static void turnOnSoftDelete(Class<?> clazz) {
+    public static void turnOnSoftDelete(Class<?> ...clazz) {
+        if (clazz == null) {
+            return;
+        }
+        for (Class<?> c : clazz) {
+            turnOnSoftDelete(c);
+        }
+    }
+
+    private static void turnOnSoftDelete(Class<?> clazz) {
         if (clazz == null) {
             return;
         }

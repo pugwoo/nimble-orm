@@ -235,36 +235,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public <T> void setTableName(Class<T> clazz, String tableName) {
-		DBHelperContext.setTableName(clazz, tableName);
-	}
-
-	@Override
-	public void resetTableNames() {
-		DBHelperContext.resetTableName();
-	}
-
-	@Override
-	public void turnOffSoftDelete(Class<?>... clazz) {
-		if (clazz == null) {
-			return;
-		}
-		for (Class<?> c : clazz) {
-			DBHelperContext.turnOffSoftDelete(c);
-		}
-	}
-
-	@Override
-	public void turnOnSoftDelete(Class<?>... clazz) {
-		if (clazz == null) {
-			return;
-		}
-		for (Class<?> c : clazz) {
-			DBHelperContext.turnOnSoftDelete(c);
-		}
-	}
-
-	@Override
 	public void turnOnFeature(FeatureEnum featureEnum) {
 		features.put(featureEnum, true);
 	}

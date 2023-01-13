@@ -176,10 +176,10 @@ public class TestDBHelper_delete {
         assert total >= softTotal + 10;
         assert softTotal >= counts2;
 
-        dbHelper.turnOnSoftDelete(StudentDO.class); // 测速错误顺序
-        dbHelper.turnOffSoftDelete(null); // 测试错误参数
+        DBHelper.turnOnSoftDelete(StudentDO.class); // 测速错误顺序
+        DBHelper.turnOffSoftDelete((Class<?>) null); // 测试错误参数
 
-        dbHelper.turnOffSoftDelete(StudentDO.class);
+        DBHelper.turnOffSoftDelete(StudentDO.class);
 
         long turnoffTotal = dbHelper.getCount(StudentDO.class);
         assert total == turnoffTotal;
@@ -187,8 +187,8 @@ public class TestDBHelper_delete {
         // 物理删除了
         dbHelper.delete(StudentDO.class, "where 1=1");
 
-        dbHelper.turnOnSoftDelete(StudentDO.class);
-        dbHelper.turnOnSoftDelete(null); // 测试错误参数
+        DBHelper.turnOnSoftDelete(StudentDO.class);
+        DBHelper.turnOnSoftDelete((Class<?>) null); // 测试错误参数
 
         total = dbHelper.getCount(StudentTrueDeleteDO.class);
         assert total == 0;
@@ -233,7 +233,7 @@ public class TestDBHelper_delete {
         int rows = dbHelper.deleteByKey(ListUtils.newArrayList(s1, s2));
         assert rows == 2;
 
-        dbHelper.turnOffSoftDelete(StudentWithDeleteScriptDO.class);
+        DBHelper.turnOffSoftDelete(StudentWithDeleteScriptDO.class);
 
         List<StudentTrueDeleteDO> list = dbHelper.getAll(StudentTrueDeleteDO.class,
                 "where id in (?)", ListUtils.newArrayList(s1.getId(), s2.getId()));
@@ -241,7 +241,7 @@ public class TestDBHelper_delete {
         assert list.get(0).getName().equals("deleteddata");
         assert list.get(1).getName().equals("deleteddata");
 
-        dbHelper.turnOnSoftDelete(StudentWithDeleteScriptDO.class);
+        DBHelper.turnOnSoftDelete(StudentWithDeleteScriptDO.class);
     }
 
     @Table("t_student")
