@@ -16,6 +16,68 @@ import java.util.stream.Stream;
  * @author pugwoo
  */
 public interface DBHelper {
+
+	// =============== Dynamic Table Name ===================================
+
+	/**
+	 * 为指定的类设置表名，适合于分表场景；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
+	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持，然后设置完之后要记得调用resetTableNames清除设置。
+	 * @param clazz 要替换表名的注解了@Table的类
+	 * @param tableName 新的表名
+	 */
+	static <T> void setTableName(Class<T> clazz, String tableName) {
+		DBHelperContext.setTableName(clazz, tableName);
+	}
+
+	/**
+	 * 清除setTableName设置的表名信息；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
+	 */
+	static void resetTableNames() {
+		DBHelperContext.resetTableName();
+	}
+
+	// ================ Disable soft delete ================================
+
+	/**
+	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都等价于没有注解。<br>
+	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
+	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
+	 * @param clazz 注解了@Table的类
+	 */
+	static void turnOffSoftDelete(Class<?>... clazz) {
+		DBHelperContext.turnOffSoftDelete(clazz);
+	}
+
+	/**
+	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete。<br>
+	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
+	 * @param clazz 注解了@Table的类
+	 */
+	static void turnOnSoftDelete(Class<?>... clazz) {
+		DBHelperContext.turnOnSoftDelete(clazz);
+	}
+
+	// ================= Set SQL comment ==================================
+
+	/**
+	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行。<br>
+	 * 说明：该方法会对所有的DBHelper实例生效。
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	static void setGlobalComment(String comment) {
+		DBHelperContext.setGlobalComment(comment);
+	}
+
+	/**
+	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行。<br>
+	 * 说明：该方法会对所有的DBHelper实例生效。
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	static void setLocalComment(String comment) {
+		DBHelperContext.setThreadLocalComment(comment);
+	}
+
+	// =====================================================================
 	
 	/**
 	 * 手动回滚@Transactional的事务。
@@ -80,66 +142,6 @@ public interface DBHelper {
 	 * @param featureEnum 特性枚举，默认特性是否开启详见特性文档说明
 	 */
 	void turnOffFeature(FeatureEnum featureEnum);
-
-	// =============== Dynamic Table Name ===================================
-
-	/**
-	 * 为指定的类设置表名，适合于分表场景；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
-	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持，然后设置完之后要记得调用resetTableNames清除设置。
-	 * @param clazz 要替换表名的注解了@Table的类
-	 * @param tableName 新的表名
-	 */
-	static <T> void setTableName(Class<T> clazz, String tableName) {
-		DBHelperContext.setTableName(clazz, tableName);
-	}
-
-	/**
-	 * 清除setTableName设置的表名信息；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
-	 */
-	static void resetTableNames() {
-		DBHelperContext.resetTableName();
-	}
-
-	// ================ Disable soft delete ================================
-
-	/**
-	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都等价于没有注解。<br>
-	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
-	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
-	 * @param clazz 注解了@Table的类
-	 */
-	static void turnOffSoftDelete(Class<?>... clazz) {
-		DBHelperContext.turnOffSoftDelete(clazz);
-	}
-
-	/**
-	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete。<br>
-	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
-	 * @param clazz 注解了@Table的类
-	 */
-	static void turnOnSoftDelete(Class<?>... clazz) {
-		DBHelperContext.turnOnSoftDelete(clazz);
-	}
-
-	// ================= Set SQL comment ==================================
-
-	/**
-	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行。<br>
-	 * 说明：该方法会对所有的DBHelper实例生效。
-	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
-	 */
-	static void setGlobalComment(String comment) {
-		DBHelperContext.setGlobalComment(comment);
-	}
-
-	/**
-	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行。<br>
-	 * 说明：该方法会对所有的DBHelper实例生效。
-	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
-	 */
-	static void setLocalComment(String comment) {
-		DBHelperContext.setThreadLocalComment(comment);
-	}
 
 	// =============== Query methods START ==================================
 	
