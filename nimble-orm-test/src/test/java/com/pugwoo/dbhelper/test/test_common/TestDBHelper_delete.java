@@ -35,7 +35,6 @@ public class TestDBHelper_delete {
 
         StudentDO stuDelete = dbHelper.getByKey(StudentDO.class, studentDO.getId());
         assert stuDelete == null; // 已经被删除了
-
         StudentDeleteSetIdDO stuDelete2 = dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId());
         assert stuDelete2 == null; // 已经被删除了
 
@@ -44,16 +43,15 @@ public class TestDBHelper_delete {
         assert stuDelete3.getId().equals(stuDelete3.getDeleted()); // 验证一下设置的delete是否是对的
     }
 
+    /**通过key删除*/
     @Test
     public void deleteByKey() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
         int rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
         assert rows == 1;
-
         rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
         assert rows == 0;
-
         assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
@@ -62,13 +60,20 @@ public class TestDBHelper_delete {
 
         rows = dbHelper.deleteByKey(studentDO);
         assert rows == 1;
-
         rows = dbHelper.deleteByKey(studentDO);
         assert rows == 0;
-
         assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
     }
 
+    /**通过写where条件的自定义删除*/
+    @Test
+    public void testDeleteWhere() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 1;
+        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 0;
+    }
+
+    /**通过key批量删除*/
     @Test 
     public void batchDelete() {
         int random = 10 + new Random().nextInt(10);
@@ -76,6 +81,9 @@ public class TestDBHelper_delete {
         List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper, random);
         int rows = dbHelper.deleteByKey(insertBatch);
         assert rows == insertBatch.size();
+        for (StudentDO studentDO : insertBatch) {
+            assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
+        }
 
         dbHelper.executeRaw("truncate table t_student");
         CommonOps.insertBatch(dbHelper,random);
@@ -84,6 +92,7 @@ public class TestDBHelper_delete {
 
         insertBatch = CommonOps.insertBatch(dbHelper,random);
 
+        // 测试批量删除list是多种class类型
         List<Object> differents = new ArrayList<>(insertBatch);
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("school");
@@ -95,7 +104,6 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    
     public void testTrueDelete() {
         StudentTrueDeleteDO studentTrueDeleteDO = new StudentTrueDeleteDO();
         studentTrueDeleteDO.setName("john");
@@ -192,7 +200,6 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    
     public void testDeleteEx() {
         boolean ex = false;
         try {
@@ -215,7 +222,6 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    
     public void testBatchDeleteWithDeleteScript() {
         StudentDO stu1 = CommonOps.insertOne(dbHelper);
         StudentDO stu2 = CommonOps.insertOne(dbHelper);
@@ -250,23 +256,4 @@ public class TestDBHelper_delete {
         private String name;
     }
 
-    @Test
-    public void testDeleteList() {
-        List<StudentDO> studentDOList = new ArrayList<StudentDO>();
-        studentDOList.add(CommonOps.insertOne(dbHelper));
-        studentDOList.add(CommonOps.insertOne(dbHelper));
-
-        dbHelper.deleteByKey(studentDOList);
-        for (StudentDO studentDO : studentDOList) {
-            assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
-        }
-    }
-
-    // 测试写where条件的自定义删除
-    @Test
-    public void testDeleteWhere() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 1;
-        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 0;
-    }
 }
