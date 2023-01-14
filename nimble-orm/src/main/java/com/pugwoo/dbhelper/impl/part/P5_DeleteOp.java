@@ -20,7 +20,17 @@ import java.util.List;
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected void doInterceptBeforeDelete(List<Object> tList) {
+
+	private <T> void doInterceptBeforeDelete(T t) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return;
+		}
+		List<Object> tList = new ArrayList<>();
+		tList.add(t);
+		doInterceptBeforeDelete(tList);
+	}
+
+	private void doInterceptBeforeDelete(List<Object> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
@@ -29,7 +39,16 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 
-	protected void doInterceptAfterDelete(final List<Object> tList, final int rows) {
+	private <T> void doInterceptAfterDelete(final T t, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return;
+		}
+		List<Object> tList = new ArrayList<>();
+		tList.add(t);
+		doInterceptAfterDelete(tList, rows);
+	}
+
+	private void doInterceptAfterDelete(final List<Object> tList, final int rows) {
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				interceptors.get(i).afterDelete(tList, rows);
@@ -40,27 +59,22 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 
-	///////////
+	/////////// END 拦截器
 
 	@Override
 	public <T> int deleteByKey(T t) throws NullKeyValueException {
 		PreHandleObject.preHandleDelete(t);
-
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 		
-		List<Object> values = new ArrayList<>();
-
-		List<Object> tList = new ArrayList<>();
-		tList.add(t);
-		doInterceptBeforeDelete(tList);
+		doInterceptBeforeDelete(t);
 		
 		String sql;
-		
-		if(softDelete == null) { // 物理删除
+		List<Object> values = new ArrayList<>();
+		if (softDelete == null) { // 物理删除
 			sql = SQLUtils.getDeleteSQL(t, values);
 		} else { // 软删除
 			// 对于软删除，当有拦截器时，可能使用者会修改数据以记录删除时间或删除人信息等，此时要先update该条数据
-			if(interceptors != null && !interceptors.isEmpty()) {
+			if(InnerCommonUtils.isNotEmpty(interceptors)) {
 				updateForDelete(t);
 			}
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
@@ -69,11 +83,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 
-		doInterceptAfterDelete(tList, rows);
-		
+		doInterceptAfterDelete(t, rows);
 		return rows;
 	}
-	
+
 	@Override
 	public <T> int deleteByKey(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {

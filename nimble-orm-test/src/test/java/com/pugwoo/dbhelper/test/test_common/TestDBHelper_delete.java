@@ -23,26 +23,6 @@ public class TestDBHelper_delete {
     @Autowired
     private DBHelper dbHelper;
 
-    /**测试deleted的值设置为id的情况*/
-    @Test
-    public void deleteAndSetId() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-
-        StudentDeleteSetIdDO stu1 = new StudentDeleteSetIdDO();
-        stu1.setId(studentDO.getId());
-
-        dbHelper.deleteByKey(stu1);
-
-        StudentDO stuDelete = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-        assert stuDelete == null; // 已经被删除了
-        StudentDeleteSetIdDO stuDelete2 = dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId());
-        assert stuDelete2 == null; // 已经被删除了
-
-        StudentDeleteSetIdDO2 stuDelete3 =
-                dbHelper.getByKey(StudentDeleteSetIdDO2.class, studentDO.getId());
-        assert stuDelete3.getId().equals(stuDelete3.getDeleted()); // 验证一下设置的delete是否是对的
-    }
-
     /**通过key删除*/
     @Test
     public void deleteByKey() {
@@ -101,6 +81,24 @@ public class TestDBHelper_delete {
 
         rows = dbHelper.deleteByKey(differents);
         assert rows == random + 1;
+    }
+
+    /**测试deleted的值设置为id的情况*/
+    @Test
+    public void deleteAndSetId() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
+        StudentDeleteSetIdDO stu1 = new StudentDeleteSetIdDO();
+        stu1.setId(studentDO.getId());
+
+        dbHelper.deleteByKey(stu1);
+
+        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null; // 已经被删除了
+        assert dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId()) == null; // 已经被删除了
+
+        StudentDeleteSetIdDO2 stuDelete3 =
+                dbHelper.getByKey(StudentDeleteSetIdDO2.class, studentDO.getId());
+        assert stuDelete3.getId().equals(stuDelete3.getDeleted()); // 验证一下设置的delete是否是对的
     }
 
     @Test

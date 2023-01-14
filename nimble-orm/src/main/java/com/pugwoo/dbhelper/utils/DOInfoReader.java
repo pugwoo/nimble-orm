@@ -338,14 +338,12 @@ public class DOInfoReader {
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
-
 		// 处理turnoff软删除
 		if (DBHelperContext.isTurnOffSoftDelete(clazz)) {
 			return null;
 		}
 
 		List<Field> fields = getColumns(clazz);
-		
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.softDelete().length == 2
