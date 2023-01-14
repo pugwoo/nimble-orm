@@ -374,8 +374,7 @@ public class SQLUtils {
 	 * @param postSql 附带的where子句
 	 * @return 返回值为null表示不需要更新操作，这个是这个方法特别之处
 	 */
-	public static <T> String getUpdateSQL(T t, List<Object> values,
-			boolean withNull, String postSql) {
+	public static <T> String getUpdateSQL(T t, List<Object> values, boolean withNull, String postSql) {
 		
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");

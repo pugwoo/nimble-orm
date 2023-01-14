@@ -215,15 +215,11 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		return false;
 	}
 
-	////////
 	private <T> void updateForDelete(T t) throws NullKeyValueException {
-
 		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
-
 		if (sql != null) {
-			namedJdbcExecuteUpdate(sql, values.toArray());
+			jdbcExecuteUpdate(sql, values.toArray());
 		}
-
 	}
 }
