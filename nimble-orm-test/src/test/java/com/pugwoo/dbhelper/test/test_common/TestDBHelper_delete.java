@@ -158,23 +158,23 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    
     public void testTurnOffSoftDelete() {
+        dbHelper.executeRaw("truncate table t_student");
+
         int counts1 = 10 + new Random().nextInt(10);
-        CommonOps.insertBatch(dbHelper, counts1);
+        CommonOps.insertBatchNoReturnId(dbHelper, counts1);
 
         // 先制造点软删除
         dbHelper.delete(StudentDO.class, "Where 1=1");
 
         int counts2 = 10 + new Random().nextInt(10);
-        CommonOps.insertBatch(dbHelper, counts2);
+        CommonOps.insertBatchNoReturnId(dbHelper, counts2);
 
         long total = dbHelper.getCount(StudentTrueDeleteDO.class);
         long softTotal = dbHelper.getCount(StudentDO.class);
 
-        assert total >= counts1 + counts2;
-        assert total >= softTotal + 10;
-        assert softTotal >= counts2;
+        assert total == counts1 + counts2;
+        assert softTotal == counts2;
 
         DBHelper.turnOnSoftDelete(StudentDO.class); // 测速错误顺序
         DBHelper.turnOffSoftDelete((Class<?>) null); // 测试错误参数
@@ -192,7 +192,6 @@ public class TestDBHelper_delete {
 
         total = dbHelper.getCount(StudentTrueDeleteDO.class);
         assert total == 0;
-
     }
 
     @Test
