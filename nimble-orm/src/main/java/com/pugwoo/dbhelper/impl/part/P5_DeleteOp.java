@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -88,6 +89,23 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	@Override
+	public <T> int deleteByKey(Class<T> clazz, Object keyValue)
+			throws NullKeyValueException, MustProvideConstructorException {
+		if(keyValue == null) {
+			throw new NullKeyValueException();
+		}
+
+		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
+		try {
+			T t = clazz.newInstance();
+			DOInfoReader.setValue(keyField, t, keyValue);
+			return deleteByKey(t);
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new MustProvideConstructorException();
+		}
+	}
+
+	@Override
 	public <T> int deleteByKey(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
             return 0;
@@ -162,24 +180,6 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			return rows;
 		}
 	}
-		
-	@Override
-	public <T> int deleteByKey(Class<T> clazz, Object keyValue) 
-			throws NullKeyValueException, MustProvideConstructorException {
-		if(keyValue == null) {
-			throw new NullKeyValueException();
-		}
-
-		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-		
-		try {
-			T t = clazz.newInstance();
-			DOInfoReader.setValue(keyField, t, keyValue);
-			return deleteByKey(t);
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new MustProvideConstructorException();
-		}
-	}
 	
 	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
@@ -219,7 +219,11 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
 		if (sql != null) {
-			jdbcExecuteUpdate(sql, values.toArray());
+			// 没有in (?)，因此用jdbcExecuteUpdate
+			int rows = jdbcExecuteUpdate(sql, values.toArray()); // 更新失败仅log，不阻塞删除
+			if (rows == 0) {
+				LOGGER.warn("updateForDelete update fail, object:{}", NimbleOrmJSON.toJson(t));
+			}
 		}
 	}
 }
