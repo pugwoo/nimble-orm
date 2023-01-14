@@ -8,6 +8,7 @@ import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +23,7 @@ public class TestDBHelper_delete {
     @Autowired
     private DBHelper dbHelper;
 
+    /**测试deleted的值设置为id的情况*/
     @Test
     public void deleteAndSetId() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
@@ -43,11 +45,8 @@ public class TestDBHelper_delete {
     }
 
     @Test
-    
     public void deleteByKey() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
-
-        assert dbHelper.getOne(StudentDO.class, "where id=?", studentDO.getId()).getName().equals(studentDO.getName()); // 反查确保id正确
 
         int rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
         assert rows == 1;
@@ -55,39 +54,37 @@ public class TestDBHelper_delete {
         rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
         assert rows == 0;
 
+        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
+
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 
         studentDO = CommonOps.insertOne(dbHelper);
-
-        assert dbHelper.getOne(StudentDO.class, "where id=?", studentDO.getId()).getName().equals(studentDO.getName()); // 反查确保id正确
 
         rows = dbHelper.deleteByKey(studentDO);
         assert rows == 1;
 
         rows = dbHelper.deleteByKey(studentDO);
         assert rows == 0;
+
+        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
     }
 
     @Test 
     public void batchDelete() {
-
         int random = 10 + new Random().nextInt(10);
 
         List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper, random);
         int rows = dbHelper.deleteByKey(insertBatch);
         assert rows == insertBatch.size();
 
-        insertBatch = CommonOps.insertBatch(dbHelper,random);
+        dbHelper.executeRaw("truncate table t_student");
+        CommonOps.insertBatch(dbHelper,random);
         rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
-        assert rows >= random;
-
+        assert rows == random;
 
         insertBatch = CommonOps.insertBatch(dbHelper,random);
 
-        List<Object> differents = new ArrayList<Object>();
-        for(StudentDO studentDO : insertBatch) {
-            differents.add(studentDO);
-        }
+        List<Object> differents = new ArrayList<>(insertBatch);
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("school");
         dbHelper.insert(schoolDO);
@@ -207,7 +204,6 @@ public class TestDBHelper_delete {
         assert ex;
 
 
-        StudentDO studentDO = new StudentDO();
         ex = false;
         try {
             dbHelper.deleteByKey(StudentDO.class, null);
@@ -243,6 +239,7 @@ public class TestDBHelper_delete {
         DBHelper.turnOnSoftDelete(StudentWithDeleteScriptDO.class);
     }
 
+    @Data
     @Table("t_student")
     private static class StudentWithDeleteScriptDO {
         @Column(value = "id", isKey = true, isAutoIncrement = true)
@@ -251,45 +248,10 @@ public class TestDBHelper_delete {
         private Boolean deleted;
         @Column(value = "name", deleteValueScript = "'deleted' + 'data'")
         private String name;
-
-        public Long getId() {
-            return id;
-        }
-        public void setId(Long id) {
-            this.id = id;
-        }
-        public Boolean getDeleted() {
-            return deleted;
-        }
-        public void setDeleted(Boolean deleted) {
-            this.deleted = deleted;
-        }
-        public String getName() {
-            return name;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
     }
 
     @Test
-    public void testDelete() throws InterruptedException {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-
-        dbHelper.deleteByKey(studentDO);
-
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
-
-        studentDO = CommonOps.insertOne(dbHelper);
-
-        dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
-
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
-    }
-
-    @Test
-    public void testDeleteList() throws InterruptedException {
-
+    public void testDeleteList() {
         List<StudentDO> studentDOList = new ArrayList<StudentDO>();
         studentDOList.add(CommonOps.insertOne(dbHelper));
         studentDOList.add(CommonOps.insertOne(dbHelper));
@@ -302,8 +264,9 @@ public class TestDBHelper_delete {
 
     // 测试写where条件的自定义删除
     @Test
-    public void testDeleteWhere() throws InterruptedException {
+    public void testDeleteWhere() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName());
+        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 1;
+        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 0;
     }
 }

@@ -2,10 +2,12 @@ package com.pugwoo.dbhelper.test.entity;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import lombok.Data;
 
 /**
  * 用于测速软删除时，设置软删除的deleted字段值为id的软删除字段
  */
+@Data
 @Table("t_student")
 public class StudentDeleteSetIdDO {
 
@@ -19,27 +21,4 @@ public class StudentDeleteSetIdDO {
 	@Column("name")
 	private String name;
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Boolean getDeleted() {
-		return deleted;
-	}
-
-	public void setDeleted(Boolean deleted) {
-		this.deleted = deleted;
-	}
 }
