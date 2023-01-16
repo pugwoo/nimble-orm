@@ -573,40 +573,15 @@ public class SQLUtils {
 	 * @return 生成的SQL
 	 */
 	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
-		StringBuilder setSql = new StringBuilder(getColumnName(softDeleteColumn) + "="
-				+ softDeleteColumn.softDelete()[1]);
-
-		// 处理deleteValueScript
-        List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
-        for(Field field : notKeyFields) {
-            Column column = field.getAnnotation(Column.class);
-            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
-				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
-                Object value = DOInfoReader.getValue(field, t);
-                if(value != null) {
-                    setSql.append(",").append(getColumnName(column))
-							.append("=").append(TypeAutoCast.toSqlValueStr(value));
-                }
-            }
-        }
-
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
+		sql.append(getTableName(t.getClass())).append(" SET ");
+		sql.append(getColumnName(softDeleteColumn)).append("=").append(softDeleteColumn.softDelete()[1]);
 
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-
-		sql.append(getTableName(t.getClass())).append(" ");
-
-		if(setSql.toString().trim().toLowerCase().startsWith("set ")) {
-			sql.append(setSql);
-		} else {
-			sql.append("SET ").append(setSql);
-		}
-
-		// 加上删除时间
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
+			// 加上删除时间
 			if(column.setTimeWhenDelete()) {
 				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
 				if (nowDateTime != null) {
@@ -614,11 +589,20 @@ public class SQLUtils {
 							.append("='").append(nowDateTime).append("'");
 				}
 			}
+			// 处理deleteValueScript
+			if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
+				Object value = DOInfoReader.getValue(field, t);
+				if(value != null) {
+					sql.append(",").append(getColumnName(column))
+							.append("=").append(TypeAutoCast.toSqlValueStr(value));
+				}
+			}
 		}
 
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		List<Object> whereValues = new ArrayList<>();
 		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
-
 		for(Object value : whereValues) {
 			if(value == null) {
 				throw new NullKeyValueException();
@@ -627,7 +611,6 @@ public class SQLUtils {
 		values.addAll(whereValues);
 
 		sql.append(autoSetSoftDeleted(where, t.getClass()));
-
 		return sql.toString();
 	}
 	
