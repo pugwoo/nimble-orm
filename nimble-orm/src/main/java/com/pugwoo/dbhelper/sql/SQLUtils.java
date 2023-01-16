@@ -580,7 +580,6 @@ public class SQLUtils {
         List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
         for(Field field : notKeyFields) {
             Column column = field.getAnnotation(Column.class);
-
             if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
 				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
                 Object value = DOInfoReader.getValue(field, t);
@@ -591,7 +590,45 @@ public class SQLUtils {
             }
         }
 
-		return getCustomDeleteSQL(t, values, setSql.toString());
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+
+		sql.append(getTableName(t.getClass())).append(" ");
+
+		if(setSql.toString().trim().toLowerCase().startsWith("set ")) {
+			sql.append(setSql);
+		} else {
+			sql.append("SET ").append(setSql);
+		}
+
+		// 加上删除时间
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			if(column.setTimeWhenDelete()) {
+				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
+				if (nowDateTime != null) {
+					sql.append(",").append(getColumnName(column))
+							.append("='").append(nowDateTime).append("'");
+				}
+			}
+		}
+
+		List<Object> whereValues = new ArrayList<>();
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+
+		for(Object value : whereValues) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		values.addAll(whereValues);
+
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
+
+		return sql.toString();
 	}
 	
 	/**
@@ -632,56 +669,9 @@ public class SQLUtils {
 	}
 
 	/**
-	 * 获得自定义更新的sql
-	 */
-	public static <T> String getCustomDeleteSQL(T t, List<Object> values, String setSql) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("UPDATE ");
-
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-
-		sql.append(getTableName(t.getClass())).append(" ");
-
-		if(setSql.trim().toLowerCase().startsWith("set ")) {
-			sql.append(setSql);
-		} else {
-			sql.append("SET ").append(setSql);
-		}
-
-		// 加上删除时间
-		for(Field field : fields) {
-			Column column = field.getAnnotation(Column.class);
-			if(column.setTimeWhenDelete()) {
-				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
-				if (nowDateTime != null) {
-					sql.append(",").append(getColumnName(column))
-							.append("='").append(nowDateTime).append("'");
-				}
-			}
-		}
-
-		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
-
-		for(Object value : whereValues) {
-			if(value == null) {
-				throw new NullKeyValueException();
-			}
-		}
-		values.addAll(whereValues);
-
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
-
-		return sql.toString();
-	}
-
-
-	/**
 	 * 获得硬删除SQL
 	 */
 	public static <T> String getDeleteSQL(T t, List<Object> values) {
-		
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		StringBuilder sql = new StringBuilder();

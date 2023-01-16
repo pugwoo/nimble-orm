@@ -61,18 +61,16 @@ public @interface Column {
 	 * 这里【必须】提供一个数组，包含两个值，第一个值是未删除标记，第二个值是已删除标记。<br>
 	 * <br>
 	 * 一般软删除字段是数组，所以softDelete的值会直接设置到sql中。<br>
-	 * 如果这个字段是字符串（情况很少），请这样写：softDelete = {"'NO'", "'YES'"}
+	 * 如果这个字段是字符串，请这样写：softDelete = {"'NO'", "'YES'"} <br>
+	 * 这样设计的目的，是支持软删除使用其它列名的值，和字符串区分<br>
+	 * 特别的，softDelete的第二个参数写为列名称时，可以在软删除时设置为该列的值<br>
 	 * <br>
 	 * 【错误的个数(不是两个)和空的String值将认为是无效的标记而失效。】<br>
 	 * <br>
 	 * 每个DO最多有一个softDelete字段表示软删除。可以不用软删除。<br>
 	 * <br>
-	 * 注：因为软删除标记一般不走索引，所以这里一律用String类型表达，并不会太影响数据库性能。<br>
-	 * <br>
 	 * 使用示例：<br>
 	 * \@Column(value = "deleted", softDelete = {"0", "1"}) private Boolean deleted;<br>
-	 * <br>
-	 * 特别的，softDelete的第二个参数写为列名称时，可以在软删除时设置为该列的值
 	 */
 	String[] softDelete() default "";
 	
