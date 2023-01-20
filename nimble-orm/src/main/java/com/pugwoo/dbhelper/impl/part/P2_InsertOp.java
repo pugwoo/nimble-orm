@@ -25,6 +25,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
+	@SuppressWarnings("unchecked")
 	private void doInterceptBeforeInsertList(Collection<?> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue;
@@ -44,6 +45,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsertList(list, rows);
 	}
+	@SuppressWarnings("unchecked")
 	private void doInterceptAfterInsertList(final Collection<?> list, final int rows) {
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
