@@ -70,7 +70,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	@Override
 	public int insert(Collection<?> list) {
 		list = InnerCommonUtils.removeNull(list);
-		if (list == null || list.isEmpty()) {
+		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
 
@@ -114,7 +114,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 * 说明：还有一种方式是多条insert values的代码通过批量的方式提交给数据库执行，这种方式不是真的批量，性能很差。
 		 */
 		list = InnerCommonUtils.removeNull(list);
-		if (list == null || list.isEmpty()) {
+		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
 
@@ -203,9 +203,6 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	 * 判断list里的元素是否【没有主键】或者【有主键且有值】，调用该方法之前需要确定list都是相同的class
 	 */
 	private boolean isAllHaveKeyValue(Collection<?> list) {
-		if (list == null || list.isEmpty()) {
-			return true;
-		}
 		Class<?> clazz = list.iterator().next().getClass();
 		List<Field> fields = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
 		if (fields.isEmpty()) {
