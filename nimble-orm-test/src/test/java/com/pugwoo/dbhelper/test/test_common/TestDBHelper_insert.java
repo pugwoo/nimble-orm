@@ -1,13 +1,17 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
-import com.pugwoo.wooutils.collect.ListUtils;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -17,16 +21,22 @@ public class TestDBHelper_insert {
     @Autowired
     private DBHelper dbHelper;
 
+    private String uuidName() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
     @Test 
     public void testInsert() {
         StudentDO studentDO = new StudentDO();
-        studentDO.setName("mytestname");
+        studentDO.setName(uuidName());
         studentDO.setAge(12);
         dbHelper.insert(studentDO);
 
         StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
-        assert st.getName().equals("mytestname");
+        assert st.getName().equals(studentDO.getName());
+        assert st.getAge().equals(studentDO.getAge());
 
+        // 插入插入null值
         studentDO = new StudentDO();
         studentDO.setId(null);
         studentDO.setName(null);
@@ -42,11 +52,11 @@ public class TestDBHelper_insert {
         List<StudentDO> list = new ArrayList<>();
         for (int i = 0; i < TOTAL; i++) {
             StudentDO studentDO = new StudentDO();
-            studentDO.setName(UUID.randomUUID().toString().replace("-", ""));
+            studentDO.setName(uuidName());
             list.add(studentDO);
         }
 
-        dbHelper.setTimeoutWarningValve(1);
+        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
         int rows = dbHelper.insertBatchWithoutReturnId(list);
@@ -61,8 +71,13 @@ public class TestDBHelper_insert {
         assert rows == TOTAL;
     }
 
+    /**测试插入时指定了id，依然可以准确获得id的场景*/
+    @Transactional // 开启事务是为了让下面的测试共用一个连接，而不是因为获取自增id需要事务
+    @Rollback(false)
     @Test 
-    public void testInsertId() {
+    public void testInsertWithSpecificId() {
+        CommonOps.insertOne(dbHelper); // 先插入一个，占了自增id，下面开始用户自行指定的id
+
         // 测试插入时，如果自增id 同时 又指定了id，查回id是否正常
         Long id = (long) (new Random().nextInt(100000000) + 100001234);
         String name = UUID.randomUUID().toString().replace("-", "");
@@ -75,6 +90,27 @@ public class TestDBHelper_insert {
 
         StudentDO studentDO2 = dbHelper.getByKey(StudentDO.class, id);
         assert studentDO2.getName().equals(name);
+
+        // 测试uuid的情况
+        String uuidName = uuidName();
+        UuidDO2 uuidDO2 = new UuidDO2();
+        uuidDO2.setUuid(uuidName);
+        uuidDO2.setName("nick");
+        assert dbHelper.insert(uuidDO2) == 1;
+        assert uuidName.equals(uuidDO2.getUuid());
+    }
+
+    @Data
+    @Table("t_uuid")
+    public static class UuidDO2 {
+
+        // 故意对一个varchar的key设置isAutoIncrement = true，实际上mysql数据库是不允许的
+        @Column(value = "uuid", isKey = true, isAutoIncrement = true)
+        private String uuid;
+
+        @Column(value = "name")
+        private String name;
+
     }
 
     @Test
@@ -120,7 +156,7 @@ public class TestDBHelper_insert {
     @Test
     public void testMaxStringLength() {
         StudentDO studentDO = new StudentDO();
-        studentDO.setName("nick1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+        studentDO.setName("nick1111111111111111111111111111111111111111111111111111111111");
 
         dbHelper.insert(studentDO);
         assert studentDO.getName().length()==32; // 注解配置了32位长度
@@ -128,7 +164,7 @@ public class TestDBHelper_insert {
         StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
         assert student2.getName().length()==32;
 
-        student2.setName("nick222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222");
+        student2.setName("nick22222222222222222222222222222222222222222222222222222222222222222222");
         dbHelper.update(student2);
         assert student2.getName().length()==32;
 

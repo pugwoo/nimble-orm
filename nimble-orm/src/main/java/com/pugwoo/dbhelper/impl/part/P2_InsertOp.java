@@ -165,7 +165,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 		int rows;
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
-		if (autoIncrementField != null) {
+		// 有自增注解且该字段值为null时才回查
+		if (autoIncrementField != null && DOInfoReader.getValue(autoIncrementField, t) == null) {
 			GeneratedKeyHolder holder = new GeneratedKeyHolder();
 			rows = jdbcTemplate.update(con -> {
 				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -177,8 +178,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 			if(rows > 0) {
 				Number key = holder.getKey();
-				if (key == null) {
-					DOInfoReader.setValue(autoIncrementField, t, null);
+				if (key == null) { // 对于key为null的属于异常情况，仅log，不进行任何处理
+					LOGGER.error("get auto increment field:{} return null", autoIncrementField);
 				} else {
 					long primaryKey = key.longValue();
 					DOInfoReader.setValue(autoIncrementField, t, primaryKey);
