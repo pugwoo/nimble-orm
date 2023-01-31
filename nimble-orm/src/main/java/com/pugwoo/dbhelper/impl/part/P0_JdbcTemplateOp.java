@@ -117,24 +117,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
         }
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 			@Override
-			public void suspend() {
-			}
-			@Override
-			public void resume() {
-			}
-			@Override
-			public void flush() {
-			}
-			@Override
-			public void beforeCompletion() {
-			}
-			@Override
-			public void beforeCommit(boolean readOnly) {
-			}
-			@Override
-			public void afterCompletion(int status) {
-			}
-			@Override
 			public void afterCommit() {
 				runnable.run();
 			}
@@ -251,11 +233,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	/**
 	 * 给sql加上注释，返回加完注释之后的sql
+	 * @param sql not null
 	 */
 	protected String addComment(String sql) {
-		if (sql == null) {
-			sql = "";
-		}
 		String globalComment = DBHelperContext.getGlobalComment();
 		if (InnerCommonUtils.isNotBlank(globalComment)) {
 			sql = "/*" + globalComment + "*/" + sql;
