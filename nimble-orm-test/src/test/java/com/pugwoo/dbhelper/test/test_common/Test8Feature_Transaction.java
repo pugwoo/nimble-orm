@@ -1,20 +1,15 @@
-package com.pugwoo.dbhelper.test.test_mysql;
+package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.service.WithTransactionService;
-import com.pugwoo.dbhelper.test.utils.CommonOps;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @SpringBootTest
-public class TestTransaction {
+public class Test8Feature_Transaction {
 
     @Autowired
     private DBHelper dbHelper;
