@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.test_mysql;
+package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
@@ -7,8 +7,6 @@ import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @SpringBootTest
-public class TestExecuteRaw {
+public class Test8Feature_ExecuteRaw {
 
     @Autowired
     private DBHelper dbHelper;
