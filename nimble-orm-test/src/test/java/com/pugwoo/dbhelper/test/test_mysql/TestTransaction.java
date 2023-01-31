@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_mysql;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.service.WithTransactionService;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 
 import org.junit.jupiter.api.Test;
@@ -13,50 +14,59 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SpringBootTest
-@Transactional
 public class TestTransaction {
 
     @Autowired
     private DBHelper dbHelper;
+    @Autowired
+    private WithTransactionService withTransactionService;
 
-    /**事务相关测试*/
+    /**测试事务是否生效*/
     @Test
-    @Rollback(false)
-    public void testTransaction() throws InterruptedException {
-        final StudentDO studentDO1 = CommonOps.insertOne(dbHelper);
-        final StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+    public void testTransactionEnabled() {
+        long count = dbHelper.getCount(StudentDO.class);
+        withTransactionService.insertOne(false);
+        long count2 = dbHelper.getCount(StudentDO.class);
 
-        System.out.println("insert ok, id1:" + studentDO1.getId() +
-                ",id2:" + studentDO2.getId());
+        assert count + 1 == count2;
 
-        AtomicBoolean isAfterCommitRun = new AtomicBoolean(false);
+        count = dbHelper.getCount(StudentDO.class);
+        try {
+            withTransactionService.insertOne(true);
+        } catch (Exception ignored) {
+        }
+        count2 = dbHelper.getCount(StudentDO.class);
 
-        dbHelper.executeAfterCommit(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("transaction commit, student1:" + studentDO1.getId()
-                        + ",student2:" + studentDO2.getId());
-                isAfterCommitRun.set(true);
-            }
-        });
+        assert count == count2;
+    }
 
-        System.out.println("myTrans end");
+    @Test
+    public void testRunAfterTransaction() {
+        withTransactionService.setIsAfterCommitRun(false);
+        withTransactionService.insertOneWithAfterCommit(false);
+        assert withTransactionService.getIsAfterCommitRun();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(100);
-                    assert isAfterCommitRun.get();
-                    System.out.println("checked isAfterCommitRun");
-                } catch (InterruptedException e) {
-                }
-            }
-        }).start();
-//		dbHelper.rollback(); // org.springframework.transaction.NoTransactionException
-        // throw new RuntimeException(); // 抛出异常也无法让事务回滚
-        // 原因：https://stackoverflow.com/questions/13525106/transactions-doesnt-work-in-junit
-        // 这意味着rollback()这个方法在单元测试中没法测
+        withTransactionService.setIsAfterCommitRun(false);
+        try {
+            withTransactionService.insertOneWithAfterCommit(true);
+        } catch (Exception ignored) {
+        }
+        assert !withTransactionService.getIsAfterCommitRun();
+    }
+
+    @Test
+    public void testManualRollback() {
+        long count = dbHelper.getCount(StudentDO.class);
+        withTransactionService.manualRollback(true);
+        long count2 = dbHelper.getCount(StudentDO.class);
+
+        assert count == count2;
+
+        count = dbHelper.getCount(StudentDO.class);
+        withTransactionService.manualRollback(false);
+        count2 = dbHelper.getCount(StudentDO.class);
+
+        assert count + 1== count2;
     }
 
 }

@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.UUID;
 
 @SpringBootTest
-@Transactional
 public class TestExecuteRaw {
 
     @Autowired
@@ -85,7 +84,6 @@ public class TestExecuteRaw {
         assert student == null;
     }
 
-    @Rollback(false)
     @Test
     public void testCreateTruncateDropTable() {
         String name = UUID.randomUUID().toString().replace("-", "");

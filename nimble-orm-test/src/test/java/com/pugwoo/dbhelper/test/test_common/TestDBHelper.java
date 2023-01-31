@@ -43,6 +43,10 @@ public class TestDBHelper {
 		List<StudentDO> all = dbHelper.getAll(StudentDO.class);
 		assert all.size() == dbHelper3.getRaw(StudentDO.class,
 				"select * from t_student where id in (?)", ListUtils.transform(all, o -> o.getId())).size();
+
+		// 测试获取jdbc
+		assert dbHelper3.getJdbcTemplate().equals(jdbcTemplate);
+		assert dbHelper3.getNamedParameterJdbcTemplate().equals(namedParameterJdbcTemplate);
 	}
 
 	@Test
