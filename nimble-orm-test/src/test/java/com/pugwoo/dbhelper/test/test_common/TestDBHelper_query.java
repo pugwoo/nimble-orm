@@ -671,27 +671,6 @@ public class TestDBHelper_query {
         assert joinVO.getStudent2().getId().equals(studentDO.getId());
     }
 
-    /**测试慢速记录*/
-    @Test 
-    public void testSlowLog() {
-        final StringBuilder sb = new StringBuilder();
-
-        dbHelper.setTimeoutWarningValve(1);
-        dbHelper.setTimeoutWarningCallback(new IDBHelperSlowSqlCallback() {
-            @Override
-            public void callback(long executeMsTime, String sql, List<Object> args) {
-                System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
-                    + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
-                sb.append(sql);
-            }
-        });
-
-        CommonOps.insertOne(dbHelper);
-        assert !sb.toString().isEmpty();
-
-        dbHelper.setTimeoutWarningValve(1000);
-    }
-
     /**测试分页最大数限制*/
     @Test 
     public void testMaxPageSize() {

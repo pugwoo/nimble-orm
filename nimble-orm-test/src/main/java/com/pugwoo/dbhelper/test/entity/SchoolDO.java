@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.ToString;
 
 @Data
-@ToString
 @Table("t_school")
 public class SchoolDO extends IdableSoftDeleteBaseDO {
 
