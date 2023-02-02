@@ -10,6 +10,7 @@ import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
 import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
+import com.pugwoo.wooutils.lang.DateUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -254,18 +255,15 @@ public class TestDBHelper_query {
     public void testGetByKey() {
         Long id = CommonOps.insertOne(dbHelper).getId();
 
-        StudentDO studentDO = new StudentDO();
-        studentDO.setId(id);
-
-        assert dbHelper.getByKey(studentDO);
-
         StudentDO student2 = dbHelper.getByKey(StudentDO.class, id);
         assert student2 != null;
 
         // student的时分秒不能全为0
         Date createTime = student2.getCreateTime();
         assert createTime != null;
-        assert !(createTime.getHours() == 0 && createTime.getMinutes() == 0 && createTime.getSeconds() == 0);
+        assert !(DateUtils.getHour(createTime) == 0 &&
+                 DateUtils.getMinute(createTime) == 0 &&
+                 DateUtils.getSecond(createTime) == 0);
 
         // student的时间搓在当前时间10秒以内才算合格
         assert System.currentTimeMillis() - createTime.getTime() < 10000;

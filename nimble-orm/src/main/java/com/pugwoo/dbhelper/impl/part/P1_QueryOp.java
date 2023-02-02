@@ -26,47 +26,6 @@ import java.util.stream.Stream;
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public <T> boolean getByKey(T t) throws NullKeyValueException {
-        if (t == null) {
-            return false;
-        }
-        Class<?> clazz = t.getClass();
-
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
-
-        StringBuilder sqlSB = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features, null));
-
-        List<Object> keyValues = new ArrayList<>();
-        sqlSB.append(SQLUtils.getKeysWhereSQL(t, keyValues));
-
-        try {
-            doInterceptBeforeQuery(t.getClass(), sqlSB, keyValues);
-
-            String sql = sqlSB.toString();
-            sql = addComment(sql);
-            log(sql, keyValues);
-
-            long start = System.currentTimeMillis();
-            jdbcTemplate.queryForObject(sql,
-                    new AnnotationSupportRowMapper(this, t.getClass(), t),
-                    keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-
-            handleRelatedColumn(t);
-            logSlow(System.currentTimeMillis() - start, sql, keyValues);
-
-            t = doInterceptAfterQuery(clazz, t, sqlSB, keyValues);
-            return t != null;
-        } catch (EmptyResultDataAccessException e) {
-            t = doInterceptAfterQuery(clazz, null, sqlSB, keyValues);
-            return t != null;
-        }
-    }
-
-    @Override
     public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
             NotOnlyOneKeyColumnException {
 

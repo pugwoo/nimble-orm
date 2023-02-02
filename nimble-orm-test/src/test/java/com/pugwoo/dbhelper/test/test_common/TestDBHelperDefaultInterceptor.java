@@ -25,10 +25,7 @@ public class TestDBHelperDefaultInterceptor {
 		studentDO.setAge(29);
 		dbHelper.insert(studentDO);
 		Long id = studentDO.getId();
-		
-		studentDO = new StudentDO();
-		studentDO.setId(id);
-		dbHelper.getByKey(studentDO);
+
 		dbHelper.getByKey(StudentDO.class, id);
 		List<Long> keys = new ArrayList<Long>();
 		keys.add(id);

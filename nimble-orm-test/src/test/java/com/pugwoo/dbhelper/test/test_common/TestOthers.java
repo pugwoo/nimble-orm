@@ -73,11 +73,7 @@ public class TestOthers {
         assert typesDO.getId1() != null;
         assert typesDO.getId2() != null;
 
-        TypesDO types2 = new TypesDO();
-        types2.setId1(typesDO.getId1());
-        types2.setId2(typesDO.getId2());
-
-        dbHelper.getByKey(types2);
+        TypesDO types2 = dbHelper.getOne(TypesDO.class, "where id1=? and id2=?", typesDO.getId1(), typesDO.getId2());
         assert types2.getMyByte().equals(typesDO.getMyByte());
         assert types2.getS().equals(typesDO.getS());
         assert types2.getMyFloat().equals(typesDO.getMyFloat());

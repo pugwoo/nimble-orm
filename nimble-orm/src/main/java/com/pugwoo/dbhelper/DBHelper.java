@@ -146,16 +146,7 @@ public interface DBHelper {
 	// =============== Query methods START ==================================
 	
 	/**
-	 * 通过T的主键，将数据查出来并设置到T中<br>
-	 * 【会自动处理软删除记录】
-	 * 
-	 * @param t 值设置在t中
-	 * @return 存在返回true，否则返回false
-	 */
-	<T> boolean getByKey(T t) throws NullKeyValueException;
-	
-	/**
-	 * 适合于只有一个Key的情况<br>
+	 * 适合于只有一个Key的情况，多主键的情况请使用getOne<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 查询的DO的类class
 	 * @param keyValue 查询的主键key值
@@ -528,8 +519,7 @@ public interface DBHelper {
 	
 	/**
 	 * 自定义更新多行记录，会自动去掉已软删除的行。
-	 *
-	 * 【重要更新 since 1.0.0】该方法修改的行，不会再调用afterUpdate方法，如果需要获得被修改的行记录，请考虑使用canal方案。
+	 * 【重要更新 since 1.0.0】该方法修改的记录，不会再调用afterUpdate方法，如果需要获得被修改的行记录，请考虑使用canal方案。
 	 *
 	 * @param clazz 要更新的DO类
 	 * @param setSql update sql中的set sql子句，可以包括set关键字也可以不包括
