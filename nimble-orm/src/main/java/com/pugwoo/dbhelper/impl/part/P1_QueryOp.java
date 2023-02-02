@@ -74,62 +74,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    public <T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues) {
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
-
-        if (keyValues == null || keyValues.isEmpty()) {
-            return new HashMap<>();
-        }
-
-        StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
-        sqlSB.append(SQLUtils.getKeyInWhereSQL(clazz));
-
-        List<Object> argsList = new ArrayList<>();
-        argsList.add(keyValues);
-        doInterceptBeforeQuery(clazz, sqlSB, argsList);
-
-        String sql = sqlSB.toString();
-        sql = addComment(sql);
-        log(sql, argsList);
-
-        long start = System.currentTimeMillis();
-        List<T> list = namedParameterJdbcTemplate.query(
-                NamedParameterUtils.trans(sql, argsList),
-                NamedParameterUtils.transParam(argsList),
-                new AnnotationSupportRowMapper<>(this, clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
-
-        handleRelatedColumn(list);
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, argsList);
-
-        list = doInterceptorAfterQueryList(clazz, list, list.size(), sqlSB, argsList);
-
-        // 转换to map
-        if (list == null || list.isEmpty()) {
-            return new HashMap<>();
-        }
-        Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-        Map<K, T> map = new LinkedHashMap<>();
-        for (K key : keyValues) {
-            if (key == null) {
-                continue;
-            }
-            for (T t : list) {
-                Object k = DOInfoReader.getValue(keyField, t);
-                if (key.equals(k)) {
-                    map.put(key, t);
-                    break;
-                }
-            }
-        }
-        return map;
-    }
-
-    @Override
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
                                    String postSql, Object... args) {
         if (page < 1) {

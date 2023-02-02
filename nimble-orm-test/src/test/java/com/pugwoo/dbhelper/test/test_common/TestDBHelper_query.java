@@ -270,33 +270,6 @@ public class TestDBHelper_query {
     }
 
     @Test 
-    public void testGetByKeyList() {
-        List<Long> ids = new ArrayList<Long>();
-        ids.add(CommonOps.insertOne(dbHelper).getId());
-        ids.add(CommonOps.insertOne(dbHelper).getId());
-        ids.add(CommonOps.insertOne(dbHelper).getId());
-        Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
-
-        assert 3 == map.size();
-        for(int i = 0; i < 3; i++) {
-            assert map.get(ids.get(i)).getId().equals(ids.get(i));
-        }
-
-        // 测试一下用Set来查询
-        Set<Long> idsSet = new HashSet<>(ids);
-        map = dbHelper.getByKeyList(StudentDO.class, idsSet);
-
-        assert 3 == map.size();
-        for(int i = 0; i < 3; i++) {
-            assert map.get(ids.get(i)).getId().equals(ids.get(i));
-        }
-
-
-        List<StudentDO> allKey = dbHelper.getAllKey(StudentDO.class, "where 1=1");
-        assert allKey.size() >= 3;
-    }
-
-    @Test 
     public void testExists() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         assert dbHelper.isExist(StudentDO.class, null);

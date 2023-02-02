@@ -8,6 +8,7 @@ v1.4.3 - [enhance] 优化接口定义，setTableName/resetTableNames/turnOffSoft
        - [del] 删除insertOrUpdateFull、insertOrUpdateFullWithNull方法
        - [del] 删除insertOrUpdateWithNull(list)、updateWithNull(list)方法
        - [del] 删除boolean getByKey(T t)方法
+       - [del] 删除<T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues)方法
 
 2023年1月7日
 v1.4.2 - [add] 批量插入支持数据库默认值(即当插入为null时使用数据库默认值)，此外mysql不需要再设置rewriteBatchedStatements=TRUE参数

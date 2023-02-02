@@ -27,9 +27,6 @@ public class TestDBHelperDefaultInterceptor {
 		Long id = studentDO.getId();
 
 		dbHelper.getByKey(StudentDO.class, id);
-		List<Long> keys = new ArrayList<Long>();
-		keys.add(id);
-		dbHelper.getByKeyList(StudentDO.class, keys);
 		
 		dbHelper.getAll(StudentDO.class);
 		dbHelper.getPage(StudentDO.class, 1, 10);
