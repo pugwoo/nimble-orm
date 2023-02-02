@@ -26,51 +26,15 @@ import java.util.stream.Stream;
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
-    public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
-            NotOnlyOneKeyColumnException {
-
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
-
+    public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException, NotOnlyOneKeyColumnException {
+        assertNotVirtualTable(clazz);
         if (keyValue == null) {
             throw new NullKeyValueException();
         }
         SQLAssert.onlyOneKeyColumn(clazz);
 
-        StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
-        sqlSB.append(SQLUtils.getKeysWhereSQL(clazz));
-
-        List<Object> argsList = new ArrayList<>();
-        argsList.add(keyValue);
-
-        try {
-            doInterceptBeforeQuery(clazz, sqlSB, argsList);
-
-            String sql = sqlSB.toString();
-            sql = addComment(sql);
-            log(sql, argsList);
-
-            long start = System.currentTimeMillis();
-            T t = jdbcTemplate.queryForObject(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz),
-                    argsList.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-
-            handleRelatedColumn(t);
-
-            long cost = System.currentTimeMillis() - start;
-
-            List<Object> args = new ArrayList<>();
-            args.add(keyValue);
-            logSlow(cost, sql, args);
-
-            t = doInterceptAfterQuery(clazz, t, sqlSB, argsList);
-            return t;
-        } catch (EmptyResultDataAccessException e) {
-            return doInterceptAfterQuery(clazz, null, sqlSB, argsList);
-        }
+        String where = SQLUtils.getKeysWhereSQLWithoutSoftDelete(clazz);
+        return getOne(clazz, where, keyValue);
     }
 
     @Override
@@ -251,10 +215,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
+        assertNotVirtualTable(clazz);
 
         if (postSql != null) {
             postSql = postSql.replace('\t', ' ');
@@ -466,10 +427,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     @SuppressWarnings({"unchecked"})
     public <T> List<T> getByExample(T t, int limit) {
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(t.getClass());
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
+        assertNotVirtualTable(t.getClass());
 
         Map<Field, String> filed2column = new HashMap<>();
         List<Field> declaredFields = DOInfoReader.getColumns(t.getClass());
@@ -1057,4 +1015,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return null;
     }
 
+    private void assertNotVirtualTable(Class<?> clazz) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
+    }
 }

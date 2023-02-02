@@ -233,11 +233,11 @@ public class SQLUtils {
 	 * @param clazz 注解了Table的类
 	 * @throws NoKeyColumnAnnotationException 当没有注解isKey=1的列时抛出
 	 */
-	public static String getKeysWhereSQL(Class<?> clazz) 
+	public static String getKeysWhereSQLWithoutSoftDelete(Class<?> clazz)
 			throws NoKeyColumnAnnotationException {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 		String where = joinWhere(keyFields, "AND");
-		return autoSetSoftDeleted("WHERE " + where, clazz);
+		return "WHERE " + where;
 	}
 	
 	/**
