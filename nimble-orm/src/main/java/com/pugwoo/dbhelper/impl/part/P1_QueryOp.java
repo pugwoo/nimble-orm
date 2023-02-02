@@ -17,7 +17,6 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.mvel2.MVEL;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -63,11 +62,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     public <T> long getCount(Class<T> clazz) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
-        StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectCountSQL(clazz));
-        sqlSB.append(isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
-
-        String sql = sqlSB.toString();
+        String sql = SQLUtils.getSelectCountSQL(clazz) +
+                (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
         sql = addComment(sql);
 
         log(sql, null);
@@ -88,19 +84,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             postSql = postSql.replace('\t', ' ');
         }
 
-        StringBuilder sqlSB = new StringBuilder("SELECT count(*) FROM (");
-
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, true, features, postSql));
-        sqlSB.append(isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz));
-
-        sqlSB.append(") tff305c6");
+        String sqlSB = "SELECT count(*) FROM ("
+                + SQLUtils.getSelectSQL(clazz, false, true, features, postSql)
+                + (isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz))
+                + ") tff305c6";
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
 
-        String sql = sqlSB.toString();
+        String sql = sqlSB;
         sql = addComment(sql);
         log(sql, argsList);
 
@@ -319,6 +313,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return list;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args) {
         // 解决如果java选择错重载的问题
@@ -604,21 +599,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
             }
         }
-    }
-
-    /**t为null表示没有记录，因此等价于空list*/
-    private <T> T doInterceptAfterQuery(Class<?> clazz, T t, StringBuilder sql, List<Object> args) {
-        List<T> list = new ArrayList<>();
-        if (t != null) {
-            list.add(t);
-        }
-        list = doInterceptorAfterQueryList(clazz, list, 1, sql, args);
-        return list == null || list.isEmpty() ? null : list.get(0);
-    }
-
-    private <T> List<T> doInterceptorAfterQueryList(Class<?> clazz, List<T> list, long total,
-                                                    StringBuilder sql, List<Object> args) {
-        return doInterceptorAfterQueryList(clazz, list, total, sql.toString(), args);
     }
 
     private <T> List<T> doInterceptorAfterQueryList(Class<?> clazz, List<T> list, long total,
@@ -925,7 +905,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             Column remoteColumn = remoteF.field.getAnnotation(Column.class);
             if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                sb.append(remoteF.fieldPrefix + SQLUtils.getColumnName(remoteColumn.value()));
+                sb.append(remoteF.fieldPrefix).append(SQLUtils.getColumnName(remoteColumn.value()));
             } else {
                 // 对于有remoteF.fieldPrefix的，由于计算列是用户自己写的，所以需要自己确保有fieldPrefix，如果没有，在这里告警
                 if (InnerCommonUtils.isNotBlank(remoteF.fieldPrefix)) {
