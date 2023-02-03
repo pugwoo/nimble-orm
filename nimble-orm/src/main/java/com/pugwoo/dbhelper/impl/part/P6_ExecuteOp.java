@@ -11,7 +11,7 @@ public class P6_ExecuteOp extends P5_DeleteOp {
     }
 
     @Override
-    public int executeRaw(String sql, Map<String, Object> paramMap) {
+    public int executeRaw(String sql, Map<String, ?> paramMap) {
         sql = addComment(sql);
         log(sql, paramMap);
         long start = System.currentTimeMillis();

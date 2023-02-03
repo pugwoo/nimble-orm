@@ -234,16 +234,16 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    public <T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args) {
+    public <T> List<T> getRaw(Class<T> clazz, String sql, Map<String, ?> args) {
         return getRawByNamedParam(clazz, sql, args);
     }
 
     @Override
-    public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, Object> args) {
+    public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, ?> args) {
         return getRawByNamedParamForStream(clazz, sql, args);
     }
 
-    private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, Object> args) {
+    private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, ?> args) {
         jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> forIntercept = new ArrayList<>();
@@ -283,7 +283,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return result;
     }
 
-    private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, Object> args) {
+    private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, ?> args) {
         List<Object> forIntercept = new ArrayList<>();
         if (args != null) {
             forIntercept.add(args);
@@ -313,14 +313,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return list;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args) {
-        // 解决如果java选择错重载的问题
-        if (args != null && args.length == 1 && args[0] instanceof Map) {
-            return getRawByNamedParamForStream(clazz, sql, (Map<String, Object>)(args[0]));
-        }
-
         jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -362,13 +356,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    @SuppressWarnings({"unchecked"})
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
-        // 解决如果java选择错重载的问题
-        if (args != null && args.length == 1 && args[0] instanceof Map) {
-            return getRawByNamedParam(clazz, sql, (Map<String, Object>)(args[0]));
-        }
-
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
@@ -411,7 +399,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    public <T> T getRawOne(Class<T> clazz, String sql, Map<String, Object> args) {
+    public <T> T getRawOne(Class<T> clazz, String sql, Map<String, ?> args) {
         List<T> raw = getRaw(clazz, sql, args);
         if (raw == null || raw.isEmpty()) {
             return null;

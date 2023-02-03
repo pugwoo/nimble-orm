@@ -302,7 +302,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
 	 */
-	<T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args);
+	<T> List<T> getRaw(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
 	 * 执行自行指定的SQL查询语句，以流Stream的形式返回。<br>
@@ -324,7 +324,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
 	 */
-	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, Object> args);
+	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
 	 * 执行自行指定的SQL查询语句，只返回第一行
@@ -346,7 +346,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
 	 */
-	<T> T getRawOne(Class<T> clazz, String sql, Map<String, Object> args);
+	<T> T getRawOne(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
 	 * 根据给定的对象t查询跟t的非null值完全相等的记录。
@@ -587,6 +587,6 @@ public interface DBHelper {
 	 * @param paramMap 自定义参数
 	 * @return 返回影响的行数
 	 */
-	int executeRaw(String sql, Map<String, Object> paramMap);
+	int executeRaw(String sql, Map<String, ?> paramMap);
 
 }
