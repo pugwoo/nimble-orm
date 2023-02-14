@@ -39,9 +39,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
                                    String postSql, Object... args) {
-        if (page < 1) {
-            throw new InvalidParameterException("[page] must greater than 0");
-        }
+        assertPage(page);
         if (maxPageSize != null && pageSize > maxPageSize) {
             pageSize = maxPageSize;
         }
@@ -119,9 +117,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
                                                String postSql, Object... args) {
-        if (page < 1) {
-            throw new InvalidParameterException("[page] must greater than 0");
-        }
+        assertPage(page);
         if (maxPageSize != null && pageSize > maxPageSize) {
             pageSize = maxPageSize;
         }
@@ -987,6 +983,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
         if (isVirtualTable) {
             throw new NotAllowQueryException("Virtual table is not supported");
+        }
+    }
+
+    private void assertPage(int page) {
+        if (page < 1) {
+            throw new InvalidParameterException("[page] must greater than 0");
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -256,7 +256,7 @@ public class TestDBHelper_query {
         Long id = CommonOps.insertOne(dbHelper).getId();
 
         StudentDO student2 = dbHelper.getByKey(StudentDO.class, id);
-        assert student2 != null;
+        assert student2 != null && student2.getId().equals(id);
 
         // student的时分秒不能全为0
         Date createTime = student2.getCreateTime();
@@ -265,8 +265,19 @@ public class TestDBHelper_query {
                  DateUtils.getMinute(createTime) == 0 &&
                  DateUtils.getSecond(createTime) == 0);
 
-        // student的时间搓在当前时间10秒以内才算合格
+        // student的时间戳在当前时间10秒以内才算合格
         assert System.currentTimeMillis() - createTime.getTime() < 10000;
+
+        // 测试一个异常情况
+        boolean isThrowException = false;
+        try {
+            dbHelper.getByKey(StudentDO.class, null);
+        } catch (Exception e) {
+            if (e instanceof NullKeyValueException) {
+                isThrowException = true;
+            }
+        }
+        assert isThrowException;
     }
 
     @Test 
@@ -333,6 +344,17 @@ public class TestDBHelper_query {
 
         total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
         assert total >= 100;
+
+        // 测试异常情况，页数<=0
+        boolean isThrowException = false;
+        try {
+            dbHelper.getPage(StudentDO.class, 0, 10);
+        } catch (Exception e) {
+            if (e instanceof InvalidParameterException) {
+                isThrowException = true;
+            }
+        }
+        assert isThrowException;
     }
 
     @Test
@@ -733,6 +755,16 @@ public class TestDBHelper_query {
         sum2 = dbHelper.getRawOne(Long.class, "select sum(age) from t_student where name=:name",
                 MapUtils.of("name", UUID.randomUUID().toString()));
         assert sum2 == 0;
+
+        // 测试没有参数的
+        assert dbHelper.getRawOne(Long.class, "select count(*) from t_student") > 0;
+        assert dbHelper.getRawOne(Long.class, "select count(*) from t_student", new HashMap<>()) > 0;
+
+        // 测试查询不到值的
+        assert dbHelper.getRawOne(StudentDO.class, "select * from t_student where name=?",
+                UUID.randomUUID().toString()) == null;
+        assert dbHelper.getRawOne(StudentDO.class, "select * from t_student where name=:name",
+                MapUtils.of("name", UUID.randomUUID().toString())) == null;
     }
 
     @Test 
