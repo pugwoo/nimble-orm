@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -35,7 +35,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 				isContinue = interceptor.beforeInsert(new ArrayList<>(list));
 			}
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}

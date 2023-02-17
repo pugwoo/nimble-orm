@@ -2,7 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -23,7 +23,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
@@ -32,7 +32,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdateAll(clazz, sql, customsSets, customsParams, args);
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}

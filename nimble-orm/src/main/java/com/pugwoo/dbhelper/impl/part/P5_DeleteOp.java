@@ -2,10 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.exception.InvalidParameterException;
-import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
-import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -35,7 +32,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
