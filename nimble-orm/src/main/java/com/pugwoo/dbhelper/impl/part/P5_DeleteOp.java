@@ -6,7 +6,6 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
-import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -14,6 +13,7 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -97,10 +97,11 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
 		try {
-			T t = clazz.newInstance();
+			T t = clazz.getDeclaredConstructor().newInstance();
 			DOInfoReader.setValue(keyField, t, keyValue);
 			return deleteByKey(t);
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (InstantiationException | IllegalAccessException |
+				 NoSuchMethodException | InvocationTargetException e) {
 			throw new MustProvideConstructorException();
 		}
 	}
@@ -220,10 +221,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
 		if (sql != null) {
 			// 没有in (?)，因此用jdbcExecuteUpdate
-			int rows = jdbcExecuteUpdate(sql, values.toArray()); // 更新失败仅log，不阻塞删除
-			if (rows == 0) {
-				LOGGER.warn("updateForDelete update fail, object:{}", NimbleOrmJSON.toJson(t));
-			}
+			jdbcExecuteUpdate(sql, values.toArray()); // ignore update result
 		}
 	}
 }
