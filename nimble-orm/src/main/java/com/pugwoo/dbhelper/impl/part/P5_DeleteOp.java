@@ -47,6 +47,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	private void doInterceptAfterDelete(final List<Object> tList, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return; // 内部实现尽量不调用executeAfterCommit
+		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				interceptors.get(i).afterDelete(tList, rows);

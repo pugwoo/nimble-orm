@@ -47,6 +47,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	}
 	@SuppressWarnings("unchecked")
 	private void doInterceptAfterInsertList(final Collection<?> list, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return; // 内部实现尽量不调用executeAfterCommit
+		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				if (list instanceof List) {

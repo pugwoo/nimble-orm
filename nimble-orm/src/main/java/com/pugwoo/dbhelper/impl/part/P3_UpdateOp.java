@@ -38,6 +38,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	}
 	
 	private void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return; // 内部实现尽量不调用executeAfterCommit
+		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				interceptors.get(i).afterUpdate(tList, rows);
