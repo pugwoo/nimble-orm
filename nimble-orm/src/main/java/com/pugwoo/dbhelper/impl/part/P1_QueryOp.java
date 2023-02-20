@@ -494,14 +494,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         long start = System.currentTimeMillis();
         List<T> list;
         if (argsList.isEmpty()) {
-            if (isUseNamedTemplate) {
-                // 因为有in (?)所以用namedParameterJdbcTemplate
-                list = namedParameterJdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
-            } else {
-                list = jdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
-            }
+            list = jdbcTemplate.query(sql,
+                    new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
         } else {
             if (isUseNamedTemplate) {
                 // 因为有in (?)所以用namedParameterJdbcTemplate
