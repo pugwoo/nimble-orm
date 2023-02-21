@@ -44,9 +44,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             pageSize = maxPageSize;
         }
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         int offset = (page - 1) * pageSize;
         return _getPage(clazz, true,false, true, offset, pageSize, postSql, args);
     }
@@ -77,10 +74,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
 
         String sqlSB = "SELECT count(*) FROM ("
                 + SQLUtils.getSelectSQL(clazz, false, true, features, postSql)
@@ -122,9 +115,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             pageSize = maxPageSize;
         }
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         int offset = (page - 1) * pageSize;
         return _getPage(clazz, true, false, false, offset, pageSize, postSql, args);
     }
@@ -197,9 +187,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         return _getPage(clazz, true,false, false, null, null, postSql, args).getData();
     }
 
@@ -207,9 +194,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
         assertNotVirtualTable(clazz);
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         return _getPage(clazz, true, true, false, null, null, postSql, args).getData();
     }
 
@@ -221,9 +205,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         List<T> list = _getPage(clazz, true, false, false,
                 0, 1, postSql, args).getData();
         return list == null || list.isEmpty() ? null : list.get(0);
@@ -515,11 +496,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             if(offset != null && offset == 0 && limit != null && list.size() < limit) {
                 total = list.size();
             } else {
-                if(postSql == null) {
-                    total = getCount(clazz);
-                } else {
-                    total = getCount(clazz, postSql, args);
-                }
+                total = getCount(clazz, postSql, args);
             }
         }
 
@@ -546,18 +523,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> boolean isExist(Class<T> clazz, String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         return getOne(clazz, postSql, args) != null;
     }
 
     @Override
     public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
                                       String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         if (atLeastCounts == 1) {
             return isExist(clazz, postSql, args);
         }
@@ -928,10 +899,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
-
         List<Object> param = new ArrayList<>();
         for (Object obj : values) {
             if (obj instanceof List) {
@@ -946,10 +913,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
-
         List<T> result = new ArrayList<>();
 
         for (Object value : values) {
