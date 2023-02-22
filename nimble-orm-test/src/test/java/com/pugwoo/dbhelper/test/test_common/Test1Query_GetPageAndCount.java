@@ -57,8 +57,9 @@ public class Test1Query_GetPageAndCount {
         assert isThrowException;
     }
 
+    /**测试自动移除limit、自动追加order by*/
     @Test
-    public void testGetPageRemoteLimitAddOrder() {
+    public void testGetPageRemoveLimitAddOrder() {
         String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         CommonOps.insertBatch(dbHelper, 20, prefix);
 
