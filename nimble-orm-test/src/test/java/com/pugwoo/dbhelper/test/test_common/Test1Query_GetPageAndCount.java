@@ -3,12 +3,15 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.StudentSchoolJoinVO;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -109,6 +112,26 @@ public class Test1Query_GetPageAndCount {
         // 如果用户自行执行的order by没有完全包含group by的字段，则有warning 日志
         page = dbHelper.getPage(StudentDO.class, 1, 10,
                 "where name like ? group by name,age order by name limit 4,6", prefix + "%"); // 看告警
+    }
+
+    /**测试异常情况 mock SQLUtils.removeLimitAndAddOrder 抛出异常，仍能正常处理*/
+    @Test
+    public void testRemoveLimitThrowException() {
+        String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        CommonOps.insertBatch(dbHelper, 20, prefix);
+
+        String where = "where name like ? group by name, age";
+
+        try (MockedStatic<SQLUtils> utilities = Mockito.mockStatic(SQLUtils.class, Mockito.CALLS_REAL_METHODS)) {
+            utilities.when(() -> SQLUtils.removeLimitAndAddOrder(where, true, StudentDO.class))
+                    .thenThrow(new RuntimeException("just test"));
+
+            // 测试异常抛出exception情况下，仍然没有问题
+            PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10,
+                    where, prefix + "%");
+            assert page.getData().size() == 10;
+            assert page.getTotal() == 20;
+        }
     }
 
     @Test
