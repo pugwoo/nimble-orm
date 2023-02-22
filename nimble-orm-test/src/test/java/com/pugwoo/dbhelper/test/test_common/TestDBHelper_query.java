@@ -2,7 +2,6 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
@@ -321,118 +320,6 @@ public class TestDBHelper_query {
     }
 
     @Test 
-    public void testGetPage() {
-        CommonOps.insertBatch(dbHelper,100);
-
-        // 测试分页获取
-        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
-        assert page1.getTotal() >= 100;
-        assert page1.getData().size() == 10;
-
-        page1 = dbHelper.getPage(StudentDO.class, 2, 10);
-        assert page1.getTotal() >= 100;
-        assert page1.getData().size() == 10;
-
-        page1 = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
-        assert page1.getData().size() == 10;
-
-        page1 = dbHelper.getPageWithoutCount(StudentDO.class, 2, 10);
-        assert page1.getData().size() == 10;
-
-        long total = dbHelper.getCount(StudentDO.class);
-        assert total >= 100;
-
-        total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
-        assert total >= 100;
-
-        // 测试异常情况，页数<=0
-        boolean isThrowException = false;
-        try {
-            dbHelper.getPage(StudentDO.class, 0, 10);
-        } catch (Exception e) {
-            if (e instanceof InvalidParameterException) {
-                isThrowException = true;
-            }
-        }
-        assert isThrowException;
-    }
-
-    @Test
-    public void testGetPageRemoteLimitAddOrder() {
-        String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        CommonOps.insertBatch(dbHelper, 20, prefix);
-
-        // 这里故意加上limit子句，会被自动清除掉
-        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10,
-                "where name like ? group by name, age limit 4,6", prefix + "%");
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 20;
-
-        PageData<StudentDO> page2 = dbHelper.getPage(StudentDO.class, 2, 10,
-                "where name like ? group by name, age limit 4,6", prefix + "%");
-        assert page2.getData().size() == 10;
-        assert page2.getTotal() == 20;
-
-        Set<String> name = new HashSet<>();
-        for (StudentDO stu : page.getData()) {
-            name.add(stu.getName());
-        }
-        for (StudentDO stu : page2.getData()) {
-            name.add(stu.getName());
-        }
-        assert name.size() == 20;
-
-        // ============== 不加group by时自动以id为排序
-        System.out.println("=================================");
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10,
-                "where name like ? limit 4,6", prefix + "%");
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 20;
-
-        page2 = dbHelper.getPage(StudentDO.class, 2, 10,
-                "where name like ? limit 4,6", prefix + "%");
-        assert page2.getData().size() == 10;
-        assert page2.getTotal() == 20;
-
-        name = new HashSet<>();
-        for (StudentDO stu : page.getData()) {
-            name.add(stu.getName());
-        }
-        for (StudentDO stu : page2.getData()) {
-            name.add(stu.getName());
-        }
-        assert name.size() == 20;
-
-        System.out.println("=================================");
-        // 如果用户自行执行的order by没有完全包含group by的字段，则有warning 日志
-        page = dbHelper.getPage(StudentDO.class, 1, 10,
-                "where name like ? group by name,age order by name limit 4,6", prefix + "%"); // 看告警
-    }
-
-    @Test 
-    public void testPageDataTransform() {
-        CommonOps.insertBatch(dbHelper,20);
-        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
-        PageData<StudentVO> page2 = page1.transform(o -> {
-            StudentVO studentVO = new StudentVO();
-            studentVO.setId(o.getId());
-            studentVO.setName(o.getName());
-            return studentVO;
-        });
-
-        assert page1.getTotal() == page2.getTotal();
-        assert page1.getPageSize() == page2.getPageSize();
-        assert page1.getData().size() == page2.getData().size();
-
-        for (int i = 0; i < 10; i++) {
-            assert page1.getData().get(i).getId().equals(page2.getData().get(i).getId());
-            assert Objects.equals(page1.getData().get(i).getName(),
-                    page2.getData().get(i).getName());
-        }
-    }
-
-    @Test 
     public void testGetByExample() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
@@ -545,96 +432,6 @@ public class TestDBHelper_query {
         assert one.getDeleteTime() != null;
     }
 
-    @Test 
-    public void testCount() {
-
-        dbHelper.delete(StudentDO.class, "where 1=1");
-        long count = dbHelper.getCount(StudentDO.class);
-        assert count == 0;
-
-        dbHelper.delete(SchoolDO.class, "where 1=1");
-        count = dbHelper.getCount(SchoolDO.class);
-        assert count == 0;
-
-        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 99);
-
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("sysu");
-        dbHelper.insert(schoolDO);
-        assert schoolDO.getId() != null;
-
-        for(StudentDO studentDO : studentDOS) {
-            studentDO.setSchoolId(schoolDO.getId());
-            dbHelper.update(studentDO);
-        }
-
-        count = dbHelper.getCount(StudentDO.class);
-        assert count == 99;
-        count = dbHelper.getCount(StudentDO.class, "where 1=1");
-        assert count == 99;
-        count = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
-        assert count == 99;
-        count = dbHelper.getCount(StudentDO.class, "where name like ? group by name", "nick%");
-        assert count == 99;
-
-        count = dbHelper.getCount(StudentDO.class, "where name not like ? group by name", "nick%");
-        assert count == 0;
-
-        List<String> names = new ArrayList<String>();
-        names.add(studentDOS.get(0).getName());
-        names.add(studentDOS.get(10).getName());
-        names.add(studentDOS.get(30).getName());
-        count = dbHelper.getCount(StudentDO.class, "where name in (?)",names);
-        assert count == 3;
-
-        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 99;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name like ?", "nick%");
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 99;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name not like ?", "nick%");
-        assert page.getData().size() == 0;
-        assert page.getTotal() == 0;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name in (?)", names);
-        assert page.getData().size() == 3;
-        assert page.getTotal() == 3;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 2, "where name in (?)", names);
-        assert page.getData().size() == 2;
-        assert page.getTotal() == 3;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 2, "where name in (?) group by name", names);
-        assert page.getData().size() == 2;
-        assert page.getTotal() == 3;
-
-
-        page = dbHelper.getPage(StudentDO.class, 1, 100);
-        assert page.getData().size() == 99;
-        assert page.getTotal() == 99;
-
-        count = dbHelper.getCount(StudentSchoolJoinVO.class);
-        assert count == 99;
-        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where 1=1");
-        assert count == 99;
-        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
-        assert count == 99;
-        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ? group by t1.name", "nick%");
-        assert count == 99;
-
-        PageData<StudentSchoolJoinVO> page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
-        assert page2.getData().size() == 10;
-        assert page2.getTotal() == 99;
-
-        page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 100);
-        assert page2.getData().size() == 99;
-        assert page2.getTotal() == 99;
-
-    }
-
     /**测试软删除DO查询条件中涉及到OR条件的情况*/
     @Test 
     public void testQueryWithDeletedAndOr() {
@@ -662,24 +459,6 @@ public class TestDBHelper_query {
         StudentSelfTrueDeleteJoinVO joinVO = dbHelper.getOne(StudentSelfTrueDeleteJoinVO.class, "where t1.id=?", studentDO.getId());
         assert joinVO.getStudent1().getId().equals(studentDO.getId());
         assert joinVO.getStudent2().getId().equals(studentDO.getId());
-    }
-
-    /**测试分页最大数限制*/
-    @Test 
-    public void testMaxPageSize() {
-        dbHelper.setMaxPageSize(5);
-
-        CommonOps.insertBatch(dbHelper, 10);
-        PageData<StudentDO> pageData = dbHelper.getPage(StudentDO.class, 1, 10);
-        assert pageData.getData().size() == 5; // 受限制于maxPageSize
-
-        pageData = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
-        assert pageData.getData().size() == 5; // 受限制于maxPageSize
-
-        pageData = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10, "where 1=1");
-        assert pageData.getData().size() == 5; // 受限制于maxPageSize
-
-        dbHelper.setMaxPageSize(1000000);
     }
 
     @Test
