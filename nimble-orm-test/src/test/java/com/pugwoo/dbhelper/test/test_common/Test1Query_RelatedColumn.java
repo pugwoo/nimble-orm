@@ -104,19 +104,31 @@ public class Test1Query_RelatedColumn {
         assert courseVO.getMainCourseStudents().size() == 1;
         assert courseVO.getMainCourseStudents().get(0).getId().equals(student1.getId());
         assert courseVO.getMainCourseStudent().getId().equals(student1.getId());
+        assert courseVO.getConditionNull() == null;
+        assert courseVO.getConditionNotReturnBoolean() == null;
+        assert courseVO.getConditionThrowException() == null;
 
         courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id2);
         assert courseVO.getMainCourseStudents().isEmpty();
         assert courseVO.getMainCourseStudent() == null;
+        assert courseVO.getConditionNull() == null;
+        assert courseVO.getConditionNotReturnBoolean() == null;
+        assert courseVO.getConditionThrowException() == null;
 
         courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id3);
         assert courseVO.getMainCourseStudents().isEmpty();
         assert courseVO.getMainCourseStudent() == null;
+        assert courseVO.getConditionNull() == null;
+        assert courseVO.getConditionNotReturnBoolean() == null;
+        assert courseVO.getConditionThrowException() == null;
 
         courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id4);
         assert courseVO.getMainCourseStudents().size() == 1;
         assert courseVO.getMainCourseStudents().get(0).getId().equals(student2.getId());
         assert courseVO.getMainCourseStudent().getId().equals(student2.getId());
+        assert courseVO.getConditionNull() == null;
+        assert courseVO.getConditionNotReturnBoolean() == null;
+        assert courseVO.getConditionThrowException() == null;
 
     }
 

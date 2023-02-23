@@ -3,9 +3,11 @@ package com.pugwoo.dbhelper.test.vo;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class CourseVO extends CourseDO {
 
     // 这里使用conditional，对只有是主课程的学生才进行查询
@@ -18,19 +20,13 @@ public class CourseVO extends CourseDO {
             conditional = "t.getIsMain() != null && t.getIsMain()")
     private StudentDO mainCourseStudent;
 
-    public List<StudentDO> getMainCourseStudents() {
-        return mainCourseStudents;
-    }
+    @RelatedColumn(localColumn = "student_id", remoteColumn = "id", conditional = "null")
+    private StudentDO conditionNull;
 
-    public void setMainCourseStudents(List<StudentDO> mainCourseStudents) {
-        this.mainCourseStudents = mainCourseStudents;
-    }
+    @RelatedColumn(localColumn = "student_id", remoteColumn = "id", conditional = "'something'")
+    private StudentDO conditionNotReturnBoolean;
 
-    public StudentDO getMainCourseStudent() {
-        return mainCourseStudent;
-    }
+    @RelatedColumn(localColumn = "student_id", remoteColumn = "id", conditional = "a+b")
+    private StudentDO conditionThrowException;
 
-    public void setMainCourseStudent(StudentDO mainCourseStudent) {
-        this.mainCourseStudent = mainCourseStudent;
-    }
 }
