@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -189,7 +190,19 @@ public class Test1Query_RelatedColumn {
         studentVO2.setId(studentDO.getId());
         studentVO2.setSchoolId(studentDO.getSchoolId());
         dbHelper.handleRelatedColumn(studentVO2, "courses", "schoolDO"); // 指定要的RelatedColumn
-        assert studentVO2 != null;
+        assert studentVO2.getSchoolDO() != null;
+        assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
+        assert studentVO2.getCourses() != null;
+        assert studentVO2.getCourses().size() == 2;
+        assert studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
+                || studentVO2.getCourses().get(0).getId().equals(courseDO2.getId());
+        assert studentVO2.getMainCourses() == null;
+
+        // 转换成list处理，这个其实和上面这一段是一样的逻辑
+        studentVO2 = new StudentVOForHandleRelatedColumnOnly();
+        studentVO2.setId(studentDO.getId());
+        studentVO2.setSchoolId(studentDO.getSchoolId());
+        dbHelper.handleRelatedColumn(ListUtils.newList(studentVO2), "courses", "schoolDO");
         assert studentVO2.getSchoolDO() != null;
         assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
         assert studentVO2.getCourses() != null;
