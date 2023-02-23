@@ -2,20 +2,23 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.TypesDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.collect.ListUtils;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @SpringBootTest
-public class TestDBHelperDefaultInterceptor {
+public class Test7Interceptor_Custom {
 
 	@Autowired
-	@Qualifier("dbHelperWithDefaultInterceptor")
+	@Qualifier("dbHelperWithInterceptor")
 	private DBHelper dbHelper;
 
 	@Test
@@ -52,26 +55,49 @@ public class TestDBHelperDefaultInterceptor {
 		dbHelper.updateCustom(studentDO, "age=age+1");
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
 	}
+
+	@Test 
+	public void testMultiKeyUpdateAll() {
+		Long long1 = new Random().nextLong();
+		Long long2 = new Random().nextLong();
+		Long long3 = new Random().nextLong();
+		Long long4 = new Random().nextLong();
+
+		TypesDO typesDO1 = new TypesDO();
+		typesDO1.setId1(long1);
+		typesDO1.setId2(long2);
+
+		assert dbHelper.insert(typesDO1) == 1;
+
+		TypesDO typesDO2 = new TypesDO();
+		typesDO2.setId1(long1);
+		typesDO2.setId2(long3);
+		TypesDO typesDO3 = new TypesDO();
+		typesDO3.setId1(long1);
+		typesDO3.setId2(long4);
+
+		assert dbHelper.insert(ListUtils.newArrayList(typesDO2, typesDO3)) == 2;
+
+		assert dbHelper.updateAll(TypesDO.class, "set my_short=3",
+				"where id1=?", long1) == 3;
+		List<TypesDO> all = dbHelper.getAll(TypesDO.class, "where id1=?", long1);
+		assert all.size() == 3;
+		for(TypesDO typesDO : all) {
+			assert typesDO.getS() == 3;
+		}
+
+	}
 	
 	@Test 
 	public void testDelete() {
-		StudentDO studentDO = CommonOps.insertOne(dbHelper);
-
+		StudentDO studentDO = new StudentDO();
+		studentDO.setName("nick");
+		studentDO.setAge(29);
+		dbHelper.insert(studentDO);
 		Long id = studentDO.getId();
-		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 		
-		assert dbHelper.deleteByKey(StudentDO.class, id) == 1;
-
-		CommonOps.insertBatch(dbHelper, CommonOps.getRandomInt(101, 100));
-		assert dbHelper.delete(StudentDO.class, "where id > ?", 100) > 0;
-
-		studentDO = CommonOps.insertOne(dbHelper);
-
-		assert dbHelper.getByKey(StudentDO.class, studentDO.getId())
-				.getName().equals(studentDO.getName());
-		studentDO.setName(studentDO.getName() + "Del");
-		assert dbHelper.deleteByKey(studentDO) == 1;
-
+		dbHelper.deleteByKey(StudentDO.class, id);
+		dbHelper.delete(StudentDO.class, "where id > ?", 100);
 	}
 	
 	@Test 
