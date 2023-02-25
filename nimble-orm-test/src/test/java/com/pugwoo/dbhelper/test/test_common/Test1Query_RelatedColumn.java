@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
+import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
@@ -11,6 +12,7 @@ import com.pugwoo.dbhelper.test.vo.*;
 import com.pugwoo.wooutils.collect.ListUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -308,5 +310,40 @@ public class Test1Query_RelatedColumn {
         @RelatedColumn(localColumn = "student_id", remoteColumn = "id")
         private List<StudentDO> students;
     }
+
+    @Data
+    public static class CourseDBHelperBeanNotExistVO extends CourseDO {
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", dbHelperBean = "xxxxx")
+        private List<StudentDO> students;
+    }
+
+    @Data
+    public static class CourseDBHelperBeanNotMatchVO extends CourseDO {
+        // withTransactionService 这个bean是存在的，但是类型不对
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id",
+                dbHelperBean = "withTransactionService")
+        private List<StudentDO> students;
+    }
+
+    @Test
+    public void testRelatedColumnWrongDBHelperBean() {
+        boolean isThrow = false;
+        try {
+            dbHelper.getAll(CourseDBHelperBeanNotExistVO.class);
+        } catch (NoSuchBeanDefinitionException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+        isThrow = false;
+        try {
+            dbHelper.getAll(CourseDBHelperBeanNotMatchVO.class);
+        } catch (SpringBeanNotMatchException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+    }
+
 
 }
