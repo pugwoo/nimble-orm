@@ -1,7 +1,9 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
 import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
@@ -264,6 +266,39 @@ public class Test1Query_RelatedColumn {
             assert s != null && s.getId() != null && s.getCourses().size() == 2;
         }
     }
+
+    // ================== 测试related column匹配的字段不是同一类型的情况
+
+    @Test
+    public void testDiffClassTypeRelatedColumn() {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName("sysu");
+        dbHelper.insert(schoolDO);
+
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        studentDO.setSchoolId(schoolDO.getId());
+        dbHelper.update(studentDO);
+
+        StudentStringSchoolIdDO one = dbHelper.getOne(StudentStringSchoolIdDO.class, "where id=?", studentDO.getId());
+        assert one.getId().equals(studentDO.getId());
+        assert one.getSchoolDO().getId().equals(schoolDO.getId()); // 不同类型的比对会转换成string进行
+    }
+
+    /**这个DO的school id类型是字符串，故意映射的，这是允许的*/
+    @Data
+    @Table("t_student")
+    public static class StudentStringSchoolIdDO {
+        @Column(value = "id", isKey = true, isAutoIncrement = true)
+        private Long id;
+
+        @Column("school_id")
+        private String schoolId;
+
+        @RelatedColumn(localColumn = "school_id", remoteColumn = "id")
+        private SchoolDO schoolDO;
+    }
+
+    // ================== 以下单元测试是测试异常情况的测试
 
     @Test
     public void testRelatedColumnWrongArgs() {
