@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
 import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
@@ -345,5 +346,35 @@ public class Test1Query_RelatedColumn {
 
     }
 
+    @Data
+    public static class CourseEmptyWrongExtraWhere1VO extends CourseDO {
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", extraWhere = "where a&&&") // SQL语法错误
+        private List<StudentDO> students;
+    }
+
+    @Data
+    public static class CourseEmptyWrongExtraWhere2VO extends CourseDO {
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", extraWhere = "where a&&& limit 10") // SQL语法错误，且带limit
+        private List<StudentDO> students;
+    }
+
+    @Test
+    public void testWrongExtraWhere() {
+        boolean isThrow = false;
+        try {
+            dbHelper.getAll(CourseEmptyWrongExtraWhere1VO.class);
+        } catch (BadSQLSyntaxException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+        isThrow = false;
+        try {
+            dbHelper.getAll(CourseEmptyWrongExtraWhere2VO.class);
+        } catch (BadSQLSyntaxException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+    }
 
 }

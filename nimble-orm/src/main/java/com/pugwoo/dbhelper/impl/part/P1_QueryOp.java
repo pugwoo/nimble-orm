@@ -748,24 +748,19 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
                     // 如果extraWhere包含limit子句，那么只能降级为逐个处理，否则可以用批量处理的方式提高性能
-                    if (SQLUtils.isContainsLimit(column.extraWhere())) {
-                        try {
+                    try {
+                        if (SQLUtils.isContainsLimit(column.extraWhere())) {
                             String eqExpr = whereColumn + "=?";
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), eqExpr);
                             relateValues = _dbHelper.getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
-                        } catch (JSQLParserException e) {
-                            LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
-                            throw new BadSQLSyntaxException(e);
-                        }
-                    } else {
-                        try {
+                        } else {
                             String inExpr = whereColumn + " in " + buildQuestionMark(values);
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
                             relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, where, values);
-                        } catch (JSQLParserException e) {
-                            LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
-                            throw new BadSQLSyntaxException(e);
                         }
+                    } catch (JSQLParserException e) {
+                        LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
+                        throw new BadSQLSyntaxException(e);
                     }
                 }
             }

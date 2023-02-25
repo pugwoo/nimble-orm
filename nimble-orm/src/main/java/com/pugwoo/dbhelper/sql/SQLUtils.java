@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -1018,24 +1017,21 @@ public class SQLUtils {
 	 * @param postSql 从where开始的子句
 	 * @return 是返回true，否返回false；如果解析异常返回false
 	 */
-	public static boolean isContainsLimit(String postSql) {
+	public static boolean isContainsLimit(String postSql) throws JSQLParserException {
 		Boolean result = containsLimitCache.get(postSql);
 		if (result != null) {
 			return result;
 		}
 
 		String selectSql = "select * from dual "; // 辅助where sql解析用
-		try {
-			Statement statement = CCJSqlParserUtil.parse(selectSql + postSql);
-			Select selectStatement = (Select) statement;
-			PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
-			Limit limit = plainSelect.getLimit();
-			boolean isContainsLimit = limit != null;
-			containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定
-			return isContainsLimit;
-		} catch (JSQLParserException e) {
-			throw new BadSQLSyntaxException(e);
-		}
+
+		Statement statement = CCJSqlParserUtil.parse(selectSql + postSql);
+		Select selectStatement = (Select) statement;
+		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+		Limit limit = plainSelect.getLimit();
+		boolean isContainsLimit = limit != null;
+		containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定
+		return isContainsLimit;
 	}
 
 	private static final Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
