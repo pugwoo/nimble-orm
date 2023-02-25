@@ -8,6 +8,7 @@ import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.service.WrongDataService;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
 import com.pugwoo.wooutils.collect.ListUtils;
@@ -377,4 +378,19 @@ public class Test1Query_RelatedColumn {
         assert isThrow;
     }
 
+    @Data
+    public static class CourseNullDataServiceVO extends CourseDO {
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", dataService = WrongDataService.class)
+        private List<StudentDO> students;
+    }
+
+    @Test
+    public void testNullDataService() {
+        CourseDO courseDO = new CourseDO();
+        dbHelper.insert(courseDO);
+
+        CourseNullDataServiceVO one = dbHelper.getOne(CourseNullDataServiceVO.class, "where id=?", courseDO.getId());
+        assert one.getStudents() != null; // 不会是null，框架会自动设置
+        assert one.getStudents().isEmpty();
+    }
 }
