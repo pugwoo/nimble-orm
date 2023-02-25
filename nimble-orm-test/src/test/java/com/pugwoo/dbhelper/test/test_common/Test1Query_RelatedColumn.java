@@ -1,12 +1,15 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
 import com.pugwoo.wooutils.collect.ListUtils;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -256,6 +259,54 @@ public class Test1Query_RelatedColumn {
         for(SchoolWithInnerClassVO.StudentVO s : schoolVO.getStudents()) {
             assert s != null && s.getId() != null && s.getCourses().size() == 2;
         }
+    }
+
+    @Test
+    public void testRelatedColumnWrongArgs() {
+        boolean isThrow = false;
+        try {
+            dbHelper.getOne(CourseBlankLocalColumnVO.class);
+        } catch (RelatedColumnFieldNotFoundException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+        isThrow = false;
+        try {
+            dbHelper.getOne(CourseBlankRemoteColumnVO.class);
+        } catch (RelatedColumnFieldNotFoundException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+    }
+
+    @Test
+    public void testRelatedColumnEmptyList() {
+        CourseDO courseDO = new CourseDO();
+        // courseDO.setStudentId(-1L); // student id不设置
+        dbHelper.insert(courseDO);
+
+        CourseEmptyListVO one = dbHelper.getOne(CourseEmptyListVO.class, "where id=?", courseDO.getId());
+        assert one.getStudents() != null; // 不会是null，框架会自动设置
+        assert one.getStudents().isEmpty();
+    }
+
+    @Data
+    public static class CourseBlankLocalColumnVO extends CourseDO {
+        @RelatedColumn(localColumn = "", remoteColumn = "id")
+        private StudentDO conditionNotReturnBoolean;
+    }
+
+    @Data
+    public static class CourseBlankRemoteColumnVO extends CourseDO {
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "")
+        private StudentDO conditionNotReturnBoolean;
+    }
+
+    @Data
+    public static class CourseEmptyListVO extends CourseDO {
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id")
+        private List<StudentDO> students;
     }
 
 }
