@@ -267,6 +267,42 @@ public class Test1Query_RelatedColumn {
         }
     }
 
+    // ================== 计算列的related column关联查询
+    @Data
+    @Table("t_school")
+    public static class School1DO {
+        @Column(value = "name2", computed = "concat('S',name)")
+        private String name2;
+    }
+
+    @Data
+    @Table("t_student")
+    public static class Student1DO {
+        @Column(value = "name1", computed = "concat('S',name)")
+        private String name1;
+
+        @RelatedColumn(localColumn = "name1", remoteColumn = "name2") // 靠计算列进行关联
+        private School1DO school1DO;
+    }
+
+    @Test
+    public void testComputedRelatedColumn() {
+        String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+
+        StudentDO studentDO = new StudentDO();
+        studentDO.setName(uuid);
+        dbHelper.insert(studentDO);
+
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName(uuid);
+        dbHelper.insert(schoolDO);
+
+        Student1DO one = dbHelper.getOne(Student1DO.class, "where name=?", uuid);
+        assert one.getName1().equals("S" + uuid);
+        assert one.getSchool1DO().getName2().equals("S" + uuid);
+
+    }
+
     // ================== 测试related column匹配的字段不是同一类型的情况
 
     @Test
