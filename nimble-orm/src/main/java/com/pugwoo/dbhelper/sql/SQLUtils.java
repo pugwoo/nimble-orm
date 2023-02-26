@@ -761,7 +761,12 @@ public class SQLUtils {
 		List<OrderByElement> list = new ArrayList<>();
 		for (Field field : orderColumn) {
 			OrderByElement ele = new OrderByElement();
-			ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(field)));
+			Column column = field.getAnnotation(Column.class);
+			if (InnerCommonUtils.isBlank(column.computed())) {
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(field)));
+			} else {
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(getColumnName(field, prefix)));
+			}
 			list.add(ele);
 		}
 		return list;
@@ -1106,11 +1111,13 @@ public class SQLUtils {
     		Column column = field.getAnnotation(Column.class);
     		
     		if(InnerCommonUtils.isNotBlank(column.computed())) {
-    			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ");
+				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
+    			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ")
+						.append(getColumnName(column, fieldPrefix)).append(sep);
     		} else {
-    			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
-    		}
-        	sb.append(getColumnName(column)).append(sep);
+				// 非计算列的话，表的别名要放在`外边
+				sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
+			}
     	}
     	int len = sb.length();
     	return len == 0 ? "" : sb.substring(0, len - 1);
@@ -1241,6 +1248,10 @@ public class SQLUtils {
 		sb.append("`").append(tableName).append("`");
 	}
 
+	private static String getColumnName(Column column, String prefix) {
+		return getColumnName(column.value(), prefix);
+	}
+
 	private static String getColumnName(Column column) {
 		return getColumnName(column.value());
 	}
@@ -1250,8 +1261,16 @@ public class SQLUtils {
 		return getColumnName(field.getAnnotation(Column.class));
 	}
 
+	public static String getColumnName(Field field, String prefix) {
+		return getColumnName(field.getAnnotation(Column.class), prefix);
+	}
+
 	public static String getColumnName(String columnName) {
 		return "`" + columnName + "`";
+	}
+
+	private static String getColumnName(String columnName, String prefix) {
+		return "`" + prefix + columnName + "`";
 	}
 
 	private static void appendColumnName(StringBuilder sb, String columnName) {

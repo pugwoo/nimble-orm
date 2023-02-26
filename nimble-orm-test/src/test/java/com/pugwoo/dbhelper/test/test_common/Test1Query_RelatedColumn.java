@@ -1,9 +1,8 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.annotation.RelatedColumn;
-import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
 import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
@@ -277,11 +276,39 @@ public class Test1Query_RelatedColumn {
 
     @Data
     @Table("t_student")
-    public static class Student1DO {
+    public static class Student1VO {
+        @RelatedColumn(localColumn = "name1", remoteColumn = "name2") // 靠计算列进行关联
+        private School1DO school1DO;
+
         @Column(value = "name1", computed = "concat('S',name)")
         private String name1;
+    }
 
-        @RelatedColumn(localColumn = "name1", remoteColumn = "name2") // 靠计算列进行关联
+    @Data
+    @Table("t_student")
+    public static class StudentLeftJoinVO {
+        @Column(value = "name1", computed = "concat('S',t1.name)") // 注意，这里要加t1，因为计算列框架不会自动处理
+        private String name1;
+    }
+
+    @Data
+    @Table("t_student")
+    public static class StudentRightJoinVO {
+        @Column(value = "name1", computed = "concat('S',t2.name)") // 注意，这里要加t2，因为计算列框架不会自动处理
+        private String name1;
+    }
+
+    @Data
+    @JoinTable(joinType = JoinTypeEnum.JOIN, on = "t1.id=t2.id")
+    public static class Student2VO {
+
+        @JoinLeftTable
+        private StudentLeftJoinVO student1DO;
+
+        @JoinRightTable
+        private StudentRightJoinVO student2DO;
+
+        @RelatedColumn(localColumn = "t1.name1", remoteColumn = "name2") // 靠计算列进行关联
         private School1DO school1DO;
     }
 
@@ -297,9 +324,12 @@ public class Test1Query_RelatedColumn {
         schoolDO.setName(uuid);
         dbHelper.insert(schoolDO);
 
-        Student1DO one = dbHelper.getOne(Student1DO.class, "where name=?", uuid);
+        Student1VO one = dbHelper.getOne(Student1VO.class, "where name=?", uuid);
         assert one.getName1().equals("S" + uuid);
         assert one.getSchool1DO().getName2().equals("S" + uuid);
+
+        Student2VO two = dbHelper.getOne(Student2VO.class, "where t1.name=?", uuid);
+        assert two.getSchool1DO().getName2().equals("S" + uuid);
 
     }
 

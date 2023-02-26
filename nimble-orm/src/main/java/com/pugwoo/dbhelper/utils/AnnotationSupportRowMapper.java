@@ -158,12 +158,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			currentField.set(0, field);
 
 			Column column = field.getAnnotation(Column.class);
-			String columnName;
-			if(InnerCommonUtils.isNotBlank(column.computed())) {
-				columnName = column.value(); // 计算列用用户自行制定别名
-			} else {
-				columnName = tableAlias + "." + column.value();
-			}
+			String columnName = tableAlias + "." + column.value();;
 
 			Object value = getFromRS(rs, columnName, field);
 			if(value != null) { // 这个值是否为null直接来自于数据库，不受是否设置了column.readIfNullScript()的影响
