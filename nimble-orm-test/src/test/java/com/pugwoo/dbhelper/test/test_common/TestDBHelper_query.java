@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.entity.*;
@@ -64,7 +65,18 @@ public class TestDBHelper_query {
             }
         }
         assert isThrowException;
+
+        // getByKey不支持virtual table
+        isThrowException = false;
+        try {
+            dbHelper.getByKey(StudentVirtualTableVO.class, 1);
+        } catch (NotAllowQueryException e) {
+            isThrowException = true;
+        }
+        assert isThrowException;
     }
+
+
 
     @Test 
     public void testExists() {

@@ -503,4 +503,13 @@ public class Test1Query_RelatedColumn {
         assert one.getStudents() != null; // 不会是null，框架会自动设置
         assert one.getStudents().isEmpty();
     }
+
+    @Test
+    public void handleNullList() {
+        List<CourseVO> courses = new ArrayList<>();
+        courses.add(null);
+        courses.add(null);
+
+        dbHelper.handleRelatedColumn(courses);
+    }
 }
