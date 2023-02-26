@@ -282,6 +282,9 @@ public class Test1Query_RelatedColumn {
         StudentStringSchoolIdDO one = dbHelper.getOne(StudentStringSchoolIdDO.class, "where id=?", studentDO.getId());
         assert one.getId().equals(studentDO.getId());
         assert one.getSchoolDO().getId().equals(schoolDO.getId()); // 不同类型的比对会转换成string进行
+
+        assert one.getSchools().size() == 1;
+        assert one.getSchools().get(0).getId().equals(schoolDO.getId()); // 不同类型的比对会转换成string进行
     }
 
     /**这个DO的school id类型是字符串，故意映射的，这是允许的*/
@@ -296,6 +299,9 @@ public class Test1Query_RelatedColumn {
 
         @RelatedColumn(localColumn = "school_id", remoteColumn = "id")
         private SchoolDO schoolDO;
+
+        @RelatedColumn(localColumn = "school_id", remoteColumn = "id")
+        private List<SchoolDO> schools;
     }
 
     // ================== 以下单元测试是测试异常情况的测试
@@ -421,7 +427,10 @@ public class Test1Query_RelatedColumn {
 
     @Test
     public void testNullDataService() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+
         CourseDO courseDO = new CourseDO();
+        courseDO.setStudentId(studentDO.getId());
         dbHelper.insert(courseDO);
 
         CourseNullDataServiceVO one = dbHelper.getOne(CourseNullDataServiceVO.class, "where id=?", courseDO.getId());
