@@ -213,4 +213,36 @@ public class Test2Insert {
         StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
         assert student2.getName().equals(student3.getName());
     }
+
+    @Test
+    public void testInsertNull() {
+        List<StudentDO> students = new ArrayList<>();
+        students.add(null);
+
+        assert dbHelper.insert(students) == 0;
+        assert dbHelper.insertBatchWithoutReturnId(students) == 0;
+    }
+
+    // 测试一个没有key的do，此时用户自己指定了id
+    @Data
+    @Table("t_student")
+    public static class StudentNoKeyDO {
+        @Column("id") // 不要注解key
+        private Long id;
+        @Column("name")
+        private String name;
+    }
+
+    @Test
+    public void testInsertNoKey() {
+        List<StudentNoKeyDO> studentDOS = new ArrayList<>();
+        for (int i = 0; i < 2; i++) { // 这个实际上会有很小概率的偶发重复key，但是概率很低
+            StudentNoKeyDO s = new StudentNoKeyDO();
+            s.setId((long) -Math.abs(new Random().nextInt())); // 取负值，这样不会影响自增
+            s.setName(UUID.randomUUID().toString().replace("-", ""));
+            studentDOS.add(s);
+        }
+
+        assert dbHelper.insert(studentDOS) == 2;
+    }
 }
