@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @SpringBootTest
-public class TestDBHelper_insert {
+public class Test2Insert {
 
     @Autowired
     private DBHelper dbHelper;
