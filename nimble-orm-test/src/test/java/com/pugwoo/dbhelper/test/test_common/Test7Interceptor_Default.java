@@ -3,12 +3,13 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
+import java.util.*;
 
 @SpringBootTest
 public class Test7Interceptor_Default {
@@ -34,22 +35,45 @@ public class Test7Interceptor_Default {
 	
 	@Test 
 	public void testInsertUpdate() {
+		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+
 		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick");
+		studentDO.setName("nick" + uuid);
 		studentDO.setAge(29);
-		dbHelper.insert(studentDO);
+		assert dbHelper.insert(studentDO) == 1;
 		Long id = studentDO.getId();
+		assert id != null;
+
+		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 
 		studentDO = new StudentDO();
 		studentDO.setId(id);
-		studentDO.setName("karen");
-		dbHelper.update(studentDO);
+		studentDO.setName("karen" + uuid);
+		assert dbHelper.update(studentDO) == 1;
+		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 		
 		studentDO.setName("karennick");
-		dbHelper.update(studentDO, "where name=?", "karen");
+		assert dbHelper.update(studentDO, "where name=?", "karen" + uuid) == 1;
 		
-		dbHelper.updateCustom(studentDO, "age=age+1");
+		assert dbHelper.updateCustom(studentDO, "age=age+1") == 1;
 		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
+	}
+
+	@Test
+	public void testInsertBatch() {
+		List<StudentDO> students = new ArrayList<>();
+		for (int i = 0; i < 10; i++) {
+			StudentDO s = new StudentDO();
+			s.setName(UUID.randomUUID().toString().replace("-", ""));
+			students.add(s);
+		}
+
+		assert dbHelper.insert(students) == 10;
+
+		// 转换成set再插入一次
+		ListUtils.forEach(students, studentDO -> studentDO.setId(null));
+		Set<StudentDO> students2 = new HashSet<>(students);
+		assert dbHelper.insert(students2) == 10;
 	}
 	
 	@Test 
