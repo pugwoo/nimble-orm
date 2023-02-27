@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.Generated;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -181,9 +182,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 			if(rows > 0) {
 				Number key = holder.getKey();
-				if (key == null) { // 对于key为null的属于异常情况，仅log，不进行任何处理
-					LOGGER.error("get auto increment field:{} return null", autoIncrementField);
-				} else {
+				logIfNull(key, autoIncrementField);
+				if (key != null)  {
 					long primaryKey = key.longValue();
 					DOInfoReader.setValue(autoIncrementField, t, primaryKey);
 				}
@@ -200,6 +200,15 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptAfterInsert(t, rows);
 		}
 		return rows;
+	}
+
+	/**抽取出来是不对这个log进行覆盖率统计*/
+	@Generated
+	private void logIfNull(Number key, Field autoIncrementField) {
+		// 对于key为null的属于异常情况，仅log，不进行任何处理
+		if (key == null) {
+			LOGGER.error("get auto increment field:{} return null", autoIncrementField);
+		}
 	}
 
 	/**
