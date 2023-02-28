@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -214,6 +215,56 @@ public class Test2Insert {
 
         StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
         assert student2.getName().equals(student3.getName());
+    }
+
+    @Test
+    public void testInsertOrUpdateNoKeyDO() {
+        NoKeyStudentDO student = new NoKeyStudentDO();
+        student.setName(uuidName());
+
+        assert dbHelper.insertOrUpdate(student) == 1; // 因为student没有key，所以会插入处理
+
+        // 重新查询数据，可以查得到
+        assert dbHelper.getOne(StudentDO.class, "where name=?", student.getName())
+                .getName().equals(student.getName());
+    }
+
+    @Data
+    @Table("t_student")
+    public static class NoKeyStudentDO {
+        @Column(value = "deleted", softDelete = {"0", "1"})
+        private Boolean deleted;
+
+        @Column(value = "name")
+        private String name;
+    }
+
+    @Test
+    public void testInsertOrUpdateNoColumnDO() {
+        boolean isThrow = false;
+        try {
+            NoColumnDO noColumnDO = new NoColumnDO();
+            dbHelper.insertOrUpdate(noColumnDO);
+        } catch (NoColumnAnnotationException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+        isThrow = false;
+        try {
+            NoColumnDO noColumnDO = new NoColumnDO();
+            dbHelper.insertOrUpdateWithNull(noColumnDO);
+        } catch (NoColumnAnnotationException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+    }
+
+    @Data
+    @Table("t_student")
+    public static class NoColumnDO {
+        // 什么列也没有
     }
 
     @Test

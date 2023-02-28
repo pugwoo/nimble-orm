@@ -48,6 +48,41 @@ public class Test7Interceptor_NotAllow {
     }
 
     @Test
+    public void testUpdate() {
+        boolean isThrow = false;
+        try {
+            StudentDO student = CommonOps.insertOne(normalDBHelper);
+            student.setName("some name");
+            dbHelper.update(student);
+        } catch (NotAllowModifyException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+        // 更新
+
+        isThrow = false;
+        try {
+            StudentDO student = CommonOps.insertOne(normalDBHelper);
+            dbHelper.updateCustom(student, "set name=?", "xxxx");
+        } catch (NotAllowModifyException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+
+        // 更新all
+        isThrow = false;
+        try {
+            StudentDO student = CommonOps.insertOne(normalDBHelper);
+            dbHelper.updateAll(StudentDO.class, "set name=?", "where id=?",
+                    "some_name", student.getId());
+        } catch (NotAllowModifyException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+    }
+
+    @Test
     public void testDelete() {
         StudentDO studentDO = CommonOps.insertOne(normalDBHelper);
 

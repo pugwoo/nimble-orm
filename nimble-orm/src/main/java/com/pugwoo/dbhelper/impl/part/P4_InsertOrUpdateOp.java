@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -14,8 +13,8 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		if(t == null) {
 			return 0;
 		}
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		if(isWithKey(t, fields)) {
+		DOInfoReader.getColumns(t.getClass()); // 目前起到判断column必须存在的作用
+		if(isWithKey(t)) {
 			return update(t);
 		} else {
 			return insert(t);
@@ -27,8 +26,8 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		if(t == null) {
 			return 0;
 		}
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		if(isWithKey(t, fields)) {
+		DOInfoReader.getColumns(t.getClass()); // 目前起到判断column必须存在的作用
+		if(isWithKey(t)) {
 			return updateWithNull(t);
 		} else {
 			return insertWithNull(t);
@@ -50,16 +49,12 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 	}
 
 	/**判断对象是否有主键值，必须全部有才返回true*/
-	private <T> boolean isWithKey(T t, List<Field> fields) {
-		if(t == null || fields == null || fields.isEmpty()) {
-			return false;
-		}
-		
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+	private <T> boolean isWithKey(T t) {
+		List<Field> keyFields = DOInfoReader.getKeyColumnsNoThrowsException(t.getClass());
 		if(keyFields.isEmpty()) {
 			return false;
 		}
-		
+
 		for(Field keyField : keyFields) {
 			if(DOInfoReader.getValue(keyField, t) == null) {
 				return false;

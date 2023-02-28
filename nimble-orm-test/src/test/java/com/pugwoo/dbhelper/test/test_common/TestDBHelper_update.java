@@ -1,11 +1,13 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.test.entity.CasVersionDO;
 import com.pugwoo.dbhelper.test.entity.CasVersionLongDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -66,6 +68,10 @@ public class TestDBHelper_update {
         dbHelper.update(list);
         db = dbHelper.getByKey(StudentDO.class, db.getId());
         assert "nick4".equals(db.getName());
+
+        // 测试异常参数
+        assert dbHelper.update(null) == 0;
+        assert dbHelper.update(new ArrayList<>()) == 0;
     }
 
     @Test
@@ -182,6 +188,21 @@ public class TestDBHelper_update {
 
     }
 
+    /**测试更新全是key的DO，实际上就等同于该DO不需要更新，修改条数为0*/
+    @Test
+    public void testUpdateAllKey() {
+        StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
+        AllKeyStudentDO s = new AllKeyStudentDO();
+        s.setId(studentDO.getId());
+
+        assert dbHelper.update(s) == 0;
+    }
+
+    @Data
+    public static class AllKeyStudentDO {
+        @Column(value = "id", isKey = true, isAutoIncrement = true)
+        private Long id;
+    }
 
 }
