@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 
 public class MyObjectMapper extends ObjectMapper {
@@ -32,15 +35,44 @@ public class MyObjectMapper extends ObjectMapper {
 		configure(JsonParser.Feature.ALLOW_MISSING_VALUES, true); //允许[]中有多个,,,
 		configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true); //允许[]最后带多一个,
 		configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true); // 允许字符串值出现反斜杠\
-	
-		MultiDateDeserializer deserializer = new MultiDateDeserializer();
-		SimpleModule module = new SimpleModule("DateDeserializerModule",
-		      new Version(1, 0, 0, "", "", ""));
-		module.addDeserializer(Date.class, deserializer);
-		
-		registerModule(module);
+
+		// 自定义Date解析器
+		{
+			MultiDateDeserializer deserializer = new MultiDateDeserializer();
+			SimpleModule module = new SimpleModule("DateDeserializerModule",
+					new Version(1, 0, 0, "", "", ""));
+			module.addDeserializer(Date.class, deserializer);
+			registerModule(module);
+		}
 
 		registerModule(new JavaTimeModule()); // 解析LocalDate等
+
+		// 自定义LocalDate解析器，这个要放在JavaTimeModule后面，以覆盖JavaTimeModule对LocalDate的默认解析
+		{
+			MultiLocalDateDeserializer deserializer = new MultiLocalDateDeserializer();
+			SimpleModule module = new SimpleModule("LocalDateDeserializerModule",
+					new Version(1, 0, 0, "", "", ""));
+			module.addDeserializer(LocalDate.class, deserializer);
+			registerModule(module);
+		}
+
+		// 自定义LocalDateTime解析器，这个要放在JavaTimeModule后面，以覆盖JavaTimeModule对LocalDateTime的默认解析
+		{
+			MultiLocalDateTimeDeserializer deserializer = new MultiLocalDateTimeDeserializer();
+			SimpleModule module = new SimpleModule("LocalDateTimeDeserializerModule",
+					new Version(1, 0, 0, "", "", ""));
+			module.addDeserializer(LocalDateTime.class, deserializer);
+			registerModule(module);
+		}
+
+		// 自定义LocalTime解析器，这个要放在JavaTimeModule后面，以覆盖JavaTimeModule对LocalTime的默认解析
+		{
+			MultiLocalTimeDeserializer deserializer = new MultiLocalTimeDeserializer();
+			SimpleModule module = new SimpleModule("LocalTimeDeserializerModule",
+					new Version(1, 0, 0, "", "", ""));
+			module.addDeserializer(LocalTime.class, deserializer);
+			registerModule(module);
+		}
 	}
 	
 }

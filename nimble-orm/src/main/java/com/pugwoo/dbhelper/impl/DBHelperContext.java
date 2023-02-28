@@ -17,6 +17,9 @@ public class DBHelperContext {
     /**关闭软删除*/
     private static final ThreadLocal<Map<Class<?>, Boolean>> turnOffSoftDelete = new ThreadLocal<>();
 
+    /**全局的SQL注释*/
+    private static String globalComment;
+    /**线程上下文注释*/
     private static final ThreadLocal<String> comment = new ThreadLocal<>();
 
     /**
@@ -78,7 +81,16 @@ public class DBHelperContext {
     /**
      * 关闭指定类的软删除设置，仅对当前线程有效
      */
-    public static void turnOffSoftDelete(Class<?> clazz) {
+    public static void turnOffSoftDelete(Class<?> ...clazz) {
+        if (clazz == null) {
+            return;
+        }
+        for (Class<?> c : clazz) {
+            turnOffSoftDelete(c);
+        }
+    }
+
+    private static void turnOffSoftDelete(Class<?> clazz) {
         if (clazz == null) {
             return;
         }
@@ -93,7 +105,16 @@ public class DBHelperContext {
     /**
      * 打开指定类的软删除设置
      */
-    public static void turnOnSoftDelete(Class<?> clazz) {
+    public static void turnOnSoftDelete(Class<?> ...clazz) {
+        if (clazz == null) {
+            return;
+        }
+        for (Class<?> c : clazz) {
+            turnOnSoftDelete(c);
+        }
+    }
+
+    private static void turnOnSoftDelete(Class<?> clazz) {
         if (clazz == null) {
             return;
         }
@@ -104,17 +125,26 @@ public class DBHelperContext {
         turnoff.remove(clazz);
     }
 
+    public static void setGlobalComment(String comment) {
+        DBHelperContext.globalComment = comment;
+    }
+
+    public static String getGlobalComment() {
+        return DBHelperContext.globalComment;
+    }
+
     /**
      * 设置线程上下文的SQL注释
      */
-    public static void setComment(String comment) {
+    public static void setThreadLocalComment(String comment) {
         DBHelperContext.comment.set(comment);
     }
 
     /**
      * 获取线程上下文的SQL注释
      */
-    public static String getComment() {
+    public static String getThreadLocalComment() {
         return DBHelperContext.comment.get();
     }
+
 }

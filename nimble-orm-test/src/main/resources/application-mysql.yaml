@@ -4,3 +4,5 @@ spring:
     username: dev
     password: devdev
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20

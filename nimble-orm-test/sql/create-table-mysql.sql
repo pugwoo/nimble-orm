@@ -94,3 +94,10 @@ CREATE TABLE `t_area_location` (
   `latitude` decimal(10,6) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `t_uuid`;
+CREATE TABLE `t_uuid` (
+  `uuid` VARCHAR (64) NOT NULL,
+  `name` VARCHAR (64),
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

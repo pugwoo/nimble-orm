@@ -6,7 +6,6 @@ import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.utils.*;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -18,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,25 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SQLUtils {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SQLUtils.class);
-	
-	/**
-	 * 展开子查询SubQuery子句。该方法不支持子查询嵌套，由上一层方法来嵌套调用以实现SubQuery子句嵌套。
-	 * 该方法会自动处理软删除标记。
-	 * @param subQuery 子查询DTO
-	 * @param values 带回去的参数列表
-	 * @return 拼凑完的SQL
-	 */
-	public static String expandSubQuery(SubQuery subQuery, List<Object> values) {
-		if(subQuery.getArgs() != null) {
-			values.addAll(Arrays.asList(subQuery.getArgs()));
-		}
-		return "SELECT * FROM (SELECT " +
-				subQuery.getField() +
-				" FROM " + getTableName(subQuery.getClazz()) + // 注意：subQuery这里不用table的alias
-				" " + SQLUtils.autoSetSoftDeleted(subQuery.getPostSql(), subQuery.getClazz()) +
-				") sub ";
-	}
-	
+
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
 	 * @param clazz 注解了Table的类
@@ -252,11 +232,11 @@ public class SQLUtils {
 	 * @param clazz 注解了Table的类
 	 * @throws NoKeyColumnAnnotationException 当没有注解isKey=1的列时抛出
 	 */
-	public static String getKeysWhereSQL(Class<?> clazz) 
+	public static String getKeysWhereSQLWithoutSoftDelete(Class<?> clazz)
 			throws NoKeyColumnAnnotationException {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 		String where = joinWhere(keyFields, "AND");
-		return autoSetSoftDeleted("WHERE " + where, clazz);
+		return "WHERE " + where;
 	}
 	
 	/**
@@ -393,8 +373,7 @@ public class SQLUtils {
 	 * @param postSql 附带的where子句
 	 * @return 返回值为null表示不需要更新操作，这个是这个方法特别之处
 	 */
-	public static <T> String getUpdateSQL(T t, List<Object> values,
-			boolean withNull, String postSql) {
+	public static <T> String getUpdateSQL(T t, List<Object> values, boolean withNull, String postSql) {
 		
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
@@ -593,25 +572,45 @@ public class SQLUtils {
 	 * @return 生成的SQL
 	 */
 	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
-		StringBuilder setSql = new StringBuilder(getColumnName(softDeleteColumn) + "="
-				+ softDeleteColumn.softDelete()[1]);
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		sql.append(getTableName(t.getClass())).append(" SET ");
+		sql.append(getColumnName(softDeleteColumn)).append("=").append(softDeleteColumn.softDelete()[1]);
 
-		// 处理deleteValueScript
-        List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
-        for(Field field : notKeyFields) {
-            Column column = field.getAnnotation(Column.class);
-
-            if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
+		List<Field> fields = DOInfoReader.getColumns(t.getClass());
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+			// 加上删除时间
+			if(column.setTimeWhenDelete()) {
+				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
+				if (nowDateTime != null) {
+					sql.append(",").append(getColumnName(column))
+							.append("='").append(nowDateTime).append("'");
+				}
+			}
+			// 处理deleteValueScript
+			if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
 				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
-                Object value = DOInfoReader.getValue(field, t);
-                if(value != null) {
-                    setSql.append(",").append(getColumnName(column))
+				Object value = DOInfoReader.getValue(field, t);
+				if(value != null) {
+					sql.append(",").append(getColumnName(column))
 							.append("=").append(TypeAutoCast.toSqlValueStr(value));
-                }
-            }
-        }
+				}
+			}
+		}
 
-		return getCustomDeleteSQL(t, values, setSql.toString());
+		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
+		List<Object> whereValues = new ArrayList<>();
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		for(Object value : whereValues) {
+			if(value == null) {
+				throw new NullKeyValueException();
+			}
+		}
+		values.addAll(whereValues);
+
+		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		return sql.toString();
 	}
 	
 	/**
@@ -652,56 +651,9 @@ public class SQLUtils {
 	}
 
 	/**
-	 * 获得自定义更新的sql
-	 */
-	public static <T> String getCustomDeleteSQL(T t, List<Object> values, String setSql) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("UPDATE ");
-
-		List<Field> fields = DOInfoReader.getColumns(t.getClass());
-		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
-
-		sql.append(getTableName(t.getClass())).append(" ");
-
-		if(setSql.trim().toLowerCase().startsWith("set ")) {
-			sql.append(setSql);
-		} else {
-			sql.append("SET ").append(setSql);
-		}
-
-		// 加上删除时间
-		for(Field field : fields) {
-			Column column = field.getAnnotation(Column.class);
-			if(column.setTimeWhenDelete()) {
-				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
-				if (nowDateTime != null) {
-					sql.append(",").append(getColumnName(column))
-							.append("='").append(nowDateTime).append("'");
-				}
-			}
-		}
-
-		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
-
-		for(Object value : whereValues) {
-			if(value == null) {
-				throw new NullKeyValueException();
-			}
-		}
-		values.addAll(whereValues);
-
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
-
-		return sql.toString();
-	}
-
-
-	/**
 	 * 获得硬删除SQL
 	 */
 	public static <T> String getDeleteSQL(T t, List<Object> values) {
-		
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		StringBuilder sql = new StringBuilder();
@@ -809,7 +761,12 @@ public class SQLUtils {
 		List<OrderByElement> list = new ArrayList<>();
 		for (Field field : orderColumn) {
 			OrderByElement ele = new OrderByElement();
-			ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(field)));
+			Column column = field.getAnnotation(Column.class);
+			if (InnerCommonUtils.isBlank(column.computed())) {
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(field)));
+			} else {
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(getColumnName(field, prefix)));
+			}
 			list.add(ele);
 		}
 		return list;
@@ -1065,24 +1022,21 @@ public class SQLUtils {
 	 * @param postSql 从where开始的子句
 	 * @return 是返回true，否返回false；如果解析异常返回false
 	 */
-	public static boolean isContainsLimit(String postSql) {
+	public static boolean isContainsLimit(String postSql) throws JSQLParserException {
 		Boolean result = containsLimitCache.get(postSql);
 		if (result != null) {
 			return result;
 		}
 
 		String selectSql = "select * from dual "; // 辅助where sql解析用
-		try {
-			Statement statement = CCJSqlParserUtil.parse(selectSql + postSql);
-			Select selectStatement = (Select) statement;
-			PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
-			Limit limit = plainSelect.getLimit();
-			boolean isContainsLimit = limit != null;
-			containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定
-			return isContainsLimit;
-		} catch (JSQLParserException e) {
-			throw new BadSQLSyntaxException(e);
-		}
+
+		Statement statement = CCJSqlParserUtil.parse(selectSql + postSql);
+		Select selectStatement = (Select) statement;
+		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+		Limit limit = plainSelect.getLimit();
+		boolean isContainsLimit = limit != null;
+		containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定
+		return isContainsLimit;
 	}
 
 	private static final Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
@@ -1157,11 +1111,13 @@ public class SQLUtils {
     		Column column = field.getAnnotation(Column.class);
     		
     		if(InnerCommonUtils.isNotBlank(column.computed())) {
-    			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ");
+				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
+    			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ")
+						.append(getColumnName(column, fieldPrefix)).append(sep);
     		} else {
-    			sb.append(fieldPrefix); // 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
-    		}
-        	sb.append(getColumnName(column)).append(sep);
+				// 非计算列的话，表的别名要放在`外边
+				sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
+			}
     	}
     	int len = sb.length();
     	return len == 0 ? "" : sb.substring(0, len - 1);
@@ -1292,6 +1248,10 @@ public class SQLUtils {
 		sb.append("`").append(tableName).append("`");
 	}
 
+	private static String getColumnName(Column column, String prefix) {
+		return getColumnName(column.value(), prefix);
+	}
+
 	private static String getColumnName(Column column) {
 		return getColumnName(column.value());
 	}
@@ -1301,8 +1261,16 @@ public class SQLUtils {
 		return getColumnName(field.getAnnotation(Column.class));
 	}
 
+	public static String getColumnName(Field field, String prefix) {
+		return getColumnName(field.getAnnotation(Column.class), prefix);
+	}
+
 	public static String getColumnName(String columnName) {
 		return "`" + columnName + "`";
+	}
+
+	private static String getColumnName(String columnName, String prefix) {
+		return "`" + prefix + columnName + "`";
 	}
 
 	private static void appendColumnName(StringBuilder sb, String columnName) {

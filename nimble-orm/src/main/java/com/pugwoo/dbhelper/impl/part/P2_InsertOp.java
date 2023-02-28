@@ -1,11 +1,12 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
+import com.pugwoo.dbhelper.utils.Generated;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -25,6 +26,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
+	@SuppressWarnings("unchecked")
 	private void doInterceptBeforeInsertList(Collection<?> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue;
@@ -34,7 +36,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 				isContinue = interceptor.beforeInsert(new ArrayList<>(list));
 			}
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
@@ -44,7 +46,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptAfterInsertList(list, rows);
 	}
+	@SuppressWarnings("unchecked")
 	private void doInterceptAfterInsertList(final Collection<?> list, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return; // 内部实现尽量不调用executeAfterCommit
+		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				if (list instanceof List) {
@@ -68,7 +74,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	@Override
 	public int insert(Collection<?> list) {
 		list = InnerCommonUtils.removeNull(list);
-		if (list == null || list.isEmpty()) {
+		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
 
@@ -108,9 +114,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 * 2）对于批量插入全是null的字段，不需要在insert列里出现，此项节省约10%~50%的插入时间（取决于null值的列的数量）
 		 * 3）为了避免sql注入风险，参数还是用?的方式表达，此项对性能的影响比较有限，但安全性足够高，因此不再自己拼凑sql值
 		 * 4）对于大量插入，log需要优化，不要打印太多的信息，否则性能会受到较大的影响。
+		 *
+		 * 说明：还有一种方式是多条insert values的代码通过批量的方式提交给数据库执行，这种方式不是真的批量，性能很差。
 		 */
 		list = InnerCommonUtils.removeNull(list);
-		if (list == null || list.isEmpty()) {
+		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
 
@@ -161,7 +169,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 		int rows;
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
-		if (autoIncrementField != null) {
+		// 有自增注解且该字段值为null时才回查
+		if (autoIncrementField != null && DOInfoReader.getValue(autoIncrementField, t) == null) {
 			GeneratedKeyHolder holder = new GeneratedKeyHolder();
 			rows = jdbcTemplate.update(con -> {
 				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -173,9 +182,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 			if(rows > 0) {
 				Number key = holder.getKey();
-				if (key == null) {
-					DOInfoReader.setValue(autoIncrementField, t, null);
-				} else {
+				logIfNull(key, autoIncrementField);
+				if (key != null)  {
 					long primaryKey = key.longValue();
 					DOInfoReader.setValue(autoIncrementField, t, primaryKey);
 				}
@@ -194,13 +202,19 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return rows;
 	}
 
+	/**抽取出来是不对这个log进行覆盖率统计*/
+	@Generated
+	private void logIfNull(Number key, Field autoIncrementField) {
+		// 对于key为null的属于异常情况，仅log，不进行任何处理
+		if (key == null) {
+			LOGGER.error("get auto increment field:{} return null", autoIncrementField);
+		}
+	}
+
 	/**
 	 * 判断list里的元素是否【没有主键】或者【有主键且有值】，调用该方法之前需要确定list都是相同的class
 	 */
 	private boolean isAllHaveKeyValue(Collection<?> list) {
-		if (list == null || list.isEmpty()) {
-			return true;
-		}
 		Class<?> clazz = list.iterator().next().getClass();
 		List<Field> fields = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
 		if (fields.isEmpty()) {

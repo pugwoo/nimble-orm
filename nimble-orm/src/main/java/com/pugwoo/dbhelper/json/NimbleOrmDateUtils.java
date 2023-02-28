@@ -4,6 +4,10 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,9 +55,9 @@ public class NimbleOrmDateUtils {
 		if(InnerCommonUtils.isBlank(date)) {
 			return null;
 		}
+		date = date.trim();
 		String pattern = determineDateFormat(date);
 		if(pattern == null) {
-
 			// 检查是否是时间戳
 			Date _date = tryParseTimestamp(date);
 			if(_date != null) {
@@ -65,13 +69,57 @@ public class NimbleOrmDateUtils {
 		}
 
 		try {
-			return new SimpleDateFormat(pattern).parse(date);
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+			simpleDateFormat.setLenient(false);
+			return simpleDateFormat.parse(date);
 		} catch (Exception e) {
 			if ("0000-00-00 00:00:00".equals(date) || "0000-00-00".equals(date)) {
 				return null;
 			}
 			throw e;
 		}
+	}
+
+	/**失败返回null，不会抛异常*/
+	public static LocalDateTime parseLocalDateTime(String date) throws ParseException {
+		return toLocalDateTime(parseThrowException(date));
+	}
+
+	private static LocalDateTime toLocalDateTime(Date date) {
+		if(date == null) {return null;}
+		// java.sql.Date和java.sql.Time不支持date.toInstant()
+		if (date instanceof java.sql.Date || date instanceof java.sql.Time) {
+			date = new Date(date.getTime());
+		}
+		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+	}
+
+	/**失败返回null，不会抛异常*/
+	public static LocalDate parseLocalDate(String date) throws ParseException {
+		return toLocalDate(parseThrowException(date));
+	}
+
+	private static LocalDate toLocalDate(Date date) {
+		if(date == null) {return null;}
+		// java.sql.Date和java.sql.Time不支持date.toInstant()
+		if (date instanceof java.sql.Date || date instanceof java.sql.Time) {
+			date = new Date(date.getTime());
+		}
+		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+	}
+
+	/**失败返回null，不会抛异常*/
+	public static LocalTime parseLocalTime(String date) throws ParseException {
+		return toLocalTime(parseThrowException(date));
+	}
+
+	private static LocalTime toLocalTime(Date date) {
+		if(date == null) {return null;}
+		// java.sql.Date和java.sql.Time不支持date.toInstant()
+		if (date instanceof java.sql.Date || date instanceof java.sql.Time) {
+			date = new Date(date.getTime());
+		}
+		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
 	}
 
 	private static Date tryParseTimestamp(String date) {
@@ -83,7 +131,7 @@ public class NimbleOrmDateUtils {
 			return null;
 		}
 
-		// 时间戳小于42亿则认为是秒，否则是毫秒
+		// 时间戳小于42亿则认为是秒（此时已经是2103-02-04），否则是毫秒
 		if(timestamp < 4200000000L) {
 			return new Date(timestamp * 1000L);
 		} else {

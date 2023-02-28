@@ -1,8 +1,5 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.pugwoo.dbhelper.model.SubQuery;
-import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
-import com.pugwoo.dbhelper.sql.SQLUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,76 +80,6 @@ public class NamedParameterUtils {
 		}
 		return map;
 	}
-	
-	private static String expandParam(String sql, List<Object> args) {
-		if(args == null || args.isEmpty()) {
-			return sql;
-		}
-		while(true) {
-			boolean isExistSubQuery = false;
-			for(Object arg : args) {
-				if(arg instanceof SubQuery) {
-					isExistSubQuery = true;
-					break;
-				}
-			}
-			if(isExistSubQuery) {
-				sql = _expandParam(sql, args);
-			} else {
-				break;
-			}
-		}
-		return sql;
-	}
-	
-	/**
-	 * 展开参数，主要是处理SubQuery参数
-	 */
-	private static String _expandParam(String sql, List<Object> args) {
-		StringBuilder sb = new StringBuilder();
-		boolean isInStr = false;
-		boolean isPreSlash = false;
-		int currParamIndex = 0;
-		List<Object> newArgs = new ArrayList<>();
-		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
-			//char ch = sql.charAt(i);
-			
-			if(ch == '?' && !isInStr) {
-				if(args.size() <= currParamIndex) {
-					throw new ParameterSizeNotMatchedException(sql);
-				}
-				Object arg = args.get(currParamIndex);
-				if(arg instanceof SubQuery) {
-					List<Object> values = new ArrayList<>();
-					sb.append(SQLUtils.expandSubQuery((SubQuery)arg, values));
-					newArgs.addAll(values);
-				} else {
-					sb.append("?");
-					newArgs.add(arg);
-				}
-				currParamIndex++;
-				continue;
-			} else {
-				sb.append(ch);
-			}
-			
-			if(ch == '\'') {
-				if(!isInStr) {
-					isInStr = true;
-				} else {
-					if(!isPreSlash) {
-						isInStr = false;
-					}
-				}
-			}
-			
-			isPreSlash = ch == '\\';
-		}
-		
-		args.clear(); // 清空原数组并插入新数组
-		args.addAll(newArgs);
-		return sb.toString();
-	}
 
 	/**
 	 * 把?变成:paramN的形式，不包括'?'中的?
@@ -165,8 +92,6 @@ public class NamedParameterUtils {
 		}
 
 		String originSql = sql;
-		
-		sql = expandParam(sql, args);
 		
 		StringBuilder sb = new StringBuilder();
 		boolean isInStr = false;

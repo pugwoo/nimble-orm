@@ -87,17 +87,14 @@ public class PreHandleObject {
 		}
 	}
 
-
     public static <T> void preHandleDelete(T t) {
         if(t == null) {
             return;
         }
 
         List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
-
         for(Field field : notKeyFields) {
             Column column = field.getAnnotation(Column.class);
-
             if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
                 ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), column.deleteValueScript());
             }

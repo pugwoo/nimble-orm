@@ -338,14 +338,12 @@ public class DOInfoReader {
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
-
 		// 处理turnoff软删除
 		if (DBHelperContext.isTurnOffSoftDelete(clazz)) {
 			return null;
 		}
 
 		List<Field> fields = getColumns(clazz);
-		
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
 			if(column.softDelete().length == 2
@@ -379,7 +377,7 @@ public class DOInfoReader {
 	 * @return 不会返回null
 	 */
 	public static List<Field> getRelatedColumns(Class<?> clazz) {
-		List<Class<?>> classLink = getClassAndParentClasses(clazz, true);
+		List<Class<?>> classLink = getClassAndParentClasses(clazz);
 
 		// 父类优先
 		List<Field> result = new ArrayList<>();
@@ -483,7 +481,7 @@ public class DOInfoReader {
 	}
 	
 	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		List<Class<?>> classLink = getClassAndParentClasses(clazz, true);
+		List<Class<?>> classLink = getClassAndParentClasses(clazz);
 		
 		List<Field> fields = _getFields(classLink, Column.class);
 		if(selectOnlyKey) {
@@ -500,7 +498,7 @@ public class DOInfoReader {
 	private static List<Field> _getAnnotationColumns(Class<?> clazz,
 													 Class<? extends Annotation> annotationClazz) {
 
-		List<Class<?>> classLink = getClassAndParentClasses(clazz, false);
+		List<Class<?>> classLink = getClassAndParentClasses(clazz);
 
 		return _getFields(classLink, annotationClazz);
 	}
@@ -508,9 +506,8 @@ public class DOInfoReader {
 	/**
 	 * 获得指定类及其父类的列表，子类在前，父类在后
 	 * @param clazz 要查询的类
-	 * @param enableExcludeInheritedColumn 是否受到@ExcludeInheritedColumn注解的约束
 	 */
-	private static List<Class<?>> getClassAndParentClasses(Class<?> clazz, boolean enableExcludeInheritedColumn) {
+	private static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
 		if (clazz == null) {
 			return new ArrayList<>();
 		}
@@ -519,14 +516,6 @@ public class DOInfoReader {
 		Class<?> curClass = clazz;
 		while (curClass != null) {
 			classLink.add(curClass);
-
-			if (enableExcludeInheritedColumn) {
-				ExcludeInheritedColumn eic = curClass.getAnnotation(ExcludeInheritedColumn.class);
-				if(eic != null) {
-					break;
-				}
-			}
-
 			curClass = curClass.getSuperclass();
 		}
 

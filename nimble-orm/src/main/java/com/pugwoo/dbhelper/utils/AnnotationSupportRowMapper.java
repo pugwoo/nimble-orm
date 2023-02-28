@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.RowMapper;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,9 +32,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private final DBHelper dbHelper;
 
 	private Class<T> clazz;
-	private boolean isUseGivenObj = false;
-	private T t;
-	
+
 	private boolean isJoinVO = false;
 	private Field leftJoinField;
 	private Field rightJoinField;
@@ -50,14 +49,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		this.selectOnlyKey = selectOnlyKey;
 		handleClazz(clazz);
 	}
-	
-	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, T t) {
-		this.dbHelper = dbHelper;
-		handleClazz(clazz);
-		this.t = t;
-		this.isUseGivenObj = true;
-	}
-	
+
 	private void handleClazz(Class<T> clazz) {
 		this.clazz = clazz;
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
@@ -70,6 +62,10 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 
 	@Override
 	public T mapRow(ResultSet rs, int index) {
+		// 保存当前正在处理的field，存null表示没有正在处理的field，这个记录是为了log打印出来，方便问题排查
+		List<Field> currentField = new ArrayList<>(1);
+		currentField.add(null);
+
 		try {
 			// 支持基本的类型
 			TypeAutoCast.BasicTypeResult basicTypeResult = TypeAutoCast.transBasicType(clazz, rs);
@@ -77,29 +73,35 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				return (T) basicTypeResult.getValue();
 			}
 
-			T obj = isUseGivenObj ? t : clazz.newInstance();
+			T obj = clazz.newInstance();
 			
 			if(isJoinVO) {
+				currentField.set(0, leftJoinField);
 				Object t1 = leftJoinField.getType().newInstance();
-				Object t2 = rightJoinField.getType().newInstance();
-				
 				JoinLeftTable joinLeftTable = leftJoinField.getAnnotation(JoinLeftTable.class);
-				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
-				
-				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
 
 				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType(), selectOnlyKey);
-				boolean isT1AllNull = handleFieldAndIsAllFieldNull(fieldsT1, joinLeftTable.alias(), t1, rs);
+				boolean isT1AllNull = handleFieldAndIsAllFieldNull(fieldsT1, joinLeftTable.alias(), t1, rs, currentField);
+				currentField.set(0, leftJoinField); // 因为handleFieldAndIsAllFieldNull中会修改currentField，所以重新设置
+				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
+				DOInfoReader.setValue(leftJoinField, obj, isT1AllNull ? null : t1);
+				currentField.set(0, null);
+
+				currentField.set(0, rightJoinField);
+				Object t2 = rightJoinField.getType().newInstance();
+				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
 
 				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType(), selectOnlyKey);
-				boolean isT2AllNull = handleFieldAndIsAllFieldNull(fieldsT2, joinRightTable.alias(), t2, rs);
-				
-				DOInfoReader.setValue(leftJoinField, obj, isT1AllNull ? null : t1);
+				boolean isT2AllNull = handleFieldAndIsAllFieldNull(fieldsT2, joinRightTable.alias(), t2, rs, currentField);
+				currentField.set(0, rightJoinField);
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
+				currentField.set(0, null);
 				
 			} else {
 				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 				for (Field field : fields) {
+					currentField.set(0, field);
+
 					Column column = field.getAnnotation(Column.class);
 					Object value = getFromRS(rs, column.value(), field);
 					if (value == null && InnerCommonUtils.isNotBlank(column.readIfNullScript())) {
@@ -107,13 +109,20 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					}
 
 					DOInfoReader.setValue(field, obj, value);
+					currentField.set(0, null);
 				}
 			}
 			
 			return obj;
 		} catch (Exception e) {
-			LOGGER.error("mapRow exception, class:{}", clazz, e);
-			throw new RowMapperFailException(e);
+			boolean isHandleField = !currentField.isEmpty() && currentField.get(0) != null;
+			if (isHandleField) {
+				LOGGER.error("mapRow exception, class:{}, field:{}", clazz, currentField.get(0), e);
+				throw new RowMapperFailException(e, currentField.get(0));
+			} else {
+				LOGGER.error("mapRow exception, class:{}", clazz, e);
+				throw new RowMapperFailException(e);
+			}
 		}
 	}
 
@@ -142,16 +151,14 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
-	private boolean handleFieldAndIsAllFieldNull(List<Field> fields, String tableAlias, Object t, ResultSet rs) throws Exception{
+	private boolean handleFieldAndIsAllFieldNull(List<Field> fields, String tableAlias, Object t, ResultSet rs,
+												 List<Field> currentField) throws Exception {
 		boolean isAllNull = true;
 		for (Field field : fields) {
+			currentField.set(0, field);
+
 			Column column = field.getAnnotation(Column.class);
-			String columnName;
-			if(InnerCommonUtils.isNotBlank(column.computed())) {
-				columnName = column.value(); // 计算列用用户自行制定别名
-			} else {
-				columnName = tableAlias + "." + column.value();
-			}
+			String columnName = tableAlias + "." + column.value();;
 
 			Object value = getFromRS(rs, columnName, field);
 			if(value != null) { // 这个值是否为null直接来自于数据库，不受是否设置了column.readIfNullScript()的影响
@@ -161,6 +168,8 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.readIfNullScript());
 			}
 			DOInfoReader.setValue(field, t, value);
+
+			currentField.set(0, null);
 		}
 		return isAllNull;
 	}

@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.test_mysql;
+package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
@@ -7,8 +7,6 @@ import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @SpringBootTest
-@Transactional
-public class TestExecuteRaw {
+public class Test8Feature_ExecuteRaw {
 
     @Autowired
     private DBHelper dbHelper;
@@ -50,6 +47,10 @@ public class TestExecuteRaw {
         student2 = dbHelper.getOne(StudentDO.class, "where name=?", params.get("name2"));
         assert student1.getName().equals(params.get("name1"));
         assert student2.getName().equals(params.get("name2"));
+
+        // 测试没有paramMap的插入，插入1个
+        assert dbHelper.executeRaw("insert into t_student(deleted,name) values(0,'nick')",
+                (Map<String, Object>) null) == 1;
 
         // 复制的方式插入2个
         List<String> names = ListUtils.newArrayList(name1, name2);
@@ -85,7 +86,6 @@ public class TestExecuteRaw {
         assert student == null;
     }
 
-    @Rollback(false)
     @Test
     public void testCreateTruncateDropTable() {
         String name = UUID.randomUUID().toString().replace("-", "");

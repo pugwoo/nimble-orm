@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
 
 import java.util.Collection;
@@ -15,6 +16,68 @@ import java.util.stream.Stream;
  * @author pugwoo
  */
 public interface DBHelper {
+
+	// =============== Dynamic Table Name ===================================
+
+	/**
+	 * 为指定的类设置表名，适合于分表场景；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
+	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持，然后设置完之后要记得调用resetTableNames清除设置。
+	 * @param clazz 要替换表名的注解了@Table的类
+	 * @param tableName 新的表名
+	 */
+	static <T> void setTableName(Class<T> clazz, String tableName) {
+		DBHelperContext.setTableName(clazz, tableName);
+	}
+
+	/**
+	 * 清除setTableName设置的表名信息；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
+	 */
+	static void resetTableNames() {
+		DBHelperContext.resetTableName();
+	}
+
+	// ================ Disable soft delete ================================
+
+	/**
+	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都等价于没有注解。<br>
+	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
+	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
+	 * @param clazz 注解了@Table的类
+	 */
+	static void turnOffSoftDelete(Class<?>... clazz) {
+		DBHelperContext.turnOffSoftDelete(clazz);
+	}
+
+	/**
+	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete。<br>
+	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
+	 * @param clazz 注解了@Table的类
+	 */
+	static void turnOnSoftDelete(Class<?>... clazz) {
+		DBHelperContext.turnOnSoftDelete(clazz);
+	}
+
+	// ================= Set SQL comment ==================================
+
+	/**
+	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行。<br>
+	 * 说明：该方法会对所有的DBHelper实例生效。
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	static void setGlobalComment(String comment) {
+		DBHelperContext.setGlobalComment(comment);
+	}
+
+	/**
+	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行。<br>
+	 * 说明：该方法会对所有的DBHelper实例生效。
+	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
+	 */
+	static void setLocalComment(String comment) {
+		DBHelperContext.setThreadLocalComment(comment);
+	}
+
+	// =====================================================================
 	
 	/**
 	 * 手动回滚@Transactional的事务。
@@ -80,83 +143,17 @@ public interface DBHelper {
 	 */
 	void turnOffFeature(FeatureEnum featureEnum);
 
-	// =============== Dynamic Table Name ===================================
-
-	/**
-	 * 为指定的类设置表名，适合于分表场景；
-	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持（例如servlet规范），
-	 *            然后设置完之后要记得调用resetTableNames清除设置
-	 * @param clazz 要替换表名的注解了@Table的类
-	 * @param tableName 新的表名
-	 */
-	<T> void setTableName(Class<T> clazz, String tableName);
-
-	/**
-	 * 清除setTableName设置的表名信息
-	 */
-	void resetTableNames();
-
-	// ================ Disable soft delete ================================
-
-	/**
-	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都会进行物理删除。<br>
-	 * 该设置仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
-	 * 如果需要永久性的移除软删除，请使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
-	 *
-	 * @param clazz 注解了@Table的类
-	 */
-	void turnOffSoftDelete(Class<?>... clazz);
-
-	/**
-	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete
-	 *
-	 * @param clazz 注解了@Table的类
-	 */
-	void turnOnSoftDelete(Class<?>... clazz);
-
-	// ================= Set SQL comment ==================================
-
-	/**
-	 * 设置全局的SQL注释，设置后每条执行的SQL都将自动带上该注释到数据库中执行
-	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
-	 */
-	void setGlobalComment(String comment);
-
-	/**
-	 * 设置线程上下文的SQL注释，设置后当前线程执行的每条SQL都将自动带上该注释到数据库中执行
-	 * @param comment SQL注释（不需要加注释的标识），空字符串为清空
-	 */
-	void setLocalComment(String comment);
-
 	// =============== Query methods START ==================================
 	
 	/**
-	 * 通过T的主键，将数据查出来并设置到T中<br>
-	 * 【会自动处理软删除记录】
-	 * 
-	 * @param t 值设置在t中
-	 * @return 存在返回true，否则返回false
-	 */
-	<T> boolean getByKey(T t) throws NullKeyValueException;
-	
-	/**
-	 * 适合于只有一个Key的情况<br>
+	 * 适合于只有一个Key的情况，多主键的情况请使用getOne<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 查询的DO的类class
 	 * @param keyValue 查询的主键key值
 	 * @return 如果不存在则返回null
 	 */
     <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException;
-    
-    /**
-     * 通过多个key查询对象<br>
-     * 【会自动处理软删除记录】
-     * @param clazz 查询的DO的类class
-     * @param keyValues 查询的主键key值列表
-     * @return 返回的值是LinkedHashMap对象，按照keyValues的顺序来，但如果key不存在，那么不会再返回值的map key中
-     */
-    <T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues);
-	
+
 	/**
 	 * 查询列表，没有查询条件<br>
 	 * 【会自动处理软删除记录】
@@ -305,7 +302,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
 	 */
-	<T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args);
+	<T> List<T> getRaw(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
 	 * 执行自行指定的SQL查询语句，以流Stream的形式返回。<br>
@@ -327,7 +324,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
 	 */
-	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, Object> args);
+	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
 	 * 执行自行指定的SQL查询语句，只返回第一行
@@ -349,7 +346,7 @@ public interface DBHelper {
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
 	 */
-	<T> T getRawOne(Class<T> clazz, String sql, Map<String, Object> args);
+	<T> T getRawOne(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
 	 * 根据给定的对象t查询跟t的非null值完全相等的记录。
@@ -376,8 +373,7 @@ public interface DBHelper {
 	 * @param args postSql中的参数列表
 	 * @return 如果存在则返回true，否则返回false
 	 */
-	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
-			String postSql, Object... args);
+	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz, String postSql, Object... args);
 	
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了
@@ -462,37 +458,6 @@ public interface DBHelper {
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdate(Collection<T> list);
-	
-	/**
-	 * 如果t有主键，则更新值；否则插入记录。包括null的值会更新或插入。
-	 * @param list 需要插入的DO对象实例列表
-	 * @return 返回数据库实际修改的条数
-	 */
-	@Deprecated
-	<T> int insertOrUpdateWithNull(Collection<T> list);
-	
-	/**
-	 * 全量更新指定的列表，只处理非null字段。dbList表示原来的数据，必须都带上key。<br>
-	 * newList表示新的数据，可以带有key也可以没有。<br>
-	 * 对于dbList有的key但是newList中没有的key，将被删除。<br>
-	 * 对于dbList有的key且newList也有的key，将被更新。<br>
-	 * 对于dbList没有的key，但newList中有的key，将被更新。<br>
-	 * 对于dbList没有的key，但newList也没有key的对象，将被插入。<br>
-	 * @param dbList 可以是null，等同于空list
-	 * @param newList 不能是null，否则该方法什么都不执行
-	 * @return newList成功的值，不包括dbList中删除的
-	 */
-	@Deprecated
-	<T> int insertOrUpdateFull(Collection<T> dbList, Collection<T> newList);
-	
-	/**
-	 * 文档同insertOrUpdateFull，只是会insert or update null值
-	 * @param dbList 可以是null，等同于空list
-	 * @param newList 不能是null，否则该方法什么都不执行
-	 * @return newList成功的值，不包括dbList中删除的
-	 */
-	@Deprecated
-	<T> int insertOrUpdateFullWithNull(Collection<T> dbList, Collection<T> newList);
 
 	/**
 	 * 更新单个实例数据库记录，必须带上object的key，包含更新null值的字段
@@ -545,8 +510,7 @@ public interface DBHelper {
 	
 	/**
 	 * 自定义更新多行记录，会自动去掉已软删除的行。
-	 *
-	 * 【重要更新 since 1.0.0】该方法修改的行，不会再调用afterUpdate方法，如果需要获得被修改的行记录，请考虑使用canal方案。
+	 * 【重要更新 since 1.0.0】该方法修改的记录，不会再调用afterUpdate方法，如果需要获得被修改的行记录，请考虑使用canal方案。
 	 *
 	 * @param clazz 要更新的DO类
 	 * @param setSql update sql中的set sql子句，可以包括set关键字也可以不包括
@@ -555,17 +519,7 @@ public interface DBHelper {
 	 * @return 实际修改条数
 	 */
 	<T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args);
-	
-	/**
-	 * 更新数据库记录，更新包含null的字段，返回数据库实际修改条数。
-	 * 【注】批量更新的方法并不会比程序中循环调用int updateNotNull(T t)更快
-	 * @param list 要更新的对象列表
-	 * @return 实际修改条数
-	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
-	 */
-	@Deprecated
-	<T> int updateWithNull(Collection<T> list) throws NullKeyValueException;
-	
+
 	/**
 	 * 更新数据库记录，返回数据库实际修改条数。
 	 * 【注】批量更新的方法并不会比程序中循环调用int update(T t)更快
@@ -633,6 +587,6 @@ public interface DBHelper {
 	 * @param paramMap 自定义参数
 	 * @return 返回影响的行数
 	 */
-	int executeRaw(String sql, Map<String, Object> paramMap);
+	int executeRaw(String sql, Map<String, ?> paramMap);
 
 }

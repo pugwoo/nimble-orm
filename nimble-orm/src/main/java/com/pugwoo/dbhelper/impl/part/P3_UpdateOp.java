@@ -2,7 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -23,7 +23,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
@@ -32,12 +32,15 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeUpdateAll(clazz, sql, customsSets, customsParams, args);
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
 	
 	private void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return; // 内部实现尽量不调用executeAfterCommit
+		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				interceptors.get(i).afterUpdate(tList, rows);
@@ -57,7 +60,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	@Override
 	public <T> int update(T t, String postSql, Object... args) throws NullKeyValueException {
-		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _update(t, false, true, postSql, args);
 	}
 	
@@ -68,30 +70,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	@Override
 	public <T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException {
-		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		return _update(t, true, true, postSql, args);
 	}
-	
-	@Override
-	public <T> int updateWithNull(Collection<T> list) throws NullKeyValueException {
-		if(list == null || list.isEmpty()) {
-			return 0;
-		}
 
-		List<Object> tmpList = new ArrayList<>(list);
-		doInterceptBeforeUpdate(tmpList, null, null);
-		
-		int rows = 0;
-		for(T t : list) {
-			if(t != null) {
-				rows += _update(t, true, false, null);
-			}
-		}
-		
-		doInterceptAfterUpdate(tmpList, rows);
-		return rows;
-	}
-	
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
@@ -172,7 +153,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	@Override
 	public <T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException {
-		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
 		if(InnerCommonUtils.isBlank(setSql)) {
 			return 0; // 不需要更新
 		}
@@ -200,7 +180,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
 	@Override
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
-		if(setSql != null) {setSql = setSql.replace('\t', ' ');}
 		if(InnerCommonUtils.isBlank(setSql)) {
 			return 0; // 不需要更新
 		}

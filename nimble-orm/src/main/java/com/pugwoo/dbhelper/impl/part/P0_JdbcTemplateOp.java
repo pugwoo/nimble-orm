@@ -52,9 +52,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
-	/**全局的SQL注释*/
-	private String globalComment;
-
 	protected void log(String sql, Object keyValues) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
@@ -85,7 +82,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-	protected void logSlowForParamMap(long cost, String sql, Map<String, Object> paramMap) {
+	protected void logSlowForParamMap(long cost, String sql, Map<String, ?> paramMap) {
 		List<Object> params = new ArrayList<>();
 		params.add(paramMap);
 		logSlow(cost, sql, params);
@@ -119,24 +116,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
             return false;
         }
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void suspend() {
-			}
-			@Override
-			public void resume() {
-			}
-			@Override
-			public void flush() {
-			}
-			@Override
-			public void beforeCompletion() {
-			}
-			@Override
-			public void beforeCommit(boolean readOnly) {
-			}
-			@Override
-			public void afterCompletion(int status) {
-			}
 			@Override
 			public void afterCommit() {
 				runnable.run();
@@ -184,9 +163,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	/**
-	 * 废弃，不需要设置了 since 1.2
+	 * 可选，非必须
+	 * since 1.2
 	 */
-	@Deprecated
 	public void setNamedParameterJdbcTemplate(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
@@ -238,36 +217,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public <T> void setTableName(Class<T> clazz, String tableName) {
-		DBHelperContext.setTableName(clazz, tableName);
-	}
-
-	@Override
-	public void resetTableNames() {
-		DBHelperContext.resetTableName();
-	}
-
-	@Override
-	public void turnOffSoftDelete(Class<?>... clazz) {
-		if (clazz == null) {
-			return;
-		}
-		for (Class<?> c : clazz) {
-			DBHelperContext.turnOffSoftDelete(c);
-		}
-	}
-
-	@Override
-	public void turnOnSoftDelete(Class<?>... clazz) {
-		if (clazz == null) {
-			return;
-		}
-		for (Class<?> c : clazz) {
-			DBHelperContext.turnOnSoftDelete(c);
-		}
-	}
-
-	@Override
 	public void turnOnFeature(FeatureEnum featureEnum) {
 		features.put(featureEnum, true);
 	}
@@ -282,27 +231,16 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return enabled != null && enabled;
 	}
 
-	@Override
-	public void setGlobalComment(String comment) {
-		this.globalComment = comment;
-	}
-
-	@Override
-	public void setLocalComment(String comment) {
-		DBHelperContext.setComment(comment);
-	}
-
 	/**
 	 * 给sql加上注释，返回加完注释之后的sql
+	 * @param sql not null
 	 */
 	protected String addComment(String sql) {
-		if (sql == null) {
-			sql = "";
-		}
+		String globalComment = DBHelperContext.getGlobalComment();
 		if (InnerCommonUtils.isNotBlank(globalComment)) {
 			sql = "/*" + globalComment + "*/" + sql;
 		}
-		String comment = DBHelperContext.getComment();
+		String comment = DBHelperContext.getThreadLocalComment();
 		if (InnerCommonUtils.isNotBlank(comment)) {
 			sql = "/*" + comment + "*/" + sql;
 		}

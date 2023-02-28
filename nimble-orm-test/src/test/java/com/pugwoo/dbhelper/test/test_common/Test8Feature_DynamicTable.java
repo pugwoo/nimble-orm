@@ -8,15 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
+import java.util.UUID;
+
 @SpringBootTest
-public class TestDynamic {
+public class Test8Feature_DynamicTable {
 
     @Autowired
     private DBHelper dbHelper;
 
-    /**测试分表*/
     @Test
-    public void test() {
+    public void testSetTableName() {
         String tableName = DBHelperContext.getTableName(StudentDO.class);
         assert tableName == null;
 
@@ -35,10 +37,11 @@ public class TestDynamic {
     }
 
     @Test
-    public void test2() {
+    public void testSetTableNameInsertAndQuery() {
 
-        dbHelper.setTableName(StudentNoTableNameDO.class, "t_student");
+        DBHelper.setTableName(StudentNoTableNameDO.class, "t_student");
 
+        // 插入
         StudentNoTableNameDO studentNoTableNameDO = new StudentNoTableNameDO();
         studentNoTableNameDO.setName("nick");
 
@@ -46,16 +49,43 @@ public class TestDynamic {
 
         assert studentNoTableNameDO.getId() != null;
 
+        // 查询
         StudentNoTableNameDO student2 = dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
         assert student2.getId().equals(studentNoTableNameDO.getId());
         assert student2.getName().equals(studentNoTableNameDO.getName());
 
-        dbHelper.resetTableNames(); // 清空
+        List<StudentNoTableNameDO> list = dbHelper.getAll(
+                StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId());
+        assert list.get(0).getId().equals(studentNoTableNameDO.getId());
+        assert list.get(0).getName().equals(studentNoTableNameDO.getName());
+
+        // 更新
+        studentNoTableNameDO.setName(UUID.randomUUID().toString().replace("-", ""));
+        int rows = dbHelper.update(studentNoTableNameDO);
+        assert rows == 1;
+
+        // 再查询
+        student2 = dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
+        assert student2.getId().equals(studentNoTableNameDO.getId());
+        assert student2.getName().equals(studentNoTableNameDO.getName());
+
+        list = dbHelper.getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId());
+        assert list.get(0).getId().equals(studentNoTableNameDO.getId());
+        assert list.get(0).getName().equals(studentNoTableNameDO.getName());
+
+        // 删除
+        rows = dbHelper.deleteByKey(studentNoTableNameDO);
+        assert rows == 1;
+
+        assert dbHelper.getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId())
+                        .isEmpty();
+
+        DBHelper.resetTableNames(); // 清空
 
         // 应该抛出异常
         boolean ex = false;
         try {
-            student2 = dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
+            dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
         } catch (Exception e) {
             ex = true;
         }

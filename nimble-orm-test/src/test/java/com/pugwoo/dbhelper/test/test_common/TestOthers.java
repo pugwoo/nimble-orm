@@ -4,8 +4,8 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -74,11 +74,7 @@ public class TestOthers {
         assert typesDO.getId1() != null;
         assert typesDO.getId2() != null;
 
-        TypesDO types2 = new TypesDO();
-        types2.setId1(typesDO.getId1());
-        types2.setId2(typesDO.getId2());
-
-        dbHelper.getByKey(types2);
+        TypesDO types2 = dbHelper.getOne(TypesDO.class, "where id1=? and id2=?", typesDO.getId1(), typesDO.getId2());
         assert types2.getMyByte().equals(typesDO.getMyByte());
         assert types2.getS().equals(typesDO.getS());
         assert types2.getMyFloat().equals(typesDO.getMyFloat());
@@ -93,18 +89,6 @@ public class TestOthers {
 
     @Test
     public void testOthers() throws NoSuchFieldException, IOException {
-
-        // SubQuery
-        SubQuery subQuery = new SubQuery("field", StudentDO.class, "postsql", "1");
-        subQuery.setField("field1");
-        assert subQuery.getField().equals("field1");
-        subQuery.setClazz(SchoolDO.class);
-        assert subQuery.getClazz().equals(SchoolDO.class);
-        subQuery.setPostSql("sql");
-        assert subQuery.getPostSql().equals("sql");
-        subQuery.setArgs(new Object[]{"1", "2", "3"});
-        assert subQuery.getArgs().length == 3;
-
         // JoinTypeEnum
         assert !JoinTypeEnum.JOIN.getName().isEmpty();
 
@@ -383,4 +367,8 @@ public class TestOthers {
 
     }
 
+    @Test
+    public void testDBHelperContextEx() {
+        assert !DBHelperContext.isTurnOffSoftDelete(null); // 测试异常情况
+    }
 }

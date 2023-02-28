@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,10 +36,16 @@ public class NimbleOrmJSON {
 	}
 
 	public static <T> T parse(String json, Class<T> clazz) throws IOException {
+		if (InnerCommonUtils.isBlank(json)) {
+			return null;
+		}
 		return objectMapper.readValue(json, clazz);
 	}
 
 	public static Object parseGeneric(String json, ParameterizedType type) throws IOException {
+		if (InnerCommonUtils.isBlank(json)) {
+			return null;
+		}
 		JavaType javaType = toJavaType(type);
 		return objectMapper.readValue(json, javaType);
 	}

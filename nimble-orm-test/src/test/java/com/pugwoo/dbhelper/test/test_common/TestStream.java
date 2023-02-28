@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -136,6 +137,11 @@ public class TestStream {
 
         // 测试没有参数的
         List<StudentVO> list4 = dbHelper.getRawForStream(StudentVO.class, "select * from t_student")
+                .collect(Collectors.toList());
+        assert list4.size() == dbHelper.getRawOne(Integer.class, "select count(*) from t_student");
+
+        // 测试空map参数的
+        list4 = dbHelper.getRawForStream(StudentVO.class, "select * from t_student", new HashMap<>())
                 .collect(Collectors.toList());
         assert list4.size() == dbHelper.getRawOne(Integer.class, "select count(*) from t_student");
 

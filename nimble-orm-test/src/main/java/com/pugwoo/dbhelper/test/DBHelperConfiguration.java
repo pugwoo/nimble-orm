@@ -44,4 +44,14 @@ public class DBHelperConfiguration {
         return dbHelper;
     }
 
+    @Bean
+    public DBHelper dbHelperWithNotAllowInterceptor(JdbcTemplate jdbcTemplate) {
+        SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
+        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        List<DBHelperInterceptor> interceptors = new ArrayList<>();
+        interceptors.add(new com.pugwoo.dbhelper.test.interceptor.NotAllowInterceptor());
+        dbHelper.setInterceptors(interceptors);
+        return dbHelper;
+    }
+
 }

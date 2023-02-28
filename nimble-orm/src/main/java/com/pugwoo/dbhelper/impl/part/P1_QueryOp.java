@@ -17,7 +17,6 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.mvel2.MVEL;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -26,163 +25,25 @@ import java.util.stream.Stream;
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public <T> boolean getByKey(T t) throws NullKeyValueException {
-        if (t == null) {
-            return false;
-        }
-        Class<?> clazz = t.getClass();
-
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
-
-        StringBuilder sqlSB = new StringBuilder(SQLUtils.getSelectSQL(t.getClass(), false, false, features, null));
-
-        List<Object> keyValues = new ArrayList<>();
-        sqlSB.append(SQLUtils.getKeysWhereSQL(t, keyValues));
-
-        try {
-            doInterceptBeforeQuery(t.getClass(), sqlSB, keyValues);
-
-            String sql = sqlSB.toString();
-            sql = addComment(sql);
-            log(sql, keyValues);
-
-            long start = System.currentTimeMillis();
-            jdbcTemplate.queryForObject(sql,
-                    new AnnotationSupportRowMapper(this, t.getClass(), t),
-                    keyValues.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-
-            handleRelatedColumn(t);
-            logSlow(System.currentTimeMillis() - start, sql, keyValues);
-
-            t = doInterceptAfterQuery(clazz, t, sqlSB, keyValues);
-            return t != null;
-        } catch (EmptyResultDataAccessException e) {
-            t = doInterceptAfterQuery(clazz, null, sqlSB, keyValues);
-            return t != null;
-        }
-    }
-
-    @Override
-    public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
-            NotOnlyOneKeyColumnException {
-
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
-
+    public <T> T getByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException, NotOnlyOneKeyColumnException {
+        assertNotVirtualTable(clazz);
         if (keyValue == null) {
             throw new NullKeyValueException();
         }
         SQLAssert.onlyOneKeyColumn(clazz);
 
-        StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
-        sqlSB.append(SQLUtils.getKeysWhereSQL(clazz));
-
-        List<Object> argsList = new ArrayList<>();
-        argsList.add(keyValue);
-
-        try {
-            doInterceptBeforeQuery(clazz, sqlSB, argsList);
-
-            String sql = sqlSB.toString();
-            sql = addComment(sql);
-            log(sql, argsList);
-
-            long start = System.currentTimeMillis();
-            T t = jdbcTemplate.queryForObject(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz),
-                    argsList.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-
-            handleRelatedColumn(t);
-
-            long cost = System.currentTimeMillis() - start;
-
-            List<Object> args = new ArrayList<>();
-            args.add(keyValue);
-            logSlow(cost, sql, args);
-
-            t = doInterceptAfterQuery(clazz, t, sqlSB, argsList);
-            return t;
-        } catch (EmptyResultDataAccessException e) {
-            return doInterceptAfterQuery(clazz, null, sqlSB, argsList);
-        }
-    }
-
-    @Override
-    public <T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues) {
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
-
-        if (keyValues == null || keyValues.isEmpty()) {
-            return new HashMap<>();
-        }
-
-        StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, null));
-        sqlSB.append(SQLUtils.getKeyInWhereSQL(clazz));
-
-        List<Object> argsList = new ArrayList<>();
-        argsList.add(keyValues);
-        doInterceptBeforeQuery(clazz, sqlSB, argsList);
-
-        String sql = sqlSB.toString();
-        sql = addComment(sql);
-        log(sql, argsList);
-
-        long start = System.currentTimeMillis();
-        List<T> list = namedParameterJdbcTemplate.query(
-                NamedParameterUtils.trans(sql, argsList),
-                NamedParameterUtils.transParam(argsList),
-                new AnnotationSupportRowMapper<>(this, clazz)); // 因为有in (?)所以用namedParameterJdbcTemplate
-
-        handleRelatedColumn(list);
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, argsList);
-
-        list = doInterceptorAfterQueryList(clazz, list, list.size(), sqlSB, argsList);
-
-        // 转换to map
-        if (list == null || list.isEmpty()) {
-            return new HashMap<>();
-        }
-        Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-        Map<K, T> map = new LinkedHashMap<>();
-        for (K key : keyValues) {
-            if (key == null) {
-                continue;
-            }
-            for (T t : list) {
-                Object k = DOInfoReader.getValue(keyField, t);
-                if (key.equals(k)) {
-                    map.put(key, t);
-                    break;
-                }
-            }
-        }
-        return map;
+        String where = SQLUtils.getKeysWhereSQLWithoutSoftDelete(clazz);
+        return getOne(clazz, where, keyValue);
     }
 
     @Override
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize,
                                    String postSql, Object... args) {
-        if (page < 1) {
-            throw new InvalidParameterException("[page] must greater than 0");
-        }
+        assertPage(page);
         if (maxPageSize != null && pageSize > maxPageSize) {
             pageSize = maxPageSize;
         }
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         int offset = (page - 1) * pageSize;
         return _getPage(clazz, true,false, true, offset, pageSize, postSql, args);
     }
@@ -196,11 +57,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     public <T> long getCount(Class<T> clazz) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
-        StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectCountSQL(clazz));
-        sqlSB.append(isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
-
-        String sql = sqlSB.toString();
+        String sql = SQLUtils.getSelectCountSQL(clazz) +
+                (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
         sql = addComment(sql);
 
         log(sql, null);
@@ -217,23 +75,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
-
-        StringBuilder sqlSB = new StringBuilder("SELECT count(*) FROM (");
-
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, true, features, postSql));
-        sqlSB.append(isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz));
-
-        sqlSB.append(") tff305c6");
+        String sqlSB = "SELECT count(*) FROM ("
+                + SQLUtils.getSelectSQL(clazz, false, true, features, postSql)
+                + (isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz))
+                + ") tff305c6";
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
         }
 
-        String sql = sqlSB.toString();
+        String sql = sqlSB;
         sql = addComment(sql);
         log(sql, argsList);
 
@@ -258,16 +110,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
                                                String postSql, Object... args) {
-        if (page < 1) {
-            throw new InvalidParameterException("[page] must greater than 0");
-        }
+        assertPage(page);
         if (maxPageSize != null && pageSize > maxPageSize) {
             pageSize = maxPageSize;
         }
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         int offset = (page - 1) * pageSize;
         return _getPage(clazz, true, false, false, offset, pageSize, postSql, args);
     }
@@ -340,22 +187,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         return _getPage(clazz, true,false, false, null, null, postSql, args).getData();
     }
 
     @Override
     public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
+        assertNotVirtualTable(clazz);
 
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         return _getPage(clazz, true, true, false, null, null, postSql, args).getData();
     }
 
@@ -367,25 +205,22 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         List<T> list = _getPage(clazz, true, false, false,
                 0, 1, postSql, args).getData();
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
     @Override
-    public <T> List<T> getRaw(Class<T> clazz, String sql, Map<String, Object> args) {
+    public <T> List<T> getRaw(Class<T> clazz, String sql, Map<String, ?> args) {
         return getRawByNamedParam(clazz, sql, args);
     }
 
     @Override
-    public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, Object> args) {
+    public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, ?> args) {
         return getRawByNamedParamForStream(clazz, sql, args);
     }
 
-    private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, Object> args) {
+    private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, ?> args) {
         jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> forIntercept = new ArrayList<>();
@@ -425,7 +260,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return result;
     }
 
-    private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, Object> args) {
+    private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, ?> args) {
         List<Object> forIntercept = new ArrayList<>();
         if (args != null) {
             forIntercept.add(args);
@@ -457,11 +292,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args) {
-        // 解决如果java选择错重载的问题
-        if (args != null && args.length == 1 && args[0] instanceof Map) {
-            return getRawByNamedParamForStream(clazz, sql, (Map<String, Object>)(args[0]));
-        }
-
         jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -503,13 +333,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    @SuppressWarnings({"unchecked"})
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
-        // 解决如果java选择错重载的问题
-        if (args != null && args.length == 1 && args[0] instanceof Map) {
-            return getRawByNamedParam(clazz, sql, (Map<String, Object>)(args[0]));
-        }
-
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
@@ -552,7 +376,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
-    public <T> T getRawOne(Class<T> clazz, String sql, Map<String, Object> args) {
+    public <T> T getRawOne(Class<T> clazz, String sql, Map<String, ?> args) {
         List<T> raw = getRaw(clazz, sql, args);
         if (raw == null || raw.isEmpty()) {
             return null;
@@ -563,10 +387,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     @SuppressWarnings({"unchecked"})
     public <T> List<T> getByExample(T t, int limit) {
-        boolean isVirtualTable = DOInfoReader.isVirtualTable(t.getClass());
-        if (isVirtualTable) {
-            throw new NotAllowQueryException("Virtual table is not supported");
-        }
+        assertNotVirtualTable(t.getClass());
 
         Map<Field, String> filed2column = new HashMap<>();
         List<Field> declaredFields = DOInfoReader.getColumns(t.getClass());
@@ -654,14 +475,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         long start = System.currentTimeMillis();
         List<T> list;
         if (argsList.isEmpty()) {
-            if (isUseNamedTemplate) {
-                // 因为有in (?)所以用namedParameterJdbcTemplate
-                list = namedParameterJdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
-            } else {
-                list = jdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
-            }
+            list = jdbcTemplate.query(sql,
+                    new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
         } else {
             if (isUseNamedTemplate) {
                 // 因为有in (?)所以用namedParameterJdbcTemplate
@@ -681,11 +496,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             if(offset != null && offset == 0 && limit != null && list.size() < limit) {
                 total = list.size();
             } else {
-                if(postSql == null) {
-                    total = getCount(clazz);
-                } else {
-                    total = getCount(clazz, postSql, args);
-                }
+                total = getCount(clazz, postSql, args);
             }
         }
 
@@ -712,18 +523,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> boolean isExist(Class<T> clazz, String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         return getOne(clazz, postSql, args) != null;
     }
 
     @Override
     public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
                                       String postSql, Object... args) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
         if (atLeastCounts == 1) {
             return isExist(clazz, postSql, args);
         }
@@ -743,21 +548,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
             }
         }
-    }
-
-    /**t为null表示没有记录，因此等价于空list*/
-    private <T> T doInterceptAfterQuery(Class<?> clazz, T t, StringBuilder sql, List<Object> args) {
-        List<T> list = new ArrayList<>();
-        if (t != null) {
-            list.add(t);
-        }
-        list = doInterceptorAfterQueryList(clazz, list, 1, sql, args);
-        return list == null || list.isEmpty() ? null : list.get(0);
-    }
-
-    private <T> List<T> doInterceptorAfterQueryList(Class<?> clazz, List<T> list, long total,
-                                                    StringBuilder sql, List<Object> args) {
-        return doInterceptorAfterQueryList(clazz, list, total, sql.toString(), args);
     }
 
     private <T> List<T> doInterceptorAfterQueryList(Class<?> clazz, List<T> list, long total,
@@ -940,6 +730,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
                 String whereColumn = getWhereColumnForRelated(remoteField);
+                // 这里不能用DBHelper是因为拦截器会被重复触发；其次也必要，另外的DBHelper的实现也重新实现这个逻辑
                 P1_QueryOp _dbHelper = this;
                 if (InnerCommonUtils.isNotBlank(column.dbHelperBean())) {
                     String beanName = column.dbHelperBean().trim();
@@ -957,24 +748,19 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, "where " + inExpr, values);
                 } else {
                     // 如果extraWhere包含limit子句，那么只能降级为逐个处理，否则可以用批量处理的方式提高性能
-                    if (SQLUtils.isContainsLimit(column.extraWhere())) {
-                        try {
+                    try {
+                        if (SQLUtils.isContainsLimit(column.extraWhere())) {
                             String eqExpr = whereColumn + "=?";
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), eqExpr);
                             relateValues = _dbHelper.getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
-                        } catch (JSQLParserException e) {
-                            LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
-                            throw new BadSQLSyntaxException(e);
-                        }
-                    } else {
-                        try {
+                        } else {
                             String inExpr = whereColumn + " in " + buildQuestionMark(values);
                             String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
                             relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, where, values);
-                        } catch (JSQLParserException e) {
-                            LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
-                            throw new BadSQLSyntaxException(e);
                         }
+                    } catch (JSQLParserException e) {
+                        LOGGER.error("wrong RelatedColumn extraWhere:{}, ignore extraWhere", column.extraWhere());
+                        throw new BadSQLSyntaxException(e);
                     }
                 }
             }
@@ -1064,15 +850,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             Column remoteColumn = remoteF.field.getAnnotation(Column.class);
             if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                sb.append(remoteF.fieldPrefix + SQLUtils.getColumnName(remoteColumn.value()));
+                sb.append(remoteF.fieldPrefix).append(SQLUtils.getColumnName(remoteColumn.value()));
             } else {
-                // 对于有remoteF.fieldPrefix的，由于计算列是用户自己写的，所以需要自己确保有fieldPrefix，如果没有，在这里告警
-                if (InnerCommonUtils.isNotBlank(remoteF.fieldPrefix)) {
-                    if (!remoteColumn.computed().contains(remoteF.fieldPrefix)) {
-                        LOGGER.warn("remote column computed:{} should contain fieldPrefix:{}",
-                                remoteColumn.computed(), remoteF.fieldPrefix);
-                    }
-                }
+                // 对于有remoteF.fieldPrefix的，由于计算列是用户自己写的，所以需要自己确保有fieldPrefix
                 sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
             }
         }
@@ -1109,10 +889,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
-
         List<Object> param = new ArrayList<>();
         for (Object obj : values) {
             if (obj instanceof List) {
@@ -1127,10 +903,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
-        if (postSql != null) {
-            postSql = postSql.replace('\t', ' ');
-        }
-
         List<T> result = new ArrayList<>();
 
         for (Object value : values) {
@@ -1154,4 +926,16 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return null;
     }
 
+    private void assertNotVirtualTable(Class<?> clazz) {
+        boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        if (isVirtualTable) {
+            throw new NotAllowQueryException("Virtual table is not supported");
+        }
+    }
+
+    private void assertPage(int page) {
+        if (page < 1) {
+            throw new InvalidParameterException("[page] must greater than 0");
+        }
+    }
 }

@@ -60,7 +60,7 @@ public @interface RelatedColumn {
 	String dbHelperBean() default "";
 	
 	/**
-	 * 外部查询数据接口，该接口必须继承实现IDBHelperDataService
+	 * 外部查询数据接口或类，该接口或类必须实现IDBHelperDataService，且在Spring容器中能拿到。
 	 */
 	Class<?> dataService() default void.class;
 

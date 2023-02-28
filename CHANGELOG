@@ -1,3 +1,16 @@
+2023年2月28日
+v1.4.3 - [enhance] 优化接口定义，setTableName/resetTableNames/turnOffSoftDelete/turnOnSoftDelete
+                   /setGlobalComment/setLocalComment定义为接口静态方法，对所有DBHelper实例生效
+                   【升级须知】对于这6个方法的调用，需要由实例方式调用改成接口静态方法调用
+       - [add] 增加nimbleorm内置JSON解析对LocalDate/LocalDateTime/LocalTime的扩展支持，支持更多的时间日期格式
+       - [enhance] 兼容字符串类型的字段误注解了isAutoIncrement=true的情况，可以正常处理
+       - [del] 删除@ExcludeInheritedColumn，推荐使用@Table的sameTableNameAs指定表名或直接指定表名
+       - [del] 删除SubQuery子查询参数功能
+       - [del] 删除insertOrUpdateFull、insertOrUpdateFullWithNull方法
+       - [del] 删除insertOrUpdateWithNull(list)、updateWithNull(list)方法
+       - [del] 删除boolean getByKey(T t)方法
+       - [del] 删除<T, K> Map<K, T> getByKeyList(Class<T> clazz, Collection<K> keyValues)方法
+
 2023年1月7日
 v1.4.2 - [add] 批量插入支持数据库默认值(即当插入为null时使用数据库默认值)，此外mysql不需要再设置rewriteBatchedStatements=TRUE参数
        - [enhance] 优化批量插入日志和不插入不需要的字段，提升50+%批量插入性能

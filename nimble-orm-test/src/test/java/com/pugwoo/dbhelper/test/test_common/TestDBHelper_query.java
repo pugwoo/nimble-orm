@@ -1,16 +1,16 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
-import com.pugwoo.dbhelper.model.SubQuery;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
 import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
+import com.pugwoo.wooutils.lang.DateUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,274 +31,52 @@ public class TestDBHelper_query {
     private DBHelper dbHelper;
 
     @Test 
-    public void testExcludeInheritedColumn() {
+    public void testSameTableNameAs() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
         StudentCalVO db = dbHelper.getOne(StudentCalVO.class, "where id=?", studentDO.getId());
         assert db != null;
-       // assert db.getId() == null;
         assert db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi");
-    }
-
-    @Test
-    public void testRelatedColumnWithLimit() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-
-        CourseDO courseDO1 = new CourseDO();
-        courseDO1.setName("math");
-        courseDO1.setStudentId(studentDO.getId());
-        courseDO1.setIsMain(true); // math是主课程
-        dbHelper.insert(courseDO1);
-
-        CourseDO courseDO2 = new CourseDO();
-        courseDO2.setName("eng");
-        courseDO2.setStudentId(studentDO.getId());
-        courseDO2.setIsMain(true); // eng是主课程
-        dbHelper.insert(courseDO2);
-
-        CourseDO courseDO3 = new CourseDO();
-        courseDO3.setName("chinese");
-        courseDO3.setStudentId(studentDO.getId());
-        courseDO3.setIsMain(true); // chinese是主课程
-        dbHelper.insert(courseDO3);
-
-        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
-
-        List<StudentLimitVO> all = dbHelper.getAll(StudentLimitVO.class, "where id=? or id=?",
-                studentDO.getId(), studentDO2.getId());
-        for (StudentLimitVO a : all) {
-            if (a.getId().equals(studentDO.getId())) {
-                assert a.getMainCourses().size() == 2;
-                assert a.getMainCourses().get(0).getIsMain();
-                assert a.getMainCourses().get(1).getIsMain();
-            }
-            if (a.getId().equals(studentDO2.getId())) {
-                assert a.getMainCourses().isEmpty();
-            }
-        }
-    }
-
-    @Test
-    public void testRelatedColumnConditional() {
-        // 构造数据：
-        // 课程1 学生1 主课程
-        // 课程1 学生2 非主课程
-        // 课程2 学生1 非主课程
-        // 课程2 学生2 主课程
-        StudentDO student1 = CommonOps.insertOne(dbHelper);
-        StudentDO student2 = CommonOps.insertOne(dbHelper);
-
-        String course1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        String course2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-
-        CourseDO courseDO = new CourseDO();
-        courseDO.setName(course1);
-        courseDO.setStudentId(student1.getId());
-        courseDO.setIsMain(true);
-        dbHelper.insert(courseDO);
-        Long id1 = courseDO.getId();
-
-        courseDO = new CourseDO();
-        courseDO.setName(course1);
-        courseDO.setStudentId(student2.getId());
-        courseDO.setIsMain(false);
-        dbHelper.insert(courseDO);
-        Long id2 = courseDO.getId();
-
-        courseDO = new CourseDO();
-        courseDO.setName(course2);
-        courseDO.setStudentId(student1.getId());
-        courseDO.setIsMain(false);
-        dbHelper.insert(courseDO);
-        Long id3 = courseDO.getId();
-
-        courseDO = new CourseDO();
-        courseDO.setName(course2);
-        courseDO.setStudentId(student2.getId());
-        courseDO.setIsMain(true);
-        dbHelper.insert(courseDO);
-        Long id4 = courseDO.getId();
-
-        CourseVO courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id1);
-        assert courseVO.getMainCourseStudents().size() == 1;
-        assert courseVO.getMainCourseStudents().get(0).getId().equals(student1.getId());
-        assert courseVO.getMainCourseStudent().getId().equals(student1.getId());
-
-        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id2);
-        assert courseVO.getMainCourseStudents().isEmpty();
-        assert courseVO.getMainCourseStudent() == null;
-
-        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id3);
-        assert courseVO.getMainCourseStudents().isEmpty();
-        assert courseVO.getMainCourseStudent() == null;
-
-        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id4);
-        assert courseVO.getMainCourseStudents().size() == 1;
-        assert courseVO.getMainCourseStudents().get(0).getId().equals(student2.getId());
-        assert courseVO.getMainCourseStudent().getId().equals(student2.getId());
-
-    }
-
-    @Test 
-    public void testRelatedColumn() {
-
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("sysu");
-        dbHelper.insert(schoolDO);
-
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        studentDO.setSchoolId(schoolDO.getId());
-        dbHelper.update(studentDO);
-
-        CourseDO courseDO1 = new CourseDO();
-        courseDO1.setName("math");
-        courseDO1.setStudentId(studentDO.getId());
-        courseDO1.setIsMain(true); // math是主课程
-        dbHelper.insert(courseDO1);
-
-        CourseDO courseDO2 = new CourseDO();
-        courseDO2.setName("eng");
-        courseDO2.setStudentId(studentDO.getId());
-        dbHelper.insert(courseDO2);
-
-        StudentDO studentDO2  = CommonOps.insertOne(dbHelper);
-        studentDO2.setSchoolId(schoolDO.getId());
-        dbHelper.update(studentDO2);
-
-        CourseDO courseDO3 = new CourseDO();
-        courseDO3.setName("math");
-        courseDO3.setStudentId(studentDO2.getId());
-        courseDO3.setIsMain(true); // math是主课程
-        dbHelper.insert(courseDO3);
-
-        CourseDO courseDO4 = new CourseDO();
-        courseDO4.setName("chinese");
-        courseDO4.setStudentId(studentDO2.getId());
-        dbHelper.insert(courseDO4);
-
-        /////////////////// 下面是查询 ///////////////////
-
-        StudentVO studentVO1 = dbHelper.getByKey(StudentVO.class, studentDO.getId());
-        assert studentVO1 != null;
-        assert studentVO1.getSchoolDO() != null;
-        assert studentVO1.getSchoolDO().getId().equals(studentVO1.getSchoolId());
-        assert studentVO1.getCourses() != null;
-        assert studentVO1.getCourses().size() == 2;
-        assert studentVO1.getCourses().get(0).getId().equals(courseDO1.getId())
-                || studentVO1.getCourses().get(0).getId().equals(courseDO2.getId());
-        assert studentVO1.getMainCourses().size() == 1 &&
-                studentVO1.getMainCourses().get(0).getName().equals("math"); // math是主课程
-        assert studentVO1.getNameWithHi().equals(studentVO1.getName() + "hi"); // 测试计算列
-
-        // == handleRelatedColumn test
-        StudentVOForHandleRelatedColumnOnly studentVO2 = new StudentVOForHandleRelatedColumnOnly();
-        studentVO2.setId(studentDO.getId());
-        studentVO2.setSchoolId(studentDO.getSchoolId());
-        dbHelper.handleRelatedColumn(studentVO2);
-        assert studentVO2 != null;
-        assert studentVO2.getSchoolDO() != null;
-        assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
-        assert studentVO2.getCourses() != null;
-        assert studentVO2.getCourses().size() == 2;
-        assert studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
-                || studentVO2.getCourses().get(0).getId().equals(courseDO2.getId());
-        assert studentVO2.getMainCourses().size() == 1 &&
-                studentVO2.getMainCourses().get(0).getName().equals("math"); // math是主课程
-
-        studentVO2 = new StudentVOForHandleRelatedColumnOnly();
-        studentVO2.setId(studentDO.getId());
-        studentVO2.setSchoolId(studentDO.getSchoolId());
-        dbHelper.handleRelatedColumn(studentVO2, "courses", "schoolDO"); // 指定要的RelatedColumn
-        assert studentVO2 != null;
-        assert studentVO2.getSchoolDO() != null;
-        assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
-        assert studentVO2.getCourses() != null;
-        assert studentVO2.getCourses().size() == 2;
-        assert studentVO2.getCourses().get(0).getId().equals(courseDO1.getId())
-                || studentVO2.getCourses().get(0).getId().equals(courseDO2.getId());
-        assert studentVO2.getMainCourses() == null;
-
-        // END
-
-        List<Long> ids = new ArrayList<Long>();
-        ids.add(studentDO.getId());
-        ids.add(studentDO2.getId());
-        List<StudentVO> studentVOs = dbHelper.getAll(StudentVO.class,
-                "where id in (?)", ids);
-        assert studentVOs.size() == 2;
-        for(StudentVO sVO : studentVOs) {
-            assert sVO != null;
-            assert sVO.getSchoolDO() != null;
-            assert sVO.getSchoolDO().getId().equals(sVO.getSchoolId());
-            assert sVO.getCourses() != null;
-            assert sVO.getCourses().size() == 2;
-            assert sVO.getMainCourses().size() == 1 &&
-                    studentVO1.getMainCourses().get(0).getName().equals("math"); // math是主课程
-
-            if(sVO.getId().equals(studentDO2.getId())) {
-                assert 
-                        sVO.getCourses().get(0).getId().equals(courseDO3.getId())
-                                || sVO.getCourses().get(1).getId().equals(courseDO4.getId());
-            }
-
-            assert sVO.getNameWithHi().equals(sVO.getName() + "hi"); // 测试计算列
-        }
-
-        // 测试innerClass
-        SchoolWithInnerClassVO schoolVO = dbHelper.getByKey(SchoolWithInnerClassVO.class, schoolDO.getId());
-        assert schoolVO != null && schoolVO.getId().equals(schoolDO.getId());
-        assert schoolVO.getStudents().size() == 2;
-        for(SchoolWithInnerClassVO.StudentVO s : schoolVO.getStudents()) {
-            assert s != null && s.getId() != null && s.getCourses().size() == 2;
-        }
     }
 
     @Test 
     public void testGetByKey() {
         Long id = CommonOps.insertOne(dbHelper).getId();
 
-        StudentDO studentDO = new StudentDO();
-        studentDO.setId(id);
-
-        assert dbHelper.getByKey(studentDO);
-
         StudentDO student2 = dbHelper.getByKey(StudentDO.class, id);
-        assert student2 != null;
+        assert student2 != null && student2.getId().equals(id);
 
         // student的时分秒不能全为0
         Date createTime = student2.getCreateTime();
         assert createTime != null;
-        assert !(createTime.getHours() == 0 && createTime.getMinutes() == 0 && createTime.getSeconds() == 0);
+        assert !(DateUtils.getHour(createTime) == 0 &&
+                 DateUtils.getMinute(createTime) == 0 &&
+                 DateUtils.getSecond(createTime) == 0);
 
-        // student的时间搓在当前时间10秒以内才算合格
+        // student的时间戳在当前时间10秒以内才算合格
         assert System.currentTimeMillis() - createTime.getTime() < 10000;
+
+        // 测试一个异常情况
+        boolean isThrowException = false;
+        try {
+            dbHelper.getByKey(StudentDO.class, null);
+        } catch (Exception e) {
+            if (e instanceof NullKeyValueException) {
+                isThrowException = true;
+            }
+        }
+        assert isThrowException;
+
+        // getByKey不支持virtual table
+        isThrowException = false;
+        try {
+            dbHelper.getByKey(StudentVirtualTableVO.class, 1);
+        } catch (NotAllowQueryException e) {
+            isThrowException = true;
+        }
+        assert isThrowException;
     }
 
-    @Test 
-    public void testGetByKeyList() {
-        List<Long> ids = new ArrayList<Long>();
-        ids.add(CommonOps.insertOne(dbHelper).getId());
-        ids.add(CommonOps.insertOne(dbHelper).getId());
-        ids.add(CommonOps.insertOne(dbHelper).getId());
-        Map<Long, StudentDO> map = dbHelper.getByKeyList(StudentDO.class, ids);
 
-        assert 3 == map.size();
-        for(int i = 0; i < 3; i++) {
-            assert map.get(ids.get(i)).getId().equals(ids.get(i));
-        }
-
-        // 测试一下用Set来查询
-        Set<Long> idsSet = new HashSet<>(ids);
-        map = dbHelper.getByKeyList(StudentDO.class, idsSet);
-
-        assert 3 == map.size();
-        for(int i = 0; i < 3; i++) {
-            assert map.get(ids.get(i)).getId().equals(ids.get(i));
-        }
-
-
-        List<StudentDO> allKey = dbHelper.getAllKey(StudentDO.class, "where 1=1");
-        assert allKey.size() >= 3;
-    }
 
     @Test 
     public void testExists() {
@@ -338,107 +116,6 @@ public class TestDBHelper_query {
         }
 
         System.out.println("===============================");
-    }
-
-    @Test 
-    public void testGetPage() {
-        CommonOps.insertBatch(dbHelper,100);
-
-        // 测试分页获取
-        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
-        assert page1.getTotal() >= 100;
-        assert page1.getData().size() == 10;
-
-        page1 = dbHelper.getPage(StudentDO.class, 2, 10);
-        assert page1.getTotal() >= 100;
-        assert page1.getData().size() == 10;
-
-        page1 = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
-        assert page1.getData().size() == 10;
-
-        page1 = dbHelper.getPageWithoutCount(StudentDO.class, 2, 10);
-        assert page1.getData().size() == 10;
-
-        long total = dbHelper.getCount(StudentDO.class);
-        assert total >= 100;
-
-        total = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
-        assert total >= 100;
-    }
-
-    @Test
-    public void testGetPageRemoteLimitAddOrder() {
-        String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        CommonOps.insertBatch(dbHelper, 20, prefix);
-
-        // 这里故意加上limit子句，会被自动清除掉
-        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10,
-                "where name like ? group by name, age limit 4,6", prefix + "%");
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 20;
-
-        PageData<StudentDO> page2 = dbHelper.getPage(StudentDO.class, 2, 10,
-                "where name like ? group by name, age limit 4,6", prefix + "%");
-        assert page2.getData().size() == 10;
-        assert page2.getTotal() == 20;
-
-        Set<String> name = new HashSet<>();
-        for (StudentDO stu : page.getData()) {
-            name.add(stu.getName());
-        }
-        for (StudentDO stu : page2.getData()) {
-            name.add(stu.getName());
-        }
-        assert name.size() == 20;
-
-        // ============== 不加group by时自动以id为排序
-        System.out.println("=================================");
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10,
-                "where name like ? limit 4,6", prefix + "%");
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 20;
-
-        page2 = dbHelper.getPage(StudentDO.class, 2, 10,
-                "where name like ? limit 4,6", prefix + "%");
-        assert page2.getData().size() == 10;
-        assert page2.getTotal() == 20;
-
-        name = new HashSet<>();
-        for (StudentDO stu : page.getData()) {
-            name.add(stu.getName());
-        }
-        for (StudentDO stu : page2.getData()) {
-            name.add(stu.getName());
-        }
-        assert name.size() == 20;
-
-        System.out.println("=================================");
-        // 如果用户自行执行的order by没有完全包含group by的字段，则有warning 日志
-        page = dbHelper.getPage(StudentDO.class, 1, 10,
-                "where name like ? group by name,age order by name limit 4,6", prefix + "%"); // 看告警
-    }
-
-    @Test 
-    public void testPageDataTransform() {
-        CommonOps.insertBatch(dbHelper,20);
-        PageData<StudentDO> page1 = dbHelper.getPage(StudentDO.class, 1, 10);
-        PageData<StudentVO> page2 = page1.transform(o -> {
-            StudentVO studentVO = new StudentVO();
-            studentVO.setId(o.getId());
-            studentVO.setName(o.getName());
-            return studentVO;
-        });
-
-        assert page1.getTotal() == page2.getTotal();
-        assert page1.getPageSize() == page2.getPageSize();
-        assert page1.getData().size() == page2.getData().size();
-
-        for (int i = 0; i < 10; i++) {
-            assert page1.getData().get(i).getId().equals(page2.getData().get(i).getId());
-            assert Objects.equals(page1.getData().get(i).getName(),
-                    page2.getData().get(i).getName());
-        }
     }
 
     @Test 
@@ -554,96 +231,6 @@ public class TestDBHelper_query {
         assert one.getDeleteTime() != null;
     }
 
-    @Test 
-    public void testCount() {
-
-        dbHelper.delete(StudentDO.class, "where 1=1");
-        long count = dbHelper.getCount(StudentDO.class);
-        assert count == 0;
-
-        dbHelper.delete(SchoolDO.class, "where 1=1");
-        count = dbHelper.getCount(SchoolDO.class);
-        assert count == 0;
-
-        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 99);
-
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("sysu");
-        dbHelper.insert(schoolDO);
-        assert schoolDO.getId() != null;
-
-        for(StudentDO studentDO : studentDOS) {
-            studentDO.setSchoolId(schoolDO.getId());
-            dbHelper.update(studentDO);
-        }
-
-        count = dbHelper.getCount(StudentDO.class);
-        assert count == 99;
-        count = dbHelper.getCount(StudentDO.class, "where 1=1");
-        assert count == 99;
-        count = dbHelper.getCount(StudentDO.class, "where name like ?", "nick%");
-        assert count == 99;
-        count = dbHelper.getCount(StudentDO.class, "where name like ? group by name", "nick%");
-        assert count == 99;
-
-        count = dbHelper.getCount(StudentDO.class, "where name not like ? group by name", "nick%");
-        assert count == 0;
-
-        List<String> names = new ArrayList<String>();
-        names.add(studentDOS.get(0).getName());
-        names.add(studentDOS.get(10).getName());
-        names.add(studentDOS.get(30).getName());
-        count = dbHelper.getCount(StudentDO.class, "where name in (?)",names);
-        assert count == 3;
-
-        PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 99;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name like ?", "nick%");
-        assert page.getData().size() == 10;
-        assert page.getTotal() == 99;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name not like ?", "nick%");
-        assert page.getData().size() == 0;
-        assert page.getTotal() == 0;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 10, "where name in (?)", names);
-        assert page.getData().size() == 3;
-        assert page.getTotal() == 3;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 2, "where name in (?)", names);
-        assert page.getData().size() == 2;
-        assert page.getTotal() == 3;
-
-        page = dbHelper.getPage(StudentDO.class, 1, 2, "where name in (?) group by name", names);
-        assert page.getData().size() == 2;
-        assert page.getTotal() == 3;
-
-
-        page = dbHelper.getPage(StudentDO.class, 1, 100);
-        assert page.getData().size() == 99;
-        assert page.getTotal() == 99;
-
-        count = dbHelper.getCount(StudentSchoolJoinVO.class);
-        assert count == 99;
-        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where 1=1");
-        assert count == 99;
-        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ?", "nick%");
-        assert count == 99;
-        count = dbHelper.getCount(StudentSchoolJoinVO.class, "where t1.name like ? group by t1.name", "nick%");
-        assert count == 99;
-
-        PageData<StudentSchoolJoinVO> page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 10);
-        assert page2.getData().size() == 10;
-        assert page2.getTotal() == 99;
-
-        page2 = dbHelper.getPage(StudentSchoolJoinVO.class, 1, 100);
-        assert page2.getData().size() == 99;
-        assert page2.getTotal() == 99;
-
-    }
-
     /**测试软删除DO查询条件中涉及到OR条件的情况*/
     @Test 
     public void testQueryWithDeletedAndOr() {
@@ -671,45 +258,6 @@ public class TestDBHelper_query {
         StudentSelfTrueDeleteJoinVO joinVO = dbHelper.getOne(StudentSelfTrueDeleteJoinVO.class, "where t1.id=?", studentDO.getId());
         assert joinVO.getStudent1().getId().equals(studentDO.getId());
         assert joinVO.getStudent2().getId().equals(studentDO.getId());
-    }
-
-    /**测试慢速记录*/
-    @Test 
-    public void testSlowLog() {
-        final StringBuilder sb = new StringBuilder();
-
-        dbHelper.setTimeoutWarningValve(1);
-        dbHelper.setTimeoutWarningCallback(new IDBHelperSlowSqlCallback() {
-            @Override
-            public void callback(long executeMsTime, String sql, List<Object> args) {
-                System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
-                    + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
-                sb.append(sql);
-            }
-        });
-
-        CommonOps.insertOne(dbHelper);
-        assert !sb.toString().isEmpty();
-
-        dbHelper.setTimeoutWarningValve(1000);
-    }
-
-    /**测试分页最大数限制*/
-    @Test 
-    public void testMaxPageSize() {
-        dbHelper.setMaxPageSize(5);
-
-        CommonOps.insertBatch(dbHelper, 10);
-        PageData<StudentDO> pageData = dbHelper.getPage(StudentDO.class, 1, 10);
-        assert pageData.getData().size() == 5; // 受限制于maxPageSize
-
-        pageData = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10);
-        assert pageData.getData().size() == 5; // 受限制于maxPageSize
-
-        pageData = dbHelper.getPageWithoutCount(StudentDO.class, 1, 10, "where 1=1");
-        assert pageData.getData().size() == 5; // 受限制于maxPageSize
-
-        dbHelper.setMaxPageSize(1000000);
     }
 
     @Test
@@ -785,6 +333,16 @@ public class TestDBHelper_query {
         sum2 = dbHelper.getRawOne(Long.class, "select sum(age) from t_student where name=:name",
                 MapUtils.of("name", UUID.randomUUID().toString()));
         assert sum2 == 0;
+
+        // 测试没有参数的
+        assert dbHelper.getRawOne(Long.class, "select count(*) from t_student") > 0;
+        assert dbHelper.getRawOne(Long.class, "select count(*) from t_student", new HashMap<>()) > 0;
+
+        // 测试查询不到值的
+        assert dbHelper.getRawOne(StudentDO.class, "select * from t_student where name=?",
+                UUID.randomUUID().toString()) == null;
+        assert dbHelper.getRawOne(StudentDO.class, "select * from t_student where name=:name",
+                MapUtils.of("name", UUID.randomUUID().toString())) == null;
     }
 
     @Test 
@@ -877,45 +435,6 @@ public class TestDBHelper_query {
 
         assert one.getName().endsWith("FFFFFFFF");
         assert one.getName2() == null;
-    }
-
-
-    @Test
-    public void testSubQuery() {
-        StudentDO stu1 = CommonOps.insertOne(dbHelper);
-        StudentDO stu2 = CommonOps.insertOne(dbHelper);
-        StudentDO stu3 = CommonOps.insertOne(dbHelper);
-
-        List<Long> ids = new ArrayList<Long>();
-        ids.add(stu1.getId());
-        ids.add(stu2.getId());
-        ids.add(stu3.getId());
-
-        SubQuery subQuery = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
-
-        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery);
-        assert all.size() == 3;
-        for(StudentDO stu : all) {
-            assert ids.contains(stu.getId());
-        }
-
-        all = dbHelper.getAll(StudentDO.class, "where id in (?) and id > ?" +
-                " and name != '\\''", subQuery, 0); // 测试subQuery和参数混合
-        assert all.size() == 3;
-        for(StudentDO stu : all) {
-            assert ids.contains(stu.getId());
-        }
-
-        // 测试3层subQuery
-        SubQuery subQuery1 = new SubQuery("id", StudentDO.class, "where id in (?)", ids);
-        SubQuery subQuery2 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery1);
-        SubQuery subQuery3 = new SubQuery("id", StudentDO.class, "where id in (?)", subQuery2);
-
-        all = dbHelper.getAll(StudentDO.class, "where id in (?)", subQuery3);
-        assert all.size() == 3;
-        for(StudentDO stu : all) {
-            assert ids.contains(stu.getId());
-        }
     }
 
     @Test

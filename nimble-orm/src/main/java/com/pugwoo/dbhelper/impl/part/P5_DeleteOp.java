@@ -2,10 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.exception.InvalidParameterException;
-import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
-import com.pugwoo.dbhelper.exception.NotAllowQueryException;
-import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -13,6 +10,7 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,16 +18,38 @@ import java.util.List;
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	
 	/////// 拦截器
-	protected void doInterceptBeforeDelete(List<Object> tList) {
+
+	private <T> void doInterceptBeforeDelete(T t) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return;
+		}
+		List<Object> tList = new ArrayList<>();
+		tList.add(t);
+		doInterceptBeforeDelete(tList);
+	}
+
+	private void doInterceptBeforeDelete(List<Object> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
-				throw new NotAllowQueryException("interceptor class:" + interceptor.getClass());
+				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
 
-	protected void doInterceptAfterDelete(final List<Object> tList, final int rows) {
+	private <T> void doInterceptAfterDelete(final T t, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return;
+		}
+		List<Object> tList = new ArrayList<>();
+		tList.add(t);
+		doInterceptAfterDelete(tList, rows);
+	}
+
+	private void doInterceptAfterDelete(final List<Object> tList, final int rows) {
+		if (InnerCommonUtils.isEmpty(interceptors)) {
+			return; // 内部实现尽量不调用executeAfterCommit
+		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
 				interceptors.get(i).afterDelete(tList, rows);
@@ -40,27 +60,22 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 	}
 
-	///////////
+	/////////// END 拦截器
 
 	@Override
 	public <T> int deleteByKey(T t) throws NullKeyValueException {
 		PreHandleObject.preHandleDelete(t);
-
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 		
-		List<Object> values = new ArrayList<>();
-
-		List<Object> tList = new ArrayList<>();
-		tList.add(t);
-		doInterceptBeforeDelete(tList);
+		doInterceptBeforeDelete(t);
 		
 		String sql;
-		
-		if(softDelete == null) { // 物理删除
+		List<Object> values = new ArrayList<>();
+		if (softDelete == null) { // 物理删除
 			sql = SQLUtils.getDeleteSQL(t, values);
 		} else { // 软删除
 			// 对于软删除，当有拦截器时，可能使用者会修改数据以记录删除时间或删除人信息等，此时要先update该条数据
-			if(interceptors != null && !interceptors.isEmpty()) {
+			if(InnerCommonUtils.isNotEmpty(interceptors)) {
 				updateForDelete(t);
 			}
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
@@ -69,11 +84,28 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 
-		doInterceptAfterDelete(tList, rows);
-		
+		doInterceptAfterDelete(t, rows);
 		return rows;
 	}
-	
+
+	@Override
+	public <T> int deleteByKey(Class<T> clazz, Object keyValue)
+			throws NullKeyValueException, MustProvideConstructorException {
+		if(keyValue == null) {
+			throw new NullKeyValueException();
+		}
+
+		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
+		try {
+			T t = clazz.getDeclaredConstructor().newInstance();
+			DOInfoReader.setValue(keyField, t, keyValue);
+			return deleteByKey(t);
+		} catch (InstantiationException | IllegalAccessException |
+				 NoSuchMethodException | InvocationTargetException e) {
+			throw new MustProvideConstructorException();
+		}
+	}
+
 	@Override
 	public <T> int deleteByKey(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
@@ -149,28 +181,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			return rows;
 		}
 	}
-		
-	@Override
-	public <T> int deleteByKey(Class<T> clazz, Object keyValue) 
-			throws NullKeyValueException, MustProvideConstructorException {
-		if(keyValue == null) {
-			throw new NullKeyValueException();
-		}
-
-		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-		
-		try {
-			T t = clazz.newInstance();
-			DOInfoReader.setValue(keyField, t, keyValue);
-			return deleteByKey(t);
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new MustProvideConstructorException();
-		}
-	}
 	
 	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
-		if(postSql != null) {postSql = postSql.replace('\t', ' ');}
 		if(InnerCommonUtils.isBlank(postSql)) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请明确传入where 1=1
 			throw new InvalidParameterException("delete postSql is blank. it's very dangerous"); 
@@ -202,15 +215,12 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		return false;
 	}
 
-	////////
 	private <T> void updateForDelete(T t) throws NullKeyValueException {
-
 		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(t, values, false, null);
-
 		if (sql != null) {
-			namedJdbcExecuteUpdate(sql, values.toArray());
+			// 没有in (?)，因此用jdbcExecuteUpdate
+			jdbcExecuteUpdate(sql, values.toArray()); // ignore update result
 		}
-
 	}
 }
