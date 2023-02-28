@@ -65,7 +65,9 @@ public class TestDBHelper_delete {
             assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
         }
 
-        dbHelper.executeRaw("truncate table t_student");
+        DBHelper.turnOffSoftDelete(StudentDO.class);
+        dbHelper.delete(StudentDO.class, "where 1=1");
+        DBHelper.turnOnSoftDelete(StudentDO.class);
         CommonOps.insertBatch(dbHelper,random);
         rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
         assert rows == random;
@@ -162,7 +164,9 @@ public class TestDBHelper_delete {
 
     @Test
     public void testTurnOffSoftDelete() {
-        dbHelper.executeRaw("truncate table t_student");
+        DBHelper.turnOffSoftDelete(StudentDO.class);
+        dbHelper.delete(StudentDO.class, "where 1=1");
+        DBHelper.turnOnSoftDelete(StudentDO.class);
 
         int counts1 = 10 + new Random().nextInt(10);
         CommonOps.insertBatchNoReturnId(dbHelper, counts1);

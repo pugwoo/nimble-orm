@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.collect.ListUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -200,6 +201,7 @@ public class Test2Insert {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
         assert dbHelper.insertOrUpdate(null) == 0;
+        assert dbHelper.insertOrUpdate((StudentDO) null) == 0;
         assert dbHelper.insertOrUpdate(studentDO) == 1;
         assert studentDO.getId() != null;
 
@@ -212,6 +214,33 @@ public class Test2Insert {
 
         StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
         assert student2.getName().equals(student3.getName());
+    }
+
+    @Test
+    public void testInsertOrUpdateList() {
+        // 测试插入2个，修改3个的情况
+        List<StudentDO> students = new ArrayList<>();
+
+        StudentDO s1 = new StudentDO();
+        s1.setName(uuidName());
+
+        StudentDO s2 = new StudentDO();
+        s2.setName(uuidName());
+
+        students.add(s1);
+        students.add(s2);
+
+        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 3);
+        ListUtils.forEach(studentDOS, o -> o.setName(uuidName()));
+
+        students.addAll(studentDOS);
+
+        assert dbHelper.insertOrUpdate(students) == 5;
+        assert dbHelper.getByKey(StudentDO.class, s1.getId()).getName().equals(s1.getName());
+        assert dbHelper.getByKey(StudentDO.class, s2.getId()).getName().equals(s2.getName());
+        ListUtils.forEach(studentDOS, o -> {
+            assert dbHelper.getByKey(StudentDO.class, o.getId()).getName().equals(o.getName());
+        });
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,6 +18,10 @@ public class Test7Interceptor_NotAllow {
     @Autowired
     @Qualifier("dbHelperWithNotAllowInterceptor")
     private DBHelper dbHelper;
+
+    @Autowired
+    @Qualifier("dbHelper")
+    private DBHelper normalDBHelper;
 
     @Test
     public void testQuery() {
@@ -36,6 +41,19 @@ public class Test7Interceptor_NotAllow {
             StudentDO studentDO = new StudentDO();
             studentDO.setName("some name");
             dbHelper.insert(studentDO);
+        } catch (NotAllowModifyException e) {
+            isThrow = true;
+        }
+        assert isThrow;
+    }
+
+    @Test
+    public void testDelete() {
+        StudentDO studentDO = CommonOps.insertOne(normalDBHelper);
+
+        boolean isThrow = false;
+        try {
+            dbHelper.delete(StudentDO.class, "where id=?", studentDO.getId());
         } catch (NotAllowModifyException e) {
             isThrow = true;
         }

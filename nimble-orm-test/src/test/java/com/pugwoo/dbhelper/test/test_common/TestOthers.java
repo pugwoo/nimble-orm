@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.test.entity.*;
@@ -366,4 +367,8 @@ public class TestOthers {
 
     }
 
+    @Test
+    public void testDBHelperContextEx() {
+        assert !DBHelperContext.isTurnOffSoftDelete(null); // 测试异常情况
+    }
 }

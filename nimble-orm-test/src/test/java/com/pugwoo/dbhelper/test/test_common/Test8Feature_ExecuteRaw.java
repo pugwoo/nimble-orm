@@ -48,6 +48,10 @@ public class Test8Feature_ExecuteRaw {
         assert student1.getName().equals(params.get("name1"));
         assert student2.getName().equals(params.get("name2"));
 
+        // 测试没有paramMap的插入，插入1个
+        assert dbHelper.executeRaw("insert into t_student(deleted,name) values(0,'nick')",
+                (Map<String, Object>) null) == 1;
+
         // 复制的方式插入2个
         List<String> names = ListUtils.newArrayList(name1, name2);
         rows = dbHelper.executeRaw("insert into t_student(deleted,name) select 0,name from t_student"
