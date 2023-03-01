@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.sql;
 
 import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.enums.DatabaseEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
@@ -281,7 +282,8 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> InsertSQLForBatchDTO getInsertSQLForBatch(Collection<T> list, List<Object> values) {
+	public static <T> InsertSQLForBatchDTO getInsertSQLForBatch(Collection<T> list, List<Object> values,
+																DatabaseEnum databaseType) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
@@ -299,7 +301,7 @@ public class SQLUtils {
 		boolean isFirst = true;
 		for (T t : list) {
 			sql.append(isFirst ? "VALUES" : ",");
-			appendValueForBatchInsert(sql, fields, values, t);
+			appendValueForBatchInsert(sql, fields, values, t, databaseType);
 			if (isFirst) {
 				sqlLogEndIndex = sql.length();
 				paramLogEndIndex = values.size();
@@ -335,7 +337,8 @@ public class SQLUtils {
 		return new ArrayList<>(result);
 	}
 
-	private static void appendValueForBatchInsert(StringBuilder sb, List<Field> fields, List<Object> values, Object obj) {
+	private static void appendValueForBatchInsert(StringBuilder sb, List<Field> fields, List<Object> values,
+												  Object obj, DatabaseEnum databaseType) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
 		}
@@ -356,7 +359,7 @@ public class SQLUtils {
 				value = NimbleOrmJSON.toJson(value);
 			}
 			if (value == null) {
-				sb.append("default");
+				sb.append(SQLDialect.getInsertDefaultValue(databaseType));
 			} else {
 				sb.append("?");
 				values.add(value);

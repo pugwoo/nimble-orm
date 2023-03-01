@@ -131,7 +131,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		List<Object> values = new ArrayList<>();
-		InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values);
+		InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
 		String sql = addComment(sqlDTO.getSql());
 		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
 		logForBatchInsert(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
