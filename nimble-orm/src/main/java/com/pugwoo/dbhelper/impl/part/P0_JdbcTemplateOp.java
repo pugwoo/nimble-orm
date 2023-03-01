@@ -262,7 +262,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		} catch (NullPointerException e) {
 			throw new CannotGetJdbcConnectionException("getConnection() return null");
 		} catch (Exception e) {
-			LOGGER.error("fail to get database type from jdbc url, will return empty string", e);
+			LOGGER.error("fail to get database type from jdbc url", e);
 		}
 		return DatabaseEnum.UNKNOWN;
 	}
