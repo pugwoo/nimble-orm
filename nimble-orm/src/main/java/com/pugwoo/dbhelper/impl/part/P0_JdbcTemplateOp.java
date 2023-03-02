@@ -3,9 +3,11 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.enums.DatabaseEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
@@ -13,16 +15,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,6 +35,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
+	protected DatabaseEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
@@ -62,12 +64,20 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
+			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
 		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
+			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
 		}
 	}
-	
+
+	protected void logForBatchInsert(String sql, int listSize, Object[] values) {
+		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
+		} else {
+			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
+		}
+	}
+
 	protected void logSlow(long cost, String sql, List<Object> keyValues) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
@@ -158,8 +168,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 	
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+		if (jdbcTemplate == null) {
+			return;
+		}
 		this.jdbcTemplate = jdbcTemplate;
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+		this.databaseType = getDatabaseType(jdbcTemplate);
 	}
 
 	/**
@@ -247,4 +261,18 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return sql;
 	}
 
+	private DatabaseEnum getDatabaseType(JdbcTemplate jdbcTemplate) {
+		try {
+			String url = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection().getMetaData().getURL();
+			String type = url.split(":")[1];
+			return DatabaseEnum.getByJdbcProtocol(type);
+		} catch (SQLException e) {
+			throw new CannotGetJdbcConnectionException("", e);
+		} catch (NullPointerException e) {
+			throw new CannotGetJdbcConnectionException("getConnection() return null");
+		} catch (Exception e) {
+			LOGGER.error("fail to get database type from jdbc url", e);
+		}
+		return DatabaseEnum.UNKNOWN;
+	}
 }
