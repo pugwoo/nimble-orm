@@ -1,3 +1,4 @@
+2023年3月2日
 v1.4.4 - [enhance] clickhouse22.2以下版本不支持insert into default，因此改成null，支持全版本clickhouse
        - [enhance] clickhouse的批量插入使用jdbcTemplate.batchUpdate的方式进行，insert多values性能不佳
 
