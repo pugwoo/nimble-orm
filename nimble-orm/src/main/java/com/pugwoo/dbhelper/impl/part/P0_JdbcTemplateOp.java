@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.enums.DatabaseEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
@@ -63,12 +64,20 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
+			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
 		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, values);
+			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
 		}
 	}
-	
+
+	protected void logForBatchInsert(String sql, int listSize, Object[] values) {
+		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
+		} else {
+			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
+		}
+	}
+
 	protected void logSlow(long cost, String sql, List<Object> keyValues) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);

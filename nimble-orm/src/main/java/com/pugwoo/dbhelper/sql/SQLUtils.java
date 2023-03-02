@@ -312,6 +312,44 @@ public class SQLUtils {
 		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
 	}
 
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
+	 *
+	 * @param list 要插入的数据，非空
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static <T> String getInsertSQLForBatchForJDBCTemplate(Collection<T> list, List<Object[]> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+
+		// 获得元素的class，list非空，因此clazz和t肯定有值
+		Class<?> clazz = list.iterator().next().getClass();
+		List<Field> fields = DOInfoReader.getColumns(clazz);
+
+		// 根据list的值，只留下有值的field和非computed的列
+		fields = filterFieldWithValue(fields, list);
+
+		appendTableName(sql, clazz);
+		sql.append(" (");
+
+		boolean isFirst = true;
+		for (T t : list) {
+			List<Object> _values = new ArrayList<>();
+			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
+			if (isFirst) {
+				sql.append(insertSql);
+				sql.append(") VALUES ");
+				String dotSql = "(" + join("?", _values.size(), ",") + ")";
+				sql.append(dotSql);
+			}
+			isFirst = false;
+			values.add(_values.toArray());
+		}
+
+		return sql.toString();
+	}
+
 	private static <T> List<Field> filterFieldWithValue(List<Field> fields, Collection<T> list) {
 		fields = InnerCommonUtils.filter(fields, o -> {
 			Column column = o.getAnnotation(Column.class);

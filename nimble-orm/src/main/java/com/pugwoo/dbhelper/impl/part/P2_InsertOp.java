@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.enums.DatabaseEnum;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
@@ -130,14 +131,37 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsertList(list);
 		}
 
-		List<Object> values = new ArrayList<>();
-		InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
-		String sql = addComment(sqlDTO.getSql());
-		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
-		logForBatchInsert(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
+		long start = 0;
+		int total = 0;
+		String sqlForLog = "";
+		if (databaseType == DatabaseEnum.CLICKHOUSE) { // clickhouse因为驱动原因，只能使用jdbc原生的批量方式
+			List<Object[]> values = new ArrayList<>();
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
+			sql = addComment(sql);
+			logForBatchInsert(sql, values.size(), values.isEmpty() ? null : values.get(0));
 
-		long start = System.currentTimeMillis();
-		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			start = System.currentTimeMillis();
+			int[] rows = jdbcTemplate.batchUpdate(sql, values);
+			for (int row : rows) {
+				int result = row;
+				if (row == -2) {
+					result = 1; // -2 means Statement.SUCCESS_NO_INFO
+				} else if (row < 0) {
+					result = 0; // not success
+				}
+				total += result;
+			}
+		} else {
+			List<Object> values = new ArrayList<>();
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
+			String sql = addComment(sqlDTO.getSql());
+			sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
+			logForBatchInsert(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
+
+			start = System.currentTimeMillis();
+			total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		}
+
 		long cost = System.currentTimeMillis() - start;
 		logSlowForBatch(cost, sqlForLog, list.size());
 
