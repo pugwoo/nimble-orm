@@ -25,7 +25,8 @@ public enum DatabaseEnum {
     public static DatabaseEnum getByJdbcProtocol(String jdbcProtocol) {
         if ("mysql".equalsIgnoreCase(jdbcProtocol)) {
             return MYSQL;
-        } else if ("clickhouse".equalsIgnoreCase(jdbcProtocol)) {
+        } else if ("clickhouse".equalsIgnoreCase(jdbcProtocol)
+                || "ch".equalsIgnoreCase(jdbcProtocol)) {
             return CLICKHOUSE;
         }
         return UNKNOWN;
