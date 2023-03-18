@@ -15,14 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,7 +33,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
-	protected DatabaseEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到
+	private DatabaseEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
@@ -266,13 +264,16 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			String url = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection().getMetaData().getURL();
 			String type = url.split(":")[1];
 			return DatabaseEnum.getByJdbcProtocol(type);
-		} catch (SQLException e) {
-			throw new CannotGetJdbcConnectionException("", e);
-		} catch (NullPointerException e) {
-			throw new CannotGetJdbcConnectionException("getConnection() return null");
 		} catch (Exception e) {
-			LOGGER.error("fail to get database type from jdbc url", e);
+			LOGGER.error("fail to get database type from jdbc url, jdbcTemplate:{}, will try later", jdbcTemplate, e);
+			return null;
 		}
-		return DatabaseEnum.UNKNOWN;
+	}
+
+	protected DatabaseEnum getDatabaseType() {
+		if (databaseType == null) {
+			databaseType = getDatabaseType(jdbcTemplate); // 尝试再次获取
+		}
+		return databaseType;
 	}
 }

@@ -134,6 +134,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long start = 0;
 		int total = 0;
 		String sqlForLog = "";
+		DatabaseEnum databaseType = getDatabaseType();
 		if (databaseType == DatabaseEnum.CLICKHOUSE) { // clickhouse因为驱动原因，只能使用jdbc原生的批量方式
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
