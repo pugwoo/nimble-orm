@@ -349,6 +349,21 @@ public class TestOthers {
     }
 
     @Test
+    public void testWhereSQLAppendAnd() {
+        WhereSQL whereSQL = new WhereSQL();
+        whereSQL.and("name='nick'");
+        whereSQL.and("age=18");
+        System.out.println(whereSQL.getSQLForWhereAppend());
+        assert whereSQL.getSQLForWhereAppend().equals(" AND name='nick' AND age=18 ");
+
+        whereSQL = new WhereSQL();
+        whereSQL.or("name='nick'");
+        whereSQL.or("age=18");
+        System.out.println(whereSQL.getSQLForWhereAppend());
+        assert whereSQL.getSQLForWhereAppend().equals(" AND (name='nick' OR age=18) ");
+    }
+
+    @Test
     public void testTypeAutoCast() {
         assert TypeAutoCast.cast(1, Integer.class) == 1;
         assert TypeAutoCast.cast(1, Long.class) == 1L;

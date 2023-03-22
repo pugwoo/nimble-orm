@@ -78,11 +78,40 @@ public class WhereSQL {
         doAddParam(param);
     }
 
+    /**
+     * 获得从where开始的SQL子句
+     */
     public String getSQL() {
         StringBuilder sql = new StringBuilder();
         if (InnerCommonUtils.isNotBlank(condition)) {
             sql.append(" WHERE ").append(condition);
         }
+        getSQLLeft(sql);
+
+        return sql.toString();
+    }
+
+    /**
+     * 获得用于where开始的SQL子句，用于追加到一个已有的where sql中，所以如果有where时，会以and开头，并且where条件会自动加上括号
+     */
+    public String getSQLForWhereAppend() {
+        StringBuilder sql = new StringBuilder();
+        if (InnerCommonUtils.isNotBlank(condition)) {
+            sql.append(" AND ");
+            if (isOrExpression) {
+                sql.append("(");
+            }
+            sql.append(condition);
+            if (isOrExpression) {
+                sql.append(")");
+            }
+        }
+        getSQLLeft(sql);
+
+        return sql.toString();
+    }
+
+    private void getSQLLeft(StringBuilder sql) {
         if (InnerCommonUtils.isNotEmpty(groupBy)) {
             sql.append(" GROUP BY ").append(String.join(",", groupBy));
         }
@@ -101,9 +130,12 @@ public class WhereSQL {
             sql.append(limit);
         }
 
-        return sql.toString();
+        sql.append(" "); // 留一个空格，减少和后续sql直接拼接的错误
     }
 
+    /**
+     * 获得参数列表
+     */
     public Object[] getParams() {
         List<Object> result = new ArrayList<>();
 
