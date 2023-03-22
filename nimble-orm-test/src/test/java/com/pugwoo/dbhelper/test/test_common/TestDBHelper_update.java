@@ -34,7 +34,7 @@ public class TestDBHelper_update {
         db.setAge(3);
         dbHelper.update(db);
         db.setAge(null);
-        dbHelper.updateWithNull(db, "where age=?", 3);
+        assert dbHelper.updateWithNull(db, "where age=?", 3) == 1;
 
         db = dbHelper.getByKey(StudentDO.class, db.getId());
         assert db.getAge() == null;
