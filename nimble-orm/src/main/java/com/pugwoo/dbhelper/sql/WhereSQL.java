@@ -92,6 +92,14 @@ public class WhereSQL {
     }
 
     /**
+     * 等价于getSQL()
+     */
+    @Override
+    public String toString() {
+        return getSQL();
+    }
+
+    /**
      * 获得用于where开始的SQL子句，用于追加到一个已有的where sql中，所以如果有where时，会以and开头，并且where条件会自动加上括号
      */
     public String getSQLForWhereAppend() {
