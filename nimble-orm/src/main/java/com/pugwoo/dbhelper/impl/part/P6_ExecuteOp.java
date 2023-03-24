@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -73,6 +73,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return _update(t, true, true, postSql, args);
 	}
 
+
+	@Override
+	public <T> int updateBatchByCaseWhen(Collection<T> list) throws NullKeyValueException {
+		return 0;
+	}
+
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {

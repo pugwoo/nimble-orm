@@ -529,6 +529,29 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
 	 */
 	<T> int update(Collection<T> list) throws NullKeyValueException;
+
+	/**
+	 * 批量更新数据库记录，返回是否更新成功:
+	 *
+	 *  UPDATE TableName
+	 * 	SET
+	 * 	column1 = case ID
+	 * 		When 1 THEN value11
+	 * 		When 3 THEN value22
+	 * 	End,
+	 * 	column2 = case ID
+	 * 		When 2 THEN ' New Title 2 '
+	 * 		When 3 THEN ' New Title 3 '
+	 * 	End
+	 * WHERE ID in (1,2,3)；
+	 *
+	 * 【只更新非null字段】 因此不需要更新的字段最好设置为 null
+	 * @param list 要更新的对象列表
+	 * @return 返回是否更新成功条数， 这里只有1条sql
+	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
+	 */
+	<T> int updateBatchByCaseWhen(Collection<T> list) throws NullKeyValueException;
+
 	
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数。
