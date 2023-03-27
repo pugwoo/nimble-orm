@@ -75,6 +75,18 @@ public class TestDBHelper_update {
     }
 
     @Test
+    public void testUpdateBatch() {
+        List<StudentDO> list = CommonOps.insertBatch(dbHelper, 11);
+
+        for (StudentDO studentDO : list) {
+            studentDO.setName(studentDO.getName() + "x");
+        }
+
+        int rows = dbHelper.update(list);
+        assert rows == list.size();
+    }
+
+    @Test
     public void testUpdateCustom() {
         StudentDO db = CommonOps.insertOne(dbHelper);
 

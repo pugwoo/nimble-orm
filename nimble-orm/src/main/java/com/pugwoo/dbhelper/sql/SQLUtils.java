@@ -356,23 +356,16 @@ public class SQLUtils {
 			return column != null && InnerCommonUtils.isBlank(column.computed());
 		});
 
-		int totalSize = fields.size();
-		Set<Field> result = new HashSet<>();
-		int current = 0;
-		for (T t : list) {
-			for (Field field : fields) {
+		List<Field> result = new ArrayList<>();
+		for (Field field : fields) {
+			for (T t : list) {
 				if (DOInfoReader.getValue(field, t) != null) {
-					if (!result.contains(field)) {
-						result.add(field);
-						current++;
-						if (current == totalSize) {
-							return new ArrayList<>(result);
-						}
-					}
+					result.add(field);
+					break;
 				}
 			}
 		}
-		return new ArrayList<>(result);
+		return result;
 	}
 
 	private static void appendValueForBatchInsert(StringBuilder sb, List<Field> fields, List<Object> values,
@@ -404,6 +397,124 @@ public class SQLUtils {
 			}
 		}
 		sb.append(")");
+	}
+
+	/**
+	 * 生成批量update的sql
+	 * @param list 要更新的对象
+	 * @param values sql中对应的参数
+	 * @param casVersionColumn cas版本号列，如果为null则表示没有
+	 * @param keyColumn 主键列，目前的主键列只有一列，在外层调用时限制了
+	 * @param notKeyColumns 非主键列
+	 * @return 批量update的sql
+	 */
+	public static <T> String getBatchUpdateSQL(Collection<T> list, List<Object> values, Field casVersionColumn,
+											   Field keyColumn, List<Field> notKeyColumns, Class<?> clazz) {
+
+		// 1. 找出所有的主键的值，如果值为null，这抛出异常
+		List<Object> keys = new ArrayList<>(list.size());
+		for (T t : list) {
+			Object key = DOInfoReader.getValue(keyColumn, t);
+			if (key == null) {
+				throw new NullKeyValueException("class:" + t.getClass().getName() + ",values:" + NimbleOrmJSON.toJson(t));
+			}
+			keys.add(key);
+		}
+
+		// 2. 找出所有非null的字段，对于list中已经全是null的字段，不参与update
+		List<Field> notKeyNotNullFields = new ArrayList<>();
+		for (Field field : notKeyColumns) {
+			for (T t : list) {
+				if (DOInfoReader.getValue(field, t) != null) {
+					notKeyNotNullFields.add(field);
+					break;
+				}
+			}
+		}
+
+		StringBuilder sql = new StringBuilder();
+
+		// 3. 生成update语句
+		sql.append("UPDATE ").append(getTableName(clazz)).append(" SET ");
+		boolean isFirst = true;
+		for (Field field : notKeyNotNullFields) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sql.append(",");
+			}
+
+			sql.append(getColumnName(field)).append("=(CASE");
+			for (T t : list) {
+				if (casVersionColumn == null) { // 没有CAS的场景
+					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? THEN ");
+					values.add(DOInfoReader.getValue(keyColumn, t));
+
+					Object value = DOInfoReader.getValue(field, t);
+					if (value == null) {
+						sql.append(getColumnName(field));
+					} else {
+						if (field.getAnnotation(Column.class).isJSON()) {
+							value = NimbleOrmJSON.toJson(value);
+						}
+						sql.append("?");
+						values.add(value);
+					}
+				} else {
+					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
+							.append(getColumnName(casVersionColumn)).append("=? THEN ");
+					values.add(DOInfoReader.getValue(keyColumn, t));
+					values.add(DOInfoReader.getValue(casVersionColumn, t));
+
+					Object value = DOInfoReader.getValue(field, t);
+					if (value == null) {
+						sql.append(getColumnName(field));
+					} else {
+						if (field.getAnnotation(Column.class).isJSON()) {
+							value = NimbleOrmJSON.toJson(value);
+						}
+						sql.append("?");
+						values.add(value);
+					}
+
+					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
+							.append(getColumnName(casVersionColumn)).append("!=? THEN ");
+					values.add(DOInfoReader.getValue(keyColumn, t));
+					values.add(DOInfoReader.getValue(casVersionColumn, t));
+					sql.append(getColumnName(keyColumn));
+				}
+			}
+			sql.append(" END)");
+		}
+
+		// 最后再追加CAS列的更新
+		if (casVersionColumn != null) {
+			if (!isFirst) {
+				sql.append(",");
+			} else {
+				isFirst = false;
+			}
+			sql.append(getColumnName(casVersionColumn)).append("=(CASE");
+			for (T t : list) {
+				sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
+						.append(getColumnName(casVersionColumn)).append("=? THEN ")
+						.append(getColumnName(casVersionColumn)).append("+1");
+				values.add(DOInfoReader.getValue(keyColumn, t));
+				values.add(DOInfoReader.getValue(casVersionColumn, t));
+				sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
+						.append(getColumnName(casVersionColumn)).append("!=? THEN ")
+						.append(getColumnName(casVersionColumn));
+
+			}
+			sql.append(" END)");
+		}
+
+		String where = "WHERE " + getColumnName(keyColumn) + " IN (?)";
+		values.add(keys);
+
+		sql.append(autoSetSoftDeleted(where, clazz));
+
+		return sql.toString();
 	}
 
 	/**

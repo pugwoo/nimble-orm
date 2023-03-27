@@ -521,9 +521,12 @@ public interface DBHelper {
 	<T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args);
 
 	/**
-	 * 更新数据库记录，返回数据库实际修改条数。
-	 * 【注】批量更新的方法并不会比程序中循环调用int update(T t)更快
-	 * 【只更新非null字段】
+	 * 批量更新数据库记录，返回数据库实际修改条数。【只更新非null字段，需要更新null字段请使用updateWithNull方法】<br>
+	 * <br>
+	 * 当符合以下条件时，更新数据将转换成真正的批量更新，性能可提升100倍左右：<br>
+	 * 1) list中所有的元素都是相同的类<br>
+	 * 2) list中所有的元素都有且只有一个主键，且主键有值（多主键场景很少，后续有时间再支持多主键）<br>
+	 *
 	 * @param list 要更新的对象列表
 	 * @return 实际修改条数
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
