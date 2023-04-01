@@ -406,7 +406,7 @@ public class SQLUtils {
 	 * @param casVersionColumn cas版本号列，如果为null则表示没有
 	 * @param keyColumn 主键列，目前的主键列只有一列，在外层调用时限制了
 	 * @param notKeyColumns 非主键列
-	 * @return 批量update的sql
+	 * @return 批量update的sql；如果返回空字符串表示不需要更新，且应该当成功处理
 	 */
 	public static <T> String getBatchUpdateSQL(Collection<T> list, List<Object> values, Field casVersionColumn,
 											   Field keyColumn, List<Field> notKeyColumns, Class<?> clazz) {
@@ -430,6 +430,9 @@ public class SQLUtils {
 					break;
 				}
 			}
+		}
+		if (casVersionColumn == null && notKeyNotNullFields.isEmpty()) {
+			return ""; // 没有需要更新的列
 		}
 
 		StringBuilder sql = new StringBuilder();
@@ -491,8 +494,6 @@ public class SQLUtils {
 		if (casVersionColumn != null) {
 			if (!isFirst) {
 				sql.append(",");
-			} else {
-				isFirst = false;
 			}
 			sql.append(getColumnName(casVersionColumn)).append("=(CASE");
 			for (T t : list) {
