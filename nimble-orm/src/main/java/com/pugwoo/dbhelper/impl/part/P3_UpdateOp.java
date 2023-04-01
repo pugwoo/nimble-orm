@@ -122,7 +122,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			String batchUpdateSQL = SQLUtils.getBatchUpdateSQL(list, params, casVersionColumn,
 					keyColumns.get(0), notKeyColumns, clazz);
 			if (InnerCommonUtils.isBlank(batchUpdateSQL)) {
-				return list.size(); // not need to update, so treat as success
+				return 0; // not need to update, return actually update rows
 			}
 
 			rows = namedJdbcExecuteUpdate(batchUpdateSQL, params.toArray());
