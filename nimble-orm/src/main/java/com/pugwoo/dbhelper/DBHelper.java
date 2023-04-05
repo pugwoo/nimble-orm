@@ -561,6 +561,7 @@ public interface DBHelper {
 	 * @return 实际删除的条数
 	 * @throws NullKeyValueException 当keyValue为null时，抛出异常
 	 */
+	@Deprecated
 	<T> int deleteByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
 	    MustProvideConstructorException;
 
