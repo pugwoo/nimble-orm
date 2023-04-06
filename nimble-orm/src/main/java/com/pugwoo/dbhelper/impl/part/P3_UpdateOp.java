@@ -191,7 +191,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return; // 没有casVersion列，不处理
 		}
 		if (list.size() != rows) {
-			throw new CasVersionNotMatchException("update fail for class:"
+			throw new CasVersionNotMatchException(rows, "update fail for class:"
 					+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(list));
 		} else {
 			list.forEach(o -> postHandleCasVersion(o, casVersionColumn));

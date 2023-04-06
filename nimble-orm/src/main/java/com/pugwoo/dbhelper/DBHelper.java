@@ -527,6 +527,8 @@ public interface DBHelper {
 	 * 1) list中所有的元素都是相同的类<br>
 	 * 2) list中所有的元素都有且只有一个主键，且主键有值（多主键场景很少，后续有时间再支持多主键）<br>
 	 *
+	 * 特别说明：如果有cas版本，会抛出CasVersionNotMatchException异常（可以从该异常中获取实际的修改行数），需要自行注解@Transactional事务进行回滚，否则修改的数据不会回滚。
+	 *
 	 * @param list 要更新的对象列表
 	 * @return 实际修改条数
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出

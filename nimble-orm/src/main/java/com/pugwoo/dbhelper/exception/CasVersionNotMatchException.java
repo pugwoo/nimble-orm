@@ -7,6 +7,8 @@ public class CasVersionNotMatchException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
+    private int affectedRows;
+
     public CasVersionNotMatchException() {
     }
 
@@ -14,7 +16,21 @@ public class CasVersionNotMatchException extends RuntimeException {
         super(errMsg);
     }
 
+    public CasVersionNotMatchException(int affectedRows, String errMsg) {
+        super(errMsg);
+        this.affectedRows = affectedRows;
+    }
+
+
     public CasVersionNotMatchException(Throwable e) {
         super(e);
+    }
+
+    public int getAffectedRows() {
+        return affectedRows;
+    }
+
+    public void setAffectedRows(int affectedRows) {
+        this.affectedRows = affectedRows;
     }
 }
