@@ -484,7 +484,7 @@ public class SQLUtils {
 							.append(getColumnName(casVersionColumn)).append("!=? THEN ");
 					values.add(DOInfoReader.getValue(keyColumn, t));
 					values.add(DOInfoReader.getValue(casVersionColumn, t));
-					sql.append(getColumnName(keyColumn));
+					sql.append(getColumnName(field));
 				}
 			}
 			sql.append(" END)");
@@ -505,13 +505,27 @@ public class SQLUtils {
 				sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
 						.append(getColumnName(casVersionColumn)).append("!=? THEN ")
 						.append(getColumnName(casVersionColumn));
-
+				values.add(DOInfoReader.getValue(keyColumn, t));
+				values.add(DOInfoReader.getValue(casVersionColumn, t));
 			}
 			sql.append(" END)");
 		}
 
 		String where = "WHERE " + getColumnName(keyColumn) + " IN (?)";
 		values.add(keys);
+
+		// 对于casVersion，要将cas版本加入到where子句中，因为返回的affected rows应该是where match到的行数，而不是实际修改的行数
+		if (casVersionColumn != null) {
+			where += " AND (" + getColumnName(keyColumn) + "," + getColumnName(casVersionColumn) + ") IN (?)";
+			List<Object[]> idAndCas = new ArrayList();
+			for (T t : list) {
+				idAndCas.add(new Object[]{
+						DOInfoReader.getValue(keyColumn, t),
+						DOInfoReader.getValue(casVersionColumn, t)
+				});
+			}
+			values.add(idAndCas);
+		}
 
 		sql.append(autoSetSoftDeleted(where, clazz));
 
