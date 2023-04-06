@@ -168,12 +168,50 @@ public class Test2Update_Batch {
 
         list = dbHelper.getAll(CasVersionDO.class, "where name=?", name + "xy");
         assert list.size() == 5;
+
+        // 全部再查回来一次
+        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        assert list.size() == 7;
+
+        // 故意改掉所有的casversion
+        for (CasVersionDO cas : list) {
+            cas.setVersion(cas.getVersion() + 1);
+            cas.setName(cas.getName() + "z");
+        }
+
+        isThrow = false;
+        try {
+            dbHelper.update(list);
+        } catch (CasVersionNotMatchException e) {
+            isThrow = true;
+            assert e.getAffectedRows() == 0;
+        }
+        assert isThrow;
+
+        // 再查询回来验证
+        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        assert list.size() == 7;
+        for (CasVersionDO cas : list) {
+            assert !cas.getName().endsWith("z"); // 期望没有修改
+        }
+
+        // 测试update时，有null值的情况
+        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        assert list.size() == 7;
+        for (CasVersionDO cas : list) {
+            cas.setName(cas.getName() + "z");
+        }
+        list.get(0).setName(null);
+        list.get(5).setName(null);
+        list.get(6).setName(null); // 3个设置name为null，即不修改
+        assert dbHelper.update(list) == 7;
+
+        // 再查询回来验证
+        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        assert list.size() == 7;
+        assert ListUtils.filter(list, o -> o.getName().endsWith("z")).size() == 4; // 4个被修改了
+        assert ListUtils.filter(list, o -> !o.getName().endsWith("z")).size() == 3; // 3个没有被修改
+
     }
-
-    // 批量update有casVersion，且update有null值的情况
-
-    // 批量update casVersion部分不匹配的情况，看看是否修改无变化
-
-    // 批量update casVersion全部不匹配的情况，看看是否修改无变化
 
 }
