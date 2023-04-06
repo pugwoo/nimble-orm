@@ -1,6 +1,8 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.test.entity.CasVersionDO;
 import com.pugwoo.dbhelper.test.entity.IdableSoftDeleteBaseDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -10,9 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 测试批量更新
@@ -105,8 +105,63 @@ public class Test2Update_Batch {
         }
     }
 
-
     // 批量update有casVersion的情况
+    @Test
+    public void testCasVersionUpdate() {
+        String name = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+
+        List<CasVersionDO> list = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            CasVersionDO cas = new CasVersionDO();
+            cas.setName(name);
+            list.add(cas);
+        }
+
+        int rows = dbHelper.insertBatchWithoutReturnId(list);
+        assert rows == 3;
+        for (CasVersionDO cas : list) {
+            assert cas.getVersion() == 1;
+        }
+
+        // 查询回来
+        list = dbHelper.getAll(CasVersionDO.class, "where name=?", name);
+        assert list.size() == 3;
+        for (CasVersionDO cas : list) {
+            assert cas.getVersion() == 1;
+        }
+
+        // 再修改一次
+        for (CasVersionDO cas : list) {
+            cas.setName(cas.getName() + "x");
+        }
+        assert dbHelper.update(list) == 3;
+        for (CasVersionDO cas : list) {
+            assert cas.getVersion() == 2;
+        }
+
+        // 再查询回来
+        list = dbHelper.getAll(CasVersionDO.class, "where name=?", name + "x");
+        assert list.size() == 3;
+        for (CasVersionDO cas : list) {
+            assert cas.getVersion() == 2;
+            assert (name + "x").equals(cas.getName());
+        }
+
+        // 故意改错1条casversion
+        list.get(1).setVersion(1);
+        for (CasVersionDO cas : list) {
+            cas.setName(cas.getName() + "y");
+        }
+
+        boolean isThrow = false;
+        try {
+            dbHelper.update(list);
+        } catch (CasVersionNotMatchException e) {
+            isThrow = true;
+            // 此时业务方可以选择回滚
+        }
+        assert isThrow;
+    }
 
     // 批量update有casVersion，且update有null值的情况
 
