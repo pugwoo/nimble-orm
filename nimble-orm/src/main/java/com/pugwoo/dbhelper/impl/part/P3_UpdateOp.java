@@ -81,6 +81,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
+		if (list.size() == 1) { // 只有一个元素，直接调用update(T t)
+			return update(list.iterator().next());
+		}
 
 		List<Object> tmpList = new ArrayList<>(list); // TODO 待优化，减少一次list的复制
 		doInterceptBeforeUpdate(tmpList, null, null);
