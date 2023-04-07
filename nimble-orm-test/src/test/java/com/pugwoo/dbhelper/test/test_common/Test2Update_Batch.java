@@ -4,12 +4,11 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
-import com.pugwoo.dbhelper.test.entity.CasVersionDO;
-import com.pugwoo.dbhelper.test.entity.IdableSoftDeleteBaseDO;
-import com.pugwoo.dbhelper.test.entity.SchoolDO;
-import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
+import com.pugwoo.wooutils.collect.MapUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -219,6 +218,70 @@ public class Test2Update_Batch {
     }
 
     @Test
+    public void testUpdateJSON() {
+        // 正常的json do
+        {
+            List<JsonDO> list = new ArrayList<>();
+            for (int i = 0; i < 4; i++) {
+                JsonDO jsonDO = new JsonDO();
+                jsonDO.setJson2(MapUtils.of("one", UUID.randomUUID().toString(),
+                        "two", UUID.randomUUID().toString()));
+                list.add(jsonDO);
+            }
+            assert dbHelper.insert(list) == 4;
+
+            // 更新
+            for (JsonDO jsonDO : list) {
+                jsonDO.setJson2(MapUtils.of("one", UUID.randomUUID().toString(),
+                        "two", UUID.randomUUID().toString(),
+                        "three", UUID.randomUUID().toString()));
+            }
+            assert dbHelper.update(list) == 4;
+
+            // 查询回来验证
+            for (JsonDO jsonDO : list) {
+                JsonDO one = dbHelper.getOne(JsonDO.class, "where id=?", jsonDO.getId());
+                assert one.getJson2().size() == 3;
+                assert one.getJson2().get("one").equals(jsonDO.getJson2().get("one"));
+                assert one.getJson2().get("two").equals(jsonDO.getJson2().get("two"));
+                assert one.getJson2().get("three").equals(jsonDO.getJson2().get("three"));
+            }
+        }
+
+        // 测试带cas+json的DO
+        {
+            List<CasVersionWithJsonDO> list2 = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                CasVersionWithJsonDO jsonDO = new CasVersionWithJsonDO();
+                jsonDO.setName(MapUtils.of("a",
+                        UUID.randomUUID().toString().replace("-","").substring(0, 16)));
+                list2.add(jsonDO);
+            }
+            assert dbHelper.insert(list2) == 3;
+
+            // 检查cas版本
+            for (CasVersionWithJsonDO jsonDO : list2) {
+                assert jsonDO.getVersion() == 1;
+            }
+
+            // 更新
+            for (CasVersionWithJsonDO jsonDO : list2) {
+                jsonDO.setName(MapUtils.of("a",
+                        UUID.randomUUID().toString().replace("-","").substring(0, 16)));
+            }
+            assert dbHelper.update(list2) == 3;
+
+            // 查询回来验证
+            for (CasVersionWithJsonDO jsonDO : list2) {
+                CasVersionWithJsonDO one = dbHelper.getOne(CasVersionWithJsonDO.class, "where id=?", jsonDO.getId());
+                assert one.getName().size() == 1;
+                assert one.getName().get("a").equals(jsonDO.getName().get("a"));
+                assert one.getVersion().equals(2);
+            }
+        }
+    }
+
+    @Test
     public void testUpdateDifferentDO() {
         List<Object> list = new ArrayList<>();
 
@@ -285,6 +348,16 @@ public class Test2Update_Batch {
             list3.add(d);
         }
         assert dbHelper.update(list3) == 0; // 所有非主键列都是null
+
+        // 测试update提供了null的主键
+        studentDOS.get(0).setId(null);
+        isThrow = false;
+        try {
+            dbHelper.update(studentDOS);
+        } catch (NullKeyValueException e) {
+            isThrow = true;
+        }
+        assert isThrow;
     }
 
     @Data
@@ -316,6 +389,21 @@ public class Test2Update_Batch {
 
         @Column(value = "school_id", casVersion = true)
         private Long schoolId;
+
+    }
+
+    @Data
+    @Table("t_cas_version")
+    public static class CasVersionWithJsonDO {
+
+        @Column(value = "id", isKey = true, isAutoIncrement = true)
+        private Integer id;
+
+        @Column(value = "name", isJSON = true)
+        private Map<String, Object> name;
+
+        @Column(value = "version", casVersion = true)
+        private Integer version;
 
     }
 }
