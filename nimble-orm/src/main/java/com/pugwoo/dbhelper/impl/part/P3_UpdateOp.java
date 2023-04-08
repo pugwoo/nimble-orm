@@ -122,13 +122,14 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 
 			List<Object> params = new ArrayList<>();
-			String batchUpdateSQL = SQLUtils.getBatchUpdateSQL(list, params, casVersionColumn,
+			SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(list, params, casVersionColumn,
 					keyColumns.get(0), notKeyColumns, clazz);
-			if (InnerCommonUtils.isBlank(batchUpdateSQL)) {
+			if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
 				return 0; // not need to update, return actually update rows
 			}
 
-			rows = namedJdbcExecuteUpdate(batchUpdateSQL, params.toArray());
+			rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
+					batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
 
 			postHandleCasVersion(list, rows, casVersionColumn, clazz);
 

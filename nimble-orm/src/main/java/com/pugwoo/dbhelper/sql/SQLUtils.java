@@ -399,6 +399,36 @@ public class SQLUtils {
 		sb.append(")");
 	}
 
+	public static class BatchUpdateResultDTO {
+		private String sql;
+		private String logSql;
+		private List<Object> logParams;
+
+		public String getSql() {
+			return sql;
+		}
+
+		public void setSql(String sql) {
+			this.sql = sql;
+		}
+
+		public String getLogSql() {
+			return logSql;
+		}
+
+		public void setLogSql(String logSql) {
+			this.logSql = logSql;
+		}
+
+		public List<Object> getLogParams() {
+			return logParams;
+		}
+
+		public void setLogParams(List<Object> logParams) {
+			this.logParams = logParams;
+		}
+	}
+
 	/**
 	 * 生成批量update的sql
 	 * @param list 要更新的对象
@@ -408,8 +438,9 @@ public class SQLUtils {
 	 * @param notKeyColumns 非主键列
 	 * @return 批量update的sql；如果返回空字符串表示不需要更新，且应该当成功处理
 	 */
-	public static <T> String getBatchUpdateSQL(Collection<T> list, List<Object> values, Field casVersionColumn,
-											   Field keyColumn, List<Field> notKeyColumns, Class<?> clazz) {
+	public static <T> BatchUpdateResultDTO getBatchUpdateSQL(
+			Collection<T> list, List<Object> values, Field casVersionColumn,
+			Field keyColumn, List<Field> notKeyColumns, Class<?> clazz) {
 
 		// 1. 找出所有的主键的值，如果值为null，这抛出异常
 		List<Object> keys = new ArrayList<>(list.size());
@@ -432,23 +463,42 @@ public class SQLUtils {
 			}
 		}
 		if (casVersionColumn == null && notKeyNotNullFields.isEmpty()) {
-			return ""; // 没有需要更新的列
+			BatchUpdateResultDTO dto = new BatchUpdateResultDTO();
+			dto.setSql("");
+			return dto; // 没有需要更新的列
 		}
 
 		StringBuilder sql = new StringBuilder();
+		StringBuilder logSql = new StringBuilder();
+		List<Object> logParams = new ArrayList<>();
 
 		// 3. 生成update语句
 		sql.append("UPDATE ").append(getTableName(clazz)).append(" SET ");
+		logSql.append(sql);
+
 		boolean isFirst = true;
 		for (Field field : notKeyNotNullFields) {
 			if (isFirst) {
 				isFirst = false;
 			} else {
 				sql.append(",");
+				logSql.append(",");
 			}
 
 			sql.append(getColumnName(field)).append("=(CASE");
+			logSql.append(getColumnName(field)).append("=(CASE");
+
+			boolean isFirstT = true;
 			for (T t : list) {
+				StringBuilder sqlOld = null;
+				List<Object> valuesOld = null;
+				if (isFirstT) {
+					sqlOld = sql;
+					valuesOld = values;
+					sql = new StringBuilder();
+					values = new ArrayList<>();
+				}
+
 				if (casVersionColumn == null) { // 没有CAS的场景
 					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? THEN ");
 					values.add(DOInfoReader.getValue(keyColumn, t));
@@ -486,17 +536,42 @@ public class SQLUtils {
 					values.add(DOInfoReader.getValue(casVersionColumn, t));
 					sql.append(getColumnName(field));
 				}
+
+				if (isFirstT) {
+					logSql.append(sql);
+					sqlOld.append(sql);
+					valuesOld.addAll(values);
+					logParams.addAll(values);
+					sql = sqlOld;
+					values = valuesOld;
+					isFirstT = false;
+				}
 			}
+
 			sql.append(" END)");
+			logSql.append(" END)");
 		}
 
 		// 最后再追加CAS列的更新
 		if (casVersionColumn != null) {
 			if (!isFirst) {
 				sql.append(",");
+				logSql.append(",");
 			}
 			sql.append(getColumnName(casVersionColumn)).append("=(CASE");
+			logSql.append(getColumnName(casVersionColumn)).append("=(CASE");
+
+			boolean isFirstT = true;
 			for (T t : list) {
+				StringBuilder sqlOld = null;
+				List<Object> valuesOld = null;
+				if (isFirstT) {
+					sqlOld = sql;
+					valuesOld = values;
+					sql = new StringBuilder();
+					values = new ArrayList<>();
+				}
+
 				sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
 						.append(getColumnName(casVersionColumn)).append("=? THEN ")
 						.append(getColumnName(casVersionColumn)).append("+1");
@@ -507,8 +582,20 @@ public class SQLUtils {
 						.append(getColumnName(casVersionColumn));
 				values.add(DOInfoReader.getValue(keyColumn, t));
 				values.add(DOInfoReader.getValue(casVersionColumn, t));
+
+				if (isFirstT) {
+					logSql.append(sql);
+					sqlOld.append(sql);
+					valuesOld.addAll(values);
+					logParams.addAll(values);
+					sql = sqlOld;
+					values = valuesOld;
+					isFirstT = false;
+				}
 			}
+
 			sql.append(" END)");
+			logSql.append(" END)");
 		}
 
 		String where = "WHERE " + getColumnName(keyColumn) + " IN (?)";
@@ -527,9 +614,16 @@ public class SQLUtils {
 			values.add(idAndCas);
 		}
 
-		sql.append(autoSetSoftDeleted(where, clazz));
+		where = autoSetSoftDeleted(where, clazz);
+		sql.append(where);
+		logSql.append(where);
 
-		return sql.toString();
+		BatchUpdateResultDTO dto = new BatchUpdateResultDTO();
+		dto.setSql(sql.toString());
+		dto.setLogSql(logSql.toString());
+		dto.setLogParams(logParams);
+
+		return dto;
 	}
 
 	/**
