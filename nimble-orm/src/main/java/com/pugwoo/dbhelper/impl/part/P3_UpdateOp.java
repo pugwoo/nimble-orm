@@ -21,14 +21,23 @@ import java.util.List;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private void doInterceptBeforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
+
+	@SuppressWarnings("unchecked")
+	private void doInterceptBeforeUpdate(Collection<?> tList, String setSql, List<Object> setSqlArgs) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
+			boolean isContinue;
+			if (tList instanceof List) {
+				isContinue = interceptor.beforeUpdate((List<Object>) tList, setSql, setSqlArgs);
+			} else {
+				isContinue = interceptor.beforeUpdate(new ArrayList<>(tList), setSql, setSqlArgs);
+			}
+
 			if (!isContinue) {
 				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
+
 	private void doInterceptBeforeUpdate(Class<?> clazz, String sql,
 			List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
@@ -38,14 +47,19 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 	}
-	
-	private void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
+
+	@SuppressWarnings("unchecked")
+	private void doInterceptAfterUpdate(final Collection<?> tList, final int rows) {
 		if (InnerCommonUtils.isEmpty(interceptors)) {
 			return; // 内部实现尽量不调用executeAfterCommit
 		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
-				interceptors.get(i).afterUpdate(tList, rows);
+				if (tList instanceof List) {
+					interceptors.get(i).afterUpdate((List<Object>) tList, rows);
+				} else {
+					interceptors.get(i).afterUpdate(new ArrayList<>(tList), rows);
+				}
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -85,8 +99,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return update(list.iterator().next());
 		}
 
-		List<Object> tmpList = new ArrayList<>(list); // TODO 待优化，减少一次list的复制
-		doInterceptBeforeUpdate(tmpList, null, null);
+		doInterceptBeforeUpdate(list, null, null);
 
 		// 判断是否可以转化成批量update，使用update case when的方式
 		// 可以批量update的条件：
@@ -141,7 +154,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 
-		doInterceptAfterUpdate(tmpList, rows);
+		doInterceptAfterUpdate(list, rows);
 		return rows;
 	}
 	

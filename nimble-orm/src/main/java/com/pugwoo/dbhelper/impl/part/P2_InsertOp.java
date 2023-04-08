@@ -27,6 +27,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
+
 	@SuppressWarnings("unchecked")
 	private void doInterceptBeforeInsertList(Collection<?> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
