@@ -406,4 +406,34 @@ public class Test2Update_Batch {
         private Integer version;
 
     }
+
+    @Test
+    public void testUpdateBatchBenchmark() {
+        String name = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        List<StudentDO> students = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            StudentDO student = new StudentDO();
+            student.setName(name);
+            students.add(student);
+        }
+
+        dbHelper.insertBatchWithoutReturnId(students);
+
+        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where name=?", name);
+
+        all.forEach(o -> o.setName(o.getName() + "x"));
+
+        long start = System.currentTimeMillis();
+        assert dbHelper.update(all) == 1000;
+
+        // 这种方式需要60秒，而上面的方式只需要1秒
+//        for (int i = 0; i < 1000; i++) {
+//            dbHelper.update(all.get(i));
+//        }
+
+        long end = System.currentTimeMillis();
+        assert end - start < 3000; // 一般600ms完成，最多3秒
+
+        System.out.println("cost: " + (end - start) + "ms");
+    }
 }
