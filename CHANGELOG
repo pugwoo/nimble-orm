@@ -1,3 +1,4 @@
+2023年4月8日
 v1.4.5 - [add] 支持真正的批量update，提高批量update的性能10-100倍
        - [enhance] 数据库类型databaseType的获取支持lazy初始化，不会因为数据库连接异常导致Spring容器启动不了
        - [add] WhereSQL新增getSQLForWhereAppend方法，用于追加到where and的SQL片段
