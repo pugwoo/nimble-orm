@@ -75,7 +75,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	@Override
 	public int insert(Collection<?> list) {
-		list = InnerCommonUtils.removeNull(list);
+		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
@@ -119,7 +119,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 *
 		 * 说明：还有一种方式是多条insert values的代码通过批量的方式提交给数据库执行，这种方式不是真的批量，性能很差。
 		 */
-		list = InnerCommonUtils.removeNull(list);
+		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}

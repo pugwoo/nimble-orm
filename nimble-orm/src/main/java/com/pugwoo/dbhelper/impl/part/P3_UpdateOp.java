@@ -91,7 +91,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
-		list = InnerCommonUtils.removeNull(list);
+		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
