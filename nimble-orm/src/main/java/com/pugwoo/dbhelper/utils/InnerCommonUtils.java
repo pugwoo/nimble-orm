@@ -37,9 +37,9 @@ public class InnerCommonUtils {
         return collection != null && !collection.isEmpty();
     }
 
-    public static <T> Collection<T> removeNull(Collection<T> list) {
+    public static <T> Collection<T> filterNonNull(Collection<T> list) {
         if (list == null) {
-            return null;
+            return new ArrayList<>();
         }
         for (T t : list) {
             if (t == null) {

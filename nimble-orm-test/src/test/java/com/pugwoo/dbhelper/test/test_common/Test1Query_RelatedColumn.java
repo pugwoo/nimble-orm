@@ -456,7 +456,7 @@ public class Test1Query_RelatedColumn {
 
     @Data
     public static class CourseEmptyWrongExtraWhere1VO extends CourseDO {
-        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", extraWhere = "where a&&&") // SQL语法错误
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", extraWhere = "where a#$%") // SQL语法错误
         private List<StudentDO> students;
     }
 

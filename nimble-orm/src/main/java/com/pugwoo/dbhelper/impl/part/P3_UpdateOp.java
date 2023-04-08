@@ -1,10 +1,12 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
@@ -19,14 +21,23 @@ import java.util.List;
 public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	/////////////// 拦截器
-	private void doInterceptBeforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
+
+	@SuppressWarnings("unchecked")
+	private void doInterceptBeforeUpdate(Collection<?> tList, String setSql, List<Object> setSqlArgs) {
 		for (DBHelperInterceptor interceptor : interceptors) {
-			boolean isContinue = interceptor.beforeUpdate(tList, setSql, setSqlArgs);
+			boolean isContinue;
+			if (tList instanceof List) {
+				isContinue = interceptor.beforeUpdate((List<Object>) tList, setSql, setSqlArgs);
+			} else {
+				isContinue = interceptor.beforeUpdate(new ArrayList<>(tList), setSql, setSqlArgs);
+			}
+
 			if (!isContinue) {
 				throw new NotAllowModifyException("interceptor class:" + interceptor.getClass());
 			}
 		}
 	}
+
 	private void doInterceptBeforeUpdate(Class<?> clazz, String sql,
 			List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		for (DBHelperInterceptor interceptor : interceptors) {
@@ -36,14 +47,19 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 	}
-	
-	private void doInterceptAfterUpdate(final List<Object> tList, final int rows) {
+
+	@SuppressWarnings("unchecked")
+	private void doInterceptAfterUpdate(final Collection<?> tList, final int rows) {
 		if (InnerCommonUtils.isEmpty(interceptors)) {
 			return; // 内部实现尽量不调用executeAfterCommit
 		}
 		Runnable runnable = () -> {
 			for (int i = interceptors.size() - 1; i >= 0; i--) {
-				interceptors.get(i).afterUpdate(tList, rows);
+				if (tList instanceof List) {
+					interceptors.get(i).afterUpdate((List<Object>) tList, rows);
+				} else {
+					interceptors.get(i).afterUpdate(new ArrayList<>(tList), rows);
+				}
 			}
 		};
 		if(!executeAfterCommit(runnable)) {
@@ -75,21 +91,70 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
-		if(list == null || list.isEmpty()) {
+		list = InnerCommonUtils.filterNonNull(list);
+		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
+		if (list.size() == 1) { // 只有一个元素，直接调用update(T t)
+			return update(list.iterator().next());
+		}
 
-		List<Object> tmpList = new ArrayList<>(list);
-		doInterceptBeforeUpdate(tmpList, null, null);
-		
+		doInterceptBeforeUpdate(list, null, null);
+
+		// 判断是否可以转化成批量update，使用update case when的方式
+		// 可以批量update的条件：
+		// 1) list里所有对象都是相同的类
+		// 2) DO类有主键且只有一个主键(暂不支持多个主键，这种情况太少，以后有时间再支持)
+		boolean isSameClass = SQLAssert.isAllSameClass(list);
+		Class<?> clazz = list.iterator().next().getClass();
+		List<Field> keyColumns = DOInfoReader.getKeyColumns(clazz);
+
 		int rows = 0;
-		for(T t : list) {
-			if(t != null) {
-				rows += _update(t, false, false, null);
+
+		if (isSameClass && keyColumns.size() == 1) { // 满足批量条件
+			List<Field> notKeyColumns = DOInfoReader.getNotKeyColumns(clazz);
+			if(notKeyColumns.isEmpty()) {
+				return 0; // not need to update
+			}
+
+			list.forEach(PreHandleObject::preHandleUpdate);
+
+			// 找到notKeyColumns中的casVersionColumn，并从notKeyColumns中移除
+			Field casVersionColumn = null;
+			for (Field field : notKeyColumns) {
+				if (field.getAnnotation(Column.class).casVersion()) {
+					if (casVersionColumn != null) {
+						throw new RuntimeException("class:" + clazz.getName() + " has more than one casVersion column");
+					} else {
+						casVersionColumn = field;
+					}
+				}
+			}
+			if (casVersionColumn != null) {
+				notKeyColumns.remove(casVersionColumn);
+			}
+
+			List<Object> params = new ArrayList<>();
+			SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(list, params, casVersionColumn,
+					keyColumns.get(0), notKeyColumns, clazz);
+			if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
+				return 0; // not need to update, return actually update rows
+			}
+
+			rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
+					batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
+
+			postHandleCasVersion(list, rows, casVersionColumn, clazz);
+
+		} else {
+			for(T t : list) {
+				if(t != null) {
+					rows += _update(t, false, false, null);
+				}
 			}
 		}
-		
-		doInterceptAfterUpdate(tmpList, rows);
+
+		doInterceptAfterUpdate(list, rows);
 		return rows;
 	}
 	
@@ -126,6 +191,30 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return rows;
 	}
 
+	private void postHandleCasVersion(Object t, Field casVersionField) {
+		Object casVersion = DOInfoReader.getValue(casVersionField, t);
+		if(casVersion instanceof Integer) {
+			Integer newVersion = ((Integer) casVersion) + 1;
+			DOInfoReader.setValue(casVersionField, t, newVersion);
+		} else if (casVersion instanceof Long) {
+			Long newVersion = ((Long) casVersion) + 1;
+			DOInfoReader.setValue(casVersionField, t, newVersion);
+		}
+		// 其它类型ignore，已经在update之前就断言casVersion必须是Integer或Long类型
+	}
+
+	private <T> void postHandleCasVersion(Collection<T> list, int rows, Field casVersionColumn, Class<?> clazz) {
+		if (casVersionColumn == null) {
+			return; // 没有casVersion列，不处理
+		}
+		if (list.size() != rows) {
+			throw new CasVersionNotMatchException(rows, "update fail for class:"
+					+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(list));
+		} else {
+			list.forEach(o -> postHandleCasVersion(o, casVersionColumn));
+		}
+	}
+
     /**
      * 后处理casVersion相关内容：
      * 1. 当DO类有注解casVersion但是数据库没有修改时抛出异常。
@@ -133,22 +222,15 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
      */
 	private void postHandleCasVersion(Object t, int rows) {
         Field casVersionField = DOInfoReader.getCasVersionColumn(t.getClass());
-        if(casVersionField != null) {
-            if(rows <= 0) {
-                throw new CasVersionNotMatchException("update fail for class:"
-                        + t.getClass().getName() + ",data:" + NimbleOrmJSON.toJson(t));
-            } else {
-                Object casVersion = DOInfoReader.getValue(casVersionField, t);
-                if(casVersion instanceof Integer) {
-                    Integer newVersion = ((Integer) casVersion) + 1;
-                    DOInfoReader.setValue(casVersionField, t, newVersion);
-                } else if (casVersion instanceof Long) {
-                    Long newVersion = ((Long) casVersion) + 1;
-                    DOInfoReader.setValue(casVersionField, t, newVersion);
-                }
-                // 其它类型ignore，已经在update之前就断言casVersion必须是Integer或Long类型
-            }
-        }
+		if (casVersionField == null) {
+			return; // 没有casVersion列，不处理
+		}
+		if(rows <= 0) {
+			throw new CasVersionNotMatchException("update fail for class:"
+					+ t.getClass().getName() + ", data:" + NimbleOrmJSON.toJson(t));
+		} else {
+			postHandleCasVersion(t, casVersionField);
+		}
     }
 	
 	@Override

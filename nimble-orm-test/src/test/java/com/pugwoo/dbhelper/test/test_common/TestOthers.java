@@ -7,12 +7,14 @@ import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.WhereSQL;
+import com.pugwoo.dbhelper.sql.WhereSQLForNamedParam;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.TypeAutoCast;
+import com.pugwoo.wooutils.collect.MapUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -345,7 +347,126 @@ public class TestOthers {
         whereSQL.limit(3, 3);
         all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == 3;
+    }
 
+    @Test
+    public void testWhereSQLAppendAnd() {
+        WhereSQL whereSQL = new WhereSQL();
+        whereSQL.and("name='nick'");
+        whereSQL.and("age=18");
+        System.out.println(whereSQL.getSQLForWhereAppend());
+        assert whereSQL.getSQLForWhereAppend().equals(" AND name='nick' AND age=18 ");
+
+        whereSQL = new WhereSQL();
+        whereSQL.or("name='nick'");
+        whereSQL.or("age=18");
+        System.out.println(whereSQL.getSQLForWhereAppend());
+        assert whereSQL.getSQLForWhereAppend().equals(" AND (name='nick' OR age=18) ");
+    }
+
+    @Test
+    public void testWhereSQLForNamedParam() {
+        int num1 = 3 + new Random().nextInt(5);
+        String prefix1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        List<StudentDO> student1 = CommonOps.insertBatch(dbHelper, num1, prefix1);
+
+        int num2 = 3 + new Random().nextInt(5);
+        String prefix2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        List<StudentDO> student2 = CommonOps.insertBatch(dbHelper, num2, prefix2);
+
+        WhereSQLForNamedParam whereSQL = new WhereSQLForNamedParam("deleted=0 and name like :name",
+                MapUtils.of("name", prefix1 + "%"));
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+
+        whereSQL = new WhereSQLForNamedParam("deleted=0").and("name like :name", MapUtils.of("name", prefix1 + "%")); // 等价写法
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+
+        whereSQL.and(new WhereSQLForNamedParam()); // 加一个空的，等于没有任何约束
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+
+        whereSQL.or(new WhereSQLForNamedParam("deleted=0 and name like :name2", MapUtils.of("name2", prefix2 + "%")));
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.not().and("deleted=0");
+        int size = dbHelper.getRawOne(Integer.class, "select count(*) from t_student "+ whereSQL.getSQL(), whereSQL.getParams());
+        long size2 = dbHelper.getCount(StudentDO.class, "where name is not null") - (num1 + num2);
+        assert size == size2;
+
+        whereSQL.not().and("deleted=0");
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(),
+                whereSQL.getParams()) == num1 + num2;
+
+        whereSQL.and("1=:one", MapUtils.of("one", 1)).and("deleted=0");
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+
+        whereSQL = whereSQL.copy();
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+
+        // 测试空的not，等于没有约束
+        assert dbHelper.getAll(StudentDO.class).size() ==
+                dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + new WhereSQL().not().and("deleted=0").getSQL());
+
+        // =============================== 重新new WhereSQL
+
+        whereSQL = new WhereSQLForNamedParam("name like :name1 or name like :name2",
+                MapUtils.of("name1", prefix1 + "%", "name2", prefix2 + "%"));
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+
+        whereSQL.and("1=1");
+        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+
+        whereSQL.addOrderBy("id desc");
+        List<StudentDO> all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(),
+                whereSQL.getParams());
+        assert all.size() == num1 + num2;
+        for (int i = 0; i < all.size() - 1; i++) {
+            assert all.get(i).getId() > all.get(i + 1).getId();
+        }
+
+        whereSQL.addGroupBy("age");
+        assert  dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
+
+        whereSQL.resetGroupBy();
+        whereSQL.addGroupBy("id", "name");
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.resetGroupBy();
+        whereSQL.addGroupByWithParam("id + :one", MapUtils.of("one",1)); // 重复group id效果一样
+        whereSQL.having("count(*) = :zero", MapUtils.of("zero",0));
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
+
+        whereSQL.having("count(*) > :zero", MapUtils.of("zero",0));
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.having("count(*) > 0");
+        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+
+        whereSQL.resetOrderBy();
+        whereSQL.addOrderBy("name desc", "age");
+        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == num1 + num2;
+        for (int i = 0; i < all.size() - 1; i++) {
+            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        }
+
+        whereSQL.resetOrderBy();
+        whereSQL.addOrderByWithParam("concat(name,:abcname) desc", MapUtils.of("abcname","abc"));
+        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == num1 + num2;
+        for (int i = 0; i < all.size() - 1; i++) {
+            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        }
+
+        // test limit
+
+        whereSQL.limit(5);
+
+        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == 5;
+
+        whereSQL.limit(3, 3);
+        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        assert all.size() == 3;
     }
 
     @Test

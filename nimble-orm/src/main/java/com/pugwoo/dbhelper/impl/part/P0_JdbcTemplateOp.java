@@ -15,14 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,7 +33,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
-	protected DatabaseEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到
+	private DatabaseEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
@@ -54,6 +52,31 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
+	/**
+	 * 批量和非批量的log
+	 * @param sql 要log的sql
+	 * @param batchSize 如果大于0，则是批量log方式
+	 * @param args 参数
+	 */
+	protected void log(String sql, int batchSize, Object args) {
+		if (batchSize > 0) { // 批量log
+			if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+				LOGGER.info("Batch ExecSQL:{}; batch size:{}, first row params:{}",
+						sql, batchSize, NimbleOrmJSON.toJson(args));
+			} else {
+				LOGGER.debug("Batch ExecSQL:{}; batch size:{}, first row params:{}",
+						sql, batchSize, NimbleOrmJSON.toJson(args));
+			}
+		} else {
+			if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+				LOGGER.info("ExecSQL:{}; params:{}", sql, NimbleOrmJSON.toJson(args));
+			} else {
+				LOGGER.debug("ExecSQL:{}; params:{}", sql, NimbleOrmJSON.toJson(args));
+			}
+		}
+	}
+
+	@Deprecated
 	protected void log(String sql, Object keyValues) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
@@ -62,6 +85,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	@Deprecated
 	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
@@ -70,6 +94,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	@Deprecated
 	protected void logForBatchInsert(String sql, int listSize, Object[] values) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
@@ -78,6 +103,53 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	/**
+	 * 记录慢sql请求
+	 * @param cost 请求耗时，毫秒
+	 * @param sql 要记录的sql
+	 * @param batchSize 批量大小，如果大于0，则是批量
+	 * @param args 参数
+	 */
+	protected void logSlow(long cost, String sql, int batchSize, Object args) {
+		if(cost > timeoutWarningValve) {
+			if (batchSize > 0) {
+				LOGGER.warn("SlowSQL:{}; cost:{}ms, listSize:{}, params:{}", sql, cost,
+						batchSize, NimbleOrmJSON.toJson(args));
+				try {
+					if(slowSqlCallback != null) {
+						if (args instanceof List) {
+							slowSqlCallback.callback(cost, sql, (List<Object>) args);
+						} else if (args instanceof Object[]) {
+							slowSqlCallback.callback(cost, sql, Arrays.asList((Object[]) args));
+						} else {
+							slowSqlCallback.callback(cost, sql, Collections.singletonList(args));
+						}
+					}
+				} catch (Throwable e) {
+					LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
+							sql, cost, batchSize, NimbleOrmJSON.toJson(args), e);
+				}
+			} else {
+				LOGGER.warn("SlowSQL:{}; cost:{}ms, params:{}", sql, cost, NimbleOrmJSON.toJson(args));
+				try {
+					if(slowSqlCallback != null) {
+						if (args instanceof List) {
+							slowSqlCallback.callback(cost, sql, (List<Object>) args);
+						} else if (args instanceof Object[]) {
+							slowSqlCallback.callback(cost, sql, Arrays.asList((Object[]) args));
+						} else {
+							slowSqlCallback.callback(cost, sql, Collections.singletonList(args));
+						}
+					}
+				} catch (Throwable e) {
+					LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
+							sql, cost, NimbleOrmJSON.toJson(args), e);
+				}
+			}
+		}
+	}
+
+	@Deprecated
 	protected void logSlow(long cost, String sql, List<Object> keyValues) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
@@ -92,12 +164,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	@Deprecated
 	protected void logSlowForParamMap(long cost, String sql, Map<String, ?> paramMap) {
 		List<Object> params = new ArrayList<>();
 		params.add(paramMap);
 		logSlow(cost, sql, params);
 	}
 
+	@Deprecated
 	protected void logSlowForBatch(long cost, String sql, int listSize) {
 		if(cost > timeoutWarningValve) {
 			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
@@ -164,6 +238,30 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, argsList);
+		return rows;
+	}
+
+
+	/**
+	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
+	 * @param logSql 用于日志打印的sql
+	 * @param batchSize 批量修改的大小，当它的值大于0时，切换为batchLog方式log
+	 * @param logArgs 用于日志打印的参数
+	 */
+	protected int namedJdbcExecuteUpdateWithLog(String sql, String logSql, int batchSize, List<Object> logArgs,
+												Object... args) {
+		sql = addComment(sql);
+		log(logSql, batchSize, logArgs);
+		long start = System.currentTimeMillis();
+		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
+		if(args != null) {
+			argsList.addAll(Arrays.asList(args));
+		}
+		int rows = namedParameterJdbcTemplate.update(
+				NamedParameterUtils.trans(sql, argsList),
+				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, logSql, batchSize, logArgs);
 		return rows;
 	}
 	
@@ -266,13 +364,16 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			String url = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection().getMetaData().getURL();
 			String type = url.split(":")[1];
 			return DatabaseEnum.getByJdbcProtocol(type);
-		} catch (SQLException e) {
-			throw new CannotGetJdbcConnectionException("", e);
-		} catch (NullPointerException e) {
-			throw new CannotGetJdbcConnectionException("getConnection() return null");
 		} catch (Exception e) {
-			LOGGER.error("fail to get database type from jdbc url", e);
+			LOGGER.error("fail to get database type from jdbc url, jdbcTemplate:{}, will try later", jdbcTemplate, e);
+			return null;
 		}
-		return DatabaseEnum.UNKNOWN;
+	}
+
+	protected DatabaseEnum getDatabaseType() {
+		if (databaseType == null) {
+			databaseType = getDatabaseType(jdbcTemplate); // 尝试再次获取
+		}
+		return databaseType;
 	}
 }

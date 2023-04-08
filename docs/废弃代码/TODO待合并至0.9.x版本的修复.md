@@ -1,2 +1,0 @@
-1. commit: 268a60af2125300c9a1c59cb1ca6dac5d32e2da7
-   修复当RelateColumn注解的remoteColumn的值是SQL关键词时导致SQL异常的问题

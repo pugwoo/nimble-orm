@@ -11,29 +11,25 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
- * 辅助构造where子句及后续子句的工具
+ * 辅助构造where子句及后续子句的工具，用于命名参数
  */
-public class WhereSQL {
+public class WhereSQLForNamedParam {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WhereSQL.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WhereSQLForNamedParam.class);
+
+    private Map<String, Object> paramMap = new HashMap<>();
 
     private String condition;
     private boolean isOrExpression;
-    private List<Object> params;
 
     private List<String> groupBy;
-    private List<Object> groupByParams;
 
     private String having;
-    private List<Object> havingByParams;
 
     private List<String> orderBy;
-    private List<Object> orderByParams;
 
     private Integer offset;
     private Integer limit;
@@ -41,41 +37,50 @@ public class WhereSQL {
     /**
      * 空的WhereSQL
      */
-    public WhereSQL() {
+    public WhereSQLForNamedParam() {
     }
 
 
     /**
      * 复制出一个新的WhereSQL对象，两个对象独立
      */
-    public WhereSQL copy() {
-        WhereSQL whereSQL = new WhereSQL();
+    public WhereSQLForNamedParam copy() {
+        WhereSQLForNamedParam whereSQL = new WhereSQLForNamedParam();
         whereSQL.condition = this.condition;
         whereSQL.isOrExpression = this.isOrExpression;
-        whereSQL.params = this.params == null ? null : new ArrayList<>(this.params);
+        whereSQL.paramMap = this.paramMap == null ? null : new HashMap<>(this.paramMap);
         whereSQL.groupBy = this.groupBy == null ? null : new ArrayList<>(this.groupBy);
-        whereSQL.groupByParams = this.groupByParams == null ? null : new ArrayList<>(this.groupByParams);
         whereSQL.having = this.having;
-        whereSQL.havingByParams = this.havingByParams == null ? null : new ArrayList<>(this.havingByParams);
         whereSQL.orderBy = this.orderBy == null ? null : new ArrayList<>(this.orderBy);
-        whereSQL.orderByParams = this.orderByParams == null ? null : new ArrayList<>(this.orderByParams);
         whereSQL.offset = this.offset;
         whereSQL.limit = this.limit;
         return whereSQL;
     }
 
     /**
-     * 使用条件进行初始化，条件即例如 a=? 这样的表达式，也可以是 a=? or b=? 这样的表达式。<br>
+     * 使用条件进行初始化，条件即例如 a=:param 这样的表达式，也可以是 a=:param1 or b=:param2 这样的表达式。<br>
      * 当表达式是or表达式时，工具会自动加上括号。
-     * @param condition 例如 a=? 或 a=? or b=?，不用加上括号，工具会自动处理
-     * @param param 参数
+     * @param condition 例如 a=:param 或 a=:param1 or b=:param2，不用加上括号，工具会自动处理
      */
-    public WhereSQL(String condition, Object... param) {
+    public WhereSQLForNamedParam(String condition) {
         if (InnerCommonUtils.isNotBlank(condition)) {
             isOrExpression = isOrExpression(condition);
             this.condition = condition;
         }
-        doAddParam(param);
+    }
+
+    /**
+     * 使用条件进行初始化，条件即例如 a=:param 这样的表达式，也可以是 a=:param1 or b=:param2 这样的表达式。<br>
+     * 当表达式是or表达式时，工具会自动加上括号。
+     * @param condition 例如 a=:param 或 a=:param1 or b=:param2，不用加上括号，工具会自动处理
+     * @param paramMap 参数
+     */
+    public WhereSQLForNamedParam(String condition, Map<String, ?> paramMap) {
+        if (InnerCommonUtils.isNotBlank(condition)) {
+            isOrExpression = isOrExpression(condition);
+            this.condition = condition;
+        }
+        doAddParam(paramMap);
     }
 
     /**
@@ -144,26 +149,11 @@ public class WhereSQL {
     /**
      * 获得参数列表
      */
-    public Object[] getParams() {
-        List<Object> result = new ArrayList<>();
-
-        if (params != null) {
-            result.addAll(params);
-        }
-        if (groupByParams != null) {
-            result.addAll(groupByParams);
-        }
-        if (havingByParams != null) {
-            result.addAll(havingByParams);
-        }
-        if (orderByParams != null) {
-            result.addAll(orderByParams);
-        }
-
-        return result.toArray();
+    public Map<String, Object> getParams() {
+        return paramMap == null ? new HashMap<>() : paramMap;
     }
 
-    public WhereSQL not() {
+    public WhereSQLForNamedParam not() {
         if (InnerCommonUtils.isBlank(condition)) {
             return this;
         }
@@ -172,7 +162,11 @@ public class WhereSQL {
         return this;
     }
 
-    public WhereSQL and(String condition, Object... param) {
+    public WhereSQLForNamedParam and(String condition) {
+        return and(condition, null);
+    }
+
+    public WhereSQLForNamedParam and(String condition, Map<String, ?> param) {
         if (InnerCommonUtils.isNotBlank(condition)) {
             // 一共四种组合，目的是最小可能地加括号
             boolean isOrExpression = isOrExpression(condition);
@@ -198,14 +192,14 @@ public class WhereSQL {
     /**
      * 功能同addAnd，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
-    public WhereSQL and(WhereSQL whereSQL) {
+    public WhereSQLForNamedParam and(WhereSQLForNamedParam whereSQL) {
         if (whereSQL.isNotOnlyHasCondition()) {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
-        return and(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
+        return and(whereSQL.condition, whereSQL.paramMap);
     }
 
-    public WhereSQL or(String condition, Object... param) {
+    public WhereSQLForNamedParam or(String condition, Map<String, ?> param) {
         if (InnerCommonUtils.isNotBlank(condition)) {
             this.condition = (this.condition == null ? "" : (this.condition + " OR ")) + condition;
             this.isOrExpression = true;
@@ -218,14 +212,14 @@ public class WhereSQL {
     /**
      * 功能同addOr，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
-    public WhereSQL or(WhereSQL whereSQL) {
+    public WhereSQLForNamedParam or(WhereSQLForNamedParam whereSQL) {
         if (whereSQL.isNotOnlyHasCondition()) {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
-        return or(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
+        return or(whereSQL.condition, whereSQL.paramMap);
     }
 
-    public WhereSQL addGroupByWithParam(String groupColumn, Object... params) {
+    public WhereSQLForNamedParam addGroupByWithParam(String groupColumn, Map<String, ?> paramMap) {
         if (InnerCommonUtils.isNotBlank(groupColumn)) {
             if (this.groupBy == null) {
                 this.groupBy = new ArrayList<>();
@@ -233,17 +227,11 @@ public class WhereSQL {
             this.groupBy.add(groupColumn);
         }
 
-        if (params != null && params.length > 0) {
-            if (this.groupByParams == null) {
-                this.groupByParams = new ArrayList<>();
-            }
-            this.groupByParams.addAll(Arrays.asList(params));
-        }
-
+        doAddParam(paramMap);
         return this;
     }
 
-    public WhereSQL addGroupBy(String... groupByColumn) {
+    public WhereSQLForNamedParam addGroupBy(String... groupByColumn) {
         if (groupByColumn != null && groupByColumn.length > 0) {
             if (this.groupBy == null) {
                 this.groupBy = new ArrayList<>();
@@ -258,30 +246,29 @@ public class WhereSQL {
         return this;
     }
 
-    public WhereSQL resetGroupBy() {
+    public WhereSQLForNamedParam resetGroupBy() {
         this.groupBy = null;
-        this.groupByParams = null;
         return this;
+    }
+
+    public WhereSQLForNamedParam having(String having) {
+        return having(having, null);
     }
 
     /**
      * 多次调用时，会覆盖前一次调用设置的值。不需要加HAVING关键字。
      */
-    public WhereSQL having(String having, Object... params) {
-        if (InnerCommonUtils.isNotBlank(this.having) || InnerCommonUtils.isNotEmpty(this.havingByParams)) {
+    public WhereSQLForNamedParam having(String having, Map<String, ?> paramMap) {
+        if (InnerCommonUtils.isNotBlank(this.having)) {
             LOGGER.warn("having sql [{}] will be covered by [{}]", this.having, having);
         }
 
         this.having = having;
-        if (params != null && params.length > 0) {
-            this.havingByParams = new ArrayList<>(Arrays.asList(params));
-        } else {
-            this.havingByParams = null;
-        }
+        doAddParam(paramMap);
         return this;
     }
 
-    public WhereSQL addOrderByWithParam(String orderColumn, Object... params) {
+    public WhereSQLForNamedParam addOrderByWithParam(String orderColumn, Map<String, ?> paramMap) {
         if (InnerCommonUtils.isNotBlank(orderColumn)) {
             if (this.orderBy == null) {
                 this.orderBy = new ArrayList<>();
@@ -289,17 +276,11 @@ public class WhereSQL {
             this.orderBy.add(orderColumn);
         }
 
-        if (params != null && params.length > 0) {
-            if (this.orderByParams == null) {
-                this.orderByParams = new ArrayList<>();
-            }
-            this.orderByParams.addAll(Arrays.asList(params));
-        }
-
+        doAddParam(paramMap);
         return this;
     }
 
-    public WhereSQL addOrderBy(String... orderByColumn) {
+    public WhereSQLForNamedParam addOrderBy(String... orderByColumn) {
         if (orderByColumn != null && orderByColumn.length > 0) {
             if (this.orderBy == null) {
                 this.orderBy = new ArrayList<>();
@@ -314,30 +295,29 @@ public class WhereSQL {
         return this;
     }
 
-    public WhereSQL resetOrderBy() {
+    public WhereSQLForNamedParam resetOrderBy() {
         this.orderBy = null;
-        this.orderByParams = null;
         return this;
     }
 
-    public WhereSQL limit(Integer limit) {
+    public WhereSQLForNamedParam limit(Integer limit) {
         this.limit = limit;
         this.offset = null;
         return this;
     }
 
-    public WhereSQL limit(Integer offset, Integer limit) {
+    public WhereSQLForNamedParam limit(Integer offset, Integer limit) {
         this.limit = limit;
         this.offset = offset;
         return this;
     }
 
-    private void doAddParam(Object[] param) {
-        if (param != null && param.length > 0) {
-            if (this.params == null) {
-                this.params = new ArrayList<>();
+    private void doAddParam(Map<String, ?> paramMap) {
+        if (paramMap != null) {
+            if (this.paramMap == null) {
+                this.paramMap = new HashMap<>();
             }
-            this.params.addAll(Arrays.asList(param));
+            this.paramMap.putAll(paramMap);
         }
     }
 
@@ -364,11 +344,10 @@ public class WhereSQL {
     }
 
     private boolean isNotOnlyHasCondition() {
-        return InnerCommonUtils.isNotEmpty(groupBy) || InnerCommonUtils.isNotEmpty(groupByParams)
-                || InnerCommonUtils.isNotBlank(having) || InnerCommonUtils.isNotEmpty(havingByParams)
-                || InnerCommonUtils.isNotEmpty(orderBy) || InnerCommonUtils.isNotEmpty(orderByParams)
+        return InnerCommonUtils.isNotEmpty(groupBy)
+                || InnerCommonUtils.isNotBlank(having)
+                || InnerCommonUtils.isNotEmpty(orderBy)
                 || offset != null || limit != null;
-
     }
 
 }

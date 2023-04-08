@@ -27,6 +27,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		list.add(t);
 		doInterceptBeforeInsertList(list);
 	}
+
 	@SuppressWarnings("unchecked")
 	private void doInterceptBeforeInsertList(Collection<?> list) {
 		for (DBHelperInterceptor interceptor : interceptors) {
@@ -74,7 +75,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	
 	@Override
 	public int insert(Collection<?> list) {
-		list = InnerCommonUtils.removeNull(list);
+		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
@@ -118,7 +119,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 *
 		 * 说明：还有一种方式是多条insert values的代码通过批量的方式提交给数据库执行，这种方式不是真的批量，性能很差。
 		 */
-		list = InnerCommonUtils.removeNull(list);
+		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
@@ -134,6 +135,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long start = 0;
 		int total = 0;
 		String sqlForLog = "";
+		DatabaseEnum databaseType = getDatabaseType();
 		if (databaseType == DatabaseEnum.CLICKHOUSE) { // clickhouse因为驱动原因，只能使用jdbc原生的批量方式
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
