@@ -534,7 +534,26 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当对象列表中的对象的主键值为null时抛出
 	 */
 	<T> int update(Collection<T> list) throws NullKeyValueException;
-	
+
+	/**
+	 * 删除数据库记录，返回数据库实际修改条数。
+	 * 该操作【会】自动使用软删除进行删除
+	 *
+	 * @param t 要更新的对象
+	 * @return 实际删除的条数
+	 */
+	<T> int delete(T t) throws NullKeyValueException;
+
+	/**
+	 * 删除数据库记录，返回数据库实际修改条数。
+	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
+	 * 该操作【会】自动使用软删除进行删除
+	 * @param list 要更新的对象列表
+	 * @return 实际删除的条数
+	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
+	 */
+	<T> int delete(Collection<T> list) throws NullKeyValueException;
+
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数。
 	 * 该操作【会】自动使用软删除进行删除
@@ -542,6 +561,7 @@ public interface DBHelper {
 	 * @param t 要更新的对象
 	 * @return 实际删除的条数
 	 */
+	@Deprecated
 	<T> int deleteByKey(T t) throws NullKeyValueException;
 	
 	/**
@@ -552,6 +572,7 @@ public interface DBHelper {
 	 * @return 实际删除的条数
 	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
 	 */
+	@Deprecated
 	<T> int deleteByKey(Collection<T> list) throws NullKeyValueException;
 	
 	/**
