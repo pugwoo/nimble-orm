@@ -7,7 +7,7 @@ import com.pugwoo.dbhelper.annotation.Table;
  * 专门测试物理删除的DO
  */
 @Table("t_student")
-public class StudentTrueDeleteDO {
+public class StudentHardDeleteDO {
 
 	@Column(value = "id", isKey = true, isAutoIncrement = true)
 	private Long id;

@@ -3,7 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.entity.StudentTrueDeleteDO;
+import com.pugwoo.dbhelper.test.entity.StudentHardDeleteDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.StudentVO;
 import com.pugwoo.wooutils.collect.ListUtils;
@@ -29,7 +29,7 @@ public class TestStream {
 
     @Test
     public void testGetAllStream() {
-        dbHelper.delete(StudentTrueDeleteDO.class, "where 1=1");
+        dbHelper.delete(StudentHardDeleteDO.class, "where 1=1");
 
         dbHelper.setFetchSize(5);
 
@@ -77,7 +77,7 @@ public class TestStream {
 
     @Test
     public void testGetRawStream() {
-        dbHelper.delete(StudentTrueDeleteDO.class, "where 1=1");
+        dbHelper.delete(StudentHardDeleteDO.class, "where 1=1");
 
         dbHelper.setFetchSize(5);
 
