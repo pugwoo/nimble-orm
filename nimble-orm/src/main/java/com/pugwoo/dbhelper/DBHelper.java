@@ -564,6 +564,17 @@ public interface DBHelper {
 	 */
 	<T> int delete(Collection<T> list) throws NullKeyValueException;
 
+
+	/**
+	 * 硬删除数据库记录（无论是否注解了软删除字段），返回数据库实际修改条数。
+	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
+	 *
+	 * @param list 要更新的对象列表
+	 * @return 实际删除的条数
+	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
+	 */
+	<T> int deleteHard(Collection<T> list) throws NullKeyValueException;
+
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数。
 	 * 该操作【会】自动使用软删除进行删除
@@ -607,6 +618,18 @@ public interface DBHelper {
 	 * @return 实际删除的条数
 	 */
 	<T> int delete(Class<T> clazz, String postSql, Object... args);
+
+	/**
+	 * 自定义条件删除数据（无论是否注解了软删除字段）。
+	 *
+	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
+	 *
+	 * @param clazz 必须有默认构造方法
+	 * @param postSql 必须提供，必须写where，【不允许】留空
+	 * @param args postSql的参数
+	 * @return 实际删除的条数
+	 */
+	<T> int deleteHard(Class<T> clazz, String postSql, Object... args);
 
 	/**
 	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作

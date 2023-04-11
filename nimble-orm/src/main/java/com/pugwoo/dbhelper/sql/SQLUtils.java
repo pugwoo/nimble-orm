@@ -875,14 +875,12 @@ public class SQLUtils {
 	}
 	
 	/**
-	 * 获得自定义删除SQL
+	 * 获得自定义删除SQL，给物理删除的
 	 */
 	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
-		return "DELETE FROM " +
-				getTableName(clazz) +
-				autoSetSoftDeleted(postSql, clazz);
+		return "DELETE FROM " + getTableName(clazz) + " " + postSql;
 	}
-	
+
 	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql, Field softDelete) {
 		
 		List<Field> fields = DOInfoReader.getColumns(clazz);

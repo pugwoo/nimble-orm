@@ -70,6 +70,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 	@Override
 	public <T> int delete(T t) throws NullKeyValueException {
+		return _delete(t, false);
+	}
+
+	private <T> int _delete(T t, boolean isHard) throws NullKeyValueException {
 		PreHandleObject.preHandleDelete(t);
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 
@@ -77,7 +81,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 		String sql;
 		List<Object> values = new ArrayList<>();
-		if (softDelete == null) { // 物理删除
+		if (isHard || softDelete == null) { // 物理删除
 			sql = SQLUtils.getDeleteSQL(t, values);
 		} else { // 软删除
 			// 对于软删除，当有拦截器时，可能使用者会修改数据以记录删除时间或删除人信息等，此时要先update该条数据
@@ -96,16 +100,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 	@Override
 	public <T> int deleteHard(T t) throws NullKeyValueException {
-		PreHandleObject.preHandleDelete(t);
-		doInterceptBeforeDelete(t);
-
-		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getDeleteSQL(t, values); // 不管是否注解了软删除，都进行物理删除
-
-		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
-
-		doInterceptAfterDelete(t, rows);
-		return rows;
+		return _delete(t, true);
 	}
 
 	@Override
@@ -128,7 +123,16 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	@Override
+	public <T> int deleteHard(Collection<T> list) throws NullKeyValueException {
+		return _delete(list, true);
+	}
+
+	@Override
 	public <T> int delete(Collection<T> list) throws NullKeyValueException {
+		return _delete(list, false);
+	}
+
+	private <T> int _delete(Collection<T> list, boolean isHard) throws NullKeyValueException {
 		if(list == null || list.isEmpty()) {
 			return 0;
 		}
@@ -183,7 +187,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 			String sql;
 			String where = "where " + SQLUtils.getColumnName(keyField) + " in (?)";
-			if(softDelete == null) { // 物理删除
+			if(isHard || softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, where);
 			} else { // 软删除
 				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, where, softDelete);
@@ -208,7 +212,16 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	@Override
+	public <T> int deleteHard(Class<T> clazz, String postSql, Object... args) {
+		return _delete(clazz, true, postSql, args);
+	}
+
+	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
+		return _delete(clazz, false, postSql, args);
+	}
+
+	private <T> int _delete(Class<T> clazz, boolean isHard, String postSql, Object... args) {
 		if(InnerCommonUtils.isBlank(postSql)) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请明确传入where 1=1
 			throw new InvalidParameterException("delete postSql is blank. it's very dangerous. use WHERE 1=1 to confirm delete all");
@@ -218,7 +231,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		String sql;
 
 		if((interceptors == null || interceptors.isEmpty()) && !isUseDeleteValueScript(clazz)) { // 没有配置拦截器，则直接删除
-			if(softDelete == null) { // 物理删除
+			if(isHard || softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
 			} else { // 软删除
 				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, postSql, softDelete);
