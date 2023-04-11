@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 @SpringBootTest
-public class TestDBHelper_delete {
+public class Test4Delete {
 
     @Autowired
     private DBHelper dbHelper;
