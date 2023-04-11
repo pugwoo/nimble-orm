@@ -44,6 +44,7 @@ public interface DBHelper {
 	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
 	 * @param clazz 注解了@Table的类
 	 */
+	@Deprecated
 	static void turnOffSoftDelete(Class<?>... clazz) {
 		DBHelperContext.turnOffSoftDelete(clazz);
 	}
@@ -53,6 +54,7 @@ public interface DBHelper {
 	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
 	 * @param clazz 注解了@Table的类
 	 */
+	@Deprecated
 	static void turnOnSoftDelete(Class<?>... clazz) {
 		DBHelperContext.turnOnSoftDelete(clazz);
 	}
@@ -539,10 +541,18 @@ public interface DBHelper {
 	 * 删除数据库记录，返回数据库实际修改条数。
 	 * 该操作【会】自动使用软删除进行删除
 	 *
-	 * @param t 要更新的对象
+	 * @param t 要删除的对象
 	 * @return 实际删除的条数
 	 */
 	<T> int delete(T t) throws NullKeyValueException;
+
+	/**
+	 * 硬删除数据库记录（无论是否注解了软删除字段），返回数据库实际修改条数。
+	 * @param t 要删除的对象
+	 * @return 实际删除的条数
+	 * @throws NullKeyValueException 当对象的主键值为null时抛出
+	 */
+	<T> int deleteHard(T t) throws NullKeyValueException;
 
 	/**
 	 * 删除数据库记录，返回数据库实际修改条数。

@@ -930,9 +930,8 @@ public class SQLUtils {
 			}
 		}
 		values.addAll(_values);
-		
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
-		
+
+		sql.append(where);
 		return sql.toString();
 	}
 

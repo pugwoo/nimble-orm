@@ -95,6 +95,20 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	@Override
+	public <T> int deleteHard(T t) throws NullKeyValueException {
+		PreHandleObject.preHandleDelete(t);
+		doInterceptBeforeDelete(t);
+
+		List<Object> values = new ArrayList<>();
+		String sql = SQLUtils.getDeleteSQL(t, values); // 不管是否注解了软删除，都进行物理删除
+
+		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+
+		doInterceptAfterDelete(t, rows);
+		return rows;
+	}
+
+	@Override
 	@Deprecated
 	public <T> int deleteByKey(Class<T> clazz, Object keyValue)
 			throws NullKeyValueException, MustProvideConstructorException {
