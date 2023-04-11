@@ -13,7 +13,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		if(t == null) {
 			return 0;
 		}
-		DOInfoReader.getColumns(t.getClass()); // 目前起到判断column必须存在的作用
+
 		if(isWithKey(t)) {
 			return update(t);
 		} else {
@@ -26,7 +26,7 @@ public abstract class P4_InsertOrUpdateOp extends P3_UpdateOp {
 		if(t == null) {
 			return 0;
 		}
-		DOInfoReader.getColumns(t.getClass()); // 目前起到判断column必须存在的作用
+
 		if(isWithKey(t)) {
 			return updateWithNull(t);
 		} else {
