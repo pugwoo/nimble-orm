@@ -74,7 +74,7 @@ public class Test8Feature_DynamicTable {
         assert list.get(0).getName().equals(studentNoTableNameDO.getName());
 
         // 删除
-        rows = dbHelper.deleteByKey(studentNoTableNameDO);
+        rows = dbHelper.delete(studentNoTableNameDO);
         assert rows == 1;
 
         assert dbHelper.getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId())

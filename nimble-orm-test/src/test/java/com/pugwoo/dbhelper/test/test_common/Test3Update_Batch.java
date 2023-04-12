@@ -47,8 +47,8 @@ public class Test3Update_Batch {
         }
 
         // 软删除2个，再批量update
-        dbHelper.deleteByKey(list.get(3));
-        dbHelper.deleteByKey(list.get(8));
+        dbHelper.delete(list.get(3));
+        dbHelper.delete(list.get(8));
 
         for (StudentDO studentDO : list) {
             studentDO.setName(studentDO.getName() + "y");

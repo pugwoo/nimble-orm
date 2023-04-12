@@ -118,14 +118,14 @@ public class Test7Interceptor_Custom {
 		dbHelper.insert(studentDO);
 		Long id = studentDO.getId();
 		
-		dbHelper.deleteByKey(StudentDO.class, id);
+		dbHelper.delete(StudentDO.class, "where id=?", id);
 		dbHelper.delete(StudentDO.class, "where id > ?", 100);
 	}
 	
 	@Test 
 	public void batchDelete() {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
-		int rows = dbHelper.deleteByKey(insertBatch);
+		int rows = dbHelper.delete(insertBatch);
 		assert rows == insertBatch.size();
 		
 		insertBatch = CommonOps.insertBatch(dbHelper,20);

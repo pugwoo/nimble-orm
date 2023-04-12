@@ -1,7 +1,6 @@
 package com.pugwoo.dbhelper;
 
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
@@ -574,40 +573,6 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
 	 */
 	<T> int deleteHard(Collection<T> list) throws NullKeyValueException;
-
-	/**
-	 * 删除数据库记录，返回数据库实际修改条数。
-	 * 该操作【会】自动使用软删除进行删除
-	 * 
-	 * @param t 要更新的对象
-	 * @return 实际删除的条数
-	 */
-	@Deprecated
-	<T> int deleteByKey(T t) throws NullKeyValueException;
-	
-	/**
-	 * 删除数据库记录，返回数据库实际修改条数。
-	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
-	 * 该操作【会】自动使用软删除进行删除
-	 * @param list 要更新的对象列表
-	 * @return 实际删除的条数
-	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
-	 */
-	@Deprecated
-	<T> int deleteByKey(Collection<T> list) throws NullKeyValueException;
-	
-	/**
-	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况。
-	 * 该操作【会】自动使用软删除进行删除
-	 * 
-	 * @param clazz 必须有默认构造方法
-	 * @param keyValue 要删除的对象的主键值
-	 * @return 实际删除的条数
-	 * @throws NullKeyValueException 当keyValue为null时，抛出异常
-	 */
-	@Deprecated
-	<T> int deleteByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
-	    MustProvideConstructorException;
 
 	/**
 	 * 自定义条件删除数据，该操作【会】自动使用软删除标记。

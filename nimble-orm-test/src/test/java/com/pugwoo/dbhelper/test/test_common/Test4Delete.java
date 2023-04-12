@@ -28,9 +28,9 @@ public class Test4Delete {
     public void deleteByKey() {
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
 
-        int rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
+        int rows = dbHelper.delete(StudentDO.class, "where id=?", studentDO.getId());
         assert rows == 1;
-        rows = dbHelper.deleteByKey(StudentDO.class, studentDO.getId());
+        rows = dbHelper.delete(StudentDO.class, "where id=?", studentDO.getId());
         assert rows == 0;
         assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
 
@@ -38,9 +38,9 @@ public class Test4Delete {
 
         studentDO = CommonOps.insertOne(dbHelper);
 
-        rows = dbHelper.deleteByKey(studentDO);
+        rows = dbHelper.delete(studentDO);
         assert rows == 1;
-        rows = dbHelper.deleteByKey(studentDO);
+        rows = dbHelper.delete(studentDO);
         assert rows == 0;
         assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
     }
@@ -59,7 +59,7 @@ public class Test4Delete {
         int random = 10 + new Random().nextInt(10);
 
         List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper, random);
-        int rows = dbHelper.deleteByKey(insertBatch);
+        int rows = dbHelper.delete(insertBatch);
         assert rows == insertBatch.size();
         for (StudentDO studentDO : insertBatch) {
             assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
@@ -81,7 +81,7 @@ public class Test4Delete {
         dbHelper.insert(schoolDO);
         differents.add(schoolDO);
 
-        rows = dbHelper.deleteByKey(differents);
+        rows = dbHelper.delete(differents);
         assert rows == random + 1;
     }
 
@@ -93,7 +93,7 @@ public class Test4Delete {
         StudentDeleteSetIdDO stu1 = new StudentDeleteSetIdDO();
         stu1.setId(studentDO.getId());
 
-        dbHelper.deleteByKey(stu1);
+        dbHelper.delete(stu1);
 
         assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null; // 已经被删除了
         assert dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId()) == null; // 已经被删除了
@@ -109,10 +109,10 @@ public class Test4Delete {
         studentHardDeleteDO.setName("john");
         dbHelper.insert(studentHardDeleteDO);
 
-        int rows = dbHelper.deleteByKey(StudentHardDeleteDO.class, studentHardDeleteDO.getId());
+        int rows = dbHelper.delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
         assert rows == 1;
 
-        rows = dbHelper.deleteByKey(StudentHardDeleteDO.class, studentHardDeleteDO.getId());
+        rows = dbHelper.delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
         assert rows == 0;
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
@@ -121,10 +121,10 @@ public class Test4Delete {
         studentHardDeleteDO.setName("john");
         dbHelper.insert(studentHardDeleteDO);
 
-        rows = dbHelper.deleteByKey(studentHardDeleteDO);
+        rows = dbHelper.delete(studentHardDeleteDO);
         assert rows == 1;
 
-        rows = dbHelper.deleteByKey(studentHardDeleteDO);
+        rows = dbHelper.delete(studentHardDeleteDO);
         assert rows == 0;
 
         //
@@ -155,7 +155,7 @@ public class Test4Delete {
             ids.add(o.getId());
         }
 
-        rows = dbHelper.deleteByKey(list);
+        rows = dbHelper.delete(list);
         assert rows == list.size();
 
         List<StudentHardDeleteDO> all = dbHelper.getAll(StudentHardDeleteDO.class, "where id in (?)", ids);
@@ -215,7 +215,8 @@ public class Test4Delete {
 
         ex = false;
         try {
-            dbHelper.deleteByKey(StudentDO.class, null);
+            StudentDO studentDO = new StudentDO();
+            dbHelper.delete(studentDO);
         } catch (Exception e) {
             assert e instanceof NullKeyValueException;
             ex = true;
@@ -233,7 +234,7 @@ public class Test4Delete {
         StudentWithDeleteScriptDO s2 = new StudentWithDeleteScriptDO();
         s2.setId(stu2.getId());
 
-        int rows = dbHelper.deleteByKey(ListUtils.newArrayList(s1, s2));
+        int rows = dbHelper.delete(ListUtils.newArrayList(s1, s2));
         assert rows == 2;
 
         DBHelper.turnOffSoftDelete(StudentWithDeleteScriptDO.class);

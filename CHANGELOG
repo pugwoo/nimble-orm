@@ -1,3 +1,5 @@
+v1.5.0 - [del] 移除deleteByKey 3个方法，请用delete方法代替
+
 2023年4月12日
 v1.4.6 - [deprecated] 废弃deleteByKey(Class<T> clazz, Object keyValue)方法
        - [deprecated] deleteByKey(T t)和deleteByKey(Collection<T> list)标记重命名为delete(T t)和deleteByKey(Collection<T> list)

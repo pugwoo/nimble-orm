@@ -83,7 +83,7 @@ public class Test7Interceptor_Default {
 		Long id = studentDO.getId();
 		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 		
-		assert dbHelper.deleteByKey(StudentDO.class, id) == 1;
+		assert dbHelper.delete(StudentDO.class, "where id=?", id) == 1;
 
 		CommonOps.insertBatch(dbHelper, CommonOps.getRandomInt(101, 100));
 		assert dbHelper.delete(StudentDO.class, "where id > ?", 100) > 0;
@@ -93,14 +93,14 @@ public class Test7Interceptor_Default {
 		assert dbHelper.getByKey(StudentDO.class, studentDO.getId())
 				.getName().equals(studentDO.getName());
 		studentDO.setName(studentDO.getName() + "Del");
-		assert dbHelper.deleteByKey(studentDO) == 1;
+		assert dbHelper.delete(studentDO) == 1;
 
 	}
 	
 	@Test 
 	public void batchDelete() {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
-		int rows = dbHelper.deleteByKey(insertBatch);
+		int rows = dbHelper.delete(insertBatch);
 		assert rows == insertBatch.size();
 		
 		insertBatch = CommonOps.insertBatch(dbHelper,20);

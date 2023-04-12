@@ -2,7 +2,9 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.NotAllowModifyException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -10,7 +12,6 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -63,12 +64,6 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	/////////// END 拦截器
 
 	@Override
-	@Deprecated
-	public <T> int deleteByKey(T t) throws NullKeyValueException {
-		return delete(t);
-	}
-
-	@Override
 	public <T> int delete(T t) throws NullKeyValueException {
 		return _delete(t, false);
 	}
@@ -101,25 +96,6 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	@Override
 	public <T> int deleteHard(T t) throws NullKeyValueException {
 		return _delete(t, true);
-	}
-
-	@Override
-	@Deprecated
-	public <T> int deleteByKey(Class<T> clazz, Object keyValue)
-			throws NullKeyValueException, MustProvideConstructorException {
-		if(keyValue == null) {
-			throw new NullKeyValueException();
-		}
-
-		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-		try {
-			T t = clazz.getDeclaredConstructor().newInstance();
-			DOInfoReader.setValue(keyField, t, keyValue);
-			return deleteByKey(t);
-		} catch (InstantiationException | IllegalAccessException |
-				 NoSuchMethodException | InvocationTargetException e) {
-			throw new MustProvideConstructorException();
-		}
 	}
 
 	@Override
@@ -200,15 +176,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		} else {
 			int rows = 0;
 			for(T t : list) {
-				rows += deleteByKey(t); // deleteByKey中已经做了preHandleDelete
+				rows += delete(t); // deleteByKey中已经做了preHandleDelete
 			}
 			return rows;
 		}
-	}
-
-	@Override
-	public <T> int deleteByKey(Collection<T> list) throws NullKeyValueException {
-		return delete(list);
 	}
 
 	@Override
@@ -239,7 +210,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			return namedJdbcExecuteUpdate(sql, args);
 		} else { // 配置了拦截器，则先查出key，再删除
 			List<T> allKey = getAllKey(clazz, postSql, args);
-			return deleteByKey(allKey);
+			return delete(allKey);
 		}
 	}
 
