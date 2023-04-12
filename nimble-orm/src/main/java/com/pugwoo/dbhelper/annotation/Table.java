@@ -24,6 +24,16 @@ public @interface Table {
 	Class<?> sameTableNameAs() default void.class;
 
 	/**
+	 * 指定软删除表名，本表删除时，会将删除的数据插入到该表中，该表的结构必须和本表一致。<br>
+	 */
+	String softDeleteTable() default "";
+
+	/**
+	 * 当软删除表不是同一个数据库时，可以通过softDeleteDBHelper指定数据库
+	 */
+	String softDeleteDBHelperBean() default "";
+
+	/**
 	 * 虚拟表SQL，从select开始的完整SQL，该方式只对查询操作有效。当非空时有效，此时value()表名失效。<br>
 	 * <br>
 	 * 说明：虚拟表也支持path路径，path路径的文件内容就是SQL。
@@ -37,7 +47,6 @@ public @interface Table {
 
 	/**
 	 * 作用同virtualTableSQL()注解，但是是一个classpath路径
-	 * @return
 	 */
 	String virtualTablePath() default "";
 

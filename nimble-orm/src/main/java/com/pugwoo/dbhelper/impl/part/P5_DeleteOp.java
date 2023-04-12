@@ -1,10 +1,15 @@
 package com.pugwoo.dbhelper.impl.part;
 
+import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -68,11 +73,21 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		return _delete(t, false);
 	}
 
+	@Override
+	public <T> int deleteHard(T t) throws NullKeyValueException {
+		return _delete(t, true);
+	}
+
 	private <T> int _delete(T t, boolean isHard) throws NullKeyValueException {
+		if (t == null) {
+			throw new InvalidParameterException("delete t is null");
+		}
+
 		PreHandleObject.preHandleDelete(t);
-		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 
 		doInterceptBeforeDelete(t);
+
+		Field softDelete = DOInfoReader.getSoftDeleteColumn(t.getClass());
 
 		String sql;
 		List<Object> values = new ArrayList<>();
@@ -87,15 +102,48 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values);
 		}
 
+		Table table = DOInfoReader.getTable(t.getClass());
+		if (InnerCommonUtils.isNotBlank(table.softDeleteTable())) { // 将删除的数据存到另外一张表中
+			DBHelper dbHelper = this;
+			if (InnerCommonUtils.isNotBlank(table.softDeleteDBHelperBean())) {
+				Object bean = applicationContext.getBean(table.softDeleteDBHelperBean());
+				if (!(bean instanceof DBHelper)) {
+					throw new SpringBeanNotMatchException("cannot find DBHelper bean: " + table.softDeleteDBHelperBean()
+							+ " or it is not type of SpringJdbcDBHelper");
+				} else {
+					dbHelper = (DBHelper) bean;
+				}
+			}
+
+			// 查回数据并插入到软删除表
+			List<Object> keyParams = new ArrayList<>();
+			String keysWhereSQL = SQLUtils.getKeysWhereSQL(t, keyParams);
+			Object dbT = getOne(t.getClass(), keysWhereSQL, keyParams.toArray());
+			try {
+				if (dbT == null) {
+					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, key:{}",
+							NimbleOrmJSON.toJson(keyParams));
+				} else {
+					String oldTableNames = DBHelperContext.getTableName(t.getClass());
+					DBHelperContext.setTableName(t.getClass(), table.softDeleteTable());
+					int rows = dbHelper.insert(dbT);
+					DBHelperContext.setTableName(t.getClass(), oldTableNames);
+
+					if (rows != 1) {
+						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
+								rows, NimbleOrmJSON.toJson(dbT));
+					}
+				}
+			} catch (Exception e) {
+				LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",
+						NimbleOrmJSON.toJson(dbT), e);
+			}
+		}
+
 		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
 
 		doInterceptAfterDelete(t, rows);
 		return rows;
-	}
-
-	@Override
-	public <T> int deleteHard(T t) throws NullKeyValueException {
-		return _delete(t, true);
 	}
 
 	@Override
