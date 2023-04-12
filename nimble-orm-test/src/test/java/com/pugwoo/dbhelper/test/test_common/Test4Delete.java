@@ -65,9 +65,7 @@ public class Test4Delete {
             assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
         }
 
-        DBHelper.turnOffSoftDelete(StudentDO.class);
-        dbHelper.delete(StudentDO.class, "where 1=1");
-        DBHelper.turnOnSoftDelete(StudentDO.class);
+        dbHelper.deleteHard(StudentDO.class, "where 1=1");
         CommonOps.insertBatch(dbHelper,random);
         rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
         assert rows == random;
@@ -164,9 +162,7 @@ public class Test4Delete {
 
     @Test
     public void testTurnOffSoftDelete() {
-        DBHelper.turnOffSoftDelete(StudentDO.class);
-        dbHelper.delete(StudentDO.class, "where 1=1");
-        DBHelper.turnOnSoftDelete(StudentDO.class);
+        dbHelper.deleteHard(StudentDO.class, "where 1=1");
 
         int counts1 = 10 + new Random().nextInt(10);
         CommonOps.insertBatchNoReturnId(dbHelper, counts1);
@@ -183,19 +179,8 @@ public class Test4Delete {
         assert total == counts1 + counts2;
         assert softTotal == counts2;
 
-        DBHelper.turnOnSoftDelete(StudentDO.class); // 测速错误顺序
-        DBHelper.turnOffSoftDelete((Class<?>) null); // 测试错误参数
-
-        DBHelper.turnOffSoftDelete(StudentDO.class);
-
-        long turnoffTotal = dbHelper.getCount(StudentDO.class);
-        assert total == turnoffTotal;
-
         // 物理删除了
-        dbHelper.delete(StudentDO.class, "where 1=1");
-
-        DBHelper.turnOnSoftDelete(StudentDO.class);
-        DBHelper.turnOnSoftDelete((Class<?>) null); // 测试错误参数
+        dbHelper.deleteHard(StudentDO.class, "where 1=1");
 
         total = dbHelper.getCount(StudentHardDeleteDO.class);
         assert total == 0;
@@ -237,15 +222,11 @@ public class Test4Delete {
         int rows = dbHelper.delete(ListUtils.newArrayList(s1, s2));
         assert rows == 2;
 
-        DBHelper.turnOffSoftDelete(StudentWithDeleteScriptDO.class);
-
         List<StudentHardDeleteDO> list = dbHelper.getAll(StudentHardDeleteDO.class,
                 "where id in (?)", ListUtils.newArrayList(s1.getId(), s2.getId()));
         assert list.size() == 2;
         assert list.get(0).getName().equals("deleteddata");
         assert list.get(1).getName().equals("deleteddata");
-
-        DBHelper.turnOnSoftDelete(StudentWithDeleteScriptDO.class);
     }
 
     @Data

@@ -35,29 +35,6 @@ public interface DBHelper {
 		DBHelperContext.resetTableName();
 	}
 
-	// ================ Disable soft delete ================================
-
-	/**
-	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都等价于没有注解。<br>
-	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
-	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
-	 * @param clazz 注解了@Table的类
-	 */
-	@Deprecated
-	static void turnOffSoftDelete(Class<?>... clazz) {
-		DBHelperContext.turnOffSoftDelete(clazz);
-	}
-
-	/**
-	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete。<br>
-	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
-	 * @param clazz 注解了@Table的类
-	 */
-	@Deprecated
-	static void turnOnSoftDelete(Class<?>... clazz) {
-		DBHelperContext.turnOnSoftDelete(clazz);
-	}
-
 	// ================= Set SQL comment ==================================
 
 	/**
@@ -586,7 +563,7 @@ public interface DBHelper {
 
 	/**
 	 * 自定义条件删除数据（无论是否注解了软删除字段）。
-	 *
+	 * <br>
 	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
 	 *
 	 * @param clazz 必须有默认构造方法

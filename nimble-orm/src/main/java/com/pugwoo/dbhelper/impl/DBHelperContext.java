@@ -6,16 +6,12 @@ import java.util.Map;
 /**
  * DBHelper线程上下文，支持: <br>
  * 1. 自定义表名<br>
- * 2. 开启和关闭指定DO类的软删除<br>
- * 3. 线程级别的SQL注释
+ * 2. 线程级别的SQL注释
  */
 public class DBHelperContext {
 
     /**自定义表名，适合于分表场景*/
     private static final ThreadLocal<Map<Class<?>, String>> tableNames = new ThreadLocal<>();
-
-    /**关闭软删除*/
-    private static final ThreadLocal<Map<Class<?>, Boolean>> turnOffSoftDelete = new ThreadLocal<>();
 
     /**全局的SQL注释*/
     private static String globalComment;
@@ -60,69 +56,6 @@ public class DBHelperContext {
      */
     public static void resetTableName() {
         tableNames.set(null);
-    }
-
-    /**
-     * 查询指定类是否关闭了软删除
-     */
-    public static boolean isTurnOffSoftDelete(Class<?> clazz) {
-        if (clazz == null) {
-            return false;
-        }
-        Map<Class<?>, Boolean> turnoff = turnOffSoftDelete.get();
-        if(turnoff == null) {
-            return false;
-        }
-
-        Boolean b = turnoff.get(clazz);
-        return b != null && b;
-    }
-
-    /**
-     * 关闭指定类的软删除设置，仅对当前线程有效
-     */
-    public static void turnOffSoftDelete(Class<?> ...clazz) {
-        if (clazz == null) {
-            return;
-        }
-        for (Class<?> c : clazz) {
-            turnOffSoftDelete(c);
-        }
-    }
-
-    private static void turnOffSoftDelete(Class<?> clazz) {
-        if (clazz == null) {
-            return;
-        }
-        Map<Class<?>, Boolean> turnoff = turnOffSoftDelete.get();
-        if(turnoff == null) {
-            turnoff = new HashMap<>();
-            turnOffSoftDelete.set(turnoff);
-        }
-        turnoff.put(clazz, true);
-    }
-
-    /**
-     * 打开指定类的软删除设置
-     */
-    public static void turnOnSoftDelete(Class<?> ...clazz) {
-        if (clazz == null) {
-            return;
-        }
-        for (Class<?> c : clazz) {
-            turnOnSoftDelete(c);
-        }
-    }
-
-    private static void turnOnSoftDelete(Class<?> clazz) {
-        if (clazz == null) {
-            return;
-        }
-        Map<Class<?>, Boolean> turnoff = turnOffSoftDelete.get();
-        if(turnoff == null) {
-            return;
-        }
-        turnoff.remove(clazz);
     }
 
     public static void setGlobalComment(String comment) {

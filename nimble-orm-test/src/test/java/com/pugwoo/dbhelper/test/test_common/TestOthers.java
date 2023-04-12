@@ -4,11 +4,13 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
-import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.sql.WhereSQLForNamedParam;
-import com.pugwoo.dbhelper.test.entity.*;
+import com.pugwoo.dbhelper.test.entity.AreaDO;
+import com.pugwoo.dbhelper.test.entity.AreaLocationDO;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.entity.TypesDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -488,8 +490,4 @@ public class TestOthers {
 
     }
 
-    @Test
-    public void testDBHelperContextEx() {
-        assert !DBHelperContext.isTurnOffSoftDelete(null); // 测试异常情况
-    }
 }

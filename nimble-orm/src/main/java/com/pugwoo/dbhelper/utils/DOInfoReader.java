@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper.utils;
 import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.exception.*;
-import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -338,11 +337,6 @@ public class DOInfoReader {
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
-		// 处理turnoff软删除
-		if (DBHelperContext.isTurnOffSoftDelete(clazz)) {
-			return null;
-		}
-
 		List<Field> fields = getColumns(clazz);
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
