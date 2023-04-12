@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @SpringBootTest
-public class Test2Update_Custom {
+public class Test3Update_Custom {
 
     @Autowired
     private DBHelper dbHelper;

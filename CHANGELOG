@@ -1,3 +1,10 @@
+2023年4月12日
+v1.4.6 - [deprecated] 废弃deleteByKey(Class<T> clazz, Object keyValue)方法
+       - [deprecated] deleteByKey(T t)和deleteByKey(Collection<T> list)标记重命名为delete(T t)和deleteByKey(Collection<T> list)
+       - [deprecated] 标记废弃turnOffSoftDelete和turnOnSoftDelete方法
+       - [add] 增加deleteHard(Collection<T> list)、deleteHard(Class<T> clazz, String postSql, Object... args)方法
+       - [enhance] 优化insertOrUpdate方法，支持批量，提高性能
+
 2023年4月8日
 v1.4.5 - [add] 支持真正的批量update，提高批量update的性能10-100倍
        - [enhance] 数据库类型databaseType的获取支持lazy初始化，不会因为数据库连接异常导致Spring容器启动不了

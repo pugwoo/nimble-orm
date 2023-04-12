@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 @SpringBootTest
-public class TestDBHelper_delete {
+public class Test4Delete {
 
     @Autowired
     private DBHelper dbHelper;
@@ -105,60 +105,60 @@ public class TestDBHelper_delete {
 
     @Test
     public void testTrueDelete() {
-        StudentTrueDeleteDO studentTrueDeleteDO = new StudentTrueDeleteDO();
-        studentTrueDeleteDO.setName("john");
-        dbHelper.insert(studentTrueDeleteDO);
+        StudentHardDeleteDO studentHardDeleteDO = new StudentHardDeleteDO();
+        studentHardDeleteDO.setName("john");
+        dbHelper.insert(studentHardDeleteDO);
 
-        int rows = dbHelper.deleteByKey(StudentTrueDeleteDO.class, studentTrueDeleteDO.getId());
+        int rows = dbHelper.deleteByKey(StudentHardDeleteDO.class, studentHardDeleteDO.getId());
         assert rows == 1;
 
-        rows = dbHelper.deleteByKey(StudentTrueDeleteDO.class, studentTrueDeleteDO.getId());
+        rows = dbHelper.deleteByKey(StudentHardDeleteDO.class, studentHardDeleteDO.getId());
         assert rows == 0;
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 
-        studentTrueDeleteDO = new StudentTrueDeleteDO();
-        studentTrueDeleteDO.setName("john");
-        dbHelper.insert(studentTrueDeleteDO);
+        studentHardDeleteDO = new StudentHardDeleteDO();
+        studentHardDeleteDO.setName("john");
+        dbHelper.insert(studentHardDeleteDO);
 
-        rows = dbHelper.deleteByKey(studentTrueDeleteDO);
+        rows = dbHelper.deleteByKey(studentHardDeleteDO);
         assert rows == 1;
 
-        rows = dbHelper.deleteByKey(studentTrueDeleteDO);
+        rows = dbHelper.deleteByKey(studentHardDeleteDO);
         assert rows == 0;
 
         //
-        studentTrueDeleteDO = new StudentTrueDeleteDO();
-        studentTrueDeleteDO.setName("john");
-        dbHelper.insert(studentTrueDeleteDO);
+        studentHardDeleteDO = new StudentHardDeleteDO();
+        studentHardDeleteDO.setName("john");
+        dbHelper.insert(studentHardDeleteDO);
 
-        rows = dbHelper.delete(StudentTrueDeleteDO.class, "where name=?", "john");
+        rows = dbHelper.delete(StudentHardDeleteDO.class, "where name=?", "john");
         assert rows > 0;
 
-        rows = dbHelper.delete(StudentTrueDeleteDO.class, "where name=?", "john");
+        rows = dbHelper.delete(StudentHardDeleteDO.class, "where name=?", "john");
         assert rows == 0;
 
 
         // 批量物理删除
-        List<StudentTrueDeleteDO> list = new ArrayList<StudentTrueDeleteDO>();
+        List<StudentHardDeleteDO> list = new ArrayList<StudentHardDeleteDO>();
         int size = CommonOps.getRandomInt(10, 10);
         for(int i = 0; i < size; i++) {
-            studentTrueDeleteDO = new StudentTrueDeleteDO();
-            studentTrueDeleteDO.setName(CommonOps.getRandomName("jack"));
-            dbHelper.insert(studentTrueDeleteDO);
+            studentHardDeleteDO = new StudentHardDeleteDO();
+            studentHardDeleteDO.setName(CommonOps.getRandomName("jack"));
+            dbHelper.insert(studentHardDeleteDO);
 
-            list.add(studentTrueDeleteDO);
+            list.add(studentHardDeleteDO);
         }
 
         List<Long> ids = new ArrayList<Long>();
-        for(StudentTrueDeleteDO o : list) {
+        for(StudentHardDeleteDO o : list) {
             ids.add(o.getId());
         }
 
         rows = dbHelper.deleteByKey(list);
         assert rows == list.size();
 
-        List<StudentTrueDeleteDO> all = dbHelper.getAll(StudentTrueDeleteDO.class, "where id in (?)", ids);
+        List<StudentHardDeleteDO> all = dbHelper.getAll(StudentHardDeleteDO.class, "where id in (?)", ids);
         assert all.isEmpty();
     }
 
@@ -177,7 +177,7 @@ public class TestDBHelper_delete {
         int counts2 = 10 + new Random().nextInt(10);
         CommonOps.insertBatchNoReturnId(dbHelper, counts2);
 
-        long total = dbHelper.getCount(StudentTrueDeleteDO.class);
+        long total = dbHelper.getCount(StudentHardDeleteDO.class);
         long softTotal = dbHelper.getCount(StudentDO.class);
 
         assert total == counts1 + counts2;
@@ -197,7 +197,7 @@ public class TestDBHelper_delete {
         DBHelper.turnOnSoftDelete(StudentDO.class);
         DBHelper.turnOnSoftDelete((Class<?>) null); // 测试错误参数
 
-        total = dbHelper.getCount(StudentTrueDeleteDO.class);
+        total = dbHelper.getCount(StudentHardDeleteDO.class);
         assert total == 0;
     }
 
@@ -238,7 +238,7 @@ public class TestDBHelper_delete {
 
         DBHelper.turnOffSoftDelete(StudentWithDeleteScriptDO.class);
 
-        List<StudentTrueDeleteDO> list = dbHelper.getAll(StudentTrueDeleteDO.class,
+        List<StudentHardDeleteDO> list = dbHelper.getAll(StudentHardDeleteDO.class,
                 "where id in (?)", ListUtils.newArrayList(s1.getId(), s2.getId()));
         assert list.size() == 2;
         assert list.get(0).getName().equals("deleteddata");

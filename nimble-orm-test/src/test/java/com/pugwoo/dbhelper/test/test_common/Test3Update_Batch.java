@@ -20,7 +20,7 @@ import java.util.*;
  * 测试批量更新
  */
 @SpringBootTest
-public class Test2Update_Batch {
+public class Test3Update_Batch {
 
     @Autowired
     private DBHelper dbHelper;

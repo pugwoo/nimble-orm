@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootTest
-public class Test2Update_Single {
+public class Test3Update_Single {
 
     @Autowired
     private DBHelper dbHelper;
