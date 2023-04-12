@@ -152,8 +152,7 @@ public interface DBHelper {
 	 * @param args postSql中的参数列表
 	 * @return 返回的data不会是null
 	 */
-	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
-			String postSql, Object... args);
+	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize, String postSql, Object... args);
 
 	/**
 	 * 计算总数<br>
@@ -192,8 +191,7 @@ public interface DBHelper {
 	 * @param postSql 包含where关键字起的后续SQL语句
 	 * @return 返回的data不会是null
 	 */
-	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
-			String postSql, Object... args);
+	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize, String postSql, Object... args);
 	
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
