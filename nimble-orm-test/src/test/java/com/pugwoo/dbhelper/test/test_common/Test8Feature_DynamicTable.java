@@ -2,13 +2,17 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
+import com.pugwoo.dbhelper.test.entity.JsonDO;
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentNoTableNameDO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @SpringBootTest
@@ -34,6 +38,54 @@ public class Test8Feature_DynamicTable {
         DBHelperContext.resetTableName();
         tableName = DBHelperContext.getTableName(StudentDO.class);
         assert tableName == null;
+    }
+
+    @Test
+    public void testWithTableName() {
+        // 测试自定义表名
+        Map<Class<?>, String> map = new HashMap<>();
+        map.put(StudentDO.class, "t_student123");
+        map.put(SchoolDO.class, "t_school123");
+
+        DBHelper.withTableNames(map, () -> {
+            String tableName = DBHelperContext.getTableName(StudentDO.class);
+            assert tableName.equals("t_student123");
+
+            tableName = DBHelperContext.getTableName(SchoolDO.class);
+            assert tableName.equals("t_school123");
+
+            tableName = DBHelperContext.getTableName(JsonDO.class);
+            assert tableName == null;
+        });
+
+        // 测试表名是否被还原
+        String tableName = DBHelperContext.getTableName(StudentDO.class);
+        assert tableName == null;
+
+        String tableName1 = DBHelperContext.getTableName(SchoolDO.class);
+        assert tableName1 == null;
+
+        // 测试已经有自定义表名了，是否可以自动还原
+        DBHelperContext.setTableName(StudentDO.class, "t_student456");
+        DBHelperContext.setTableName(SchoolDO.class, "t_school456");
+
+        assert DBHelperContext.getTableName(StudentDO.class).equals("t_student456");
+        assert DBHelperContext.getTableName(SchoolDO.class).equals("t_school456");
+
+        DBHelper.withTableNames(map, () -> {
+            String tableName2 = DBHelperContext.getTableName(StudentDO.class);
+            assert tableName2.equals("t_student123");
+
+            String tableName3 = DBHelperContext.getTableName(SchoolDO.class);
+            assert tableName3.equals("t_school123");
+
+            String tableName4 = DBHelperContext.getTableName(JsonDO.class);
+            assert tableName4 == null;
+        });
+
+        assert DBHelperContext.getTableName(StudentDO.class).equals("t_student456");
+        assert DBHelperContext.getTableName(SchoolDO.class).equals("t_school456");
+
     }
 
     @Test

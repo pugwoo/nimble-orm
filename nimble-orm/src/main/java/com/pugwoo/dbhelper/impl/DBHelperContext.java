@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.impl;
 
+import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,14 +34,20 @@ public class DBHelperContext {
 
     /**
      * 设置类对应的自定义表名
-     * @param tableName 不需要加反引号`
+     * @param tableName 不需要加反引号`，如果为null表示清除自定义表名
      */
     public static void setTableName(Class<?> clazz, String tableName) {
-        if(clazz == null || tableName == null) {
+        if(clazz == null) {
             return;
         }
-        tableName = tableName.trim();
-        if(tableName.isEmpty()) {
+        if (tableName == null) { // 清除表名
+            Map<Class<?>, String> tableNames = DBHelperContext.tableNames.get();
+            if (tableNames != null) {
+                tableNames.remove(clazz);
+            }
+        }
+
+        if(InnerCommonUtils.isBlank(tableName)) { // 空字符串不允许，不处理
             return;
         }
 
