@@ -103,7 +103,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 
 		Table table = DOInfoReader.getTable(t.getClass());
-		if (InnerCommonUtils.isNotBlank(table.softDeleteTable())) { // 将删除的数据存到另外一张表中
+		if (!isHard && InnerCommonUtils.isNotBlank(table.softDeleteTable())) { // 将删除的数据存到另外一张表中
 			DBHelper dbHelper = this;
 			if (InnerCommonUtils.isNotBlank(table.softDeleteDBHelperBean())) {
 				Object bean = applicationContext.getBean(table.softDeleteDBHelperBean());
