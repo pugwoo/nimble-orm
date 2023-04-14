@@ -140,7 +140,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
 			sql = addComment(sql);
-			logForBatchInsert(sql, values.size(), values.isEmpty() ? null : values.get(0));
+			log(sql, values.size(), values.isEmpty() ? null : values.get(0));
 
 			start = System.currentTimeMillis();
 			int[] rows = jdbcTemplate.batchUpdate(sql, values);
@@ -158,7 +158,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
 			String sql = addComment(sqlDTO.getSql());
 			sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
-			logForBatchInsert(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
+			log(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
 
 			start = System.currentTimeMillis();
 			total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式

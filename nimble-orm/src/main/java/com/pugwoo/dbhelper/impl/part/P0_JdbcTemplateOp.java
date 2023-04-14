@@ -76,24 +76,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-	@Deprecated
-	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
-		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		}
-	}
-
-	@Deprecated
-	protected void logForBatchInsert(String sql, int listSize, Object[] values) {
-		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		}
-	}
-
 	/**
 	 * 记录慢sql请求
 	 * @param cost 请求耗时，毫秒
