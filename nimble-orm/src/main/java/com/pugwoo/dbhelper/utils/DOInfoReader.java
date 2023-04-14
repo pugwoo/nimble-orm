@@ -207,16 +207,15 @@ public class DOInfoReader {
 	 * @return 不会返回null
 	 */
 	public static List<Field> getColumnsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		if(clazz == null) {
-			throw new NoColumnAnnotationException("class is null");
+		List<Field> result = getColumns(clazz);
+
+		if(selectOnlyKey) {
+			result = InnerCommonUtils.filter(result, o -> o.getAnnotation(Column.class).isKey());
 		}
-		
-		List<Field> result = _getFieldsForSelect(clazz, selectOnlyKey);
 		if (result.isEmpty()) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column fields");
+			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
 		}
-		
+
 		return result;
 	}
 	
