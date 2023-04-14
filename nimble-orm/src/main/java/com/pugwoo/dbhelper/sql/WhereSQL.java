@@ -172,6 +172,16 @@ public class WhereSQL {
         return this;
     }
 
+    /**
+     * 只有当ifTrue为true时，才会执行not
+     */
+    public WhereSQL notIf(boolean ifTrue) {
+        if (ifTrue) {
+            not();
+        }
+        return this;
+    }
+
     public WhereSQL and(String condition, Object... param) {
         if (InnerCommonUtils.isNotBlank(condition)) {
             // 一共四种组合，目的是最小可能地加括号
@@ -195,6 +205,13 @@ public class WhereSQL {
         return this;
     }
 
+    public WhereSQL andIf(boolean ifTrue, String condition, Object... param) {
+        if (ifTrue) {
+            and(condition, param);
+        }
+        return this;
+    }
+
     /**
      * 功能同addAnd，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
@@ -203,6 +220,13 @@ public class WhereSQL {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
         return and(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
+    }
+
+    public WhereSQL andIf(boolean ifTrue, WhereSQL whereSQL) {
+        if (ifTrue) {
+            and(whereSQL);
+        }
+        return this;
     }
 
     public WhereSQL or(String condition, Object... param) {
@@ -215,6 +239,13 @@ public class WhereSQL {
         return this;
     }
 
+    public WhereSQL orIf(boolean ifTrue, String condition, Object... param) {
+        if (ifTrue) {
+            or(condition, param);
+        }
+        return this;
+    }
+
     /**
      * 功能同addOr，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
@@ -223,6 +254,13 @@ public class WhereSQL {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
         return or(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
+    }
+
+    public WhereSQL orIf(boolean ifTrue, WhereSQL whereSQL) {
+        if (ifTrue) {
+            or(whereSQL);
+        }
+        return this;
     }
 
     public WhereSQL addGroupByWithParam(String groupColumn, Object... params) {
