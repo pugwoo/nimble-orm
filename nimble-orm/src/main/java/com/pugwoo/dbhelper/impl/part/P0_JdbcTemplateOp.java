@@ -77,15 +77,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Deprecated
-	protected void log(String sql, Object keyValues) {
-		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
-		} else {
-			LOGGER.debug("ExecSQL:{},params:{}", sql, keyValues);
-		}
-	}
-
-	@Deprecated
 	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
 		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
@@ -214,7 +205,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, args);
+		log(sql, 0, args);
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
@@ -227,7 +218,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, args);
+		log(sql, 0, args);
 		long start = System.currentTimeMillis();
 		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {

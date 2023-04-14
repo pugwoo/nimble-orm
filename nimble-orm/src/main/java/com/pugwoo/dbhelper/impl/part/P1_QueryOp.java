@@ -61,7 +61,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
         sql = addComment(sql);
 
-        log(sql, null);
+        log(sql, 0, null);
         long start = System.currentTimeMillis();
         Long rows = jdbcTemplate.queryForObject(sql, Long.class);
 
@@ -87,7 +87,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sql = sqlSB;
         sql = addComment(sql);
-        log(sql, argsList);
+        log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
 
@@ -151,7 +151,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sql = sqlSB.toString();
         sql = addComment(sql);
-        log(sql, argsList);
+        log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
 
@@ -230,7 +230,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
         sql = addComment(sql);
-        log(sql, forIntercept);
+        log(sql, 0, forIntercept);
         long start = System.currentTimeMillis();
 
 
@@ -268,7 +268,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
         sql = addComment(sql);
-        log(sql, forIntercept);
+        log(sql, 0, forIntercept);
         long start = System.currentTimeMillis();
 
         List<T> list;
@@ -301,7 +301,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         sql = addComment(sql);
-        log(sql, argsList);
+        log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
         Stream<T> stream;
@@ -341,7 +341,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         sql = addComment(sql);
-        log(sql, argsList);
+        log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
         List<T> list;
@@ -470,7 +470,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sql = sqlSB.toString();
         sql = addComment(sql);
-        log(sql, argsList);
+        log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
         List<T> list;

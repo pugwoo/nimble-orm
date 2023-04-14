@@ -189,7 +189,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		String sql1 = SQLUtils.getInsertSQL(t, values, isWithNullValue);
 		final String sql = addComment(sql1);
-		log(sql, values);
+		log(sql, 0, values);
 		
 		final long start = System.currentTimeMillis();
 
