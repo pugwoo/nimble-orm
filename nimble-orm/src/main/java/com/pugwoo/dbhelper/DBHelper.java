@@ -86,6 +86,30 @@ public interface DBHelper {
 		DBHelperContext.setThreadLocalComment(comment);
 	}
 
+	// ================= Enable / Disable Cache ===========================
+
+	/**
+	 * 开启DBHelper的缓存，目前缓存DO类信息，默认开启
+	 */
+	static void enableCache() {
+		DBHelperContext.enableCache();
+	}
+
+	/**
+	 * 关闭DBHelper的缓存，目前缓存DO类信息
+	 */
+	static void disableCache() {
+		DBHelperContext.disableCache();
+	}
+
+	/**
+	 * 是否开启了DBHelper的缓存，目前缓存DO类信息，默认开启
+	 * @return true表示开启
+	 */
+	static boolean isCacheEnabled() {
+		return DBHelperContext.isCacheEnabled();
+	}
+
 	// =====================================================================
 
 	/**

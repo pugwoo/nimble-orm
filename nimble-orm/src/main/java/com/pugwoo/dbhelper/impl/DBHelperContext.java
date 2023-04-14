@@ -20,6 +20,9 @@ public class DBHelperContext {
     /**线程上下文注释*/
     private static final ThreadLocal<String> comment = new ThreadLocal<>();
 
+    /**是否开启缓存，默认开启*/
+    private static boolean isCacheEnabled = true;
+
     /**
      * 动态获得类对应的自定义表名，不存在返回null
      */
@@ -86,6 +89,19 @@ public class DBHelperContext {
      */
     public static String getThreadLocalComment() {
         return DBHelperContext.comment.get();
+    }
+
+    /**全局开启缓存*/
+    public static synchronized void enableCache() {
+        isCacheEnabled = true;
+    }
+
+    public static synchronized void disableCache() {
+        isCacheEnabled = false;
+    }
+
+    public static boolean isCacheEnabled() {
+        return isCacheEnabled;
     }
 
 }

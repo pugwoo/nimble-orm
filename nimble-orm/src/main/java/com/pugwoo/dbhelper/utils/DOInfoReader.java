@@ -190,12 +190,8 @@ public class DOInfoReader {
 			throw new NoColumnAnnotationException("class is null");
 		}
 
-		List<Field> result = ClassInfoCache.getField(clazz);
-		if (result == null) { // 还没有缓存过
-			result = _getAnnotationColumns(clazz, Column.class);
-			ClassInfoCache.putField(clazz, result);
-		}
-		if (result.isEmpty()) {
+		List<Field> result = ClassInfoCache.getColumnFields(clazz);
+		if (InnerCommonUtils.isEmpty(result)) {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
 					+ " does not have any @Column fields");
 		}
