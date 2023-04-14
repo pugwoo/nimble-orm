@@ -48,6 +48,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.LOG_SQL_AT_INFO_LEVEL, false);
 		put(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST, false);
 		put(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION, true);
+		put(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL, true);
 	}};
 
 	private IDBHelperSlowSqlCallback slowSqlCallback;
@@ -121,7 +122,8 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				}
 
 				// 对于非batch的慢sql，自动explain一下检查是否加了索引
-				if (getDatabaseType() == DatabaseEnum.MYSQL) {
+				boolean autoExplainSlowSql = getFeature(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
+				if (autoExplainSlowSql && getDatabaseType() == DatabaseEnum.MYSQL) {
 					try {
 						String explainSql = "EXPLAIN " + sql;
 						List<Object> explainArgs = new ArrayList<>();

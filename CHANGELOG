@@ -5,7 +5,7 @@ v1.5.0 - [del] 移除deleteByKey 3个方法，请用delete方法代替
        - [add] WhereSQL增加andIf/orIf/notIf方法，支持条件判断
        - [add] 新增开启和关闭缓存的开关，默认开启缓存，支持关闭缓存
        - [add] 增加@Table和@RelatedColumn的缓存
-       - [add] 对于MySQL慢sql，自动进行explain分析，打印分析结果
+       - [add] 对于MySQL慢sql，自动进行explain分析，打印分析结果，默认开启，支持关闭
 
 2023年4月12日
 v1.4.6 - [deprecated] 废弃deleteByKey(Class<T> clazz, Object keyValue)方法

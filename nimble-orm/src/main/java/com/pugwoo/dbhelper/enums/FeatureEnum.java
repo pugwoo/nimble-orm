@@ -26,4 +26,8 @@ public enum FeatureEnum {
      */
     AUTO_ADD_ORDER_FOR_PAGINATION,
 
+    /**
+     * 是否自动对慢SQL进行explain分析，默认[开启]
+     */
+    AUTO_EXPLAIN_SLOW_SQL,
 }
