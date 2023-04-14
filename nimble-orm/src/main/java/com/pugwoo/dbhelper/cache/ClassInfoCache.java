@@ -1,11 +1,13 @@
 package com.pugwoo.dbhelper.cache;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -201,4 +203,45 @@ public class ClassInfoCache {
         return result;
     }
 
+    // ==================================================================================
+
+    private static final Map<Class<?>, Table> classTableMap = new ConcurrentHashMap<>();
+
+    public static Table getTable(Class<?> clazz) {
+        Table table = null;
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        if (isCacheEnable) {
+            table = classTableMap.get(clazz);
+            if (table != null) {
+                return table;
+            }
+        }
+
+        table = getAnnotationClass(clazz, Table.class);
+
+        if (isCacheEnable && table != null) {
+            classTableMap.put(clazz, table);
+        }
+
+        return table;
+    }
+
+    /**
+     * 从指定类clazz再往其父类查找注解了annotationClass的类，如果已经找到了，就返回对应该注解，不再继续往上找
+     * @return 找不到返回null
+     */
+    private static <T extends Annotation> T getAnnotationClass(Class<?> clazz,
+                                                               Class<T> annotationClass) {
+        Class<?> curClass = clazz;
+        while (curClass != null) {
+            T annotation = curClass.getAnnotation(annotationClass);
+            if(annotation != null) {
+                return annotation;
+            }
+            curClass = curClass.getSuperclass();
+        }
+
+        return null;
+    }
 }

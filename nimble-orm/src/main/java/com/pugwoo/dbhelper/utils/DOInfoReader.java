@@ -30,7 +30,7 @@ public class DOInfoReader {
 	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
 	 */
 	public static Table getTable(Class<?> clazz) throws NoTableAnnotationException {
-		Table table = getAnnotationClass(clazz, Table.class);
+		Table table = ClassInfoCache.getTable(clazz);
 		if (table != null) {
 			if (table.sameTableNameAs() != void.class) {
 				if (InnerCommonUtils.isNotBlank(table.value())) {
@@ -41,7 +41,7 @@ public class DOInfoReader {
 			}
 			return table;
 		}
-		
+
 		throw new NoTableAnnotationException("class: "
 				+ (clazz == null ? "null" : clazz.getName())
 				+ " does not have @Table annotation.");
