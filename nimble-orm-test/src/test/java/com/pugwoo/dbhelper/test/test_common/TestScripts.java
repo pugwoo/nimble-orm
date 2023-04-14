@@ -74,7 +74,7 @@ public class TestScripts {
         StudentScriptDO studentDO = new StudentScriptDO();
         dbHelper.insert(studentDO);
 
-        dbHelper.deleteByKey(studentDO);
+        dbHelper.delete(studentDO);
 
         StudentRawDO student2 = dbHelper.getByKey(StudentRawDO.class, studentDO.getId());
         assert student2.getName().equals("333");

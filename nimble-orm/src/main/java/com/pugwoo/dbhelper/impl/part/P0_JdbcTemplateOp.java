@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author NICK
  */
 public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextAware {
-	
+
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
@@ -38,9 +38,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
 	protected int fetchSize = 1000; // Stream流式获取数据的fetchSize大小，默认1000（一般jdbc各数据库驱动的默认值是10，过小了）
-	
+
 	protected ApplicationContext applicationContext;
-	
+
 	protected List<DBHelperInterceptor> interceptors = new ArrayList<>();
 
 	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<FeatureEnum, Boolean>() {{
@@ -48,8 +48,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.LOG_SQL_AT_INFO_LEVEL, false);
 		put(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST, false);
 		put(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION, true);
+		put(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL, true);
 	}};
-	
+
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
 	/**
@@ -76,33 +77,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-	@Deprecated
-	protected void log(String sql, Object keyValues) {
-		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("ExecSQL:{},params:{}", sql, keyValues);
-		} else {
-			LOGGER.debug("ExecSQL:{},params:{}", sql, keyValues);
-		}
-	}
-
-	@Deprecated
-	protected void logForBatchInsert(String sql, int listSize, List<Object> values) {
-		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		}
-	}
-
-	@Deprecated
-	protected void logForBatchInsert(String sql, int listSize, Object[] values) {
-		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-			LOGGER.info("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		} else {
-			LOGGER.debug("Batch ExecSQL:{}; batch insert rows:{}, first row params are:{}", sql, listSize, NimbleOrmJSON.toJson(values));
-		}
-	}
-
 	/**
 	 * 记录慢sql请求
 	 * @param cost 请求耗时，毫秒
@@ -110,6 +84,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * @param batchSize 批量大小，如果大于0，则是批量
 	 * @param args 参数
 	 */
+	@SuppressWarnings("unchecked")
 	protected void logSlow(long cost, String sql, int batchSize, Object args) {
 		if(cost > timeoutWarningValve) {
 			if (batchSize > 0) {
@@ -145,43 +120,38 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
 							sql, cost, NimbleOrmJSON.toJson(args), e);
 				}
-			}
-		}
-	}
 
-	@Deprecated
-	protected void logSlow(long cost, String sql, List<Object> keyValues) {
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
-			try {
-				if(slowSqlCallback != null) {
-					slowSqlCallback.callback(cost, sql, keyValues);
+				// 对于非batch的慢sql，自动explain一下检查是否加了索引
+				boolean autoExplainSlowSql = getFeature(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
+				if (autoExplainSlowSql && getDatabaseType() == DatabaseEnum.MYSQL) {
+					try {
+						String explainSql = "EXPLAIN " + sql;
+						List<Object> explainArgs = new ArrayList<>();
+						boolean isMap = false;
+						if (args != null) {
+							if (args instanceof List) {
+								explainArgs = ((List<Object>) args);
+							} else if (args instanceof Object[]) {
+								explainArgs = Arrays.asList(args);
+							} else if (args instanceof Map) {
+								isMap = true;
+							}
+						}
+						List<Map<String, Object>> explainResult = null;
+						if (!isMap) {
+							explainResult = namedParameterJdbcTemplate.queryForList(
+									NamedParameterUtils.trans(explainSql, explainArgs),
+									NamedParameterUtils.transParam(explainArgs));
+						} else {
+							explainResult = namedParameterJdbcTemplate.queryForList(explainSql, (Map<String, ?>) args);
+						}
+						LOGGER.warn("Explain SlowSQL:{}; cost:{}ms, params:{} explain result:{}", sql,
+								   cost, NimbleOrmJSON.toJson(args), NimbleOrmJSON.toJson(explainResult));
+					} catch (Throwable e) {
+						LOGGER.error("SlowSQL explain fail, SlowSQL:{}; cost:{}ms, params:{}",
+								sql, cost, NimbleOrmJSON.toJson(args), e);
+					}
 				}
-			} catch (Throwable e) {
-				LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{},cost:{}ms,params:{}",
-						sql, cost, keyValues, e);
-			}
-		}
-	}
-
-	@Deprecated
-	protected void logSlowForParamMap(long cost, String sql, Map<String, ?> paramMap) {
-		List<Object> params = new ArrayList<>();
-		params.add(paramMap);
-		logSlow(cost, sql, params);
-	}
-
-	@Deprecated
-	protected void logSlowForBatch(long cost, String sql, int listSize) {
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
-			try {
-				if(slowSqlCallback != null) {
-					slowSqlCallback.callback(cost, sql, new ArrayList<>());
-				}
-			} catch (Throwable e) {
-				LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{},cost:{}ms,listSize:{}",
-						sql, cost, listSize, e);
 			}
 		}
 	}
@@ -190,7 +160,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	}
-	
+
 	@Override
 	public boolean executeAfterCommit(final Runnable runnable) {
 		if(runnable == null) {
@@ -214,20 +184,20 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, args);
+		log(sql, 0, args);
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args == null ? new ArrayList<>() : Arrays.asList(args));
+		logSlow(cost, sql, 0, args == null ? new ArrayList<>() : Arrays.asList(args));
 		return rows;
 	}
-	
+
 	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, args);
+		log(sql, 0, args);
 		long start = System.currentTimeMillis();
 		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
 		if(args != null) {
@@ -237,7 +207,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, argsList);
+		logSlow(cost, sql, 0, argsList);
 		return rows;
 	}
 
@@ -264,7 +234,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		logSlow(cost, logSql, batchSize, logArgs);
 		return rows;
 	}
-	
+
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		if (jdbcTemplate == null) {
 			return;
@@ -306,11 +276,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) 
+	public void setApplicationContext(ApplicationContext applicationContext)
 			throws BeansException {
 		this.applicationContext = applicationContext;
 	}
-	
+
 	@Override
 	public void setInterceptors(List<DBHelperInterceptor> interceptors) {
 		if(interceptors != null) {
@@ -322,7 +292,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			}
 		}
 	}
-	
+
 	@Override
 	public void setTimeoutWarningCallback(IDBHelperSlowSqlCallback callback) {
 		this.slowSqlCallback = callback;

@@ -1,17 +1,25 @@
 package com.pugwoo.dbhelper.cache;
 
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 缓存类相关信息
  */
 public class ClassInfoCache {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClassInfoCache.class);
 
     private static final Map<Field, Method> fieldSetMethodMap = new ConcurrentHashMap<>();
     private static final Map<Field, Boolean> fieldSetMethodNullMap = new ConcurrentHashMap<>();
@@ -22,14 +30,18 @@ public class ClassInfoCache {
      * @return 不存在返回null
      */
     public static Method getFieldSetMethod(Field field) {
-        Method method = fieldSetMethodMap.get(field);
-        if (method != null) {
-            return method;
-        }
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
 
-        Boolean isNull = fieldSetMethodNullMap.get(field);
-        if (isNull != null && isNull) {
-            return null;
+        Method method = null;
+        if (isCacheEnable) {
+            method = fieldSetMethodMap.get(field);
+            if (method != null) {
+                return method;
+            }
+            Boolean isNull = fieldSetMethodNullMap.get(field);
+            if (isNull != null && isNull) {
+                return null;
+            }
         }
 
         String fieldName = field.getName();
@@ -41,14 +53,19 @@ public class ClassInfoCache {
             // 不需要打log，框架允许没有setter方法
         }
 
-        if (method == null) {
-            fieldSetMethodNullMap.put(field, true);
-        } else {
-            method.setAccessible(true);
-            fieldSetMethodMap.put(field, method);
+        if (isCacheEnable) {
+            if (method == null) {
+                fieldSetMethodNullMap.put(field, true);
+            } else {
+                method.setAccessible(true);
+                fieldSetMethodMap.put(field, method);
+            }
         }
+
         return method;
     }
+
+    // ==================================================================================
 
     private static final Map<Field, Method> fieldGetMethodMap = new ConcurrentHashMap<>();
     private static final Map<Field, Boolean> fieldGetMethodNullMap = new ConcurrentHashMap<>();
@@ -59,14 +76,18 @@ public class ClassInfoCache {
      * @return 不存在返回null
      */
     public static Method getFieldGetMethod(Field field) {
-        Method method = fieldGetMethodMap.get(field);
-        if (method != null) {
-            return method;
-        }
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
 
-        Boolean isNull = fieldGetMethodNullMap.get(field);
-        if (isNull != null && isNull) {
-            return null;
+        Method method = null;
+        if (isCacheEnable) {
+            method = fieldGetMethodMap.get(field);
+            if (method != null) {
+                return method;
+            }
+            Boolean isNull = fieldGetMethodNullMap.get(field);
+            if (isNull != null && isNull) {
+                return null;
+            }
         }
 
         String fieldName = field.getName();
@@ -78,23 +99,185 @@ public class ClassInfoCache {
             // 不需要打log，框架允许没有getter方法
         }
 
-        if (method == null) {
-            fieldGetMethodNullMap.put(field, true);
-        } else {
-            method.setAccessible(true);
-            fieldGetMethodMap.put(field, method);
+        if (isCacheEnable) {
+            if (method == null) {
+                fieldGetMethodNullMap.put(field, true);
+            } else {
+                method.setAccessible(true);
+                fieldGetMethodMap.put(field, method);
+            }
         }
         return method;
     }
 
+    // ==================================================================================
+
     private static final Map<Class<?>, List<Field>> classFieldMap = new ConcurrentHashMap<>();
 
-    public static void putField(Class<?> clazz, List<Field> field) {
-        classFieldMap.put(clazz, field);
+    /**
+     * 获得clazz的所有Column字段
+     */
+    public static List<Field> getColumnFields(Class<?> clazz) {
+        List<Field> fields = null;
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        if (isCacheEnable) {
+            fields = classFieldMap.get(clazz);
+            if (fields != null) {
+                return fields;
+            }
+        }
+
+        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+        fields = getFields(classLink);
+
+        if (isCacheEnable) {
+            classFieldMap.put(clazz, fields);
+        }
+
+        return fields;
     }
 
-    public static List<Field> getField(Class<?> clazz) {
-        return classFieldMap.get(clazz);
+    /**
+     * 获得指定类及其父类的列表，子类在前，父类在后
+     * @param clazz 要查询的类
+     */
+    private static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
+        if (clazz == null) {
+            return new ArrayList<>();
+        }
+
+        List<Class<?>> classLink = new ArrayList<>();
+        Class<?> curClass = clazz;
+        while (curClass != null) {
+            classLink.add(curClass);
+            curClass = curClass.getSuperclass();
+        }
+
+        return classLink;
+    }
+
+    /**
+     * 获取classLink多个类中，注解了annotationClazz的Field字段。<br>
+     * 目前annotationClazz的取值有@Column @JoinLeftTable @JoinRightTable <br>
+     * 对于Column注解，如果子类和父类字段同名，那么子类将代替父类，父类的Field不会加进来；<br>
+     * 如果子类出现相同的Field，那么也只拿第一个；一旦出现字段同名，那么进行error log，正常是不建议覆盖和同名操作的，风险很大 <br>
+     */
+    private static List<Field> getFields(List<Class<?>> classLink) {
+        List<Field> result = new ArrayList<>();
+        if(classLink == null || classLink.isEmpty()) {
+            return result;
+        }
+
+        // 按父类优先的顺序来
+        List<List<Field>> fieldList = new ArrayList<>();
+        for (int i = classLink.size() - 1; i >= 0; i--) {
+            Field[] fields = classLink.get(i).getDeclaredFields();
+            fieldList.add(InnerCommonUtils.filter(fields, o -> o.getAnnotation(Column.class) != null));
+        }
+
+        Set<String> columnValues = new HashSet<>();
+        // 从子类开始拿
+        List<List<Field>> fieldListTmp = new ArrayList<>();
+        for (int i = fieldList.size() - 1; i >= 0; i--) {
+            List<Field> fields = fieldList.get(i);
+            List<Field> fieldsTmp = new ArrayList<>();
+            for (Field field : fields) {
+                Column column = field.getAnnotation(Column.class);
+                if (columnValues.contains(column.value())) {
+                    // 如果子类已经存在，那么子类会覆盖父类
+                    LOGGER.error("found duplicate field:{} in class(and its parents):{}, this field is ignored",
+                            field.getName(), classLink.get(0).getName());
+                    continue;
+                }
+                columnValues.add(column.value());
+
+                fieldsTmp.add(field);
+            }
+            fieldListTmp.add(0, fieldsTmp);
+        }
+
+        for (List<Field> fields : fieldListTmp) { // 最终排序是父类先，再子类
+            result.addAll(fields);
+        }
+
+        return result;
+    }
+
+    // ==================================================================================
+
+    private static final Map<Class<?>, Table> classTableMap = new ConcurrentHashMap<>();
+
+    public static Table getTable(Class<?> clazz) {
+        Table table = null;
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        if (isCacheEnable) {
+            table = classTableMap.get(clazz);
+            if (table != null) {
+                return table;
+            }
+        }
+
+        table = getAnnotationClass(clazz, Table.class);
+
+        if (isCacheEnable && table != null) {
+            classTableMap.put(clazz, table);
+        }
+
+        return table;
+    }
+
+    /**
+     * 从指定类clazz再往其父类查找注解了annotationClass的类，如果已经找到了，就返回对应该注解，不再继续往上找
+     * @return 找不到返回null
+     */
+    private static <T extends Annotation> T getAnnotationClass(Class<?> clazz,
+                                                               Class<T> annotationClass) {
+        Class<?> curClass = clazz;
+        while (curClass != null) {
+            T annotation = curClass.getAnnotation(annotationClass);
+            if(annotation != null) {
+                return annotation;
+            }
+            curClass = curClass.getSuperclass();
+        }
+
+        return null;
+    }
+
+    // ==================================================================================
+
+    private static Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
+
+    public static List<Field> getRelatedColumns(Class<?> clazz) {
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        List<Field> fields = null;
+        if (isCacheEnable) {
+            fields = relatedColumnMap.get(clazz);
+            if (fields != null) {
+                return fields;
+            }
+        }
+
+        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+
+        // 父类优先
+        fields = new ArrayList<>();
+        for (int i = classLink.size() - 1; i >= 0; i--) {
+            Field[] f = classLink.get(i).getDeclaredFields();
+            for (Field field : f) {
+                if (field.getAnnotation(RelatedColumn.class) != null) {
+                    fields.add(field);
+                }
+            }
+        }
+
+        if (isCacheEnable) {
+            relatedColumnMap.put(clazz, fields);
+        }
+        return fields;
     }
 
 }

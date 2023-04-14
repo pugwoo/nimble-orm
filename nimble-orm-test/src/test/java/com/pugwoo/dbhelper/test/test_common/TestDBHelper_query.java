@@ -221,7 +221,7 @@ public class TestDBHelper_query {
         dbHelper.turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
 
         StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        dbHelper.deleteByKey(studentDO);
+        dbHelper.delete(studentDO);
 
         StudentWithLocalDateTimeDO one = dbHelper.getOne(StudentWithLocalDateTimeDO.class,
                 "where id=?", studentDO.getId());

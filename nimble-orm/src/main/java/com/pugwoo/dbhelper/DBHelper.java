@@ -1,12 +1,14 @@
 package com.pugwoo.dbhelper;
 
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -16,6 +18,8 @@ import java.util.stream.Stream;
  * @author pugwoo
  */
 public interface DBHelper {
+
+	Logger LOGGER = LoggerFactory.getLogger(DBHelper.class);
 
 	// =============== Dynamic Table Name ===================================
 
@@ -36,27 +40,30 @@ public interface DBHelper {
 		DBHelperContext.resetTableName();
 	}
 
-	// ================ Disable soft delete ================================
-
 	/**
-	 * 关闭指定类的软删除设置，关闭后，无论该类是否注解了软删除，都等价于没有注解。<br>
-	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效，一般执行完逻辑之后，需要再调用turnOnSoftDelete打开。<br>
-	 * 如果需要永久性的移除软删除，可以使用两个DO类描述同一张表，一个DO类是软删除，一个DO类是硬删除。
-	 * @param clazz 注解了@Table的类
+	 * 获取指定类的表名，适合于分表场景；执行完成后会自动还原成原来的表名。<br>
+	 * @param tableNames 设置DO类对应的表名
+	 * @param runnable 要执行的代码
 	 */
-	@Deprecated
-	static void turnOffSoftDelete(Class<?>... clazz) {
-		DBHelperContext.turnOffSoftDelete(clazz);
-	}
+	static void withTableNames(Map<Class<?>, String> tableNames, Runnable runnable) {
+		if (runnable == null) {
+			LOGGER.error("withTableNames runnable is null");
+			return;
+		}
+		Map<Class<?>, String> oldTableNames = new HashMap<>();
+		if (tableNames != null) {
+			tableNames.forEach((clazz, tableName) -> {
+				String oldTableName = DBHelperContext.getTableName(clazz);
+				oldTableNames.put(clazz, oldTableName);
+				DBHelperContext.setTableName(clazz, tableName);
+			});
+		}
 
-	/**
-	 * 打开指定类的软删除设置，如果没有调用过turnOffSoftDelete，则不需要调用turnOnSoftDelete。<br>
-	 * 该设置对所有DBHelper实例生效，但仅对当前线程有效。
-	 * @param clazz 注解了@Table的类
-	 */
-	@Deprecated
-	static void turnOnSoftDelete(Class<?>... clazz) {
-		DBHelperContext.turnOnSoftDelete(clazz);
+		runnable.run();
+
+		if (tableNames != null) {
+			tableNames.forEach((clazz, tableName) -> DBHelperContext.setTableName(clazz, oldTableNames.get(clazz)));
+		}
 	}
 
 	// ================= Set SQL comment ==================================
@@ -79,33 +86,57 @@ public interface DBHelper {
 		DBHelperContext.setThreadLocalComment(comment);
 	}
 
+	// ================= Enable / Disable Cache ===========================
+
+	/**
+	 * 开启DBHelper的缓存，目前缓存DO类信息，默认开启
+	 */
+	static void enableCache() {
+		DBHelperContext.enableCache();
+	}
+
+	/**
+	 * 关闭DBHelper的缓存，目前缓存DO类信息
+	 */
+	static void disableCache() {
+		DBHelperContext.disableCache();
+	}
+
+	/**
+	 * 是否开启了DBHelper的缓存，目前缓存DO类信息，默认开启
+	 * @return true表示开启
+	 */
+	static boolean isCacheEnabled() {
+		return DBHelperContext.isCacheEnabled();
+	}
+
 	// =====================================================================
-	
+
 	/**
 	 * 手动回滚@Transactional的事务。
 	 * 对于已知需要回滚的动作，我更推荐主动调用让其回滚，而非抛出RuntimeException。
 	 * 当前如果没有事务而调用该方法，将抛出org.springframework.transaction.NoTransactionException。<br><br>
-	 * 
+	 *
 	 * 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`
 	 * 异常的情况，需要使用者保证满足以下两点中的任意一点：<br>
 	 * 1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；<br>
 	 * 2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。<br>
 	 */
 	void rollback();
-	
+
 	/**
 	 * 当前事务提交后执行
 	 * @param runnable 执行的回调方法
 	 * @return 当提交成功返回true，提交失败返回false；如果当前不在事务中时，返回false
 	 */
 	boolean executeAfterCommit(Runnable runnable);
-	
+
 	/**
 	 * 设置SQL执行超时的WARN log，超时时间默认为1秒
 	 * @param timeMS 毫秒
 	 */
 	void setTimeoutWarningValve(long timeMS);
-	
+
 	/**
 	 * 设置允许的每页最大的个数，当页数超过允许的最大页数时，设置为最大页数。
 	 * 默认对每页最大个数没有限制，该限制只对getPage和getPageWithoutCount接口生效。
@@ -118,13 +149,13 @@ public interface DBHelper {
 	 * @param fetchSize fetchSize
 	 */
 	void setFetchSize(int fetchSize);
-	
+
 	/**
 	 * 设置SQL执行超时回调，可用于自行实现将慢sql存放到db
 	 * @param callback 执行的回调方法
 	 */
 	void setTimeoutWarningCallback(IDBHelperSlowSqlCallback callback);
-	
+
 	/**
 	 * 数据库拦截器
 	 * @param interceptors 拦截器列表，全量更新
@@ -146,7 +177,7 @@ public interface DBHelper {
 	void turnOffFeature(FeatureEnum featureEnum);
 
 	// =============== Query methods START ==================================
-	
+
 	/**
 	 * 适合于只有一个Key的情况，多主键的情况请使用getOne<br>
 	 * 【会自动处理软删除记录】
@@ -176,8 +207,7 @@ public interface DBHelper {
 	 * @param args postSql中的参数列表
 	 * @return 返回的data不会是null
 	 */
-	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize,
-			String postSql, Object... args);
+	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize, String postSql, Object... args);
 
 	/**
 	 * 计算总数<br>
@@ -186,7 +216,7 @@ public interface DBHelper {
 	 * @return 总数
 	 */
 	<T> long getCount(Class<T> clazz);
-	
+
 	/**
 	 * 计算总数<br>
 	 * 【会自动处理软删除记录】
@@ -196,7 +226,7 @@ public interface DBHelper {
 	 * @return 总数
 	 */
 	<T> long getCount(Class<T> clazz, String postSql, Object... args);
-	
+
 	/**
 	 * 查询列表，没有查询条件；不查询总数<br>
 	 * 【会自动处理软删除记录】
@@ -206,7 +236,7 @@ public interface DBHelper {
 	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize);
-	
+
 	/**
 	 * 查询列表，postSql可以带查询条件；不查询总数<br>
 	 * 【会自动处理软删除记录】
@@ -216,9 +246,8 @@ public interface DBHelper {
 	 * @param postSql 包含where关键字起的后续SQL语句
 	 * @return 返回的data不会是null
 	 */
-	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
-			String postSql, Object... args);
-	
+	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize, String postSql, Object... args);
+
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
 	 * 【会自动处理软删除记录】
@@ -237,7 +266,7 @@ public interface DBHelper {
 	 * @return 返回不会是null
 	 */
 	<T> Stream<T> getAllForStream(Class<T> clazz);
-	
+
 	/**
 	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。<br>
 	 * 【会自动处理软删除记录】
@@ -275,7 +304,7 @@ public interface DBHelper {
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz);
-	
+
 	/**
 	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
 	 * 【会自动处理软删除记录】
@@ -366,7 +395,7 @@ public interface DBHelper {
 	 * @return 如果存在则返回true，否则返回false
 	 */
 	<T> boolean isExist(Class<T> clazz, String postSql, Object... args);
-	
+
 	/**
 	 * 是否出现至少N条记录(含N条)
 	 * @param atLeastCounts 至少有N条记录（isExist方法等级于atLeastCounts=1）
@@ -376,35 +405,35 @@ public interface DBHelper {
 	 * @return 如果存在则返回true，否则返回false
 	 */
 	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz, String postSql, Object... args);
-	
+
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了
 	 * @param t 需要处理RelatedColumn的对象
 	 */
 	<T> void handleRelatedColumn(T t);
-	
+
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
 	 * @param list 需要处理RelatedColumn的对象列表
 	 */
 	<T> void handleRelatedColumn(List<T> list);
-	
+
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了
 	 * @param t 需要处理RelatedColumn的对象
 	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleRelatedColumn(T t, String... relatedColumnProperties);
-	
+
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
 	 * @param list 需要处理RelatedColumn的对象列表
 	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties);
-	
+
 	// ===============Query methods END ==================================
-	
+
 	/**
 	 * 插入一条记录<br>
 	 * 如果包含了自增id，则自增Id会被设置。<br>
@@ -413,7 +442,7 @@ public interface DBHelper {
 	 * @return 实际修改的条数
 	 */
 	<T> int insert(T t);
-	
+
 	/**
 	 * 批量插入多条记录，返回数据库实际修改的条数。<br>
 	 * 【说明】该方法没有事务，请在外层加事务。<br>
@@ -446,14 +475,14 @@ public interface DBHelper {
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdate(T t);
-	
+
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。包括null的值会更新或插入。
 	 * @param t 需要插入的DO对象实例
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdateWithNull(T t);
-	
+
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。只有非null的值会更新或插入。
 	 * @param list 需要插入的DO对象实例列表
@@ -468,10 +497,10 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当对象t的主键值为null时抛出
 	 */
 	<T> int updateWithNull(T t) throws NullKeyValueException;
-	
+
 	/**
 	 * 带条件的更新单个对象，必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改
-	 * 
+	 *
 	 * @param t 更新的对象实例
 	 * @param postSql where及后续的sql，包含where关键字
 	 * @param args postSql中的参数
@@ -479,7 +508,7 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当对象t的主键值为null时抛出
 	 */
 	<T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException;
-	
+
 	/**
 	 * 更新单条数据库记录,必须带上object的key。【只更新非null字段】
 	 * @param t 更新的对象实例
@@ -487,11 +516,11 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当对象t的主键值为null时抛出
 	 */
 	<T> int update(T t) throws NullKeyValueException;
-	
+
 	/**
 	 * 更新单条数据库记录,必须带上object的key，主要用于mysql的update ... where ...这样的CAS修改。
 	 * 【只更新非null字段】
-	 * 
+	 *
 	 * @param t 更新的对象实例
 	 * @param postSql where及后续的sql，包含where关键字
 	 * @param args postSql中的参数
@@ -499,7 +528,7 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当对象t的主键值为null时抛出
 	 */
 	<T> int update(T t, String postSql, Object... args) throws NullKeyValueException;
-	
+
 	/**
 	 * 自定义set字句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。
 	 * @param t 必须提供key
@@ -509,7 +538,7 @@ public interface DBHelper {
 	 * @throws NullKeyValueException 当t没有带上key时，抛出该异常
 	 */
 	<T> int updateCustom(T t, String setSql, Object... args) throws NullKeyValueException;
-	
+
 	/**
 	 * 自定义更新多行记录，会自动去掉已软删除的行。
 	 * 【重要更新 since 1.0.0】该方法修改的记录，不会再调用afterUpdate方法，如果需要获得被修改的行记录，请考虑使用canal方案。
@@ -576,40 +605,6 @@ public interface DBHelper {
 	<T> int deleteHard(Collection<T> list) throws NullKeyValueException;
 
 	/**
-	 * 删除数据库记录，返回数据库实际修改条数。
-	 * 该操作【会】自动使用软删除进行删除
-	 * 
-	 * @param t 要更新的对象
-	 * @return 实际删除的条数
-	 */
-	@Deprecated
-	<T> int deleteByKey(T t) throws NullKeyValueException;
-	
-	/**
-	 * 删除数据库记录，返回数据库实际修改条数。
-	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
-	 * 该操作【会】自动使用软删除进行删除
-	 * @param list 要更新的对象列表
-	 * @return 实际删除的条数
-	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
-	 */
-	@Deprecated
-	<T> int deleteByKey(Collection<T> list) throws NullKeyValueException;
-	
-	/**
-	 * 删除数据库记录，返回实际修改数据库条数，这个接口只支持单个字段是key的情况。
-	 * 该操作【会】自动使用软删除进行删除
-	 * 
-	 * @param clazz 必须有默认构造方法
-	 * @param keyValue 要删除的对象的主键值
-	 * @return 实际删除的条数
-	 * @throws NullKeyValueException 当keyValue为null时，抛出异常
-	 */
-	@Deprecated
-	<T> int deleteByKey(Class<T> clazz, Object keyValue) throws NullKeyValueException,
-	    MustProvideConstructorException;
-
-	/**
 	 * 自定义条件删除数据，该操作【会】自动使用软删除标记。
 	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
 	 * @param clazz 必须有默认构造方法
@@ -621,7 +616,7 @@ public interface DBHelper {
 
 	/**
 	 * 自定义条件删除数据（无论是否注解了软删除字段）。
-	 *
+	 * <br>
 	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
 	 *
 	 * @param clazz 必须有默认构造方法

@@ -33,6 +33,9 @@ public class Test8Feature_SlowSqlCallback {
 
         assert dbHelper.insert(stu1) == 1;
 
+        dbHelper.getAll(StudentDO.class); // 会触发慢sql回调
+        dbHelper.getAll(StudentDO.class, "where id=?", stu1.getId()); // 会触发慢sql回调
+
         assert !sb.toString().isEmpty();
 
         dbHelper.setTimeoutWarningValve(1000);

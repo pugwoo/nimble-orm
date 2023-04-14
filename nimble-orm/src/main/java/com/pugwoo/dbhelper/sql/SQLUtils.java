@@ -228,7 +228,7 @@ public class SQLUtils {
 	}
 	
 	/**
-	 * 获得主键where子句，包含where关键字。会自动处理软删除条件
+	 * 获得主键where子句，包含where关键字
 	 * 
 	 * @param clazz 注解了Table的类
 	 * @throws NoKeyColumnAnnotationException 当没有注解isKey=1的列时抛出
@@ -239,18 +239,7 @@ public class SQLUtils {
 		String where = joinWhere(keyFields, "AND");
 		return "WHERE " + where;
 	}
-	
-	/**
-	 * 获得主键in(?)的where子句，包含where关键字。会自动处理软删除条件
-	 * @param clazz 注解了Table的类
-	 * @return 生成的where子句的SQL
-	 */
-	public static String getKeyInWhereSQL(Class<?> clazz) {
-		Field keyField = DOInfoReader.getOneKeyColumn(clazz);
-		return autoSetSoftDeleted("WHERE " +
-	           getColumnName(keyField.getAnnotation(Column.class)) + " in (?)", clazz);
-	}
-	
+
 	/**
 	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
 	 * @param t 注解了Table的对象

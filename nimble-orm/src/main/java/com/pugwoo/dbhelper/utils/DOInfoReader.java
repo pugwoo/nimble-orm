@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper.utils;
 import com.pugwoo.dbhelper.annotation.*;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.exception.*;
-import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public class DOInfoReader {
 	 * @throws NoTableAnnotationException 当clazz没有@Table注解时抛出NoTableAnnotationException
 	 */
 	public static Table getTable(Class<?> clazz) throws NoTableAnnotationException {
-		Table table = getAnnotationClass(clazz, Table.class);
+		Table table = ClassInfoCache.getTable(clazz);
 		if (table != null) {
 			if (table.sameTableNameAs() != void.class) {
 				if (InnerCommonUtils.isNotBlank(table.value())) {
@@ -42,7 +41,7 @@ public class DOInfoReader {
 			}
 			return table;
 		}
-		
+
 		throw new NoTableAnnotationException("class: "
 				+ (clazz == null ? "null" : clazz.getName())
 				+ " does not have @Table annotation.");
@@ -191,12 +190,8 @@ public class DOInfoReader {
 			throw new NoColumnAnnotationException("class is null");
 		}
 
-		List<Field> result = ClassInfoCache.getField(clazz);
-		if (result == null) { // 还没有缓存过
-			result = _getAnnotationColumns(clazz, Column.class);
-			ClassInfoCache.putField(clazz, result);
-		}
-		if (result.isEmpty()) {
+		List<Field> result = ClassInfoCache.getColumnFields(clazz);
+		if (InnerCommonUtils.isEmpty(result)) {
 			throw new NoColumnAnnotationException("class " + clazz.getName()
 					+ " does not have any @Column fields");
 		}
@@ -212,16 +207,15 @@ public class DOInfoReader {
 	 * @return 不会返回null
 	 */
 	public static List<Field> getColumnsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		if(clazz == null) {
-			throw new NoColumnAnnotationException("class is null");
+		List<Field> result = getColumns(clazz);
+
+		if(selectOnlyKey) {
+			result = InnerCommonUtils.filter(result, o -> o.getAnnotation(Column.class).isKey());
 		}
-		
-		List<Field> result = _getFieldsForSelect(clazz, selectOnlyKey);
 		if (result.isEmpty()) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column fields");
+			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
 		}
-		
+
 		return result;
 	}
 	
@@ -307,21 +301,8 @@ public class DOInfoReader {
 		}
 		return casVersionField;
 	}
-	
-	public static Field getOneKeyColumn(Class<?> clazz) throws NotOnlyOneKeyColumnException {
-		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 
-		if (keyFields.size() != 1) {
-			throw new NotOnlyOneKeyColumnException(
-					"must have only one key column, actually has "
-							+ keyFields.size() + " key columns");
-		}
-		
-		return keyFields.get(0);
-	}
-	
 	public static Field getAutoIncrementField(Class<?> clazz) {
-		
 		List<Field> fields = getColumns(clazz);
 		
 		for(Field field : fields) {
@@ -338,11 +319,6 @@ public class DOInfoReader {
 	 * @return 如果没有则返回null
 	 */
 	public static Field getSoftDeleteColumn(Class<?> clazz) {
-		// 处理turnoff软删除
-		if (DBHelperContext.isTurnOffSoftDelete(clazz)) {
-			return null;
-		}
-
 		List<Field> fields = getColumns(clazz);
 		for(Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
@@ -377,20 +353,7 @@ public class DOInfoReader {
 	 * @return 不会返回null
 	 */
 	public static List<Field> getRelatedColumns(Class<?> clazz) {
-		List<Class<?>> classLink = getClassAndParentClasses(clazz);
-
-		// 父类优先
-		List<Field> result = new ArrayList<>();
-		for (int i = classLink.size() - 1; i >= 0; i--) {
-			Field[] fields = classLink.get(i).getDeclaredFields();
-			for (Field field : fields) {
-				if (field.getAnnotation(RelatedColumn.class) != null) {
-					result.add(field);
-				}
-			}
-		}
-
-		return result;
+		return ClassInfoCache.getRelatedColumns(clazz);
 	}
 
 	/**
@@ -477,18 +440,6 @@ public class DOInfoReader {
 				LOGGER.error("field:{} set fail, object:{}, value:{}", field.getName(),
 						NimbleOrmJSON.toJson(object), value, e);
 			}
-		}
-	}
-	
-	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		List<Class<?>> classLink = getClassAndParentClasses(clazz);
-		
-		List<Field> fields = _getFields(classLink, Column.class);
-		if(selectOnlyKey) {
-			return InnerCommonUtils.filter(fields,
-					o -> o.getAnnotation(Column.class).isKey());
-		} else {
-			return fields;
 		}
 	}
 

@@ -162,8 +162,22 @@ public class WhereSQLForNamedParam {
         return this;
     }
 
+    public WhereSQLForNamedParam notIf(boolean ifTrue) {
+        if (ifTrue) {
+            not();
+        }
+        return this;
+    }
+
     public WhereSQLForNamedParam and(String condition) {
         return and(condition, null);
+    }
+
+    public WhereSQLForNamedParam andIf(boolean ifTrue, String condition) {
+        if (ifTrue) {
+            and(condition);
+        }
+        return this;
     }
 
     public WhereSQLForNamedParam and(String condition, Map<String, ?> param) {
@@ -189,6 +203,13 @@ public class WhereSQLForNamedParam {
         return this;
     }
 
+    public WhereSQLForNamedParam andIf(boolean ifTrue, String condition, Map<String, ?> param) {
+        if (ifTrue) {
+            and(condition, param);
+        }
+        return this;
+    }
+
     /**
      * 功能同addAnd，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
@@ -197,6 +218,13 @@ public class WhereSQLForNamedParam {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
         return and(whereSQL.condition, whereSQL.paramMap);
+    }
+
+    public WhereSQLForNamedParam andIf(boolean ifTrue, WhereSQLForNamedParam whereSQL) {
+        if (ifTrue) {
+            and(whereSQL);
+        }
+        return this;
     }
 
     public WhereSQLForNamedParam or(String condition, Map<String, ?> param) {
@@ -209,6 +237,13 @@ public class WhereSQLForNamedParam {
         return this;
     }
 
+    public WhereSQLForNamedParam orIf(boolean ifTrue, String condition, Map<String, ?> param) {
+        if (ifTrue) {
+            or(condition, param);
+        }
+        return this;
+    }
+
     /**
      * 功能同addOr，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
@@ -217,6 +252,13 @@ public class WhereSQLForNamedParam {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
         return or(whereSQL.condition, whereSQL.paramMap);
+    }
+
+    public WhereSQLForNamedParam orIf(boolean ifTrue, WhereSQLForNamedParam whereSQL) {
+        if (ifTrue) {
+            or(whereSQL);
+        }
+        return this;
     }
 
     public WhereSQLForNamedParam addGroupByWithParam(String groupColumn, Map<String, ?> paramMap) {

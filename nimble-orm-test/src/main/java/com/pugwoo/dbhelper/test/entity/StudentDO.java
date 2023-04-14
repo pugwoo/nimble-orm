@@ -12,7 +12,7 @@ import java.util.List;
  * 2015年1月12日 15:20:09 这个是有注解的DO
  */
 @Data
-@Table("t_student")
+@Table(value = "t_student", softDeleteTable = "t_student_del")
 public class StudentDO extends IdableSoftDeleteBaseDO {
 		
 	@Column(value = "name", maxStringLength = 32)
