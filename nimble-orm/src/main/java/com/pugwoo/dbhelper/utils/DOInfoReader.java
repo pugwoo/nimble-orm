@@ -353,20 +353,7 @@ public class DOInfoReader {
 	 * @return 不会返回null
 	 */
 	public static List<Field> getRelatedColumns(Class<?> clazz) {
-		List<Class<?>> classLink = getClassAndParentClasses(clazz);
-
-		// 父类优先
-		List<Field> result = new ArrayList<>();
-		for (int i = classLink.size() - 1; i >= 0; i--) {
-			Field[] fields = classLink.get(i).getDeclaredFields();
-			for (Field field : fields) {
-				if (field.getAnnotation(RelatedColumn.class) != null) {
-					result.add(field);
-				}
-			}
-		}
-
-		return result;
+		return ClassInfoCache.getRelatedColumns(clazz);
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.cache;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
@@ -244,4 +245,39 @@ public class ClassInfoCache {
 
         return null;
     }
+
+    // ==================================================================================
+
+    private static Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
+
+    public static List<Field> getRelatedColumns(Class<?> clazz) {
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        List<Field> fields = null;
+        if (isCacheEnable) {
+            fields = relatedColumnMap.get(clazz);
+            if (fields != null) {
+                return fields;
+            }
+        }
+
+        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+
+        // 父类优先
+        fields = new ArrayList<>();
+        for (int i = classLink.size() - 1; i >= 0; i--) {
+            Field[] f = classLink.get(i).getDeclaredFields();
+            for (Field field : f) {
+                if (field.getAnnotation(RelatedColumn.class) != null) {
+                    fields.add(field);
+                }
+            }
+        }
+
+        if (isCacheEnable) {
+            relatedColumnMap.put(clazz, fields);
+        }
+        return fields;
+    }
+
 }
