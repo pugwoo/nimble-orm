@@ -301,21 +301,8 @@ public class DOInfoReader {
 		}
 		return casVersionField;
 	}
-	
-	public static Field getOneKeyColumn(Class<?> clazz) throws NotOnlyOneKeyColumnException {
-		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 
-		if (keyFields.size() != 1) {
-			throw new NotOnlyOneKeyColumnException(
-					"must have only one key column, actually has "
-							+ keyFields.size() + " key columns");
-		}
-		
-		return keyFields.get(0);
-	}
-	
 	public static Field getAutoIncrementField(Class<?> clazz) {
-		
 		List<Field> fields = getColumns(clazz);
 		
 		for(Field field : fields) {
@@ -466,18 +453,6 @@ public class DOInfoReader {
 				LOGGER.error("field:{} set fail, object:{}, value:{}", field.getName(),
 						NimbleOrmJSON.toJson(object), value, e);
 			}
-		}
-	}
-	
-	private static List<Field> _getFieldsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		List<Class<?>> classLink = getClassAndParentClasses(clazz);
-		
-		List<Field> fields = _getFields(classLink, Column.class);
-		if(selectOnlyKey) {
-			return InnerCommonUtils.filter(fields,
-					o -> o.getAnnotation(Column.class).isKey());
-		} else {
-			return fields;
 		}
 	}
 
