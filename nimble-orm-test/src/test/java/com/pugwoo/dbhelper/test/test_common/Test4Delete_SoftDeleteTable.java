@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -67,7 +68,56 @@ public class Test4Delete_SoftDeleteTable {
 
             assert NimbleOrmJSON.toJson(s.getCourseSnapshot()).equals(NimbleOrmJSON.toJson(studentDO.getCourseSnapshot()));
         });
-
     }
 
+    @Test
+    public void testDeleteList() {
+        // 测试删除list的情况，这里就只检查name就好了，没有全字段检查了
+        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 9);
+
+        List<Long> ids = ListUtils.transform(studentDOS, o -> o.getId());
+        Map<Long, StudentDO> map = ListUtils.toMap(studentDOS, o -> o.getId(), o -> o);
+
+        assert dbHelper.delete(studentDOS) == 9;
+
+        // 测试数据已经被删除了
+        assert dbHelper.getAll(StudentDO.class, " where id in (?)", ids).size() == 0;
+
+        // 从另外一张表里查出数据，再比较
+        Map<Class<?>, String> tableNames = new HashMap<>();
+        tableNames.put(StudentDO.class, "t_student_del");
+
+        DBHelper.withTableNames(tableNames, () -> {
+            dbHelper.getAll(StudentDO.class, " where id in (?)", ids).forEach(s -> {
+                assert ids.contains(s.getId());
+                StudentDO oldStudent = map.get(s.getId());
+                assert s.getName().equals(oldStudent.getName());
+            });
+        });
+    }
+
+    @Test
+    public void testDeletePostSql() {
+        String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 9, prefix);
+
+        Map<Long, StudentDO> map = ListUtils.toMap(studentDOS, o -> o.getId(), o -> o);
+
+        assert dbHelper.delete(StudentDO.class, "where name like ?", prefix + "%") == 9;
+
+        // 测试数据已经被删除了
+        assert dbHelper.getAll(StudentDO.class, " where name like ?", prefix + "%").size() == 0;
+
+        // 从另外一张表里查出数据，再比较
+        Map<Class<?>, String> tableNames = new HashMap<>();
+        tableNames.put(StudentDO.class, "t_student_del");
+
+        DBHelper.withTableNames(tableNames, () -> {
+            dbHelper.getAll(StudentDO.class, " where name like ?", prefix + "%").forEach(s -> {
+                assert map.containsKey(s.getId());
+                StudentDO oldStudent = map.get(s.getId());
+                assert s.getName().equals(oldStudent.getName());
+            });
+        });
+    }
 }
