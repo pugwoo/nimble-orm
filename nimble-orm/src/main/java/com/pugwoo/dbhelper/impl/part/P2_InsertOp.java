@@ -135,12 +135,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		long start = 0;
 		int total = 0;
 		String sqlForLog = "";
+		Object paramForLog = null;
 		DatabaseEnum databaseType = getDatabaseType();
 		if (databaseType == DatabaseEnum.CLICKHOUSE) { // clickhouse因为驱动原因，只能使用jdbc原生的批量方式
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
 			sql = addComment(sql);
-			log(sql, values.size(), values.isEmpty() ? null : values.get(0));
+			paramForLog = values.isEmpty() ? null : values.get(0);
+			log(sql, values.size(), paramForLog);
 
 			start = System.currentTimeMillis();
 			int[] rows = jdbcTemplate.batchUpdate(sql, values);
@@ -158,14 +160,15 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
 			String sql = addComment(sqlDTO.getSql());
 			sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
-			log(sqlForLog, list.size(), values.subList(0, sqlDTO.getParamLogEndIndex()));
+			paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
+			log(sqlForLog, list.size(), paramForLog);
 
 			start = System.currentTimeMillis();
 			total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		}
 
 		long cost = System.currentTimeMillis() - start;
-		logSlowForBatch(cost, sqlForLog, list.size());
+		logSlow(cost, sqlForLog, list.size(), paramForLog);
 
 		if (withInterceptor) {
 			doInterceptAfterInsertList(list, total);
@@ -220,7 +223,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, values);
+		logSlow(cost, sql, 0, values);
 		
 		if(withInterceptor) {
 			doInterceptAfterInsert(t, rows);

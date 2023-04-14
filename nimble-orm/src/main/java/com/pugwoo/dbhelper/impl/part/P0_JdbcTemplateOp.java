@@ -123,43 +123,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-	@Deprecated
-	protected void logSlow(long cost, String sql, List<Object> keyValues) {
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,params:{}", sql, cost, keyValues);
-			try {
-				if(slowSqlCallback != null) {
-					slowSqlCallback.callback(cost, sql, keyValues);
-				}
-			} catch (Throwable e) {
-				LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{},cost:{}ms,params:{}",
-						sql, cost, keyValues, e);
-			}
-		}
-	}
-
-	@Deprecated
-	protected void logSlowForParamMap(long cost, String sql, Map<String, ?> paramMap) {
-		List<Object> params = new ArrayList<>();
-		params.add(paramMap);
-		logSlow(cost, sql, params);
-	}
-
-	@Deprecated
-	protected void logSlowForBatch(long cost, String sql, int listSize) {
-		if(cost > timeoutWarningValve) {
-			LOGGER.warn("SlowSQL:{},cost:{}ms,listSize:{}", sql, cost, listSize);
-			try {
-				if(slowSqlCallback != null) {
-					slowSqlCallback.callback(cost, sql, new ArrayList<>());
-				}
-			} catch (Throwable e) {
-				LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{},cost:{}ms,listSize:{}",
-						sql, cost, listSize, e);
-			}
-		}
-	}
-
 	@Override
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -192,7 +155,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, args == null ? new ArrayList<>() : Arrays.asList(args));
+		logSlow(cost, sql, 0, args == null ? new ArrayList<>() : Arrays.asList(args));
 		return rows;
 	}
 	
@@ -211,7 +174,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, argsList);
+		logSlow(cost, sql, 0, argsList);
 		return rows;
 	}
 

@@ -66,7 +66,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         Long rows = jdbcTemplate.queryForObject(sql, Long.class);
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, null);
+        logSlow(cost, sql, 0, null);
         return rows == null ? 0 : rows;
     }
 
@@ -103,7 +103,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, null);
+        logSlow(cost, sql, 0, null);
         return rows == null ? 0 : rows;
     }
 
@@ -179,7 +179,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, argsList);
+        logSlow(cost, sql, 0, argsList);
 
         // stream方式不支持doInterceptorAfterQueryList
         return result;
@@ -254,7 +254,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, forIntercept);
+        logSlow(cost, sql, 0, forIntercept);
 
         // stream方式不支持doInterceptorAfterQueryList
         return result;
@@ -283,7 +283,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         handleRelatedColumn(list);
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, forIntercept);
+        logSlow(cost, sql, 0, forIntercept);
 
         doInterceptorAfterQueryList(clazz, list, -1, sql, forIntercept);
 
@@ -326,7 +326,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, argsList);
+        logSlow(cost, sql, 0, argsList);
 
         // stream方式不支持doInterceptorAfterQueryList
         return result;
@@ -358,7 +358,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         handleRelatedColumn(list);
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, argsList);
+        logSlow(cost, sql, 0, argsList);
 
 
         doInterceptorAfterQueryList(clazz, list, -1, sql, argsList);
@@ -505,7 +505,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, argsList);
+        logSlow(cost, sql, 0, argsList);
 
         if (!selectOnlyKey) {
             doInterceptorAfterQueryList(clazz, list, total, sql, argsList);

@@ -24,7 +24,7 @@ public class P6_ExecuteOp extends P5_DeleteOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlowForParamMap(cost, sql, paramMap);
+        logSlow(cost, sql, 0, paramMap);
         return rows;
     }
 
