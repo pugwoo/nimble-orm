@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author NICK
  */
 public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextAware {
-	
+
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
@@ -38,9 +38,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
 	protected int fetchSize = 1000; // Stream流式获取数据的fetchSize大小，默认1000（一般jdbc各数据库驱动的默认值是10，过小了）
-	
+
 	protected ApplicationContext applicationContext;
-	
+
 	protected List<DBHelperInterceptor> interceptors = new ArrayList<>();
 
 	protected Map<FeatureEnum, Boolean> features = new ConcurrentHashMap<FeatureEnum, Boolean>() {{
@@ -49,7 +49,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST, false);
 		put(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION, true);
 	}};
-	
+
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
 	/**
@@ -119,6 +119,37 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
 							sql, cost, NimbleOrmJSON.toJson(args), e);
 				}
+
+				// 对于非batch的慢sql，自动explain一下检查是否加了索引
+				if (getDatabaseType() == DatabaseEnum.MYSQL) {
+					try {
+						String explainSql = "EXPLAIN " + sql;
+						List<Object> explainArgs = new ArrayList<>();
+						boolean isMap = false;
+						if (args != null) {
+							if (args instanceof List) {
+								explainArgs = ((List<Object>) args);
+							} else if (args instanceof Object[]) {
+								explainArgs = Arrays.asList(args);
+							} else if (args instanceof Map) {
+								isMap = true;
+							}
+						}
+						List<Map<String, Object>> explainResult = null;
+						if (!isMap) {
+							explainResult = namedParameterJdbcTemplate.queryForList(
+									NamedParameterUtils.trans(explainSql, explainArgs),
+									NamedParameterUtils.transParam(explainArgs));
+						} else {
+							explainResult = namedParameterJdbcTemplate.queryForList(explainSql, (Map<String, ?>) args);
+						}
+						LOGGER.warn("Explain SlowSQL:{}; cost:{}ms, params:{} explain result:{}", sql,
+								   cost, NimbleOrmJSON.toJson(args), NimbleOrmJSON.toJson(explainResult));
+					} catch (Throwable e) {
+						LOGGER.error("SlowSQL explain fail, SlowSQL:{}; cost:{}ms, params:{}",
+								sql, cost, NimbleOrmJSON.toJson(args), e);
+					}
+				}
 			}
 		}
 	}
@@ -127,7 +158,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	public void rollback() {
 		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 	}
-	
+
 	@Override
 	public boolean executeAfterCommit(final Runnable runnable) {
 		if(runnable == null) {
@@ -158,7 +189,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		logSlow(cost, sql, 0, args == null ? new ArrayList<>() : Arrays.asList(args));
 		return rows;
 	}
-	
+
 	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
@@ -201,7 +232,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		logSlow(cost, logSql, batchSize, logArgs);
 		return rows;
 	}
-	
+
 	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
 		if (jdbcTemplate == null) {
 			return;
@@ -243,11 +274,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) 
+	public void setApplicationContext(ApplicationContext applicationContext)
 			throws BeansException {
 		this.applicationContext = applicationContext;
 	}
-	
+
 	@Override
 	public void setInterceptors(List<DBHelperInterceptor> interceptors) {
 		if(interceptors != null) {
@@ -259,7 +290,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			}
 		}
 	}
-	
+
 	@Override
 	public void setTimeoutWarningCallback(IDBHelperSlowSqlCallback callback) {
 		this.slowSqlCallback = callback;
