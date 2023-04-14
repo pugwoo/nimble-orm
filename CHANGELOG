@@ -1,3 +1,4 @@
+2023年4月14日
 v1.5.0 - [del] 移除deleteByKey 3个方法，请用delete方法代替
        - [del] 移除turnOffSoftDelete和turnOnSoftDelete方法
        - [add] 提供withTableNames方法，支持动态自定义表名
