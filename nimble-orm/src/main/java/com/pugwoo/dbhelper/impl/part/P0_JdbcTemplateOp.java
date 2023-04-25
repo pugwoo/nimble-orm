@@ -132,12 +132,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 							if (args instanceof List) {
 								explainArgs = ((List<Object>) args);
 							} else if (args instanceof Object[]) {
-								explainArgs = Arrays.asList(args);
+								explainArgs = Arrays.asList((Object[]) args);
 							} else if (args instanceof Map) {
 								isMap = true;
 							}
 						}
-						List<Map<String, Object>> explainResult = null;
+						List<Map<String, Object>> explainResult;
 						if (!isMap) {
 							explainResult = namedParameterJdbcTemplate.queryForList(
 									NamedParameterUtils.trans(explainSql, explainArgs),

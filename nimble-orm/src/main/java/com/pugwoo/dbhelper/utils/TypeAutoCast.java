@@ -56,7 +56,6 @@ public class TypeAutoCast {
 
 	/**
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
-	 * 
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field) throws Exception {

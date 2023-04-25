@@ -132,10 +132,10 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsertList(list);
 		}
 
-		long start = 0;
+		long start;
 		int total = 0;
 		String sqlForLog = "";
-		Object paramForLog = null;
+		Object paramForLog;
 		DatabaseEnum databaseType = getDatabaseType();
 		if (databaseType == DatabaseEnum.CLICKHOUSE) { // clickhouse因为驱动原因，只能使用jdbc原生的批量方式
 			List<Object[]> values = new ArrayList<>();
