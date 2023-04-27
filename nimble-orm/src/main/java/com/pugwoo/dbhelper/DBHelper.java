@@ -24,25 +24,6 @@ public interface DBHelper {
 	// =============== Dynamic Table Name ===================================
 
 	/**
-	 * 为指定的类设置表名，适合于分表场景；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
-	 * 【特别注意】设置的信息存储在线程上下文中，因此需要线程模型支持，然后设置完之后要记得调用resetTableNames清除设置。
-	 * @param clazz 要替换表名的注解了@Table的类
-	 * @param tableName 新的表名
-	 */
-	@Deprecated
-	static <T> void setTableName(Class<T> clazz, String tableName) {
-		DBHelperContext.setTableName(clazz, tableName);
-	}
-
-	/**
-	 * 清除setTableName设置的表名信息；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
-	 */
-	@Deprecated
-	static void resetTableNames() {
-		DBHelperContext.resetTableName();
-	}
-
-	/**
 	 * 获取指定类的表名，适合于分表场景；执行完成后会自动还原成原来的表名。<br>
 	 * @param tableNames 设置DO类对应的表名
 	 * @param runnable 要执行的代码

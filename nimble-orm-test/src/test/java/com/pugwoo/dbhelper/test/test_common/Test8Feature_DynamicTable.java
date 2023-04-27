@@ -91,7 +91,7 @@ public class Test8Feature_DynamicTable {
     @Test
     public void testSetTableNameInsertAndQuery() {
 
-        DBHelper.setTableName(StudentNoTableNameDO.class, "t_student");
+        DBHelperContext.setTableName(StudentNoTableNameDO.class, "t_student");
 
         // 插入
         StudentNoTableNameDO studentNoTableNameDO = new StudentNoTableNameDO();
@@ -132,7 +132,7 @@ public class Test8Feature_DynamicTable {
         assert dbHelper.getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId())
                         .isEmpty();
 
-        DBHelper.resetTableNames(); // 清空
+        DBHelperContext.resetTableName(); // 清空
 
         // 应该抛出异常
         boolean ex = false;
