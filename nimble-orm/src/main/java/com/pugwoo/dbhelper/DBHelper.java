@@ -29,6 +29,7 @@ public interface DBHelper {
 	 * @param clazz 要替换表名的注解了@Table的类
 	 * @param tableName 新的表名
 	 */
+	@Deprecated
 	static <T> void setTableName(Class<T> clazz, String tableName) {
 		DBHelperContext.setTableName(clazz, tableName);
 	}
@@ -36,6 +37,7 @@ public interface DBHelper {
 	/**
 	 * 清除setTableName设置的表名信息；该设置对所有DBHelper实例生效，但仅对当前线程有效。<br>
 	 */
+	@Deprecated
 	static void resetTableNames() {
 		DBHelperContext.resetTableName();
 	}
@@ -59,10 +61,12 @@ public interface DBHelper {
 			});
 		}
 
-		runnable.run();
-
-		if (tableNames != null) {
-			tableNames.forEach((clazz, tableName) -> DBHelperContext.setTableName(clazz, oldTableNames.get(clazz)));
+		try {
+			runnable.run();
+		} finally {
+			if (tableNames != null) {
+				tableNames.forEach((clazz, tableName) -> DBHelperContext.setTableName(clazz, oldTableNames.get(clazz)));
+			}
 		}
 	}
 
