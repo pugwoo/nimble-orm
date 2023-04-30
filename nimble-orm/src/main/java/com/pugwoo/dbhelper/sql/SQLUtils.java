@@ -593,7 +593,7 @@ public class SQLUtils {
 		// 对于casVersion，要将cas版本加入到where子句中，因为返回的affected rows应该是where match到的行数，而不是实际修改的行数
 		if (casVersionColumn != null) {
 			where += " AND (" + getColumnName(keyColumn) + "," + getColumnName(casVersionColumn) + ") IN (?)";
-			List<Object[]> idAndCas = new ArrayList();
+			List<Object[]> idAndCas = new ArrayList<>();
 			for (T t : list) {
 				idAndCas.add(new Object[]{
 						DOInfoReader.getValue(keyColumn, t),
@@ -924,7 +924,6 @@ public class SQLUtils {
 
 	/**
 	 * 往where sql里面插入AND关系的表达式。
-	 * 
 	 * 例如：whereSql为 where a!=3 or a!=2 limit 1
 	 *      condExpress为 deleted=0
 	 * 那么返回：where (deleted=0 and (a!=3 or a!=2)) limit 1
@@ -1123,7 +1122,6 @@ public class SQLUtils {
 
 	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段。
-	 *
 	 * 说明：不支持virtualTable虚拟表。
 	 *
 	 * @param whereSql 如果有where条件的，【必须】带上where关键字；如果是group by或空的字符串或null都可以

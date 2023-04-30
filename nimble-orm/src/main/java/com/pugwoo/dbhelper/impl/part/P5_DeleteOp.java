@@ -8,7 +8,6 @@ import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
-import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -17,9 +16,7 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
@@ -116,15 +113,15 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, key:{}",
 							NimbleOrmJSON.toJson(keyParams));
 				} else {
-					String oldTableNames = DBHelperContext.getTableName(t.getClass());
-					DBHelperContext.setTableName(t.getClass(), table.softDeleteTable());
-					int rows = dbHelper.insert(dbT);
-					DBHelperContext.setTableName(t.getClass(), oldTableNames);
-
-					if (rows != 1) {
-						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
-								rows, NimbleOrmJSON.toJson(dbT));
-					}
+					Map<Class<?>, String> tableNames = new HashMap<>();
+					tableNames.put(t.getClass(), table.softDeleteTable());
+					DBHelper.withTableNames(tableNames, () -> {
+						int rows = dbHelper.insert(dbT);
+						if (rows != 1) {
+							LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
+									rows, NimbleOrmJSON.toJson(dbT));
+						}
+					});
 				}
 			} catch (Exception e) {
 				LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",
@@ -235,15 +232,15 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, key:{}",
 								NimbleOrmJSON.toJson(keys));
 					} else {
-						String oldTableNames = DBHelperContext.getTableName(clazz);
-						DBHelperContext.setTableName(clazz, table.softDeleteTable());
-						int rows = dbHelper.insert(all);
-						DBHelperContext.setTableName(clazz, oldTableNames);
-
-						if (rows != all.size()) {
-							LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
-									rows, NimbleOrmJSON.toJson(all));
-						}
+						Map<Class<?>, String> tableNames = new HashMap<>();
+						tableNames.put(clazz, table.softDeleteTable());
+						DBHelper.withTableNames(tableNames, () -> {
+							int rows = dbHelper.insert(all);
+							if (rows != all.size()) {
+								LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
+										rows, NimbleOrmJSON.toJson(all));
+							}
+						});
 					}
 				} catch (Exception e) {
 					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",
@@ -302,15 +299,15 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, postSql:{}, args:{}",
 								postSql, NimbleOrmJSON.toJson(args));
 					} else {
-						String oldTableNames = DBHelperContext.getTableName(clazz);
-						DBHelperContext.setTableName(clazz, table.softDeleteTable());
-						int rows = dbHelper.insert(all);
-						DBHelperContext.setTableName(clazz, oldTableNames);
-
-						if (rows != all.size()) {
-							LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
-									rows, NimbleOrmJSON.toJson(all));
-						}
+						Map<Class<?>, String> tableNames = new HashMap<>();
+						tableNames.put(clazz, table.softDeleteTable());
+						DBHelper.withTableNames(tableNames, () -> {
+							int rows = dbHelper.insert(all);
+							if (rows != all.size()) {
+								LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
+										rows, NimbleOrmJSON.toJson(all));
+							}
+						});
 					}
 				} catch (Exception e) {
 					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",

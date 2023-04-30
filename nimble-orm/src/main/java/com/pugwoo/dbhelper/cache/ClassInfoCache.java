@@ -118,7 +118,7 @@ public class ClassInfoCache {
      * 获得clazz的所有Column字段
      */
     public static List<Field> getColumnFields(Class<?> clazz) {
-        List<Field> fields = null;
+        List<Field> fields;
         boolean isCacheEnable = DBHelperContext.isCacheEnabled();
 
         if (isCacheEnable) {
@@ -209,7 +209,7 @@ public class ClassInfoCache {
     private static final Map<Class<?>, Table> classTableMap = new ConcurrentHashMap<>();
 
     public static Table getTable(Class<?> clazz) {
-        Table table = null;
+        Table table;
         boolean isCacheEnable = DBHelperContext.isCacheEnabled();
 
         if (isCacheEnable) {
@@ -248,12 +248,12 @@ public class ClassInfoCache {
 
     // ==================================================================================
 
-    private static Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
 
     public static List<Field> getRelatedColumns(Class<?> clazz) {
         boolean isCacheEnable = DBHelperContext.isCacheEnabled();
 
-        List<Field> fields = null;
+        List<Field> fields;
         if (isCacheEnable) {
             fields = relatedColumnMap.get(clazz);
             if (fields != null) {

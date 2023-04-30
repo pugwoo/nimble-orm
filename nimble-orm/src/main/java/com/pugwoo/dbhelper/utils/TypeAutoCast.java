@@ -56,7 +56,6 @@ public class TypeAutoCast {
 
 	/**
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
-	 * 
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field) throws Exception {
@@ -333,12 +332,12 @@ public class TypeAutoCast {
 		}
 		if(clazz == Character.class || clazz == char.class) {
 			if(obj == null) {
-				return clazz == char.class ? (T) new Character((char)0) : null;
+				return clazz == char.class ? (T) Character.valueOf((char)0) : null;
 			}
 			if(obj instanceof Character) {
 				return (T) obj;
 			}
-			return (T) new Character((char)0); // char没有办法从其它类型转
+			return (T) Character.valueOf((char)0); // char没有办法从其它类型转
 		}
 		if(clazz == Short.class || clazz == short.class) {
 			if(obj == null) {
@@ -363,21 +362,21 @@ public class TypeAutoCast {
 		}
 		if(clazz == Float.class || clazz == float.class) {
 			if(obj == null) {
-				return clazz == float.class ? (T) new Float(0f) : null;
+				return clazz == float.class ? (T) Float.valueOf(0f) : null;
 			}
 			if(obj instanceof Float) {
 				return (T) obj;
 			}
-			return (T) new Float(obj.toString());
+			return (T) Float.valueOf(obj.toString());
 		}
 		if(clazz == Double.class || clazz == double.class) {
 			if(obj == null) {
-				return clazz == double.class ? (T) new Double(0d) : null;
+				return clazz == double.class ? (T) Double.valueOf(0d) : null;
 			}
 			if(obj instanceof Double) {
 				return (T) obj;
 			}
-			return (T) new Double(obj.toString());
+			return (T) Double.valueOf(obj.toString());
 		}
 		
 		if(obj == null) {
@@ -396,9 +395,7 @@ public class TypeAutoCast {
 		if (clazz == java.sql.Time.class && obj instanceof java.util.Date) {
 			return (T) new java.sql.Time(((java.util.Date)obj).getTime());
 		}
-		
-		// TODO 可能还有更多的类型需要转换
-		
+
 		return (T) obj;
 	}
 

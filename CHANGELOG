@@ -1,3 +1,7 @@
+2023年4月30日
+v1.5.1 - [add] WhereSQL的limit支持long类型，支持更大的offset数值
+       - [del] 移除setTableName和resetTableNames方法，推荐使用withTableNames方法
+
 2023年4月14日
 v1.5.0 - [del] 移除deleteByKey 3个方法，请用delete方法代替
        - [del] 移除turnOffSoftDelete和turnOnSoftDelete方法
