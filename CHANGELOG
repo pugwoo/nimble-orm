@@ -1,4 +1,4 @@
-v1.5.2 - [upgrade] jsqlparser由4.5升级到4.6
+v1.5.2 - [upgrade] jsqlparser由4.5升级到4.6; slf4j-api由1.7.36升级到2.0.7;jackson升级到2.15.0;mvel2升级到2.4.15.Final
 
 2023年4月30日
 v1.5.1 - [add] WhereSQL的limit支持long类型，支持更大的offset数值
