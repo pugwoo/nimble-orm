@@ -41,6 +41,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                    String postSql, Object... args) {
         assertPage(page);
         if (maxPageSize != null && pageSize > maxPageSize) {
+            LOGGER.warn("query class:{} pageSize {} is too large, set to maxPageSize {}", clazz, pageSize, maxPageSize);
             pageSize = maxPageSize;
         }
 
@@ -112,6 +113,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                                String postSql, Object... args) {
         assertPage(page);
         if (maxPageSize != null && pageSize > maxPageSize) {
+            LOGGER.warn("query class:{} pageSize {} is too large, set to maxPageSize {}", clazz, pageSize, maxPageSize);
             pageSize = maxPageSize;
         }
 

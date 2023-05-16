@@ -143,6 +143,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			sql = addComment(sql);
 			paramForLog = values.isEmpty() ? null : values.get(0);
 			log(sql, values.size(), paramForLog);
+			sqlForLog = sql;
 
 			start = System.currentTimeMillis();
 			int[] rows = jdbcTemplate.batchUpdate(sql, values);

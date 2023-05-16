@@ -76,8 +76,14 @@ public class SQLUtils {
 
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
+			if (InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
+				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
+			}
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+			if (InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
+				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
+			}
 	        if(InnerCommonUtils.isBlank(joinTable.on())) {
 	        	throw new OnConditionIsNeedException("join table :" + clazz.getName());
 	        }
@@ -163,8 +169,14 @@ public class SQLUtils {
 
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
+			if (InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
+				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
+			}
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+			if (InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
+				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
+			}
 	        if(InnerCommonUtils.isBlank(joinTable.on())) {
 	        	throw new OnConditionIsNeedException("join table VO:" + clazz.getName());
 	        }
