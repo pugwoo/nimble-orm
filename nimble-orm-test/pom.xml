@@ -32,7 +32,13 @@
 		<dependency>
 			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
-			<version>0.3.2-patch11</version>
+			<version>0.4.6</version>
+		</dependency>
+		<!-- clickhosue-jdbc 0.4.6 默认使用lz4压缩，所以需要引入lz4-java包 -->
+		<dependency>
+			<groupId>org.lz4</groupId>
+			<artifactId>lz4-java</artifactId>
+			<version>1.8.0</version>
 		</dependency>
 
 		<dependency>
