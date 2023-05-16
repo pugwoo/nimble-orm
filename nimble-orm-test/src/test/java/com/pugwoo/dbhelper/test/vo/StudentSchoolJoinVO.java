@@ -31,10 +31,10 @@ public class StudentSchoolJoinVO {
 	private SchoolDO schoolDO3;
 
 
-	@JoinLeftTable
+	@JoinLeftTable(forceIndex = "PRIMARY") // forceIndex仅测试，实际上这个例子中不需要
 	private StudentVO studentDO;
 	
-	@JoinRightTable
+	@JoinRightTable(forceIndex = "PRIMARY") // forceIndex仅测试，实际上这个例子中不需要
 	private SchoolDO schoolDO;
 
 	// 这个仅用来测试RelatedColumn的远程类是JoinTable的情况
