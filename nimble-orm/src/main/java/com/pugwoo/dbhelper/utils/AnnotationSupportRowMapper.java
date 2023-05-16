@@ -25,7 +25,7 @@ import java.util.List;
  * @param <T>
  */
 public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationSupportRowMapper.class);
 
 	/**传入对应的dbHelper对象*/
@@ -38,12 +38,12 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private Field rightJoinField;
 
 	private boolean selectOnlyKey = false; // 是否只选择主键列，默认false
-	
+
 	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz) {
 		this.dbHelper = dbHelper;
 		handleClazz(clazz);
 	}
-	
+
 	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, boolean selectOnlyKey) {
 		this.dbHelper = dbHelper;
 		this.selectOnlyKey = selectOnlyKey;
@@ -74,7 +74,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			}
 
 			T obj = clazz.newInstance();
-			
+
 			if(isJoinVO) {
 				currentField.set(0, leftJoinField);
 				Object t1 = leftJoinField.getType().newInstance();
@@ -96,7 +96,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				currentField.set(0, rightJoinField);
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
 				currentField.set(0, null);
-				
+
 			} else {
 				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 				for (Field field : fields) {
@@ -112,7 +112,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					currentField.set(0, null);
 				}
 			}
-			
+
 			return obj;
 		} catch (Exception e) {
 			boolean isHandleField = !currentField.isEmpty() && currentField.get(0) != null;
@@ -141,6 +141,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					if (!(message.startsWith("Column ") && message.endsWith(" not found."))) {
 						throw e;
 					}
+					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
 					return null;
 				}
 			} else {
