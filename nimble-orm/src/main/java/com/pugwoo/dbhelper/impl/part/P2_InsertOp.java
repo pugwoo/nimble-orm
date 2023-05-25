@@ -137,7 +137,17 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		String sqlForLog = "";
 		Object paramForLog;
 		DatabaseEnum databaseType = getDatabaseType();
-		if (databaseType == DatabaseEnum.CLICKHOUSE) { // clickhouse因为驱动原因，只能使用jdbc原生的批量方式
+		/*
+		  特别说明，clickhouse的批量插入不推荐使用insert into values()()()方式，原因：
+		  1）这种方式不被clickhouse官方推荐
+		  2）这种方式的性能不佳，插入速度不及jdbcTemplate.batchUpdate方式的1%
+		  3）这种方式返回的affected不准确，不管是clickhouse 0.3或0.4的驱动，都不准确
+		  <br>
+		  但是，由于clickhouse的驱动不同版本差异比较大，主要差异为：
+		  1）对于DDL非null字段，Java侧插入null值时，0.3版本不会报错，可以成功正确插入；而0.4版本会报错，因此对于非null字段，请确保Java侧的DO属性值不为null
+		  2）对于clickhouse的UInt8类型，低版本可能无法用false来插入，请改成0
+		 */
+		if (databaseType == DatabaseEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
 			sql = addComment(sql);
