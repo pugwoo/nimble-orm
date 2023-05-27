@@ -19,6 +19,7 @@ public class TestQuery {
     @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testGetRaw() {
 
+        dbHelper.executeRaw("truncate table t_student");
         CkCommonOps.insertSome(dbHelper, 100);
 
         PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
