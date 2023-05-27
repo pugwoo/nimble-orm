@@ -34,6 +34,12 @@ public @interface Table {
 	String softDeleteDBHelperBean() default "";
 
 	/**
+	 * 表级别的插入数据默认值集合，这里填的是DBHelperContext中的默认值集合的名称<br>
+	 * 如果字段级别有默认值，则它的优先级高于表级别的默认值<br>
+	 */
+	String insertDefaultValueMap() default "";
+
+	/**
 	 * 虚拟表SQL，从select开始的完整SQL，该方式只对查询操作有效。当非空时有效，此时value()表名失效。<br>
 	 * <br>
 	 * 说明：虚拟表也支持path路径，path路径的文件内容就是SQL。

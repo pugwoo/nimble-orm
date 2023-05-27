@@ -1,3 +1,6 @@
+2023年5月27日
+v1.5.3 - [add] 支持在DO类的级别，按类的类型设置列的默认值
+
 2023年5月16日
 v1.5.2 - [add] JoinLeftTable/JoinRightTable支持force index
        - [upgrade] jsqlparser由4.5升级到4.6; slf4j-api由1.7.36升级到2.0.7;jackson升级到2.15.0;mvel2升级到2.4.15.Final
