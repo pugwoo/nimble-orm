@@ -134,7 +134,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 		long start;
 		int total = 0;
-		String sqlForLog = "";
+		String sqlForLog;
 		Object paramForLog;
 		DatabaseEnum databaseType = getDatabaseType();
 		/*
