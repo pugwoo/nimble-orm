@@ -39,12 +39,12 @@ public class StudentDO {
 	@Column("school_id")
 	private Long schoolId;
 
-	// clickhouse不建议用isJSON特性
-//	@Column(value = "school_snapshot", isJSON = true, insertValueScript = "''")
+	// clickhouse的json的null->默认值要自己处理
+//	@Column(value = "school_snapshot", isJSON = true)
 //	private SchoolDO schoolSnapshot;
 
-	// clickhouse不建议用isJSON特性
-//	@Column(value = "course_snapshot", isJSON = true, insertValueScript = "''")
+	// clickhouse的json的null->默认值要自己处理
+//	@Column(value = "course_snapshot", isJSON = true)
 //	private List<CourseDO> courseSnapshot;
 
 }
