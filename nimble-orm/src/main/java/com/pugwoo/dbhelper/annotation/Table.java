@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.annotation;
 
+import com.pugwoo.dbhelper.enums.ValueConditionEnum;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -38,6 +40,11 @@ public @interface Table {
 	 * 如果字段级别有默认值，则它的优先级高于表级别的默认值<br>
 	 */
 	String insertDefaultValueMap() default "";
+
+	/**
+	 * insertValueScript脚本的执行条件，默认为null，表示只有当原值为null时才执行脚本
+	 */
+	ValueConditionEnum insertValueCondition() default ValueConditionEnum.WHEN_NULL;
 
 	/**
 	 * 虚拟表SQL，从select开始的完整SQL，该方式只对查询操作有效。当非空时有效，此时value()表名失效。<br>

@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.utils;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.ValueConditionEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +72,22 @@ public class PreHandleObject {
 			}
 
 			// 优先级较低
-			if(InnerCommonUtils.isNotBlank(column.insertValueScript())) {
-				if(DOInfoReader.getValue(field, t) == null) {
-					ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), column.insertValueScript());
+			String insertValueScript = column.insertValueScript();
+			if(InnerCommonUtils.isNotBlank(insertValueScript)) {
+				ValueConditionEnum valueConditionEnum = table.insertValueCondition();
+				Object value = DOInfoReader.getValue(field, t);
+				if (valueConditionEnum == null || valueConditionEnum == ValueConditionEnum.WHEN_NULL) {
+					if (value == null) {
+						ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
+					}
+				} else if (valueConditionEnum == ValueConditionEnum.WHEN_EMPTY) {
+					if (value == null || (value instanceof String && ((String) value).isEmpty())) {
+						ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
+					}
+				} else if (valueConditionEnum == ValueConditionEnum.WHEN_BLANK) {
+					if (value == null || (value instanceof String && InnerCommonUtils.isBlank((String) value))) {
+						ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
+					}
 				}
 			}
 
@@ -81,8 +95,20 @@ public class PreHandleObject {
 			if(hasDefaultValueMap) {
 				Object defaultValue = defaultValueMap.get(field.getType());
 				if(defaultValue != null) {
-					if(DOInfoReader.getValue(field, t) == null) {
-						DOInfoReader.setValue(field, t, defaultValue);
+					ValueConditionEnum valueConditionEnum = table.insertValueCondition();
+					Object value = DOInfoReader.getValue(field, t);
+					if (valueConditionEnum == null || valueConditionEnum == ValueConditionEnum.WHEN_NULL) {
+						if (value == null) {
+							DOInfoReader.setValue(field, t, defaultValue);
+						}
+					} else if (valueConditionEnum == ValueConditionEnum.WHEN_EMPTY) {
+						if (value == null || (value instanceof String && ((String) value).isEmpty())) {
+							DOInfoReader.setValue(field, t, defaultValue);
+						}
+					} else if (valueConditionEnum == ValueConditionEnum.WHEN_BLANK) {
+						if (value == null || (value instanceof String && InnerCommonUtils.isBlank((String) value))) {
+							DOInfoReader.setValue(field, t, defaultValue);
+						}
 					}
 				}
 			}
