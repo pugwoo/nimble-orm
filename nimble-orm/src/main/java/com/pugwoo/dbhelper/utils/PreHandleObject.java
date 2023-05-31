@@ -91,8 +91,8 @@ public class PreHandleObject {
 				}
 			}
 
-			// 优先级最低，类级别指定的默认值
-			if(hasDefaultValueMap) {
+			// 优先级最低，类级别指定的默认值；不处理id主键，id主键要么是自增，要么应该由用户明确指定
+			if(hasDefaultValueMap && !column.isKey()) {
 				Object defaultValue = defaultValueMap.get(field.getType());
 				if(defaultValue != null) {
 					ValueConditionEnum valueConditionEnum = table.insertValueCondition();
