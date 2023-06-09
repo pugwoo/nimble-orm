@@ -8,6 +8,7 @@ import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.*;
+import java.util.Map.Entry;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
@@ -315,6 +316,58 @@ public class SQLUtils {
 
 	/**
 	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * @param list 要插入的数据，非空
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, Collection<Map<String, Object>> list,
+			List<Object> values, DatabaseEnum databaseType) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(tableName);
+		sql.append(" (");
+
+		boolean isFirst = true;
+		int sqlLogEndIndex = 0;
+		int paramLogEndIndex = 0;
+		List<String> _cols = new ArrayList<>();
+		for (Map<String, Object> map : list) {
+			StringBuilder sb = new StringBuilder("(");
+			for (Entry<String, Object> entry : map.entrySet()) {
+				if (isFirst) {
+					_cols.add(entry.getKey());
+				}
+				Object value = entry.getValue();
+				if (value == null) {
+					sb.append(SQLDialect.getInsertDefaultValue(databaseType));
+				} else {
+					sb.append("?");
+					values.add(value);
+				}
+				sb.append(",");
+			}
+			if (isFirst) {
+				String insertSql = String.join(",", _cols);
+				sql.append(insertSql);
+				sql.append(") VALUES ");
+			} else {
+				sql.append(",");
+			}
+			String dotSql = sb.substring(0, sb.length() - 1) + ")";
+			sql.append(dotSql);
+
+			if (isFirst) {
+				sqlLogEndIndex = sql.length();
+				paramLogEndIndex = values.size();
+			}
+
+			isFirst = false;
+		}
+
+		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
 	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
 	 *
 	 * @param list 要插入的数据，非空
@@ -349,6 +402,62 @@ public class SQLUtils {
 		}
 
 		return sql.toString();
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
+	 *
+	 * @param tableName 要插入的表名
+	 * @param list 列和数据的集合
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static String getInsertSQLForBatchForJDBCTemplate(String tableName,
+			Collection<Map<String, Object>> list, List<Object[]> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(tableName);
+		sql.append(" (");
+
+		boolean isFirst = true;
+		List<String> _cols = new ArrayList<>();
+		for (Map<String, Object> map : list) {
+			List<Object> _values = new ArrayList<>();
+			for (Entry<String, Object> entry : map.entrySet()) {
+				_values.add(entry.getValue());
+				if (isFirst) {
+					_cols.add(entry.getKey());
+				}
+			}
+			if (isFirst) {
+				String insertSql = String.join(",", _cols);
+				sql.append(insertSql);
+				sql.append(") VALUES ");
+				String dotSql = "(" + join("?", _values.size(), ",") + ")";
+				sql.append(dotSql);
+			}
+			isFirst = false;
+			values.add(_values.toArray());
+		}
+
+		return sql.toString();
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
+	 *
+	 * @param tableName 要插入的表名
+	 * @param cols 列和列表
+	 * @return 插入的SQL
+	 */
+	public static String getInsertSQLForBatchForJDBCTemplate(String tableName, List<String> cols) {
+		return "INSERT INTO " + tableName
+				+ " ("
+				+ String.join(",", cols)
+				+ ") VALUES ("
+				+ join("?", cols.size(), ",")
+				+ ")";
 	}
 
 	private static <T> List<Field> filterFieldWithValue(List<Field> fields, Collection<T> list) {

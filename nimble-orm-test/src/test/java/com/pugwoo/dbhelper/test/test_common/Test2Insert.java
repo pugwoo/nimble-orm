@@ -73,6 +73,33 @@ public class Test2Insert {
         assert rows == TOTAL;
     }
 
+    @Test
+    public void testInsertBatchWithoutReturnIdWithMapList() {
+        int TOTAL = 1000;
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (int i = 0; i < TOTAL; i++) {
+            Map<String, Object> studentMap = new HashMap<>();
+            studentMap.put("name", uuidName());
+            studentMap.put("age", 0);
+            list.add(studentMap);
+        }
+
+        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+
+        long start = System.currentTimeMillis();
+        int rows = dbHelper.insertBatchWithoutReturnId("t_student", list);
+        long end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+
+        start = System.currentTimeMillis();
+        rows = dbHelper.insertBatchWithoutReturnId("t_student", new HashSet<>(list));
+        end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+    }
+
     /**测试插入时指定了id，依然可以准确获得id的场景*/
     @Transactional // 开启事务是为了让下面的测试共用一个连接，而不是因为获取自增id需要事务
     @Rollback(false)
