@@ -47,7 +47,7 @@ public class Test2Insert {
         assert st.getName() == null;
     }
 
-    @Test 
+    @Test
     public void testBatchInsert() {
         int TOTAL = 1000;
 
@@ -68,6 +68,61 @@ public class Test2Insert {
 
         start = System.currentTimeMillis();
         rows = dbHelper.insertBatchWithoutReturnId(new HashSet<>(list));
+        end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+    }
+
+    @Test
+    public void testInsertBatchWithoutReturnIdWithMapList() {
+        int TOTAL = 1000;
+        Random random = new Random();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (int i = 0; i < TOTAL; i++) {
+            Map<String, Object> studentMap = new HashMap<>();
+            studentMap.put("age", 0);
+            studentMap.put("school_id", random.nextInt());
+            list.add(studentMap);
+        }
+
+        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+
+        long start = System.currentTimeMillis();
+        int rows = dbHelper.insertBatchWithoutReturnId("t_student", list);
+        long end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+
+        start = System.currentTimeMillis();
+        rows = dbHelper.insertBatchWithoutReturnId("t_student", new HashSet<>(list));
+        end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+    }
+
+    @Test
+    public void testInsertBatchWithoutReturnIdWithColsAndData() {
+        int TOTAL = 1000;
+        Random random = new Random();
+        List<String> cols = new ArrayList<>();
+        cols.add("age");
+        cols.add("school_id");
+        List<Object[]> data = new ArrayList<>();
+        for (int i = 0; i < TOTAL; i++) {
+            Object[] args = new Object[]{"0", random.nextInt()};
+            data.add(args);
+        }
+
+        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+
+        long start = System.currentTimeMillis();
+        int rows = dbHelper.insertBatchWithoutReturnId("t_student", cols, data);
+        long end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+
+        start = System.currentTimeMillis();
+        rows = dbHelper.insertBatchWithoutReturnId("t_student", cols, data);
         end = System.currentTimeMillis();
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
