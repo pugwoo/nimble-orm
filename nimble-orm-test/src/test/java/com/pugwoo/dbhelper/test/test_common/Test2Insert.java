@@ -119,8 +119,12 @@ public class Test2Insert {
         cols.add("age");
         cols.add("school_id");
         List<Object[]> data = new ArrayList<>();
-        for (int i = 0; i < TOTAL; i++) {
+        for (int i = 0; i < TOTAL - 3; i++) {
             Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
+            data.add(args);
+        }
+        for (int i = 0; i < 3; i++) {
+            Object[] args = new Object[]{0, uuidName, null, null}; // 加几个有null值的
             data.add(args);
         }
 
