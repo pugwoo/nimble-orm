@@ -10,7 +10,6 @@ import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.Generated;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
-import java.util.Map;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 import java.lang.reflect.Field;
@@ -19,6 +18,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
@@ -199,11 +199,6 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	@Override
 	public int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list) {
-		return insertBatchWithoutReturnId(tableName, list, true);
-	}
-
-	private int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list,
-			boolean withInterceptor) {
 		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
@@ -221,37 +216,26 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			total = insertBatchDefaultMode(sqlDTO, values, list.size());
 		}
 
-		if (withInterceptor) {
-			doInterceptAfterInsertList(list, total);
-		}
-
+		//	doInterceptAfterInsertList(list, total); // 不支持拦截器
 		return total;
 	}
 
 	@Override
-	public int insertBatchWithoutReturnId(String tableName, List<String> cols, List<Object[]> values) {
-		return insertBatchWithoutReturnId(tableName, cols, values, true);
-	}
-
-	private int insertBatchWithoutReturnId(String tableName, List<String> cols, List<Object[]> values,
-			boolean withInterceptor) {
+	public int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values) {
 		cols = (List<String>) InnerCommonUtils.filterNonNull(cols);
 		if (InnerCommonUtils.isEmpty(cols)) {
 			return 0;
 		}
-		values = (List<Object[]>) InnerCommonUtils.filterNonNull(values);
-		if (InnerCommonUtils.isEmpty(values)) {
+		List<Object[]> values2 = (List<Object[]>) InnerCommonUtils.filterNonNull(values);
+		if (InnerCommonUtils.isEmpty(values2)) {
 			return 0;
 		}
 
 		// 用JDBCTemplate的方式
 		String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
-		int total = insertBatchJDBCTemplateMode(sql, values);
+		int total = insertBatchJDBCTemplateMode(sql, values2);
 
-		if (withInterceptor) {
-			doInterceptAfterInsertList(values, total);
-		}
-
+		// doInterceptAfterInsertList(values, total); // 不支持拦截器
 		return total;
 	}
 

@@ -447,7 +447,7 @@ public interface DBHelper {
 	<T> int insertBatchWithoutReturnId(Collection<T> list);
 
 	/**
-	 * 批量插入多条记录，返回数据库实际修改的条数。<br>
+	 * 批量插入多条记录，返回数据库实际修改的条数。【不支持拦截器】<br>
 	 * @param tableName 插入的表名
 	 * @param list 列名和值
 	 * @return 实际修改的条数
@@ -455,13 +455,13 @@ public interface DBHelper {
 	int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list);
 
 	/**
-	 * 以JDBCTemplate的batchUpdate方式，批量插入多条记录，返回数据库实际修改的条数。<br>
+	 * 以JDBCTemplate的batchUpdate方式，批量插入多条记录，返回数据库实际修改的条数。【不支持拦截器】<br>
 	 * @param tableName 插入的表名
 	 * @param cols 列的列表
 	 * @param values 参数列表
 	 * @return 实际修改的条数
 	 */
-	int insertBatchWithoutReturnId(String tableName, List<String> cols, List<Object[]> values);
+	int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values);
 
 	/**
 	 * 插入一条记录，返回数据库实际修改条数。<br>
