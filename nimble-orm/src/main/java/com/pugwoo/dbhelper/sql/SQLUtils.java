@@ -8,7 +8,6 @@ import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.*;
-import java.util.Map.Entry;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -322,9 +322,9 @@ public class SQLUtils {
 	 */
 	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, Collection<Map<String, Object>> list,
 			List<Object> values, DatabaseEnum databaseType) {
-		StringBuilder sql = new StringBuilder("INSERT INTO ");
-		sql.append(tableName);
-		sql.append(" (");
+		StringBuilder sql = new StringBuilder("INSERT INTO `");
+		sql.append(tableName.trim());
+		sql.append("` (");
 
 		boolean isFirst = true;
 		int sqlLogEndIndex = 0;
@@ -452,12 +452,20 @@ public class SQLUtils {
 	 * @return 插入的SQL
 	 */
 	public static String getInsertSQLForBatchForJDBCTemplate(String tableName, List<String> cols) {
-		return "INSERT INTO " + tableName
-				+ " ("
-				+ String.join(",", cols)
-				+ ") VALUES ("
-				+ join("?", cols.size(), ",")
-				+ ")";
+		StringBuilder sql = new StringBuilder();
+		sql.append("INSERT INTO `").append(tableName.trim())
+				.append("` (");
+		boolean isFirst = true;
+		for(String col : cols) {
+			if (!isFirst) {
+				sql.append(",");
+			} else {
+				isFirst = false;
+			}
+			sql.append("`").append(col.trim()).append("`");
+		}
+		sql.append(") VALUES (").append(join("?", cols.size(), ",")).append(")");
+		return sql.toString();
 	}
 
 	private static <T> List<Field> filterFieldWithValue(List<Field> fields, Collection<T> list) {
