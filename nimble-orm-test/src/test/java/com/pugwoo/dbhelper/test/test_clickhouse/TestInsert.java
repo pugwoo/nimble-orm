@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @SpringBootTest
 public class TestInsert {
@@ -90,5 +87,75 @@ public class TestInsert {
             assert s.getSchoolId().equals(1000L);
         }
     }
+
+    @Test
+    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
+    public void testInsertBatchWithoutReturnIdWithMapList() {
+        int TOTAL = 1000;
+        String uuidName = uuidName();
+
+        Random random = new Random();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (int i = 0; i < TOTAL - TOTAL / 2; i++) {
+            Map<String, Object> studentMap = new HashMap<>();
+            studentMap.put("deleted", 0);
+            studentMap.put("name", uuidName);
+            studentMap.put("age", 0);
+            studentMap.put("school_id", random.nextInt());
+            list.add(studentMap);
+        }
+        for (int i = 0; i < TOTAL / 2; i++) {
+            Map<String, Object> studentMap = new HashMap<>();
+            studentMap.put("deleted", 0);
+            studentMap.put("name", uuidName);
+            studentMap.put("age", 0);
+            // 故意少掉1个属性
+            list.add(studentMap);
+        }
+
+        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+
+        long start = System.currentTimeMillis();
+        int rows = dbHelper.insertBatchWithoutReturnId("t_student", list);
+        long end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+
+        assert dbHelper.getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
+    }
+
+    @Test
+    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
+    public void testInsertBatchWithoutReturnIdWithColsAndData() {
+        int TOTAL = 1000;
+        String uuidName = uuidName();
+
+        Random random = new Random();
+        List<String> cols = new ArrayList<>();
+        cols.add("deleted");
+        cols.add("name");
+        cols.add("age");
+        cols.add("school_id");
+        List<Object[]> data = new ArrayList<>();
+        for (int i = 0; i < TOTAL; i++) {
+            Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
+            data.add(args);
+        }
+
+        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+
+        long start = System.currentTimeMillis();
+        int rows = dbHelper.insertBatchWithoutReturnId("t_student", cols, data);
+        long end = System.currentTimeMillis();
+        System.out.println("batch insert cost:" + (end - start) + "ms");
+        assert rows == TOTAL;
+
+        assert dbHelper.getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
+    }
+
+    private String uuidName() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
 
 }

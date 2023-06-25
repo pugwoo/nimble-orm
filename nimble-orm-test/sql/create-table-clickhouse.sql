@@ -9,7 +9,7 @@ CREATE TABLE nimbleorm.t_student (
                            name String,
                            age UInt8,
                            intro String,
-                           school_id Int64,
+                           school_id Nullable(Int64),
                            school_snapshot String,
                            course_snapshot String
 ) ENGINE=MergeTree ORDER BY(id);
