@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -329,14 +328,18 @@ public class SQLUtils {
 		boolean isFirst = true;
 		int sqlLogEndIndex = 0;
 		int paramLogEndIndex = 0;
-		List<String> _cols = new ArrayList<>();
+
+		// 先从map获得所有的列
+		Set<String> colSet = new HashSet<>();
+		for (Map<String, Object> map : list) {
+			colSet.addAll(map.keySet());
+		}
+		List<String> cols = new ArrayList<>(colSet);
+
 		for (Map<String, Object> map : list) {
 			StringBuilder sb = new StringBuilder("(");
-			for (Entry<String, Object> entry : map.entrySet()) {
-				if (isFirst) {
-					_cols.add(entry.getKey());
-				}
-				Object value = entry.getValue();
+			for (String col : cols) {
+				Object value = map.get(col);
 				if (value == null) {
 					sb.append(SQLDialect.getInsertDefaultValue(databaseType));
 				} else {
@@ -346,8 +349,12 @@ public class SQLUtils {
 				sb.append(",");
 			}
 			if (isFirst) {
-				String insertSql = String.join(",", _cols);
-				sql.append(insertSql);
+				for (int i = 0; i < cols.size(); i++) {
+					if (i != 0) {
+						sql.append(",");
+					}
+					sql.append("`").append(cols.get(i)).append("`");
+				}
 				sql.append(") VALUES ");
 			} else {
 				sql.append(",");
@@ -358,9 +365,8 @@ public class SQLUtils {
 			if (isFirst) {
 				sqlLogEndIndex = sql.length();
 				paramLogEndIndex = values.size();
+				isFirst = false;
 			}
-
-			isFirst = false;
 		}
 
 		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
@@ -415,28 +421,39 @@ public class SQLUtils {
 	 */
 	public static String getInsertSQLForBatchForJDBCTemplate(String tableName,
 			Collection<Map<String, Object>> list, List<Object[]> values) {
-		StringBuilder sql = new StringBuilder("INSERT INTO ");
-		sql.append(tableName);
-		sql.append(" (");
+		StringBuilder sql = new StringBuilder("INSERT INTO `");
+		sql.append(tableName.trim());
+		sql.append("` (");
 
+		// 先从map获得所有的列
+		Set<String> colSet = new HashSet<>();
+		for (Map<String, Object> map : list) {
+			colSet.addAll(map.keySet());
+		}
+
+		List<String> cols = new ArrayList<>(colSet);
 		boolean isFirst = true;
-		List<String> _cols = new ArrayList<>();
 		for (Map<String, Object> map : list) {
 			List<Object> _values = new ArrayList<>();
-			for (Entry<String, Object> entry : map.entrySet()) {
-				_values.add(entry.getValue());
-				if (isFirst) {
-					_cols.add(entry.getKey());
-				}
+			for (String col : cols) {
+				_values.add(map.get(col));
 			}
 			if (isFirst) {
-				String insertSql = String.join(",", _cols);
-				sql.append(insertSql);
+				boolean isColFirst = true;
+				for (String col : cols) {
+					if (!isColFirst) {
+						sql.append(",");
+					} else {
+						isColFirst = false;
+					}
+					sql.append("`").append(col.trim()).append("`");
+				}
+
 				sql.append(") VALUES ");
 				String dotSql = "(" + join("?", _values.size(), ",") + ")";
 				sql.append(dotSql);
+				isFirst = false;
 			}
-			isFirst = false;
 			values.add(_values.toArray());
 		}
 
