@@ -374,6 +374,57 @@ public class SQLUtils {
 
 	/**
 	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, List<String> cols,
+															Collection<Object[]> list, DatabaseEnum databaseType,
+															List<Object> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO `");
+		sql.append(tableName.trim());
+		sql.append("` (");
+
+		boolean isFirst = true;
+		int sqlLogEndIndex = 0;
+		int paramLogEndIndex = 0;
+
+		for (Object[] valueArray : list) {
+			StringBuilder sb = new StringBuilder("(");
+			for (Object value : valueArray) {
+				if (value == null) {
+					sb.append(SQLDialect.getInsertDefaultValue(databaseType));
+				} else {
+					sb.append("?");
+					values.add(value);
+				}
+				sb.append(",");
+			}
+			if (isFirst) {
+				for (int i = 0; i < cols.size(); i++) {
+					if (i != 0) {
+						sql.append(",");
+					}
+					sql.append("`").append(cols.get(i)).append("`");
+				}
+				sql.append(") VALUES ");
+			} else {
+				sql.append(",");
+			}
+			String dotSql = sb.substring(0, sb.length() - 1) + ")";
+			sql.append(dotSql);
+
+			if (isFirst) {
+				sqlLogEndIndex = sql.length();
+				paramLogEndIndex = values.size();
+				isFirst = false;
+			}
+		}
+
+		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
 	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
 	 *
 	 * @param list 要插入的数据，非空

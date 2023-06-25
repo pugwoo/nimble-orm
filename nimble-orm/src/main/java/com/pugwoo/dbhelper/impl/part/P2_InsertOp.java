@@ -222,18 +222,21 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	@Override
 	public int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values) {
-		cols = (List<String>) InnerCommonUtils.filterNonNull(cols);
-		if (InnerCommonUtils.isEmpty(cols)) {
-			return 0;
-		}
 		List<Object[]> values2 = (List<Object[]>) InnerCommonUtils.filterNonNull(values);
 		if (InnerCommonUtils.isEmpty(values2)) {
 			return 0;
 		}
 
-		// 用JDBCTemplate的方式
-		String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
-		int total = insertBatchJDBCTemplateMode(sql, values2);
+		DatabaseEnum databaseType = getDatabaseType();
+		int total;
+		if (databaseType == DatabaseEnum.CLICKHOUSE) {
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
+			total = insertBatchJDBCTemplateMode(sql, values2);
+		} else {
+			List<Object> values3 = new ArrayList<>();
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, cols, values2, databaseType, values3);
+			total = insertBatchDefaultMode(sqlDTO, values3, values2.size());
+		}
 
 		// doInterceptAfterInsertList(values, total); // 不支持拦截器
 		return total;
