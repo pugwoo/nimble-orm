@@ -76,12 +76,23 @@ public class Test2Insert {
     @Test
     public void testInsertBatchWithoutReturnIdWithMapList() {
         int TOTAL = 1000;
+        String uuidName = uuidName();
+
         Random random = new Random();
         List<Map<String, Object>> list = new ArrayList<>();
-        for (int i = 0; i < TOTAL; i++) {
+        for (int i = 0; i < TOTAL - TOTAL / 2; i++) {
             Map<String, Object> studentMap = new HashMap<>();
+            studentMap.put("deleted", 0);
+            studentMap.put("name", uuidName);
             studentMap.put("age", 0);
             studentMap.put("school_id", random.nextInt());
+            list.add(studentMap);
+        }
+        for (int i = 0; i < TOTAL / 2; i++) {
+            Map<String, Object> studentMap = new HashMap<>();
+            studentMap.put("deleted", 0);
+            studentMap.put("name", uuidName);
+            // 故意少掉2个属性
             list.add(studentMap);
         }
 
@@ -93,23 +104,23 @@ public class Test2Insert {
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
 
-        start = System.currentTimeMillis();
-        rows = dbHelper.insertBatchWithoutReturnId("t_student", new HashSet<>(list));
-        end = System.currentTimeMillis();
-        System.out.println("batch insert cost:" + (end - start) + "ms");
-        assert rows == TOTAL;
+        assert dbHelper.getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
     }
 
     @Test
     public void testInsertBatchWithoutReturnIdWithColsAndData() {
         int TOTAL = 1000;
+        String uuidName = uuidName();
+
         Random random = new Random();
         List<String> cols = new ArrayList<>();
+        cols.add("deleted");
+        cols.add("name");
         cols.add("age");
         cols.add("school_id");
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < TOTAL; i++) {
-            Object[] args = new Object[]{"0", random.nextInt()};
+            Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
             data.add(args);
         }
 
@@ -121,11 +132,7 @@ public class Test2Insert {
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
 
-        start = System.currentTimeMillis();
-        rows = dbHelper.insertBatchWithoutReturnId("t_student", cols, data);
-        end = System.currentTimeMillis();
-        System.out.println("batch insert cost:" + (end - start) + "ms");
-        assert rows == TOTAL;
+        assert dbHelper.getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
     }
 
     /**测试插入时指定了id，依然可以准确获得id的场景*/

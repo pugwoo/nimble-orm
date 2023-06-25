@@ -458,7 +458,7 @@ public interface DBHelper {
 	 * 以JDBCTemplate的batchUpdate方式，批量插入多条记录，返回数据库实际修改的条数。【不支持拦截器】<br>
 	 * @param tableName 插入的表名
 	 * @param cols 列的列表
-	 * @param values 参数列表
+	 * @param values 参数列表，每个元素是一条记录的值，按照cols的顺序，个数必须和cols的个数一致
 	 * @return 实际修改的条数
 	 */
 	int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values);
