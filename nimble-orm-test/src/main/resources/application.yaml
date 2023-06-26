@@ -1,6 +1,17 @@
 spring:
-  profiles:
-    active: mysql
+  datasource:
+    mysql:
+      url: jdbc:mysql://192.168.0.111:3306/nimbleorm?useCursorFetch=true&serverTimezone=GMT%2B8
+      username: dev
+      password: devdev
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 200
+    clickhouse:
+      jdbc-url: jdbc:clickhouse://192.168.0.111:8123/nimbleorm
+      username: root
+      password: 123456
+      driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
 
 # 是否运行压测测试
 runBenchmarkTest: false

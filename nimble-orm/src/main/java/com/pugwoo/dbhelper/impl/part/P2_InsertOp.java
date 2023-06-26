@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
@@ -132,10 +133,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsertList(list);
 		}
 
-		long start;
-		int total = 0;
-		String sqlForLog;
-		Object paramForLog;
+		int total;
 		DatabaseEnum databaseType = getDatabaseType();
 		/*
 		  特别说明，clickhouse的批量插入不推荐使用insert into values()()()方式，原因：
@@ -150,40 +148,97 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		if (databaseType == DatabaseEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
-			sql = addComment(sql);
-			paramForLog = values.isEmpty() ? null : values.get(0);
-			log(sql, values.size(), paramForLog);
-			sqlForLog = sql;
-
-			start = System.currentTimeMillis();
-			int[] rows = jdbcTemplate.batchUpdate(sql, values);
-			for (int row : rows) {
-				int result = row;
-				if (row == -2) {
-					result = 1; // -2 means Statement.SUCCESS_NO_INFO
-				} else if (row < 0) {
-					result = 0; // not success
-				}
-				total += result;
-			}
+			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
 			List<Object> values = new ArrayList<>();
 			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
-			String sql = addComment(sqlDTO.getSql());
-			sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
-			paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
-			log(sqlForLog, list.size(), paramForLog);
-
-			start = System.currentTimeMillis();
-			total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			total = insertBatchDefaultMode(sqlDTO, values, list.size());
 		}
-
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sqlForLog, list.size(), paramForLog);
 
 		if (withInterceptor) {
 			doInterceptAfterInsertList(list, total);
 		}
+		return total;
+	}
+
+	private int insertBatchDefaultMode(InsertSQLForBatchDTO sqlDTO, List<Object> values, int listSize) {
+		String sql = addComment(sqlDTO.getSql());
+		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
+		Object paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
+		log(sqlForLog, listSize, paramForLog);
+
+		long start = System.currentTimeMillis();
+		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sqlForLog, listSize, paramForLog);
+		return total;
+	}
+
+	private int insertBatchJDBCTemplateMode(String sql, List<Object[]> values) {
+		sql = addComment(sql);
+		Object paramForLog = values.isEmpty() ? null : values.get(0);
+		log(sql, values.size(), paramForLog);
+		String sqlForLog = sql;
+
+		long start = System.currentTimeMillis();
+		int total = 0;
+		int[] rows = jdbcTemplate.batchUpdate(sql, values);
+		for (int row : rows) {
+			int result = row;
+			if (row == -2) {
+				result = 1; // -2 means Statement.SUCCESS_NO_INFO
+			} else if (row < 0) {
+				result = 0; // not success
+			}
+			total += result;
+		}
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sqlForLog, values.size(), paramForLog);
+		return total;
+	}
+
+	@Override
+	public int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list) {
+		list = InnerCommonUtils.filterNonNull(list);
+		if (InnerCommonUtils.isEmpty(list)) {
+			return 0;
+		}
+
+		DatabaseEnum databaseType = getDatabaseType();
+		int total;
+		if (databaseType == DatabaseEnum.CLICKHOUSE) {
+			List<Object[]> values = new ArrayList<>();
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, list, values);
+			total = insertBatchJDBCTemplateMode(sql, values);
+		} else {
+			List<Object> values = new ArrayList<>();
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, list, values, databaseType);
+			total = insertBatchDefaultMode(sqlDTO, values, list.size());
+		}
+
+		//	doInterceptAfterInsertList(list, total); // 不支持拦截器
+		return total;
+	}
+
+	@Override
+	public int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values) {
+		List<Object[]> values2 = (List<Object[]>) InnerCommonUtils.filterNonNull(values);
+		if (InnerCommonUtils.isEmpty(values2)) {
+			return 0;
+		}
+
+		DatabaseEnum databaseType = getDatabaseType();
+		int total;
+		if (databaseType == DatabaseEnum.CLICKHOUSE) {
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
+			total = insertBatchJDBCTemplateMode(sql, values2);
+		} else {
+			List<Object> values3 = new ArrayList<>();
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, cols, values2, databaseType, values3);
+			total = insertBatchDefaultMode(sqlDTO, values3, values2.size());
+		}
+
+		// doInterceptAfterInsertList(values, total); // 不支持拦截器
 		return total;
 	}
 

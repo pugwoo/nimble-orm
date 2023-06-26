@@ -315,6 +315,116 @@ public class SQLUtils {
 
 	/**
 	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * @param list 要插入的数据，非空
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, Collection<Map<String, Object>> list,
+			List<Object> values, DatabaseEnum databaseType) {
+		StringBuilder sql = new StringBuilder("INSERT INTO `");
+		sql.append(tableName.trim());
+		sql.append("` (");
+
+		boolean isFirst = true;
+		int sqlLogEndIndex = 0;
+		int paramLogEndIndex = 0;
+
+		// 先从map获得所有的列
+		Set<String> colSet = new HashSet<>();
+		for (Map<String, Object> map : list) {
+			colSet.addAll(map.keySet());
+		}
+		List<String> cols = new ArrayList<>(colSet);
+
+		for (Map<String, Object> map : list) {
+			StringBuilder sb = new StringBuilder("(");
+			for (String col : cols) {
+				Object value = map.get(col);
+				if (value == null) {
+					sb.append(SQLDialect.getInsertDefaultValue(databaseType));
+				} else {
+					sb.append("?");
+					values.add(value);
+				}
+				sb.append(",");
+			}
+			if (isFirst) {
+				for (int i = 0; i < cols.size(); i++) {
+					if (i != 0) {
+						sql.append(",");
+					}
+					sql.append("`").append(cols.get(i)).append("`");
+				}
+				sql.append(") VALUES ");
+			} else {
+				sql.append(",");
+			}
+			String dotSql = sb.substring(0, sb.length() - 1) + ")";
+			sql.append(dotSql);
+
+			if (isFirst) {
+				sqlLogEndIndex = sql.length();
+				paramLogEndIndex = values.size();
+				isFirst = false;
+			}
+		}
+
+		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, List<String> cols,
+															Collection<Object[]> list, DatabaseEnum databaseType,
+															List<Object> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO `");
+		sql.append(tableName.trim());
+		sql.append("` (");
+
+		boolean isFirst = true;
+		int sqlLogEndIndex = 0;
+		int paramLogEndIndex = 0;
+
+		for (Object[] valueArray : list) {
+			StringBuilder sb = new StringBuilder("(");
+			for (Object value : valueArray) {
+				if (value == null) {
+					sb.append(SQLDialect.getInsertDefaultValue(databaseType));
+				} else {
+					sb.append("?");
+					values.add(value);
+				}
+				sb.append(",");
+			}
+			if (isFirst) {
+				for (int i = 0; i < cols.size(); i++) {
+					if (i != 0) {
+						sql.append(",");
+					}
+					sql.append("`").append(cols.get(i)).append("`");
+				}
+				sql.append(") VALUES ");
+			} else {
+				sql.append(",");
+			}
+			String dotSql = sb.substring(0, sb.length() - 1) + ")";
+			sql.append(dotSql);
+
+			if (isFirst) {
+				sqlLogEndIndex = sql.length();
+				paramLogEndIndex = values.size();
+				isFirst = false;
+			}
+		}
+
+		return new InsertSQLForBatchDTO(sql.toString(), sqlLogEndIndex, paramLogEndIndex);
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
 	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
 	 *
 	 * @param list 要插入的数据，非空
@@ -348,6 +458,81 @@ public class SQLUtils {
 			values.add(_values.toArray());
 		}
 
+		return sql.toString();
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
+	 *
+	 * @param tableName 要插入的表名
+	 * @param list 列和数据的集合
+	 * @param values 返回的参数列表
+	 * @return 插入的SQL
+	 */
+	public static String getInsertSQLForBatchForJDBCTemplate(String tableName,
+			Collection<Map<String, Object>> list, List<Object[]> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO `");
+		sql.append(tableName.trim());
+		sql.append("` (");
+
+		// 先从map获得所有的列
+		Set<String> colSet = new HashSet<>();
+		for (Map<String, Object> map : list) {
+			colSet.addAll(map.keySet());
+		}
+
+		List<String> cols = new ArrayList<>(colSet);
+		boolean isFirst = true;
+		for (Map<String, Object> map : list) {
+			List<Object> _values = new ArrayList<>();
+			for (String col : cols) {
+				_values.add(map.get(col));
+			}
+			if (isFirst) {
+				boolean isColFirst = true;
+				for (String col : cols) {
+					if (!isColFirst) {
+						sql.append(",");
+					} else {
+						isColFirst = false;
+					}
+					sql.append("`").append(col.trim()).append("`");
+				}
+
+				sql.append(") VALUES ");
+				String dotSql = "(" + join("?", _values.size(), ",") + ")";
+				sql.append(dotSql);
+				isFirst = false;
+			}
+			values.add(_values.toArray());
+		}
+
+		return sql.toString();
+	}
+
+	/**
+	 * 生成insert语句insert into (...) values (?,?,?)，将值放到values中。
+	 * 说明：这种方式是交给jdbc驱动来处理批量插入。
+	 *
+	 * @param tableName 要插入的表名
+	 * @param cols 列和列表
+	 * @return 插入的SQL
+	 */
+	public static String getInsertSQLForBatchForJDBCTemplate(String tableName, List<String> cols) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("INSERT INTO `").append(tableName.trim())
+				.append("` (");
+		boolean isFirst = true;
+		for(String col : cols) {
+			if (!isFirst) {
+				sql.append(",");
+			} else {
+				isFirst = false;
+			}
+			sql.append("`").append(col.trim()).append("`");
+		}
+		sql.append(") VALUES (").append(join("?", cols.size(), ",")).append(")");
 		return sql.toString();
 	}
 

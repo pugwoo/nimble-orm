@@ -1,3 +1,9 @@
+2023年6月26日
+v1.5.4 - [add] 增加int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list)和
+                   int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values) 方法
+                   支持指定表名和动态的数据进行批量插入
+       - [add] 支持设置启用默认值的条件，默认是null值时启用，还支持String为empty和blank时启用
+
 2023年5月27日
 v1.5.3 - [add] 支持在DO类的级别，按类的类型设置列的默认值
 
