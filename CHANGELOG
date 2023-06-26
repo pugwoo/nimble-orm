@@ -1,4 +1,4 @@
-
+2023年6月26日
 v1.5.4 - [add] 增加int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list)和
                    int insertBatchWithoutReturnId(String tableName, List<String> cols, Collection<Object[]> values) 方法
                    支持指定表名和动态的数据进行批量插入
