@@ -4,19 +4,18 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.test_clickhouse.entity.StudentDO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.EnabledIf;
 
 import java.util.*;
 
 @SpringBootTest
 public class TestInsert {
 
-    @Autowired
+    @Autowired @Qualifier("clickhouseDbHelper")
     private DBHelper dbHelper;
 
     @Test
-    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testInsert() {
         StudentDO student = new StudentDO();
         student.setId(new Random().nextLong());
@@ -28,7 +27,6 @@ public class TestInsert {
     }
 
     @Test
-    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testInsertNullValue() {
         // case 1: 对于非null字段特意指定了null值
         StudentDO student = new StudentDO();
@@ -47,7 +45,6 @@ public class TestInsert {
     }
 
     @Test
-    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testBatch() {
         int total = 99999;
 
@@ -89,7 +86,6 @@ public class TestInsert {
     }
 
     @Test
-    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testInsertBatchWithoutReturnIdWithMapList() {
         int TOTAL = 1000;
         String uuidName = uuidName();
@@ -125,7 +121,6 @@ public class TestInsert {
     }
 
     @Test
-    @EnabledIf(expression = "#{environment['spring.profiles.active'] == 'clickhouse'}", loadContext = true)
     public void testInsertBatchWithoutReturnIdWithColsAndData() {
         int TOTAL = 1000;
         String uuidName = uuidName();
