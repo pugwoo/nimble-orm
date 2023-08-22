@@ -24,8 +24,9 @@ public class Test8Feature_NamedParameter {
         String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         CommonOps.insertBatch(dbHelper, 10, prefix);
 
-        List<StudentDO> all = dbHelper.getAll(StudentDO.class,
-                "where /* ? ? ? */ name /*???*/  -- ?? ?? \n like ?", prefix + "%");
+        List<StudentDO> all = dbHelper.getRaw(StudentDO.class,
+                "/* ? */ -- a ? a \n select * from t_student where /* ? ? ? */ name /*???*/  -- ?? ?? \n like ?",
+                prefix + "%");
         assert all.size() == 10;
     }
 
