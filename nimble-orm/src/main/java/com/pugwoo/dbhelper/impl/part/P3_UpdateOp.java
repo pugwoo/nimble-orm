@@ -259,7 +259,6 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		return rows;
 	}
 	
-	// ref: https://gist.github.com/PieterScheffers/189cad9510d304118c33135965e9cddb
 	@Override
 	public <T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args) {
 		if(InnerCommonUtils.isBlank(setSql)) {

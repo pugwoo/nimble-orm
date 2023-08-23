@@ -113,6 +113,16 @@ public class PreHandleObject {
 				}
 			}
 
+			// 优先级最低，自动trim字符串
+			if (column.autoTrimString() == 1 || column.autoTrimString() == -1 && table.autoTrimString() == 1) {
+				if (String.class.equals(field.getType())) {
+					String value = (String) DOInfoReader.getValue(field, t);
+					if (value != null) {
+						DOInfoReader.setValue(field, t, value.trim());
+					}
+				}
+			}
+
 			// 优先级最低，truncate string should be last
 			if (column.maxStringLength() >= 0) {
 				if (String.class.equals(field.getType())) {
@@ -148,7 +158,9 @@ public class PreHandleObject {
 		}
 		
 		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
-		
+
+		Table table = DOInfoReader.getTable(t.getClass());
+
 		for(Field field : notKeyFields) {
 			Column column = field.getAnnotation(Column.class);
 			
@@ -169,6 +181,16 @@ public class PreHandleObject {
             if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
                 ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), column.updateValueScript());
             }
+
+			// 优先级最低，自动trim字符串
+			if (column.autoTrimString() == 1 || column.autoTrimString() == -1 && table.autoTrimString() == 1) {
+				if (String.class.equals(field.getType())) {
+					String value = (String) DOInfoReader.getValue(field, t);
+					if (value != null) {
+						DOInfoReader.setValue(field, t, value.trim());
+					}
+				}
+			}
 
             // truncate string should be last
 			if (column.maxStringLength() >= 0) {

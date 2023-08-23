@@ -1,5 +1,6 @@
 v1.5.5 - [enhance] 分页limit的偏移修改成offset，更标准，支持更多的数据库
        - [fix] 修复当SQL包含注释且注释中出现问号?的情况下，处理SQL参数出错的问题
+       - [add] 支持配置增删时，对DO的字符串字段进行trim操作
 
 2023年6月26日
 v1.5.4 - [add] 增加int insertBatchWithoutReturnId(String tableName, Collection<Map<String, Object>> list)和

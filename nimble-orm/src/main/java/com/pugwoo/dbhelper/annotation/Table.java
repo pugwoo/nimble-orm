@@ -72,4 +72,10 @@ public @interface Table {
 	 * 表注释
 	 */
 	String comment() default "";
+
+	/**
+	 * 是否自动去除String类型的字段两端的空白。该设置的优先级低于Table注解的autoTrimString属性。<br>
+	 * 值为1表示自动去除两端空白，值为0表示不去除，值为-1不设置，如果Column的autoTrimString属性也为-1时，不自动去除<br>
+	 */
+	int autoTrimString() default -1;
 }
