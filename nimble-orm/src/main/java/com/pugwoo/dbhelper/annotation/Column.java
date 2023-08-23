@@ -51,6 +51,12 @@ public @interface Column {
 	 * 说明：如果值为负数表示不限制。该限制只对String类型生效，其它类型不生效。特别的，当值为0时，字符串将截断成空字符串。
 	 */
 	int maxStringLength() default -1;
+
+	/**
+	 * 是否自动去除字符串字段两端的空白，仅对String类型有效。该设置的优先级高于Table注解的autoTrimString属性。<br>
+	 * 值为1表示自动去除两端空白，值为0表示不去除，值为-1不设置，如果Table的autoTrimString属性也为-1时，不自动去除<br>
+	 */
+	int autoTrimString() default -1;
 	
 	/**
 	 * 插入时，当字段值未提供时，设置是否自动生成随机32字符，此时字段必须是String类型。<br>

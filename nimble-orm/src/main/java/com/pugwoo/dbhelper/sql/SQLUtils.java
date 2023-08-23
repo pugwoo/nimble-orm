@@ -1430,11 +1430,11 @@ public class SQLUtils {
 	public static String genLimitSQL(Integer offset, Integer limit) {
 		StringBuilder sb = new StringBuilder();
 		if (limit != null) {
-			sb.append(" limit ");
-			if(offset != null) {
-				sb.append(offset).append(",");
-			}
+			sb.append(" LIMIT ");
 			sb.append(limit);
+			if(offset != null) {
+				sb.append(" OFFSET ").append(offset);
+			}
 		}
 		return sb.toString();
 	}

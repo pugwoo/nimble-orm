@@ -90,39 +90,67 @@ public class NamedParameterUtils {
 		if(sql == null || sql.isEmpty()) {
 			return "";
 		}
-
-		String originSql = sql;
-		
 		StringBuilder sb = new StringBuilder();
+
 		boolean isInStr = false;
+		boolean isInComment = false;
+		int commentType = 0; // 0:无注释，1:单行注释，2:多行注释
+
+		boolean isPreBackSlash = false;
+		boolean isPreHyphen = false;
 		boolean isPreSlash = false;
+		boolean isPreAsterisk = false;
+
 		int currParamIndex = 1;
-		for(char ch : sql.toCharArray()/*int i = 0; i < sql.length(); i++*/) {
-			//char ch = sql.charAt(i);
-			
-			if(ch == '?' && !isInStr) {
+		for(char ch : sql.toCharArray()) {
+			if(ch == '?' && !isInStr && !isInComment) {
 				sb.append(":param").append(currParamIndex++);
 				continue;
 			} else {
 				sb.append(ch);
 			}
-			
-			if(ch == '\'') {
-				if(!isInStr) {
-					isInStr = true;
-				} else {
-					if(!isPreSlash) {
-						isInStr = false;
+
+			if (!isInComment) { // 只有不在注释中，字符串才可能出现
+				if(ch == '\'') {
+					if(!isInStr) {
+						isInStr = true;
+					} else {
+						if(!isPreBackSlash) {
+							isInStr = false;
+						}
 					}
 				}
 			}
-			
-			isPreSlash = ch == '\\';
+
+			if (!isInStr) { // 只有不在字符串中，注释才可能出现
+				if (!isInComment) {
+					if (isPreHyphen && ch == '-') {
+						isInComment = true;
+						commentType = 1;
+					} else if (isPreSlash && ch == '*') {
+						isInComment = true;
+						commentType = 2;
+					}
+				} else {
+					if (commentType == 1 && ch == '\n') {
+						isInComment = false;
+						commentType = 0;
+					} else if (commentType == 2 && isPreAsterisk && ch == '/') {
+						isInComment = false;
+						commentType = 0;
+					}
+				}
+			}
+
+			isPreBackSlash = ch == '\\';
+			isPreHyphen = ch == '-';
+			isPreSlash = ch == '/';
+			isPreAsterisk = ch == '*';
 		}
 
         if (currParamIndex - 1 != args.size()) {
 			LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}",
-					args.size(), currParamIndex - 1, originSql);
+					args.size(), currParamIndex - 1, sql);
 		}
 
 		return sb.toString();

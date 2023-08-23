@@ -217,6 +217,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		//	doInterceptAfterInsertList(list, total); // 不支持拦截器
+
 		return total;
 	}
 
@@ -239,6 +240,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		// doInterceptAfterInsertList(values, total); // 不支持拦截器
+
 		return total;
 	}
 
