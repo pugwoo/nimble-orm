@@ -443,6 +443,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      boolean selectOnlyKey, boolean withCount,
                                      Integer offset, Integer limit,
                                      String postSql, Object... args) {
+        if (postSql == null) {
+            postSql = "";
+        }
 
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
