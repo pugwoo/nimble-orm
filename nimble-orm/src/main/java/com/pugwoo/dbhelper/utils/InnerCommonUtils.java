@@ -1,7 +1,6 @@
 package com.pugwoo.dbhelper.utils;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -185,18 +184,35 @@ public class InnerCommonUtils {
 
     /**
      * 读取input所有数据到String中，可用于读取文件内容到String。
-     * @param in 读取完后in不会关闭
+     * @param in 输入流会被关闭
      */
     private static String readAll(InputStream in, String charset) {
-        Scanner scanner = new Scanner(in, charset);
-
+        BufferedReader reader = null;
         try {
-            String content = scanner.useDelimiter("\\Z").next();
-            return content;
-        } catch (NoSuchElementException e) {
-            return ""; // file is empty, ignore exception
+            InputStreamReader inputStreamReader = new InputStreamReader(in, charset);
+            reader = new BufferedReader(inputStreamReader);
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+                stringBuilder.append("\n");
+            }
+            return stringBuilder.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } finally {
-            scanner.close();
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                }
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
     }
 
