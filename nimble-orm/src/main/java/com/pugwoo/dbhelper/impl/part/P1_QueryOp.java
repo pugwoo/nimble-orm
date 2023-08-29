@@ -78,7 +78,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sqlSB = "SELECT count(*) FROM ("
                 + SQLUtils.getSelectSQL(clazz, false, true, features, postSql)
-                + (isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz))
+                + (isVirtualTable ? (postSql == null ? " " : " " + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz))
                 + ") tff305c6";
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -443,10 +443,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      boolean selectOnlyKey, boolean withCount,
                                      Integer offset, Integer limit,
                                      String postSql, Object... args) {
-        if (postSql == null) {
-            postSql = "";
-        }
-
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
         StringBuilder sqlSB = new StringBuilder();
@@ -461,7 +457,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         clazz, postSql, e);
             }
         }
-        sqlSB.append(isVirtualTable ? (" " + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz));
+        sqlSB.append(isVirtualTable ? (" " + (postSql == null ? "" : postSql)) : SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sqlSB.append(SQLUtils.genLimitSQL(offset, limit));
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
