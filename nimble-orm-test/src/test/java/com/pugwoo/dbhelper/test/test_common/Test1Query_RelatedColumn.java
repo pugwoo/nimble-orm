@@ -16,44 +16,40 @@ import com.pugwoo.wooutils.collect.ListUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@SpringBootTest
-public class Test1Query_RelatedColumn {
+public abstract class Test1Query_RelatedColumn {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Test
     public void testRelatedColumnWithLimit() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
         CourseDO courseDO1 = new CourseDO();
         courseDO1.setName("math");
         courseDO1.setStudentId(studentDO.getId());
         courseDO1.setIsMain(true); // math是主课程
-        dbHelper.insert(courseDO1);
+        getDBHelper().insert(courseDO1);
 
         CourseDO courseDO2 = new CourseDO();
         courseDO2.setName("eng");
         courseDO2.setStudentId(studentDO.getId());
         courseDO2.setIsMain(true); // eng是主课程
-        dbHelper.insert(courseDO2);
+        getDBHelper().insert(courseDO2);
 
         CourseDO courseDO3 = new CourseDO();
         courseDO3.setName("chinese");
         courseDO3.setStudentId(studentDO.getId());
         courseDO3.setIsMain(true); // chinese是主课程
-        dbHelper.insert(courseDO3);
+        getDBHelper().insert(courseDO3);
 
-        StudentDO studentDO2 = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
 
-        List<StudentLimitVO> all = dbHelper.getAll(StudentLimitVO.class, "where id=? or id=?",
+        List<StudentLimitVO> all = getDBHelper().getAll(StudentLimitVO.class, "where id=? or id=?",
                 studentDO.getId(), studentDO2.getId());
         for (StudentLimitVO a : all) {
             if (a.getId().equals(studentDO.getId())) {
@@ -74,8 +70,8 @@ public class Test1Query_RelatedColumn {
         // 课程1 学生2 非主课程
         // 课程2 学生1 非主课程
         // 课程2 学生2 主课程
-        StudentDO student1 = CommonOps.insertOne(dbHelper);
-        StudentDO student2 = CommonOps.insertOne(dbHelper);
+        StudentDO student1 = CommonOps.insertOne(getDBHelper());
+        StudentDO student2 = CommonOps.insertOne(getDBHelper());
 
         String course1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         String course2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
@@ -84,31 +80,31 @@ public class Test1Query_RelatedColumn {
         courseDO.setName(course1);
         courseDO.setStudentId(student1.getId());
         courseDO.setIsMain(true);
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
         Long id1 = courseDO.getId();
 
         courseDO = new CourseDO();
         courseDO.setName(course1);
         courseDO.setStudentId(student2.getId());
         courseDO.setIsMain(false);
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
         Long id2 = courseDO.getId();
 
         courseDO = new CourseDO();
         courseDO.setName(course2);
         courseDO.setStudentId(student1.getId());
         courseDO.setIsMain(false);
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
         Long id3 = courseDO.getId();
 
         courseDO = new CourseDO();
         courseDO.setName(course2);
         courseDO.setStudentId(student2.getId());
         courseDO.setIsMain(true);
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
         Long id4 = courseDO.getId();
 
-        CourseVO courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id1);
+        CourseVO courseVO = getDBHelper().getOne(CourseVO.class, "where id=?", id1);
         assert courseVO.getMainCourseStudents().size() == 1;
         assert courseVO.getMainCourseStudents().get(0).getId().equals(student1.getId());
         assert courseVO.getMainCourseStudent().getId().equals(student1.getId());
@@ -116,21 +112,21 @@ public class Test1Query_RelatedColumn {
         assert courseVO.getConditionNotReturnBoolean() == null;
         assert courseVO.getConditionThrowException() == null;
 
-        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id2);
+        courseVO = getDBHelper().getOne(CourseVO.class, "where id=?", id2);
         assert courseVO.getMainCourseStudents().isEmpty();
         assert courseVO.getMainCourseStudent() == null;
         assert courseVO.getConditionNull() == null;
         assert courseVO.getConditionNotReturnBoolean() == null;
         assert courseVO.getConditionThrowException() == null;
 
-        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id3);
+        courseVO = getDBHelper().getOne(CourseVO.class, "where id=?", id3);
         assert courseVO.getMainCourseStudents().isEmpty();
         assert courseVO.getMainCourseStudent() == null;
         assert courseVO.getConditionNull() == null;
         assert courseVO.getConditionNotReturnBoolean() == null;
         assert courseVO.getConditionThrowException() == null;
 
-        courseVO = dbHelper.getOne(CourseVO.class, "where id=?", id4);
+        courseVO = getDBHelper().getOne(CourseVO.class, "where id=?", id4);
         assert courseVO.getMainCourseStudents().size() == 1;
         assert courseVO.getMainCourseStudents().get(0).getId().equals(student2.getId());
         assert courseVO.getMainCourseStudent().getId().equals(student2.getId());
@@ -145,41 +141,41 @@ public class Test1Query_RelatedColumn {
 
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("sysu");
-        dbHelper.insert(schoolDO);
+        getDBHelper().insert(schoolDO);
 
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         studentDO.setSchoolId(schoolDO.getId());
-        dbHelper.update(studentDO);
+        getDBHelper().update(studentDO);
 
         CourseDO courseDO1 = new CourseDO();
         courseDO1.setName("math");
         courseDO1.setStudentId(studentDO.getId());
         courseDO1.setIsMain(true); // math是主课程
-        dbHelper.insert(courseDO1);
+        getDBHelper().insert(courseDO1);
 
         CourseDO courseDO2 = new CourseDO();
         courseDO2.setName("eng");
         courseDO2.setStudentId(studentDO.getId());
-        dbHelper.insert(courseDO2);
+        getDBHelper().insert(courseDO2);
 
-        StudentDO studentDO2  = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO2  = CommonOps.insertOne(getDBHelper());
         studentDO2.setSchoolId(schoolDO.getId());
-        dbHelper.update(studentDO2);
+        getDBHelper().update(studentDO2);
 
         CourseDO courseDO3 = new CourseDO();
         courseDO3.setName("math");
         courseDO3.setStudentId(studentDO2.getId());
         courseDO3.setIsMain(true); // math是主课程
-        dbHelper.insert(courseDO3);
+        getDBHelper().insert(courseDO3);
 
         CourseDO courseDO4 = new CourseDO();
         courseDO4.setName("chinese");
         courseDO4.setStudentId(studentDO2.getId());
-        dbHelper.insert(courseDO4);
+        getDBHelper().insert(courseDO4);
 
         /////////////////// 下面是查询 ///////////////////
 
-        StudentVO studentVO1 = dbHelper.getByKey(StudentVO.class, studentDO.getId());
+        StudentVO studentVO1 = getDBHelper().getByKey(StudentVO.class, studentDO.getId());
         assert studentVO1 != null;
         assert studentVO1.getSchoolDO() != null;
         assert studentVO1.getSchoolDO().getId().equals(studentVO1.getSchoolId());
@@ -195,7 +191,7 @@ public class Test1Query_RelatedColumn {
         StudentVOForHandleRelatedColumnOnly studentVO2 = new StudentVOForHandleRelatedColumnOnly();
         studentVO2.setId(studentDO.getId());
         studentVO2.setSchoolId(studentDO.getSchoolId());
-        dbHelper.handleRelatedColumn(studentVO2);
+        getDBHelper().handleRelatedColumn(studentVO2);
         assert studentVO2 != null;
         assert studentVO2.getSchoolDO() != null;
         assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
@@ -209,7 +205,7 @@ public class Test1Query_RelatedColumn {
         studentVO2 = new StudentVOForHandleRelatedColumnOnly();
         studentVO2.setId(studentDO.getId());
         studentVO2.setSchoolId(studentDO.getSchoolId());
-        dbHelper.handleRelatedColumn(studentVO2, "courses", "schoolDO"); // 指定要的RelatedColumn
+        getDBHelper().handleRelatedColumn(studentVO2, "courses", "schoolDO"); // 指定要的RelatedColumn
         assert studentVO2.getSchoolDO() != null;
         assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
         assert studentVO2.getCourses() != null;
@@ -222,7 +218,7 @@ public class Test1Query_RelatedColumn {
         studentVO2 = new StudentVOForHandleRelatedColumnOnly();
         studentVO2.setId(studentDO.getId());
         studentVO2.setSchoolId(studentDO.getSchoolId());
-        dbHelper.handleRelatedColumn(ListUtils.newList(studentVO2), "courses", "schoolDO");
+        getDBHelper().handleRelatedColumn(ListUtils.newList(studentVO2), "courses", "schoolDO");
         assert studentVO2.getSchoolDO() != null;
         assert studentVO2.getSchoolDO().getId().equals(studentVO2.getSchoolId());
         assert studentVO2.getCourses() != null;
@@ -236,7 +232,7 @@ public class Test1Query_RelatedColumn {
         List<Long> ids = new ArrayList<Long>();
         ids.add(studentDO.getId());
         ids.add(studentDO2.getId());
-        List<StudentVO> studentVOs = dbHelper.getAll(StudentVO.class,
+        List<StudentVO> studentVOs = getDBHelper().getAll(StudentVO.class,
                 "where id in (?)", ids);
         assert studentVOs.size() == 2;
         for(StudentVO sVO : studentVOs) {
@@ -258,7 +254,7 @@ public class Test1Query_RelatedColumn {
         }
 
         // 测试innerClass
-        SchoolWithInnerClassVO schoolVO = dbHelper.getByKey(SchoolWithInnerClassVO.class, schoolDO.getId());
+        SchoolWithInnerClassVO schoolVO = getDBHelper().getByKey(SchoolWithInnerClassVO.class, schoolDO.getId());
         assert schoolVO != null && schoolVO.getId().equals(schoolDO.getId());
         assert schoolVO.getStudents().size() == 2;
         for(SchoolWithInnerClassVO.StudentVO s : schoolVO.getStudents()) {
@@ -318,17 +314,17 @@ public class Test1Query_RelatedColumn {
 
         StudentDO studentDO = new StudentDO();
         studentDO.setName(uuid);
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName(uuid);
-        dbHelper.insert(schoolDO);
+        getDBHelper().insert(schoolDO);
 
-        Student1VO one = dbHelper.getOne(Student1VO.class, "where name=?", uuid);
+        Student1VO one = getDBHelper().getOne(Student1VO.class, "where name=?", uuid);
         assert one.getName1().equals("S" + uuid);
         assert one.getSchool1DO().getName2().equals("S" + uuid);
 
-        Student2VO two = dbHelper.getOne(Student2VO.class, "where t1.name=?", uuid);
+        Student2VO two = getDBHelper().getOne(Student2VO.class, "where t1.name=?", uuid);
         assert two.getSchool1DO().getName2().equals("S" + uuid);
 
     }
@@ -339,13 +335,13 @@ public class Test1Query_RelatedColumn {
     public void testDiffClassTypeRelatedColumn() {
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("sysu");
-        dbHelper.insert(schoolDO);
+        getDBHelper().insert(schoolDO);
 
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         studentDO.setSchoolId(schoolDO.getId());
-        dbHelper.update(studentDO);
+        getDBHelper().update(studentDO);
 
-        StudentStringSchoolIdDO one = dbHelper.getOne(StudentStringSchoolIdDO.class, "where id=?", studentDO.getId());
+        StudentStringSchoolIdDO one = getDBHelper().getOne(StudentStringSchoolIdDO.class, "where id=?", studentDO.getId());
         assert one.getId().equals(studentDO.getId());
         assert one.getSchoolDO().getId().equals(schoolDO.getId()); // 不同类型的比对会转换成string进行
 
@@ -376,7 +372,7 @@ public class Test1Query_RelatedColumn {
     public void testRelatedColumnWrongArgs() {
         boolean isThrow = false;
         try {
-            dbHelper.getOne(CourseBlankLocalColumnVO.class);
+            getDBHelper().getOne(CourseBlankLocalColumnVO.class);
         } catch (RelatedColumnFieldNotFoundException e) {
             isThrow = true;
         }
@@ -384,7 +380,7 @@ public class Test1Query_RelatedColumn {
 
         isThrow = false;
         try {
-            dbHelper.getOne(CourseBlankRemoteColumnVO.class);
+            getDBHelper().getOne(CourseBlankRemoteColumnVO.class);
         } catch (RelatedColumnFieldNotFoundException e) {
             isThrow = true;
         }
@@ -395,9 +391,9 @@ public class Test1Query_RelatedColumn {
     public void testRelatedColumnEmptyList() {
         CourseDO courseDO = new CourseDO();
         // courseDO.setStudentId(-1L); // student id不设置
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
 
-        CourseEmptyListVO one = dbHelper.getOne(CourseEmptyListVO.class, "where id=?", courseDO.getId());
+        CourseEmptyListVO one = getDBHelper().getOne(CourseEmptyListVO.class, "where id=?", courseDO.getId());
         assert one.getStudents() != null; // 不会是null，框架会自动设置
         assert one.getStudents().isEmpty();
     }
@@ -438,7 +434,7 @@ public class Test1Query_RelatedColumn {
     public void testRelatedColumnWrongDBHelperBean() {
         boolean isThrow = false;
         try {
-            dbHelper.getAll(CourseDBHelperBeanNotExistVO.class);
+            getDBHelper().getAll(CourseDBHelperBeanNotExistVO.class);
         } catch (NoSuchBeanDefinitionException e) {
             isThrow = true;
         }
@@ -446,7 +442,7 @@ public class Test1Query_RelatedColumn {
 
         isThrow = false;
         try {
-            dbHelper.getAll(CourseDBHelperBeanNotMatchVO.class);
+            getDBHelper().getAll(CourseDBHelperBeanNotMatchVO.class);
         } catch (SpringBeanNotMatchException e) {
             isThrow = true;
         }
@@ -472,11 +468,11 @@ public class Test1Query_RelatedColumn {
         CourseDO courseDO = new CourseDO();
         courseDO.setName("some course");
         courseDO.setStudentId(1L);
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
 
         boolean isThrow = false;
         try {
-            dbHelper.getAll(CourseEmptyWrongExtraWhere1VO.class);
+            getDBHelper().getAll(CourseEmptyWrongExtraWhere1VO.class);
         } catch (BadSQLSyntaxException e) {
             isThrow = true;
         }
@@ -484,7 +480,7 @@ public class Test1Query_RelatedColumn {
 
         isThrow = false;
         try {
-            dbHelper.getAll(CourseEmptyWrongExtraWhere2VO.class);
+            getDBHelper().getAll(CourseEmptyWrongExtraWhere2VO.class);
         } catch (BadSQLSyntaxException e) {
             isThrow = true;
         }
@@ -499,13 +495,13 @@ public class Test1Query_RelatedColumn {
 
     @Test
     public void testNullDataService() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
         CourseDO courseDO = new CourseDO();
         courseDO.setStudentId(studentDO.getId());
-        dbHelper.insert(courseDO);
+        getDBHelper().insert(courseDO);
 
-        CourseNullDataServiceVO one = dbHelper.getOne(CourseNullDataServiceVO.class, "where id=?", courseDO.getId());
+        CourseNullDataServiceVO one = getDBHelper().getOne(CourseNullDataServiceVO.class, "where id=?", courseDO.getId());
         assert one.getStudents() != null; // 不会是null，框架会自动设置
         assert one.getStudents().isEmpty();
     }
@@ -516,6 +512,6 @@ public class Test1Query_RelatedColumn {
         courses.add(null);
         courses.add(null);
 
-        dbHelper.handleRelatedColumn(courses);
+        getDBHelper().handleRelatedColumn(courses);
     }
 }

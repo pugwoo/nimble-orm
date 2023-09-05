@@ -11,24 +11,20 @@ import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.*;
 
 /**
  * 测试批量更新
  */
-@SpringBootTest
-public class Test3Update_Batch {
+public abstract class Test3Update_Batch {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Test
     public void testUpdateBatch() {
         // 插入11条数据，然后再批量update
-        List<StudentDO> list = CommonOps.insertBatch(dbHelper, 11);
+        List<StudentDO> list = CommonOps.insertBatch(getDBHelper(), 11);
         List<Long> ids = ListUtils.transform(list, IdableSoftDeleteBaseDO::getId);
         Map<Long, StudentDO> map = ListUtils.toMap(list, IdableSoftDeleteBaseDO::getId, o -> o);
 
@@ -36,29 +32,29 @@ public class Test3Update_Batch {
             studentDO.setName(studentDO.getName() + "x");
         }
 
-        int rows = dbHelper.update(list);
+        int rows = getDBHelper().update(list);
         assert rows == list.size();
 
         // update后，再查询一次，看看数据是否正确
-        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where id in (?)", ids);
+        List<StudentDO> all = getDBHelper().getAll(StudentDO.class, "where id in (?)", ids);
         assert all.size() == list.size();
         for (StudentDO studentDO : all) {
             assert studentDO.getName().equals(map.get(studentDO.getId()).getName());
         }
 
         // 软删除2个，再批量update
-        dbHelper.delete(list.get(3));
-        dbHelper.delete(list.get(8));
+        getDBHelper().delete(list.get(3));
+        getDBHelper().delete(list.get(8));
 
         for (StudentDO studentDO : list) {
             studentDO.setName(studentDO.getName() + "y");
         }
 
-        rows = dbHelper.update(list);
+        rows = getDBHelper().update(list);
         assert rows == list.size() - 2; // 软删除了2个
 
         // update后，再查询一次，看看数据是否正确
-        all = dbHelper.getAll(StudentDO.class, "where id in (?)", ids);
+        all = getDBHelper().getAll(StudentDO.class, "where id in (?)", ids);
         assert all.size() == list.size() - 2;
         for (StudentDO studentDO : all) {
             assert studentDO.getName().equals(map.get(studentDO.getId()).getName());
@@ -68,18 +64,18 @@ public class Test3Update_Batch {
     // 批量update有null值的情况，看看数据库的值会不会被改，期望是不改，保留原值
     @Test
     public void testBatchUpdateWithNullValue() {
-        List<StudentDO> list = CommonOps.insertBatch(dbHelper, 11);
+        List<StudentDO> list = CommonOps.insertBatch(getDBHelper(), 11);
         ListUtils.forEach(list, o -> {
             o.setSchoolId(o.getId());
             o.setName(o.getName() + "x"); // 验证至少修改2个字段
         });
-        assert dbHelper.update(list) == 11;
+        assert getDBHelper().update(list) == 11;
 
         Map<Long, StudentDO> map = ListUtils.toMap(list, IdableSoftDeleteBaseDO::getId, o -> o);
         List<Long> ids = ListUtils.transform(list, IdableSoftDeleteBaseDO::getId);
 
         // 验证是否修改成功
-        List<StudentDO> students = dbHelper.getAll(StudentDO.class, "where id in (?)", ids);
+        List<StudentDO> students = getDBHelper().getAll(StudentDO.class, "where id in (?)", ids);
         for (StudentDO student : students) {
             assert Objects.equals(student.getSchoolId(), student.getId());
             assert student.getName().equals(map.get(student.getId()).getName());
@@ -95,10 +91,10 @@ public class Test3Update_Batch {
 
         map = ListUtils.toMap(students, IdableSoftDeleteBaseDO::getId, o -> o);
 
-        assert dbHelper.update(students) == 11; // 因为有update time的值，所以有更新
+        assert getDBHelper().update(students) == 11; // 因为有update time的值，所以有更新
 
         // 重新查回来，验证null值实际上没有被修改
-        students = dbHelper.getAll(StudentDO.class, "where id in (?)", ids);
+        students = getDBHelper().getAll(StudentDO.class, "where id in (?)", ids);
         for (StudentDO student : students) {
             assert Objects.equals(student.getSchoolId(), student.getId()); // null值不会被修改
             assert student.getName().endsWith("xy"); // 名字则被修改了
@@ -118,14 +114,14 @@ public class Test3Update_Batch {
             list.add(cas);
         }
 
-        int rows = dbHelper.insertBatchWithoutReturnId(list);
+        int rows = getDBHelper().insertBatchWithoutReturnId(list);
         assert rows == 7;
         for (CasVersionDO cas : list) {
             assert cas.getVersion() == 1;
         }
 
         // 查询回来
-        list = dbHelper.getAll(CasVersionDO.class, "where name=?", name);
+        list = getDBHelper().getAll(CasVersionDO.class, "where name=?", name);
         assert list.size() == 7;
         for (CasVersionDO cas : list) {
             assert cas.getVersion() == 1;
@@ -135,13 +131,13 @@ public class Test3Update_Batch {
         for (CasVersionDO cas : list) {
             cas.setName(cas.getName() + "x");
         }
-        assert dbHelper.update(list) == 7;
+        assert getDBHelper().update(list) == 7;
         for (CasVersionDO cas : list) {
             assert cas.getVersion() == 2;
         }
 
         // 再查询回来
-        list = dbHelper.getAll(CasVersionDO.class, "where name=?", name + "x");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name=?", name + "x");
         assert list.size() == 7;
         for (CasVersionDO cas : list) {
             assert cas.getVersion() == 2;
@@ -157,7 +153,7 @@ public class Test3Update_Batch {
 
         boolean isThrow = false;
         try {
-            dbHelper.update(list);
+            getDBHelper().update(list);
         } catch (CasVersionNotMatchException e) {
             isThrow = true;
             assert e.getAffectedRows() == 7 - 2; // 2条casversion不匹配，所以只有5条被修改
@@ -166,14 +162,14 @@ public class Test3Update_Batch {
         assert isThrow;
 
         // 查询回来验证
-        list = dbHelper.getAll(CasVersionDO.class, "where name=?", name + "x");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name=?", name + "x");
         assert list.size() == 2;
 
-        list = dbHelper.getAll(CasVersionDO.class, "where name=?", name + "xy");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name=?", name + "xy");
         assert list.size() == 5;
 
         // 全部再查回来一次
-        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name like ?", name + "%");
         assert list.size() == 7;
 
         // 故意改掉所有的casversion
@@ -184,7 +180,7 @@ public class Test3Update_Batch {
 
         isThrow = false;
         try {
-            dbHelper.update(list);
+            getDBHelper().update(list);
         } catch (CasVersionNotMatchException e) {
             isThrow = true;
             assert e.getAffectedRows() == 0;
@@ -192,14 +188,14 @@ public class Test3Update_Batch {
         assert isThrow;
 
         // 再查询回来验证
-        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name like ?", name + "%");
         assert list.size() == 7;
         for (CasVersionDO cas : list) {
             assert !cas.getName().endsWith("z"); // 期望没有修改
         }
 
         // 测试update时，有null值的情况
-        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name like ?", name + "%");
         assert list.size() == 7;
         for (CasVersionDO cas : list) {
             cas.setName(cas.getName() + "z");
@@ -207,10 +203,10 @@ public class Test3Update_Batch {
         list.get(0).setName(null);
         list.get(5).setName(null);
         list.get(6).setName(null); // 3个设置name为null，即不修改
-        assert dbHelper.update(list) == 7;
+        assert getDBHelper().update(list) == 7;
 
         // 再查询回来验证
-        list = dbHelper.getAll(CasVersionDO.class, "where name like ?", name + "%");
+        list = getDBHelper().getAll(CasVersionDO.class, "where name like ?", name + "%");
         assert list.size() == 7;
         assert ListUtils.filter(list, o -> o.getName().endsWith("z")).size() == 4; // 4个被修改了
         assert ListUtils.filter(list, o -> !o.getName().endsWith("z")).size() == 3; // 3个没有被修改
@@ -228,7 +224,7 @@ public class Test3Update_Batch {
                         "two", UUID.randomUUID().toString()));
                 list.add(jsonDO);
             }
-            assert dbHelper.insert(list) == 4;
+            assert getDBHelper().insert(list) == 4;
 
             // 更新
             for (JsonDO jsonDO : list) {
@@ -236,11 +232,11 @@ public class Test3Update_Batch {
                         "two", UUID.randomUUID().toString(),
                         "three", UUID.randomUUID().toString()));
             }
-            assert dbHelper.update(list) == 4;
+            assert getDBHelper().update(list) == 4;
 
             // 查询回来验证
             for (JsonDO jsonDO : list) {
-                JsonDO one = dbHelper.getOne(JsonDO.class, "where id=?", jsonDO.getId());
+                JsonDO one = getDBHelper().getOne(JsonDO.class, "where id=?", jsonDO.getId());
                 assert one.getJson2().size() == 3;
                 assert one.getJson2().get("one").equals(jsonDO.getJson2().get("one"));
                 assert one.getJson2().get("two").equals(jsonDO.getJson2().get("two"));
@@ -257,7 +253,7 @@ public class Test3Update_Batch {
                         UUID.randomUUID().toString().replace("-","").substring(0, 16)));
                 list2.add(jsonDO);
             }
-            assert dbHelper.insert(list2) == 3;
+            assert getDBHelper().insert(list2) == 3;
 
             // 检查cas版本
             for (CasVersionWithJsonDO jsonDO : list2) {
@@ -269,11 +265,11 @@ public class Test3Update_Batch {
                 jsonDO.setName(MapUtils.of("a",
                         UUID.randomUUID().toString().replace("-","").substring(0, 16)));
             }
-            assert dbHelper.update(list2) == 3;
+            assert getDBHelper().update(list2) == 3;
 
             // 查询回来验证
             for (CasVersionWithJsonDO jsonDO : list2) {
-                CasVersionWithJsonDO one = dbHelper.getOne(CasVersionWithJsonDO.class, "where id=?", jsonDO.getId());
+                CasVersionWithJsonDO one = getDBHelper().getOne(CasVersionWithJsonDO.class, "where id=?", jsonDO.getId());
                 assert one.getName().size() == 1;
                 assert one.getName().get("a").equals(jsonDO.getName().get("a"));
                 assert one.getVersion().equals(2);
@@ -287,32 +283,32 @@ public class Test3Update_Batch {
 
         StudentDO studentDO = new StudentDO();
         studentDO.setName("test");
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
         list.add(studentDO);
 
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("sysu");
-        dbHelper.insert(schoolDO);
+        getDBHelper().insert(schoolDO);
         list.add(schoolDO);
 
         // 修改name
         studentDO.setName(UUID.randomUUID().toString().replace("-", "").substring(0, 16));
         schoolDO.setName(UUID.randomUUID().toString().replace("-", "").substring(0, 16));
 
-        assert dbHelper.update(list) == 2;
+        assert getDBHelper().update(list) == 2;
 
         // 查回来检查数据
-        StudentDO one = dbHelper.getOne(StudentDO.class, "where id=?", studentDO.getId());
+        StudentDO one = getDBHelper().getOne(StudentDO.class, "where id=?", studentDO.getId());
         assert one.getName().equals(studentDO.getName());
 
-        SchoolDO b = dbHelper.getOne(SchoolDO.class, "where id=?", schoolDO.getId());
+        SchoolDO b = getDBHelper().getOne(SchoolDO.class, "where id=?", schoolDO.getId());
         assert b.getName().equals(schoolDO.getName());
 
     }
 
     @Test
     public void testSomeExCase() {
-        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 3);
+        List<StudentDO> studentDOS = CommonOps.insertBatch(getDBHelper(), 3);
 
         // 测试没有非主键的DO
         List<StudentOnlyKeyDO> list = new ArrayList<>();
@@ -321,7 +317,7 @@ public class Test3Update_Batch {
             student.setId(studentDOS.get(i).getId());
             list.add(student);
         }
-        assert dbHelper.update(list) == 0; // 只有主键，所以不会有任何更新，即使id存在
+        assert getDBHelper().update(list) == 0; // 只有主键，所以不会有任何更新，即使id存在
 
 
         // 测试多个casVersion注解的情况，此时会抛异常
@@ -333,7 +329,7 @@ public class Test3Update_Batch {
         }
         boolean isThrow = false;
         try {
-            dbHelper.update(list2);
+            getDBHelper().update(list2);
         } catch (Exception e) {
             isThrow = true;
             assert e.getMessage().contains("has more than one casVersion column");
@@ -347,13 +343,13 @@ public class Test3Update_Batch {
             d.setId(studentDO.getId());
             list3.add(d);
         }
-        assert dbHelper.update(list3) == 0; // 所有非主键列都是null
+        assert getDBHelper().update(list3) == 0; // 所有非主键列都是null
 
         // 测试update提供了null的主键
         studentDOS.get(0).setId(null);
         isThrow = false;
         try {
-            dbHelper.update(studentDOS);
+            getDBHelper().update(studentDOS);
         } catch (NullKeyValueException e) {
             isThrow = true;
         }
@@ -417,18 +413,18 @@ public class Test3Update_Batch {
             students.add(student);
         }
 
-        dbHelper.insertBatchWithoutReturnId(students);
+        getDBHelper().insertBatchWithoutReturnId(students);
 
-        List<StudentDO> all = dbHelper.getAll(StudentDO.class, "where name=?", name);
+        List<StudentDO> all = getDBHelper().getAll(StudentDO.class, "where name=?", name);
 
         all.forEach(o -> o.setName(o.getName() + "x"));
 
         long start = System.currentTimeMillis();
-        assert dbHelper.update(all) == 1000;
+        assert getDBHelper().update(all) == 1000;
 
         // 这种方式需要60秒，而上面的方式只需要1秒
 //        for (int i = 0; i < 1000; i++) {
-//            dbHelper.update(all.get(i));
+//            getDBHelper().update(all.get(i));
 //        }
 
         long end = System.currentTimeMillis();

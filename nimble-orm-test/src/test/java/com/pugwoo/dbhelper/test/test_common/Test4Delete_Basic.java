@@ -10,47 +10,43 @@ import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-@SpringBootTest
-public class Test4Delete_Basic {
+public abstract class Test4Delete_Basic {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     /**通过key删除*/
     @Test
     public void deleteByKey() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
-        int rows = dbHelper.delete(StudentDO.class, "where id=?", studentDO.getId());
+        int rows = getDBHelper().delete(StudentDO.class, "where id=?", studentDO.getId());
         assert rows == 1;
-        rows = dbHelper.delete(StudentDO.class, "where id=?", studentDO.getId());
+        rows = getDBHelper().delete(StudentDO.class, "where id=?", studentDO.getId());
         assert rows == 0;
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
+        assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 
-        studentDO = CommonOps.insertOne(dbHelper);
+        studentDO = CommonOps.insertOne(getDBHelper());
 
-        rows = dbHelper.delete(studentDO);
+        rows = getDBHelper().delete(studentDO);
         assert rows == 1;
-        rows = dbHelper.delete(studentDO);
+        rows = getDBHelper().delete(studentDO);
         assert rows == 0;
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
+        assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
     }
 
     /**通过写where条件的自定义删除*/
     @Test
     public void testDeleteWhere() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 1;
-        assert dbHelper.delete(StudentDO.class, "where name=?", studentDO.getName()) == 0;
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
+        assert getDBHelper().delete(StudentDO.class, "where name=?", studentDO.getName()) == 1;
+        assert getDBHelper().delete(StudentDO.class, "where name=?", studentDO.getName()) == 0;
     }
 
     /**通过key批量删除*/
@@ -58,46 +54,46 @@ public class Test4Delete_Basic {
     public void batchDelete() {
         int random = 10 + new Random().nextInt(10);
 
-        List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper, random);
-        int rows = dbHelper.delete(insertBatch);
+        List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(), random);
+        int rows = getDBHelper().delete(insertBatch);
         assert rows == insertBatch.size();
         for (StudentDO studentDO : insertBatch) {
-            assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null;
+            assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
         }
 
-        dbHelper.deleteHard(StudentDO.class, "where 1=1");
-        CommonOps.insertBatch(dbHelper,random);
-        rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
+        getDBHelper().deleteHard(StudentDO.class, "where 1=1");
+        CommonOps.insertBatch(getDBHelper(),random);
+        rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1);
         assert rows == random;
 
-        insertBatch = CommonOps.insertBatch(dbHelper,random);
+        insertBatch = CommonOps.insertBatch(getDBHelper(),random);
 
         // 测试批量删除list是多种class类型
         List<Object> differents = new ArrayList<>(insertBatch);
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("school");
-        dbHelper.insert(schoolDO);
+        getDBHelper().insert(schoolDO);
         differents.add(schoolDO);
 
-        rows = dbHelper.delete(differents);
+        rows = getDBHelper().delete(differents);
         assert rows == random + 1;
     }
 
     /**测试deleted的值设置为id的情况*/
     @Test
     public void deleteAndSetId() {
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
         StudentDeleteSetIdDO stu1 = new StudentDeleteSetIdDO();
         stu1.setId(studentDO.getId());
 
-        dbHelper.delete(stu1);
+        getDBHelper().delete(stu1);
 
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()) == null; // 已经被删除了
-        assert dbHelper.getByKey(StudentDeleteSetIdDO.class, studentDO.getId()) == null; // 已经被删除了
+        assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null; // 已经被删除了
+        assert getDBHelper().getByKey(StudentDeleteSetIdDO.class, studentDO.getId()) == null; // 已经被删除了
 
         StudentDeleteSetIdDO2 stuDelete3 =
-                dbHelper.getByKey(StudentDeleteSetIdDO2.class, studentDO.getId());
+                getDBHelper().getByKey(StudentDeleteSetIdDO2.class, studentDO.getId());
         assert stuDelete3.getId().equals(stuDelete3.getDeleted()); // 验证一下设置的delete是否是对的
     }
 
@@ -105,35 +101,35 @@ public class Test4Delete_Basic {
     public void testTrueDelete() {
         StudentHardDeleteDO studentHardDeleteDO = new StudentHardDeleteDO();
         studentHardDeleteDO.setName("john");
-        dbHelper.insert(studentHardDeleteDO);
+        getDBHelper().insert(studentHardDeleteDO);
 
-        int rows = dbHelper.delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
+        int rows = getDBHelper().delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
         assert rows == 1;
 
-        rows = dbHelper.delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
+        rows = getDBHelper().delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
         assert rows == 0;
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 
         studentHardDeleteDO = new StudentHardDeleteDO();
         studentHardDeleteDO.setName("john");
-        dbHelper.insert(studentHardDeleteDO);
+        getDBHelper().insert(studentHardDeleteDO);
 
-        rows = dbHelper.delete(studentHardDeleteDO);
+        rows = getDBHelper().delete(studentHardDeleteDO);
         assert rows == 1;
 
-        rows = dbHelper.delete(studentHardDeleteDO);
+        rows = getDBHelper().delete(studentHardDeleteDO);
         assert rows == 0;
 
         //
         studentHardDeleteDO = new StudentHardDeleteDO();
         studentHardDeleteDO.setName("john");
-        dbHelper.insert(studentHardDeleteDO);
+        getDBHelper().insert(studentHardDeleteDO);
 
-        rows = dbHelper.delete(StudentHardDeleteDO.class, "where name=?", "john");
+        rows = getDBHelper().delete(StudentHardDeleteDO.class, "where name=?", "john");
         assert rows > 0;
 
-        rows = dbHelper.delete(StudentHardDeleteDO.class, "where name=?", "john");
+        rows = getDBHelper().delete(StudentHardDeleteDO.class, "where name=?", "john");
         assert rows == 0;
 
 
@@ -143,7 +139,7 @@ public class Test4Delete_Basic {
         for(int i = 0; i < size; i++) {
             studentHardDeleteDO = new StudentHardDeleteDO();
             studentHardDeleteDO.setName(CommonOps.getRandomName("jack"));
-            dbHelper.insert(studentHardDeleteDO);
+            getDBHelper().insert(studentHardDeleteDO);
 
             list.add(studentHardDeleteDO);
         }
@@ -153,36 +149,36 @@ public class Test4Delete_Basic {
             ids.add(o.getId());
         }
 
-        rows = dbHelper.delete(list);
+        rows = getDBHelper().delete(list);
         assert rows == list.size();
 
-        List<StudentHardDeleteDO> all = dbHelper.getAll(StudentHardDeleteDO.class, "where id in (?)", ids);
+        List<StudentHardDeleteDO> all = getDBHelper().getAll(StudentHardDeleteDO.class, "where id in (?)", ids);
         assert all.isEmpty();
     }
 
     @Test
     public void testTurnOffSoftDelete() {
-        dbHelper.deleteHard(StudentDO.class, "where 1=1");
+        getDBHelper().deleteHard(StudentDO.class, "where 1=1");
 
         int counts1 = 10 + new Random().nextInt(10);
-        CommonOps.insertBatchNoReturnId(dbHelper, counts1);
+        CommonOps.insertBatchNoReturnId(getDBHelper(), counts1);
 
         // 先制造点软删除
-        dbHelper.delete(StudentDO.class, "Where 1=1");
+        getDBHelper().delete(StudentDO.class, "Where 1=1");
 
         int counts2 = 10 + new Random().nextInt(10);
-        CommonOps.insertBatchNoReturnId(dbHelper, counts2);
+        CommonOps.insertBatchNoReturnId(getDBHelper(), counts2);
 
-        long total = dbHelper.getCount(StudentHardDeleteDO.class);
-        long softTotal = dbHelper.getCount(StudentDO.class);
+        long total = getDBHelper().getCount(StudentHardDeleteDO.class);
+        long softTotal = getDBHelper().getCount(StudentDO.class);
 
         assert total == counts1 + counts2;
         assert softTotal == counts2;
 
         // 物理删除了
-        dbHelper.deleteHard(StudentDO.class, "where 1=1");
+        getDBHelper().deleteHard(StudentDO.class, "where 1=1");
 
-        total = dbHelper.getCount(StudentHardDeleteDO.class);
+        total = getDBHelper().getCount(StudentHardDeleteDO.class);
         assert total == 0;
     }
 
@@ -190,7 +186,7 @@ public class Test4Delete_Basic {
     public void testDeleteEx() {
         boolean ex = false;
         try {
-            dbHelper.delete(StudentDO.class, "  \t   "); // 自定义删除允许不传条件
+            getDBHelper().delete(StudentDO.class, "  \t   "); // 自定义删除允许不传条件
         } catch (Exception e) {
             assert e instanceof InvalidParameterException;
             ex = true;
@@ -201,7 +197,7 @@ public class Test4Delete_Basic {
         ex = false;
         try {
             StudentDO studentDO = new StudentDO();
-            dbHelper.delete(studentDO);
+            getDBHelper().delete(studentDO);
         } catch (Exception e) {
             assert e instanceof NullKeyValueException;
             ex = true;
@@ -211,18 +207,18 @@ public class Test4Delete_Basic {
 
     @Test
     public void testBatchDeleteWithDeleteScript() {
-        StudentDO stu1 = CommonOps.insertOne(dbHelper);
-        StudentDO stu2 = CommonOps.insertOne(dbHelper);
+        StudentDO stu1 = CommonOps.insertOne(getDBHelper());
+        StudentDO stu2 = CommonOps.insertOne(getDBHelper());
 
         StudentWithDeleteScriptDO s1 = new StudentWithDeleteScriptDO();
         s1.setId(stu1.getId());
         StudentWithDeleteScriptDO s2 = new StudentWithDeleteScriptDO();
         s2.setId(stu2.getId());
 
-        int rows = dbHelper.delete(ListUtils.newArrayList(s1, s2));
+        int rows = getDBHelper().delete(ListUtils.newArrayList(s1, s2));
         assert rows == 2;
 
-        List<StudentHardDeleteDO> list = dbHelper.getAll(StudentHardDeleteDO.class,
+        List<StudentHardDeleteDO> list = getDBHelper().getAll(StudentHardDeleteDO.class,
                 "where id in (?)", ListUtils.newArrayList(s1.getId(), s2.getId()));
         assert list.size() == 2;
         assert list.get(0).getName().equals("deleteddata");

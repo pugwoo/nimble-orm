@@ -8,14 +8,10 @@ import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.test.entity.IdableSoftDeleteBaseDO;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-public class Test2Insert_DefaultValue {
+public abstract class Test2Insert_DefaultValue {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Data
     @Table(value = "t_student", insertDefaultValueMap = "mysql")
@@ -61,9 +57,9 @@ public class Test2Insert_DefaultValue {
     @Test
     public void testTableDefaultValueWhenNull() {
         StudentDefaultValueDO student = new StudentDefaultValueDO();
-        dbHelper.insert(student);
+        getDBHelper().insert(student);
 
-        StudentDefaultValueDO one = dbHelper.getOne(StudentDefaultValueDO.class, "where id=?", student.getId());
+        StudentDefaultValueDO one = getDBHelper().getOne(StudentDefaultValueDO.class, "where id=?", student.getId());
         assert one.getSchoolSnapshot().equals("");
         assert one.getSchoolId().equals(0L);
         assert one.getCourseSnapshot().equals("aa");
@@ -77,9 +73,9 @@ public class Test2Insert_DefaultValue {
         // null 值
         {
             StudentDefaultValueDO2 student = new StudentDefaultValueDO2();
-            dbHelper.insert(student);
+            getDBHelper().insert(student);
 
-            StudentDefaultValueDO2 one = dbHelper.getOne(StudentDefaultValueDO2.class, "where id=?", student.getId());
+            StudentDefaultValueDO2 one = getDBHelper().getOne(StudentDefaultValueDO2.class, "where id=?", student.getId());
             assert one.getSchoolSnapshot().equals("(空值)");
             assert one.getSchoolId().equals(-1000L);
             assert one.getCourseSnapshot().equals("aa");
@@ -90,9 +86,9 @@ public class Test2Insert_DefaultValue {
             StudentDefaultValueDO2 student = new StudentDefaultValueDO2();
             student.setSchoolSnapshot(""); // 是空字符串也会被替换
             student.setCourseSnapshot(""); // 是空字符串也会被替换
-            dbHelper.insert(student);
+            getDBHelper().insert(student);
 
-            StudentDefaultValueDO2 one = dbHelper.getOne(StudentDefaultValueDO2.class, "where id=?", student.getId());
+            StudentDefaultValueDO2 one = getDBHelper().getOne(StudentDefaultValueDO2.class, "where id=?", student.getId());
             assert one.getSchoolSnapshot().equals("(空值)");
             assert one.getSchoolId().equals(-1000L);
             assert one.getCourseSnapshot().equals("aa");
@@ -108,9 +104,9 @@ public class Test2Insert_DefaultValue {
         // null 值
         {
             StudentDefaultValueDO3 student = new StudentDefaultValueDO3();
-            dbHelper.insert(student);
+            getDBHelper().insert(student);
 
-            StudentDefaultValueDO3 one = dbHelper.getOne(StudentDefaultValueDO3.class, "where id=?", student.getId());
+            StudentDefaultValueDO3 one = getDBHelper().getOne(StudentDefaultValueDO3.class, "where id=?", student.getId());
             assert one.getSchoolSnapshot().equals("(空值)");
             assert one.getSchoolId().equals(-1000L);
             assert one.getCourseSnapshot().equals("aa");
@@ -121,9 +117,9 @@ public class Test2Insert_DefaultValue {
             StudentDefaultValueDO3 student = new StudentDefaultValueDO3();
             student.setSchoolSnapshot(""); // 是空字符串也会被替换
             student.setCourseSnapshot(""); // 是空字符串也会被替换
-            dbHelper.insert(student);
+            getDBHelper().insert(student);
 
-            StudentDefaultValueDO3 one = dbHelper.getOne(StudentDefaultValueDO3.class, "where id=?", student.getId());
+            StudentDefaultValueDO3 one = getDBHelper().getOne(StudentDefaultValueDO3.class, "where id=?", student.getId());
             assert one.getSchoolSnapshot().equals("(空值)");
             assert one.getSchoolId().equals(-1000L);
             assert one.getCourseSnapshot().equals("aa");
@@ -134,9 +130,9 @@ public class Test2Insert_DefaultValue {
             StudentDefaultValueDO3 student = new StudentDefaultValueDO3();
             student.setSchoolSnapshot("    "); // 是空白字符串也会被替换
             student.setCourseSnapshot("    "); // 是空白字符串也会被替换
-            dbHelper.insert(student);
+            getDBHelper().insert(student);
 
-            StudentDefaultValueDO3 one = dbHelper.getOne(StudentDefaultValueDO3.class, "where id=?", student.getId());
+            StudentDefaultValueDO3 one = getDBHelper().getOne(StudentDefaultValueDO3.class, "where id=?", student.getId());
             assert one.getSchoolSnapshot().equals("(空值)");
             assert one.getSchoolId().equals(-1000L);
             assert one.getCourseSnapshot().equals("aa");
