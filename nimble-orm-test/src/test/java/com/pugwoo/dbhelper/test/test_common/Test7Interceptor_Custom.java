@@ -5,34 +5,27 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.TypesDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
-
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.*;
 
-@SpringBootTest
-public class Test7Interceptor_Custom {
+public abstract class Test7Interceptor_Custom {
 
-	@Autowired
-	@Qualifier("dbHelperWithInterceptor")
-	private DBHelper dbHelper;
-
+	public abstract DBHelper getDBHelper();
+	
 	@Test
 	public void testQuery() {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
 		studentDO.setAge(29);
-		dbHelper.insert(studentDO);
+		getDBHelper().insert(studentDO);
 		Long id = studentDO.getId();
 
-		dbHelper.getByKey(StudentDO.class, id);
+		getDBHelper().getByKey(StudentDO.class, id);
 		
-		dbHelper.getAll(StudentDO.class);
-		dbHelper.getPage(StudentDO.class, 1, 10);
-		dbHelper.getOne(StudentDO.class);
+		getDBHelper().getAll(StudentDO.class);
+		getDBHelper().getPage(StudentDO.class, 1, 10);
+		getDBHelper().getOne(StudentDO.class);
 	}
 
 	@Test
@@ -42,23 +35,23 @@ public class Test7Interceptor_Custom {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick" + uuid);
 		studentDO.setAge(29);
-		assert dbHelper.insert(studentDO) == 1;
+		assert getDBHelper().insert(studentDO) == 1;
 		Long id = studentDO.getId();
 		assert id != null;
 
-		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
+		assert getDBHelper().getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 
 		studentDO = new StudentDO();
 		studentDO.setId(id);
 		studentDO.setName("karen" + uuid);
-		assert dbHelper.update(studentDO) == 1;
-		assert dbHelper.getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
+		assert getDBHelper().update(studentDO) == 1;
+		assert getDBHelper().getByKey(StudentDO.class, id).getName().equals(studentDO.getName());
 
 		studentDO.setName("karennick");
-		assert dbHelper.update(studentDO, "where name=?", "karen" + uuid) == 1;
+		assert getDBHelper().update(studentDO, "where name=?", "karen" + uuid) == 1;
 
-		assert dbHelper.updateCustom(studentDO, "age=age+1") == 1;
-		dbHelper.updateAll(StudentDO.class, "name=?", "", "nick");
+		assert getDBHelper().updateCustom(studentDO, "age=age+1") == 1;
+		getDBHelper().updateAll(StudentDO.class, "name=?", "", "nick");
 	}
 
 	@Test
@@ -70,12 +63,12 @@ public class Test7Interceptor_Custom {
 			students.add(s);
 		}
 
-		assert dbHelper.insert(students) == 10;
+		assert getDBHelper().insert(students) == 10;
 
 		// 转换成set再插入一次
 		ListUtils.forEach(students, studentDO -> studentDO.setId(null));
 		Set<StudentDO> students2 = new HashSet<>(students);
-		assert dbHelper.insert(students2) == 10;
+		assert getDBHelper().insert(students2) == 10;
 	}
 
 	@Test 
@@ -89,7 +82,7 @@ public class Test7Interceptor_Custom {
 		typesDO1.setId1(long1);
 		typesDO1.setId2(long2);
 
-		assert dbHelper.insert(typesDO1) == 1;
+		assert getDBHelper().insert(typesDO1) == 1;
 
 		TypesDO typesDO2 = new TypesDO();
 		typesDO2.setId1(long1);
@@ -98,11 +91,11 @@ public class Test7Interceptor_Custom {
 		typesDO3.setId1(long1);
 		typesDO3.setId2(long4);
 
-		assert dbHelper.insert(ListUtils.newArrayList(typesDO2, typesDO3)) == 2;
+		assert getDBHelper().insert(ListUtils.newArrayList(typesDO2, typesDO3)) == 2;
 
-		assert dbHelper.updateAll(TypesDO.class, "set my_short=3",
+		assert getDBHelper().updateAll(TypesDO.class, "set my_short=3",
 				"where id1=?", long1) == 3;
-		List<TypesDO> all = dbHelper.getAll(TypesDO.class, "where id1=?", long1);
+		List<TypesDO> all = getDBHelper().getAll(TypesDO.class, "where id1=?", long1);
 		assert all.size() == 3;
 		for(TypesDO typesDO : all) {
 			assert typesDO.getS() == 3;
@@ -115,21 +108,21 @@ public class Test7Interceptor_Custom {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
 		studentDO.setAge(29);
-		dbHelper.insert(studentDO);
+		getDBHelper().insert(studentDO);
 		Long id = studentDO.getId();
 		
-		dbHelper.delete(StudentDO.class, "where id=?", id);
-		dbHelper.delete(StudentDO.class, "where id > ?", 100);
+		getDBHelper().delete(StudentDO.class, "where id=?", id);
+		getDBHelper().delete(StudentDO.class, "where id > ?", 100);
 	}
 	
 	@Test 
 	public void batchDelete() {
-		List<StudentDO> insertBatch = CommonOps.insertBatch(dbHelper,10);
-		int rows = dbHelper.delete(insertBatch);
+		List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(),10);
+		int rows = getDBHelper().delete(insertBatch);
 		assert rows == insertBatch.size();
 		
-		insertBatch = CommonOps.insertBatch(dbHelper,20);
-		rows = dbHelper.delete(StudentDO.class, "where 1=?", 1);
+		insertBatch = CommonOps.insertBatch(getDBHelper(),20);
+		rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1);
 		assert rows >= 20;
 	}
 	
@@ -138,15 +131,15 @@ public class Test7Interceptor_Custom {
 		StudentDO studentDO = new StudentDO();
 		studentDO.setName("nick");
 		studentDO.setAge(29);
-		dbHelper.insert(studentDO);
+		getDBHelper().insert(studentDO);
 		
-		dbHelper.updateCustom(studentDO, "age=age+1");
-		dbHelper.delete(StudentDO.class, "where 1=1");
+		getDBHelper().updateCustom(studentDO, "age=age+1");
+		getDBHelper().delete(StudentDO.class, "where 1=1");
 		
 		studentDO = new StudentDO();
 		studentDO.setName("nick");
 		studentDO.setAge(29);
-		dbHelper.insert(studentDO);
-		dbHelper.updateAll(StudentDO.class, "age=age+1", "where 1=1");
+		getDBHelper().insert(studentDO);
+		getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1");
 	}
 }
