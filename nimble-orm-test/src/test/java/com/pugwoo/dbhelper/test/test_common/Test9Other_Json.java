@@ -16,7 +16,7 @@ import java.util.*;
  * json是mysql5.7+支持的一个重要特性，一定程度上让mysql具备面向文档、schema-free的功能
  */
 @SpringBootTest
-public class TestJson {
+public class Test9Other_Json {
 
     @Autowired
     private DBHelper dbHelper;

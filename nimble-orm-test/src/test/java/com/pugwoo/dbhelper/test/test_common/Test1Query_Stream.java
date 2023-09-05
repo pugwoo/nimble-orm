@@ -19,10 +19,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * 说明：这里只测试了stream的逻辑正确性，stream的效果暂未体现（需要几十万条记录才能体现出来，故不再常规测试中，可以手工验证一下）
+ * 说明：这里只测试了stream的逻辑正确性，stream的效果暂未体现
+ * （需要几十万条记录才能体现出来，故不再常规测试中，可以手工验证一下）
  */
 @SpringBootTest
-public class TestStream {
+public class Test1Query_Stream {
 
     @Autowired
     private DBHelper dbHelper;

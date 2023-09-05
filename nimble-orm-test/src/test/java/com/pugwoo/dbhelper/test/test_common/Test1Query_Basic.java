@@ -25,7 +25,7 @@ import java.util.*;
  * 测试读操作相关
  */
 @SpringBootTest
-public class TestDBHelper_query {
+public class Test1Query_Basic {
 
     @Autowired
     private DBHelper dbHelper;

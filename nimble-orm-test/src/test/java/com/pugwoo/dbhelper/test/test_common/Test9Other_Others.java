@@ -30,7 +30,7 @@ import java.util.*;
  * 其它的一些测试，主要为了覆盖代码或最佳实践
  */
 @SpringBootTest
-public class TestOthers {
+public class Test9Other_Others {
 
     @Autowired
     private DBHelper dbHelper;
