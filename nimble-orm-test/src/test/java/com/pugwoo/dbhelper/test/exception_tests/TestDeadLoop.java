@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.ex_tests;
+package com.pugwoo.dbhelper.test.exception_tests;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
