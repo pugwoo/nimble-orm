@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.test.test_mysql;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.test.service.WithTransactionService;
+import com.pugwoo.dbhelper.test.test_common.WithTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class Test8Feature_Transaction extends com.pugwoo.dbhelper.test.test_common.Test8Feature_Transaction {
 
     @Autowired
-    private WithTransactionService withTransactionService;
+    private MysqlWithTransactionService withTransactionService;
 
     @Autowired
     private DBHelper dbHelper;

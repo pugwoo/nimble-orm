@@ -2,7 +2,6 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.dbhelper.test.service.WithTransactionService;
 import org.junit.jupiter.api.Test;
 
 public abstract class Test8Feature_Transaction {
