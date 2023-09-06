@@ -7,99 +7,88 @@ import com.pugwoo.dbhelper.exception.ScriptErrorException;
 import com.pugwoo.dbhelper.test.entity.StudentScriptDO;
 import com.pugwoo.dbhelper.utils.ScriptUtils;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-public class Test9Other_Scripts {
+public abstract class Test9Other_Scripts {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Test
-    
     public void testInsertScript() {
         StudentScriptDO studentDO = new StudentScriptDO();
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
         assert studentDO.getName().equals(student2.getName());
         assert student2.getName().equals("111");
     }
 
 
     @Test
-    
     public void testUpdateScript1() {
         StudentScriptDO studentDO = new StudentScriptDO();
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
-        dbHelper.update(student2);
+        StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
+        getDBHelper().update(student2);
 
-        StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        StudentScriptDO student3 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
         assert student3.getName().equals("222");
     }
 
     @Test
-    
     public void testUpdateScript2() {
         StudentScriptDO studentDO = new StudentScriptDO();
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
-        dbHelper.updateCustom(student2, "set age=?", 18);
+        StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
+        getDBHelper().updateCustom(student2, "set age=?", 18);
 
-        StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        StudentScriptDO student3 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
         assert student3.getName().equals("222");
     }
 
 
     @Test
-    
     public void testUpdateScript3() {
         StudentScriptDO studentDO = new StudentScriptDO();
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        StudentScriptDO student2 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
-        dbHelper.updateAll(StudentScriptDO.class, "set age=?", "where id=?",18, studentDO.getId());
+        StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
+        getDBHelper().updateAll(StudentScriptDO.class, "set age=?", "where id=?",18, studentDO.getId());
 
-        StudentScriptDO student3 = dbHelper.getByKey(StudentScriptDO.class, studentDO.getId());
+        StudentScriptDO student3 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
         assert student3.getName().equals("222");
     }
 
     @Test
-    
     public void testDeleteScript() {
         StudentScriptDO studentDO = new StudentScriptDO();
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        dbHelper.delete(studentDO);
+        getDBHelper().delete(studentDO);
 
-        StudentRawDO student2 = dbHelper.getByKey(StudentRawDO.class, studentDO.getId());
+        StudentRawDO student2 = getDBHelper().getByKey(StudentRawDO.class, studentDO.getId());
         assert student2.getName().equals("333");
     }
 
     @Test
-    
     public void testDeleteScript2() {
         StudentScriptDO studentDO = new StudentScriptDO();
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        dbHelper.delete(StudentScriptDO.class, "where id=?", studentDO.getId());
+        getDBHelper().delete(StudentScriptDO.class, "where id=?", studentDO.getId());
 
-        StudentRawDO student2 = dbHelper.getByKey(StudentRawDO.class, studentDO.getId());
+        StudentRawDO student2 = getDBHelper().getByKey(StudentRawDO.class, studentDO.getId());
         assert student2.getName().equals("333");
     }
 
     @Test
-    
     public void testWrongScript() {
         StudentTestScriptErrorDO student = new StudentTestScriptErrorDO();
 
         int i = 0;
         try {
-            dbHelper.insert(student);
+            getDBHelper().insert(student);
         } catch (Exception e) {
             assert e instanceof ScriptErrorException;
             i = 1;
@@ -184,8 +173,4 @@ public class Test9Other_Scripts {
             this.name = name;
         }
     }
-
-
-
-
 }

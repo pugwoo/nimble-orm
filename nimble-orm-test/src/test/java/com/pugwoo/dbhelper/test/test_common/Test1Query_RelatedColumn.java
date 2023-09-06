@@ -424,9 +424,8 @@ public abstract class Test1Query_RelatedColumn {
 
     @Data
     public static class CourseDBHelperBeanNotMatchVO extends CourseDO {
-        // withTransactionService 这个bean是存在的，但是类型不对
-        @RelatedColumn(localColumn = "student_id", remoteColumn = "id",
-                dbHelperBean = "withTransactionService")
+        // wrongBeanService 这个bean是存在的，但是类型不对
+        @RelatedColumn(localColumn = "student_id", remoteColumn = "id", dbHelperBean = "wrongBeanService")
         private List<StudentDO> students;
     }
 

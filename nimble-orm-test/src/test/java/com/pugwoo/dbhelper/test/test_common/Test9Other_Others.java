@@ -29,22 +29,20 @@ import java.util.*;
 /**
  * 其它的一些测试，主要为了覆盖代码或最佳实践
  */
-@SpringBootTest
-public class Test9Other_Others {
+public abstract class Test9Other_Others {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
     
     @Test 
     public void testRelateComputedColumn() {
-        dbHelper.delete(AreaDO.class, "where 1=1");
-        dbHelper.delete(AreaLocationDO.class, "where 1=1");
+        getDBHelper().delete(AreaDO.class, "where 1=1");
+        getDBHelper().delete(AreaLocationDO.class, "where 1=1");
 
         AreaDO area = new AreaDO();
         area.setLayerCode("CITY");
         area.setAreaCode("SZ");
 
-        dbHelper.insert(area);
+        getDBHelper().insert(area);
 
         AreaLocationDO areaLocationDO = new AreaLocationDO();
         areaLocationDO.setLayerCode("CITY");
@@ -52,9 +50,9 @@ public class Test9Other_Others {
         areaLocationDO.setLongitude(new BigDecimal("120"));
         areaLocationDO.setLatitude(new BigDecimal("22"));
 
-        dbHelper.insert(areaLocationDO);
+        getDBHelper().insert(areaLocationDO);
 
-        AreaVO one = dbHelper.getOne(AreaVO.class);
+        AreaVO one = getDBHelper().getOne(AreaVO.class);
         assert one.getLocationVO() != null;
 
     }
@@ -74,11 +72,11 @@ public class Test9Other_Others {
         typesDO.setMyTimestamp(new java.sql.Timestamp(new Date().getTime()));
         typesDO.setMyMediumint(123456);
 
-        dbHelper.insert(typesDO);
+        getDBHelper().insert(typesDO);
         assert typesDO.getId1() != null;
         assert typesDO.getId2() != null;
 
-        TypesDO types2 = dbHelper.getOne(TypesDO.class, "where id1=? and id2=?", typesDO.getId1(), typesDO.getId2());
+        TypesDO types2 = getDBHelper().getOne(TypesDO.class, "where id1=? and id2=?", typesDO.getId1(), typesDO.getId2());
         assert types2.getMyByte().equals(typesDO.getMyByte());
         assert types2.getS().equals(typesDO.getS());
         assert types2.getMyFloat().equals(typesDO.getMyFloat());
@@ -254,78 +252,78 @@ public class Test9Other_Others {
     public void testWhereSQL() {
         int num1 = 3 + new Random().nextInt(5);
         String prefix1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        List<StudentDO> student1 = CommonOps.insertBatch(dbHelper, num1, prefix1);
+        List<StudentDO> student1 = CommonOps.insertBatch(getDBHelper(), num1, prefix1);
 
         int num2 = 3 + new Random().nextInt(5);
         String prefix2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        List<StudentDO> student2 = CommonOps.insertBatch(dbHelper, num2, prefix2);
+        List<StudentDO> student2 = CommonOps.insertBatch(getDBHelper(), num2, prefix2);
 
         WhereSQL whereSQL = new WhereSQL("name like ?", prefix1 + "%");
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL = new WhereSQL().and("name like ?", prefix1 + "%"); // 等价写法
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL.and(new WhereSQL()); // 加一个空的，等于没有任何约束
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL.or(new WhereSQL("name like ?", prefix2 + "%"));
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.not();
-        int size = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size();
-        long size2 = dbHelper.getCount(StudentDO.class, "where name is not null") - (num1 + num2);
+        int size = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size();
+        long size2 = getDBHelper().getCount(StudentDO.class, "where name is not null") - (num1 + num2);
         assert size == size2;
 
         whereSQL.not();
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.and("1=?", 1);
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL = whereSQL.copy();
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         // 测试空的not，等于没有约束
-        assert dbHelper.getAll(StudentDO.class).size() ==
-                dbHelper.getAll(StudentDO.class, new WhereSQL().not().getSQL()).size();
+        assert getDBHelper().getAll(StudentDO.class).size() ==
+                getDBHelper().getAll(StudentDO.class, new WhereSQL().not().getSQL()).size();
 
         // =============================== 重新new WhereSQL
 
         whereSQL = new WhereSQL("name like ? or name like ?", prefix1 + "%", prefix2 + "%");
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.and("1=1");
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.addOrderBy("id desc");
-        List<StudentDO> all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        List<StudentDO> all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
             assert all.get(i).getId() > all.get(i + 1).getId();
         }
 
         whereSQL.addGroupBy("age");
-        assert  dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
+        assert  getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupBy("id", "name");
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupByWithParam("id + ?", 1); // 重复group id效果一样
         whereSQL.having("count(*) = ?", 0);
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
 
         whereSQL.having("count(*) > ?", 0);
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.having("count(*) > 0");
-        assert dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetOrderBy();
         whereSQL.addOrderBy("name desc", "age");
-        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
             assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
@@ -333,7 +331,7 @@ public class Test9Other_Others {
 
         whereSQL.resetOrderBy();
         whereSQL.addOrderByWithParam("concat(name,?) desc", "abc");
-        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
             assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
@@ -343,11 +341,11 @@ public class Test9Other_Others {
 
         whereSQL.limit(5);
 
-        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == 5;
 
         whereSQL.limit(3, 3);
-        all = dbHelper.getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == 3;
     }
 
@@ -370,55 +368,55 @@ public class Test9Other_Others {
     public void testWhereSQLForNamedParam() {
         int num1 = 3 + new Random().nextInt(5);
         String prefix1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        List<StudentDO> student1 = CommonOps.insertBatch(dbHelper, num1, prefix1);
+        List<StudentDO> student1 = CommonOps.insertBatch(getDBHelper(), num1, prefix1);
 
         int num2 = 3 + new Random().nextInt(5);
         String prefix2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        List<StudentDO> student2 = CommonOps.insertBatch(dbHelper, num2, prefix2);
+        List<StudentDO> student2 = CommonOps.insertBatch(getDBHelper(), num2, prefix2);
 
         WhereSQLForNamedParam whereSQL = new WhereSQLForNamedParam("deleted=0 and name like :name",
                 MapUtils.of("name", prefix1 + "%"));
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL = new WhereSQLForNamedParam("deleted=0").and("name like :name", MapUtils.of("name", prefix1 + "%")); // 等价写法
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL.and(new WhereSQLForNamedParam()); // 加一个空的，等于没有任何约束
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL.or(new WhereSQLForNamedParam("deleted=0 and name like :name2", MapUtils.of("name2", prefix2 + "%")));
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.not().and("deleted=0");
-        int size = dbHelper.getRawOne(Integer.class, "select count(*) from t_student "+ whereSQL.getSQL(), whereSQL.getParams());
-        long size2 = dbHelper.getCount(StudentDO.class, "where name is not null") - (num1 + num2);
+        int size = getDBHelper().getRawOne(Integer.class, "select count(*) from t_student "+ whereSQL.getSQL(), whereSQL.getParams());
+        long size2 = getDBHelper().getCount(StudentDO.class, "where name is not null") - (num1 + num2);
         assert size == size2;
 
         whereSQL.not().and("deleted=0");
-        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(),
+        assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(),
                 whereSQL.getParams()) == num1 + num2;
 
         whereSQL.and("1=:one", MapUtils.of("one", 1)).and("deleted=0");
-        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+        assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
 
         whereSQL = whereSQL.copy();
-        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+        assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
 
         // 测试空的not，等于没有约束
-        assert dbHelper.getAll(StudentDO.class).size() ==
-                dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + new WhereSQL().not().and("deleted=0").getSQL());
+        assert getDBHelper().getAll(StudentDO.class).size() ==
+                getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + new WhereSQL().not().and("deleted=0").getSQL());
 
         // =============================== 重新new WhereSQL
 
         whereSQL = new WhereSQLForNamedParam("name like :name1 or name like :name2",
                 MapUtils.of("name1", prefix1 + "%", "name2", prefix2 + "%"));
-        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+        assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
 
         whereSQL.and("1=1");
-        assert dbHelper.getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
+        assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
 
         whereSQL.addOrderBy("id desc");
-        List<StudentDO> all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(),
+        List<StudentDO> all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(),
                 whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
@@ -426,26 +424,26 @@ public class Test9Other_Others {
         }
 
         whereSQL.addGroupBy("age");
-        assert  dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
+        assert  getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupBy("id", "name");
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupByWithParam("id + :one", MapUtils.of("one",1)); // 重复group id效果一样
         whereSQL.having("count(*) = :zero", MapUtils.of("zero",0));
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
 
         whereSQL.having("count(*) > :zero", MapUtils.of("zero",0));
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.having("count(*) > 0");
-        assert dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetOrderBy();
         whereSQL.addOrderBy("name desc", "age");
-        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
             assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
@@ -453,7 +451,7 @@ public class Test9Other_Others {
 
         whereSQL.resetOrderBy();
         whereSQL.addOrderByWithParam("concat(name,:abcname) desc", MapUtils.of("abcname","abc"));
-        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == num1 + num2;
         for (int i = 0; i < all.size() - 1; i++) {
             assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
@@ -463,11 +461,11 @@ public class Test9Other_Others {
 
         whereSQL.limit(5);
 
-        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == 5;
 
         whereSQL.limit(3, 3);
-        all = dbHelper.getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
         assert all.size() == 3;
     }
 

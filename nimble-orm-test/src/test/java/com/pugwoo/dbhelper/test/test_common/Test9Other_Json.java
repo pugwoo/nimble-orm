@@ -5,8 +5,6 @@ import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.*;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -15,11 +13,9 @@ import java.util.*;
  * 2018年12月29日 17:39:42
  * json是mysql5.7+支持的一个重要特性，一定程度上让mysql具备面向文档、schema-free的功能
  */
-@SpringBootTest
-public class Test9Other_Json {
+public abstract class Test9Other_Json {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Test
     public void testJSON() {
@@ -40,9 +36,9 @@ public class Test9Other_Json {
         course2.setName("eng");
         courses.add(course2);
 
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
-        StudentDO studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        StudentDO studentDB = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert studentDB.getSchoolSnapshot() != null;
         assert studentDB.getSchoolSnapshot().getName().equals("SYSU");
 
@@ -52,9 +48,9 @@ public class Test9Other_Json {
         assert studentDB.getCourseSnapshot().get(1).getName().equals("eng");
 
         studentDO.getCourseSnapshot().get(1).setName("english");
-        dbHelper.update(studentDO);
+        getDBHelper().update(studentDO);
 
-        studentDB = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        studentDB = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert studentDB.getCourseSnapshot().get(1).getName().equals("english");
 
     }
@@ -81,7 +77,7 @@ public class Test9Other_Json {
         json2.put("age", age);
         jsonDO.setJson2(json2);
 
-        dbHelper.insert(jsonDO);
+        getDBHelper().insert(jsonDO);
         return jsonDO.getId();
     }
 
@@ -94,7 +90,7 @@ public class Test9Other_Json {
         long id = insert(score, age);
         assert id > 0;
 
-        JsonDO jsonDO1 = dbHelper.getByKey(JsonDO.class, id);
+        JsonDO jsonDO1 = getDBHelper().getByKey(JsonDO.class, id);
         assert jsonDO1 != null;
         assert jsonDO1.getId() == id;
         assert score.equals(jsonDO1.getJson().get("score").get(0).toString());
@@ -110,16 +106,16 @@ public class Test9Other_Json {
             }
         }
 
-        List<JsonDO> list = dbHelper.getAll(JsonDO.class);
+        List<JsonDO> list = getDBHelper().getAll(JsonDO.class);
         assert list.size() > 0;
 
         // json查询的两种写法
 
-        list = dbHelper.getAll(JsonDO.class, "WHERE json2->'$.score'=?", score);
+        list = getDBHelper().getAll(JsonDO.class, "WHERE json2->'$.score'=?", score);
         assert list.size() == 1;
         assert score.equals(list.get(0).getJson2().get("score").toString());
 
-        list = dbHelper.getAll(JsonDO.class, "WHERE JSON_EXTRACT(json2, '$.score')=?", score);
+        list = getDBHelper().getAll(JsonDO.class, "WHERE JSON_EXTRACT(json2, '$.score')=?", score);
         assert list.size() == 1;
         assert score.equals(list.get(0).getJson2().get("score").toString());
     }
@@ -129,25 +125,25 @@ public class Test9Other_Json {
         JsonRawDO jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"1960-06-08 12:13:14\"}");
 
-        dbHelper.insert(jsonRawDO);
+        getDBHelper().insert(jsonRawDO);
         assert jsonRawDO.getId() != null;
 
-        JsonAsTeacherDO teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
+        JsonAsTeacherDO teacherDO = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
         assert NimbleOrmDateUtils.formatDate(teacherDO.getTeacher().getBirth()).equals("1960-06-08");
         assert NimbleOrmDateUtils.format(teacherDO.getTeacher().getBirth()).equals("1960-06-08 12:13:14");
 
         jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"\"}");
-        dbHelper.insert(jsonRawDO);
-        teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
+        getDBHelper().insert(jsonRawDO);
+        teacherDO = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
         assert teacherDO.getTeacher().getBirth() == null;
 
         jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":null,null:null}");
-        dbHelper.insert(jsonRawDO);
-        teacherDO = dbHelper.getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
+        getDBHelper().insert(jsonRawDO);
+        teacherDO = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
         assert teacherDO.getTeacher().getBirth() == null;
 

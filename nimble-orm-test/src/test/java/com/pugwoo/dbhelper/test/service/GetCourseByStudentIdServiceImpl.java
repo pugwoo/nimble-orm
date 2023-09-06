@@ -1,9 +1,9 @@
-package com.pugwoo.dbhelper.test.service.impl;
+package com.pugwoo.dbhelper.test.service;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.IDBHelperDataService;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
-import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * @author pugwoo
  */
 @Service
-public class GetCourseByStudentIdServiceImpl implements IGetCourseByStudentIdDataService {
+public class GetCourseByStudentIdServiceImpl implements IDBHelperDataService {
 
 	@Autowired
 	private DBHelper dbHelper;

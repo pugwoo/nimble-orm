@@ -4,19 +4,15 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SpringBootTest
-public class Test8Feature_Comment {
+public abstract class Test8Feature_Comment {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Test
     public void testGlobalComment() throws Exception {
@@ -29,7 +25,7 @@ public class Test8Feature_Comment {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
             }
-            List<Map> processlist = dbHelper.getRaw(Map.class, "SHOW PROCESSLIST");
+            List<Map> processlist = getDBHelper().getRaw(Map.class, "SHOW PROCESSLIST");
             for (Map<String, Object> p : processlist) {
                 String info = (String) p.get("Info");
                 System.out.println("===" + info);
@@ -40,14 +36,14 @@ public class Test8Feature_Comment {
         });
         thread.start();
 
-        dbHelper.getRaw(String.class, "select sleep(1)");
+        getDBHelper().getRaw(String.class, "select sleep(1)");
 
         thread.join();
 
         assert isWithComment.get();
 
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()).getName().equals(studentDO.getName());
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
+        assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()).getName().equals(studentDO.getName());
     }
 
     @Test
@@ -61,7 +57,7 @@ public class Test8Feature_Comment {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
             }
-            List<Map> processlist = dbHelper.getRaw(Map.class, "SHOW PROCESSLIST");
+            List<Map> processlist = getDBHelper().getRaw(Map.class, "SHOW PROCESSLIST");
             for (Map<String, Object> p : processlist) {
                 String info = (String) p.get("Info");
                 System.out.println("===" + info);
@@ -72,14 +68,14 @@ public class Test8Feature_Comment {
         });
         thread.start();
 
-        dbHelper.getRaw(String.class, "select sleep(1)");
+        getDBHelper().getRaw(String.class, "select sleep(1)");
 
         thread.join();
 
         assert isWithComment.get();
 
-        StudentDO studentDO = CommonOps.insertOne(dbHelper);
-        assert dbHelper.getByKey(StudentDO.class, studentDO.getId()).getName().equals(studentDO.getName());
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
+        assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()).getName().equals(studentDO.getName());
     }
 
 }
