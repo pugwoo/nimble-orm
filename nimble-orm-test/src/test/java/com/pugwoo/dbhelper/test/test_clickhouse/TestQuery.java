@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_clickhouse;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.test.test_clickhouse.entity.StudentDO;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,7 +19,7 @@ public class TestQuery {
     public void testGetRaw() {
 
         dbHelper.executeRaw("truncate table t_student");
-        CkCommonOps.insertSome(dbHelper, 100);
+        CommonOps.insertBatchWithRandomId(dbHelper, 100, "nick");
 
         PageData<StudentDO> page = dbHelper.getPage(StudentDO.class, 1, 10);
 
