@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper;
 
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
@@ -110,6 +111,11 @@ public interface DBHelper {
 	void turnOffFeature(FeatureEnum featureEnum);
 
 	// =====================================================================
+
+	/**
+	 * 查询dbHelper对应的数据库类型
+	 */
+	DatabaseTypeEnum getDatabaseType();
 
 	/**
 	 * 手动回滚@Transactional的事务。

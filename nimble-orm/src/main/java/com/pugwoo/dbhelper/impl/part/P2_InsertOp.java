@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.enums.DatabaseEnum;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
@@ -134,7 +134,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		int total;
-		DatabaseEnum databaseType = getDatabaseType();
+		DatabaseTypeEnum databaseType = getDatabaseType();
 		/*
 		  特别说明，clickhouse的批量插入不推荐使用insert into values()()()方式，原因：
 		  1）这种方式不被clickhouse官方推荐
@@ -145,7 +145,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		  1）对于DDL非null字段，Java侧插入null值时，0.3版本不会报错，可以成功正确插入；而0.4版本会报错，因此对于非null字段，请确保Java侧的DO属性值不为null
 		  2）对于clickhouse的UInt8类型，低版本可能无法用false来插入，请改成0
 		 */
-		if (databaseType == DatabaseEnum.CLICKHOUSE) {
+		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
@@ -204,9 +204,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			return 0;
 		}
 
-		DatabaseEnum databaseType = getDatabaseType();
+		DatabaseTypeEnum databaseType = getDatabaseType();
 		int total;
-		if (databaseType == DatabaseEnum.CLICKHOUSE) {
+		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
@@ -228,9 +228,9 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			return 0;
 		}
 
-		DatabaseEnum databaseType = getDatabaseType();
+		DatabaseTypeEnum databaseType = getDatabaseType();
 		int total;
-		if (databaseType == DatabaseEnum.CLICKHOUSE) {
+		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
 			total = insertBatchJDBCTemplateMode(sql, values2);
 		} else {

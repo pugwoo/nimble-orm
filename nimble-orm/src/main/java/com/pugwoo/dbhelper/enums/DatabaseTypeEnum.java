@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * 数据库类型枚举值
  */
-public enum DatabaseEnum {
+public enum DatabaseTypeEnum {
 
     UNKNOWN("UNKNOWN", "Unknown"),
 
@@ -17,12 +17,12 @@ public enum DatabaseEnum {
     final private String code;
     final private String name;
 
-    DatabaseEnum(String code, String name) {
+    DatabaseTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    public static DatabaseEnum getByJdbcProtocol(String jdbcProtocol) {
+    public static DatabaseTypeEnum getByJdbcProtocol(String jdbcProtocol) {
         if ("mysql".equalsIgnoreCase(jdbcProtocol)) {
             return MYSQL;
         } else if ("clickhouse".equalsIgnoreCase(jdbcProtocol)
@@ -32,8 +32,8 @@ public enum DatabaseEnum {
         return UNKNOWN;
     }
 
-    public static DatabaseEnum getByCode(String code) {
-        for (DatabaseEnum e : DatabaseEnum.values()) {
+    public static DatabaseTypeEnum getByCode(String code) {
+        for (DatabaseTypeEnum e : DatabaseTypeEnum.values()) {
             if (Objects.equals(code, e.getCode())) {
                 return e;
             }
@@ -42,7 +42,7 @@ public enum DatabaseEnum {
     }
 
     public static String getNameByCode(String code) {
-        DatabaseEnum e = getByCode(code);
+        DatabaseTypeEnum e = getByCode(code);
         return e == null ? "" : e.getName();
     }
 

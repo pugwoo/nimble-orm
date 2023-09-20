@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.sql;
 
 import com.pugwoo.dbhelper.annotation.*;
-import com.pugwoo.dbhelper.enums.DatabaseEnum;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
@@ -284,7 +284,7 @@ public class SQLUtils {
 	 * @return 插入的SQL
 	 */
 	public static <T> InsertSQLForBatchDTO getInsertSQLForBatch(Collection<T> list, List<Object> values,
-																DatabaseEnum databaseType) {
+																DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
@@ -320,7 +320,7 @@ public class SQLUtils {
 	 * @return 插入的SQL
 	 */
 	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, Collection<Map<String, Object>> list,
-			List<Object> values, DatabaseEnum databaseType) {
+			List<Object> values, DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder("INSERT INTO `");
 		sql.append(tableName.trim());
 		sql.append("` (");
@@ -378,7 +378,7 @@ public class SQLUtils {
 	 * @return 插入的SQL
 	 */
 	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, List<String> cols,
-															Collection<Object[]> list, DatabaseEnum databaseType,
+															Collection<Object[]> list, DatabaseTypeEnum databaseType,
 															List<Object> values) {
 		StringBuilder sql = new StringBuilder("INSERT INTO `");
 		sql.append(tableName.trim());
@@ -555,7 +555,7 @@ public class SQLUtils {
 	}
 
 	private static void appendValueForBatchInsert(StringBuilder sb, List<Field> fields, List<Object> values,
-												  Object obj, DatabaseEnum databaseType) {
+												  Object obj, DatabaseTypeEnum databaseType) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
 		}
