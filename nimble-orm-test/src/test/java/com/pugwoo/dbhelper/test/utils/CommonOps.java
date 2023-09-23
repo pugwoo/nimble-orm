@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.utils;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 
 import java.util.ArrayList;
@@ -34,6 +35,13 @@ public class CommonOps {
         List<StudentDO> list = new ArrayList<StudentDO>();
         for(int i = 0; i < num; i++) {
             StudentDO studentDO = new StudentDO();
+
+            // clickhouse不支持自增id，所以对于clickhouse自动设置一个随机id
+            DatabaseTypeEnum databaseType = dbHelper.getDatabaseType();
+            if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
+                studentDO.setId(new Random().nextLong());
+            }
+
             studentDO.setName(getRandomName(prefix));
             list.add(studentDO);
         }
@@ -43,22 +51,6 @@ public class CommonOps {
 
         return list;
     }
-
-    public static List<StudentDO> insertBatchWithRandomId(DBHelper dbHelper, int num, String prefix) {
-        List<StudentDO> list = new ArrayList<StudentDO>();
-        for(int i = 0; i < num; i++) {
-            StudentDO studentDO = new StudentDO();
-            studentDO.setId(new Random().nextLong());
-            studentDO.setName(getRandomName(prefix));
-            list.add(studentDO);
-        }
-
-        int rows = dbHelper.insert(list);
-        assert rows == num;
-
-        return list;
-    }
-
 
     public static List<StudentDO> insertBatchNoReturnId(DBHelper dbHelper, int num) {
         return insertBatchNoReturnId(dbHelper, num, "nick");

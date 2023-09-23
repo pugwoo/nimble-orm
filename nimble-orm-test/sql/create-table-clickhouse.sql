@@ -14,3 +14,26 @@ CREATE TABLE nimbleorm.t_student (
                            course_snapshot String
 ) ENGINE=MergeTree ORDER BY(id);
 
+CREATE TABLE nimbleorm.t_student_del (
+                                     id Int64,
+                                     deleted UInt8,
+                                     create_time DateTime,
+                                     update_time DateTime,
+                                     delete_time DateTime,
+                                     name String,
+                                     age UInt8,
+                                     intro String,
+                                     school_id Nullable(Int64),
+                                     school_snapshot String,
+                                     course_snapshot String
+) ENGINE=MergeTree ORDER BY(id);
+
+create table nimbleorm.t_school (
+    id Int64,
+    deleted UInt8,
+    create_time DateTime,
+    update_time DateTime,
+    delete_time DateTime,
+    name String
+) ENGINE=MergeTree ORDER BY(id);
+

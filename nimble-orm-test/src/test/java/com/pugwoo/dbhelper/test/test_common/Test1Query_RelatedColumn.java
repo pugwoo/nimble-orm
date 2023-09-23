@@ -58,6 +58,7 @@ public abstract class Test1Query_RelatedColumn {
                 assert a.getMainCourses().get(1).getIsMain();
             }
             if (a.getId().equals(studentDO2.getId())) {
+                System.out.println(a.getMainCourses().size());
                 assert a.getMainCourses().isEmpty();
             }
         }
