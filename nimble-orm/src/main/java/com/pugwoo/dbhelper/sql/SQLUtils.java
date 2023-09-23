@@ -70,9 +70,9 @@ public class SQLUtils {
             } else {
                 List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
                 List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
-                sql.append(join(fields1, ",", joinLeftTable.alias() + ".", features));
+                sql.append(joinColumnForSelect(fields1,  joinLeftTable.alias() + ".", features));
                 sql.append(",");
-                sql.append(join(fields2, ",", joinRightTable.alias() + ".", features));
+                sql.append(joinColumnForSelect(fields2,  joinRightTable.alias() + ".", features));
             }
 
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
@@ -116,7 +116,7 @@ public class SQLUtils {
 				}
 			} else {
                 List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
-                sql.append(join(fields, ",", features));
+                sql.append(joinColumnForSelect(fields, null, features));
             }
 
 			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
@@ -146,7 +146,7 @@ public class SQLUtils {
 		if (field2.isEmpty()) {
 			return "";
 		} else {
-			return join(field2, ",", fieldPrefix, features);
+			return joinColumnForSelect(field2,  fieldPrefix, features);
 		}
 	}
 	
@@ -1484,19 +1484,30 @@ public class SQLUtils {
 
 	private static final Map<String, Boolean> containsLimitCache = new ConcurrentHashMap<>();
 
-    /**
-     * 拼凑select的field的语句
-     */
-	private static String join(List<Field> fields, String sep, Map<FeatureEnum, Boolean> features) {
-	    return join(fields, sep, null, features);
-    }
-	
-    /**
-     * 拼凑select的field的语句
-     */
-    private static String join(List<Field> fields, String sep, String fieldPrefix,
-							   Map<FeatureEnum, Boolean> features) {
-    	return joinAndGetValueForSelect(fields, sep, fieldPrefix, features);
+	/**
+	 * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
+	 */
+    private static String joinColumnForSelect(List<Field> fields, String fieldPrefix, Map<FeatureEnum, Boolean> features) {
+		String sep = ",";
+		fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
+
+		StringBuilder sb = new StringBuilder();
+		for(Field field : fields) {
+			Column column = field.getAnnotation(Column.class);
+
+			if(InnerCommonUtils.isNotBlank(column.computed())) {
+				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
+				sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ")
+						.append(getColumnName(column, fieldPrefix)).append(sep);
+			} else {
+				// 非计算列的话，表的别名要放在`外边
+				sb.append(fieldPrefix).append(getColumnName(column))
+						.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"") // as里的列名不需要`
+						.append(sep);
+			}
+		}
+		int len = sb.length();
+		return len == 0 ? "" : sb.substring(0, len - 1);
     }
 	
 	/**
@@ -1540,30 +1551,6 @@ public class SQLUtils {
 			}
 		}
 		return sb.toString();
-	}
-
-    /**
-     * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
-     */
-	private static String joinAndGetValueForSelect(List<Field> fields, String sep, String fieldPrefix,
-												   Map<FeatureEnum, Boolean> features) {
-        fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
-
-    	StringBuilder sb = new StringBuilder();
-    	for(Field field : fields) {
-    		Column column = field.getAnnotation(Column.class);
-    		
-    		if(InnerCommonUtils.isNotBlank(column.computed())) {
-				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
-    			sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ")
-						.append(getColumnName(column, fieldPrefix)).append(sep);
-    		} else {
-				// 非计算列的话，表的别名要放在`外边
-				sb.append(fieldPrefix).append(getColumnName(column)).append(sep);
-			}
-    	}
-    	int len = sb.length();
-    	return len == 0 ? "" : sb.substring(0, len - 1);
 	}
 
 	/**
