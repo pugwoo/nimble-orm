@@ -19,7 +19,7 @@ public @interface JoinRightTable {
 	String alias() default "t2";
 
 	/**
-	 * 强制使用索引，格式为: index1,index2 <br>
+	 * 【仅适用于MySQL】强制使用索引，格式为: index1,index2 <br>
 	 * 说明: 该字符串将原样放入到FORCE INDEX() 括弧中。
 	 */
 	String forceIndex() default "";

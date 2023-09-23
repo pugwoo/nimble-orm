@@ -41,7 +41,8 @@ public class SQLUtils {
 	 * @return 返回拼凑返回的SQL
 	 */
 	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1,
-									  Map<FeatureEnum, Boolean> features, String postSql) {
+									  Map<FeatureEnum, Boolean> features, String postSql,
+									  DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 
@@ -76,12 +77,12 @@ public class SQLUtils {
 
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
-			if (InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
+			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
-			if (InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
+			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
 			}
 	        if(InnerCommonUtils.isBlank(joinTable.on())) {
@@ -154,7 +155,7 @@ public class SQLUtils {
 	 * @param clazz 注解了Table的表
 	 * @return 生成的SQL
 	 */
-	public static String getSelectCountSQL(Class<?> clazz) {
+	public static String getSelectCountSQL(Class<?> clazz, DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT count(*)");
 		
@@ -169,12 +170,12 @@ public class SQLUtils {
 
 	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
-			if (InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
+			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
 	        sql.append(joinTable.joinType().getCode()).append(" ");
 	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
-			if (InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
+			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
 			}
 	        if(InnerCommonUtils.isBlank(joinTable.on())) {
