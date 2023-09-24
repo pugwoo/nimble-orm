@@ -19,8 +19,24 @@ public class CommonOps {
         return base + new Random().nextInt(bound);
     }
 
+    public static StudentDO insertOne(DBHelper dbHelper, String name) {
+        StudentDO studentDO = new StudentDO();
+        studentDO.setName(name);
+
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
+        dbHelper.insert(studentDO);
+        return  studentDO;
+    }
+
     public static StudentDO insertOne(DBHelper dbHelper) {
         StudentDO studentDO = new StudentDO();
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
         studentDO.setName(getRandomName("nick"));
         studentDO.setIntro(studentDO.getName().getBytes());
         dbHelper.insert(studentDO);

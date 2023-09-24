@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
@@ -28,6 +29,10 @@ public abstract class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(uuidName());
         studentDO.setAge(12);
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
         getDBHelper().insert(studentDO);
 
         StudentDO st = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
@@ -36,7 +41,12 @@ public abstract class Test2Insert_Basic {
 
         // 插入插入null值
         studentDO = new StudentDO();
-        studentDO.setId(null);
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        } else {
+            studentDO.setId(null);
+        }
+
         studentDO.setName(null);
         getDBHelper().insertWithNull(studentDO);
         st = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
@@ -183,6 +193,10 @@ public abstract class Test2Insert_Basic {
         studentDO.setName("nick888");
         // studentDO.setAge(28);
 
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
         int row = getDBHelper().insert(studentDO); // 如果值为null，则用数据库默认值
         // int row = getDBHelper().insertWithNull(studentDO); // 强制设置数据库
         System.out.println("affected rows:" + row);
@@ -194,6 +208,9 @@ public abstract class Test2Insert_Basic {
             StudentDO stu = new StudentDO();
             stu.setName("test" + i);
             stu.setAge(i);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                stu.setId(new Random().nextLong());
+            }
             students.add(stu);
         }
         row = getDBHelper().insert(students);
@@ -205,6 +222,9 @@ public abstract class Test2Insert_Basic {
             StudentDO stu = new StudentDO();
             stu.setName("test" + i);
             stu.setAge(i);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                stu.setId(new Random().nextLong());
+            }
             studentSet.add(stu);
         }
         row = getDBHelper().insert(studentSet);
@@ -212,6 +232,9 @@ public abstract class Test2Insert_Basic {
 
         // 测试random值
         StudentRandomNameDO studentRandomNameDO = new StudentRandomNameDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentRandomNameDO.setId(new Random().nextLong());
+        }
         getDBHelper().insert(studentRandomNameDO);
         assert studentRandomNameDO.getId() != null;
         assert !studentRandomNameDO.getName().isEmpty();
@@ -219,10 +242,8 @@ public abstract class Test2Insert_Basic {
 
     @Test
     public void testMaxStringLength() {
-        StudentDO studentDO = new StudentDO();
-        studentDO.setName("nick1111111111111111111111111111111111111111111111111111111111");
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper(), "nick1111111111111111111111111111111111111111111111111111111111");
 
-        getDBHelper().insert(studentDO);
         assert studentDO.getName().length()==32; // 注解配置了32位长度
 
         StudentDO student2 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
@@ -242,8 +263,16 @@ public abstract class Test2Insert_Basic {
 
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
         assert getDBHelper().insertOrUpdateWithNull(null) == 0;
-        assert getDBHelper().insertOrUpdateWithNull(studentDO) == 1;
+
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert getDBHelper().insertWithNull(studentDO) == 1;
+        } else {
+            assert getDBHelper().insertOrUpdateWithNull(studentDO) == 1;
+        }
         assert studentDO.getId() != null;
 
         StudentDO student2 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
@@ -263,9 +292,18 @@ public abstract class Test2Insert_Basic {
 
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) { // clickhouse不支持自增id
+            studentDO.setId(new Random().nextLong());
+        }
         assert getDBHelper().insertOrUpdate(null) == 0;
         assert getDBHelper().insertOrUpdate((StudentDO) null) == 0;
-        assert getDBHelper().insertOrUpdate(studentDO) == 1;
+
+        // 所以这里对于clickhouse insertOrUpdate其实是update，要改成insert
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert getDBHelper().insert(studentDO) == 1;
+        } else {
+            assert getDBHelper().insertOrUpdate(studentDO) == 1;
+        }
         assert studentDO.getId() != null;
 
         StudentDO student2 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
@@ -343,12 +381,23 @@ public abstract class Test2Insert_Basic {
         students.add(s1);
         students.add(s2);
 
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            for (StudentDO stu :students) {
+                if (stu.getId() == null) {
+                    stu.setId(new Random().nextLong());
+                }
+            }
+            // clickhouse因为没有办法设置自增，所以没有办法正确用insertOrUpdate，因此这里就先insert
+            assert getDBHelper().insert(students) == 2;
+        }
+
         List<StudentDO> studentDOS = CommonOps.insertBatch(getDBHelper(), 3);
         ListUtils.forEach(studentDOS, o -> o.setName(uuidName()));
 
         students.addAll(studentDOS);
 
         assert getDBHelper().insertOrUpdate(students) == 5;
+
         assert getDBHelper().getByKey(StudentDO.class, s1.getId()).getName().equals(s1.getName());
         assert getDBHelper().getByKey(StudentDO.class, s2.getId()).getName().equals(s2.getName());
         ListUtils.forEach(studentDOS, o -> {
