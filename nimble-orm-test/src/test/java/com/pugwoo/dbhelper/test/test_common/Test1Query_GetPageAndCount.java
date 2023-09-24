@@ -254,8 +254,9 @@ public abstract class Test1Query_GetPageAndCount {
         assert page2.getData().size() == 2;
         assert page2.getTotal() == 3;
 
-        page = getDBHelper().getPage(StudentDO.class, 1, 100000000);
-        assert page.getData().size() == afterInertCount;
+        page = getDBHelper().getPage(StudentDO.class, 1, 1000000); // 设置了maxPage=1000000
+        System.out.println("page.getData().size():" + page.getData().size() + ",afterInertCount:" + afterInertCount);
+        assert page.getData().size() == Math.min(afterInertCount, 1000000);
         assert page.getTotal() == afterInertCount;
 
         count = getDBHelper().getCount(StudentSchoolJoinVO.class);
