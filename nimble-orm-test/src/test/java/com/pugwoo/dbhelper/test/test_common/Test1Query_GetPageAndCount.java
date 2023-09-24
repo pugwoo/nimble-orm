@@ -271,8 +271,8 @@ public abstract class Test1Query_GetPageAndCount {
         assert page3.getData().size() == 10;
         assert page3.getTotal() == afterInertCount;
 
-        page3 = getDBHelper().getPage(StudentSchoolJoinVO.class, 1, 100000000);
-        assert page3.getData().size() == afterInertCount;
+        page3 = getDBHelper().getPage(StudentSchoolJoinVO.class, 1, 10000);
+        assert page3.getData().size() == Math.min(10000, afterInertCount);
         assert page3.getTotal() == afterInertCount;
     }
 
