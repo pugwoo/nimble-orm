@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
@@ -143,6 +144,13 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 			rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
 					batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
+
+			// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
+			if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+				if (rows > 0) {
+					rows = list.size();
+				}
+			}
 
 			postHandleCasVersion(list, rows, casVersionColumn, clazz);
 
