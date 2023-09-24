@@ -218,7 +218,7 @@ public abstract class Test1Query_GetPageAndCount {
         assert getDBHelper().getCount(StudentVOForGroup.class, "where name like ? group by deleted,name",
                 prefix + "%") == 99;
 
-        count = getDBHelper().getCount(StudentDO.class, "where name not like ?", prefix+"%");
+        count = getDBHelper().getCount(StudentDO.class, "where name not like ? or name is null", prefix+"%");
         assert count == beforeInsertCount;
 
         List<String> names = new ArrayList<String>();
@@ -236,7 +236,8 @@ public abstract class Test1Query_GetPageAndCount {
         assert page.getData().size() == 10;
         assert page.getTotal() == 99;
 
-        page = getDBHelper().getPage(StudentDO.class, 1, 10, "where name not like ?", prefix +"%");
+        page = getDBHelper().getPage(StudentDO.class, 1, 10,
+                "where name not like ? or name is null", prefix +"%");
         assert page.getData().size() == Math.min(10, beforeInsertCount);
         assert page.getTotal() == beforeInsertCount;
 
