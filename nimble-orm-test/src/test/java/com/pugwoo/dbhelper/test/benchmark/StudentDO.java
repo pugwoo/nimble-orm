@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test.test_clickhouse.entity;
+package com.pugwoo.dbhelper.test.benchmark;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;

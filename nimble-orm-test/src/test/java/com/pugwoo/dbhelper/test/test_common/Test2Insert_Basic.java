@@ -48,7 +48,7 @@ public abstract class Test2Insert_Basic {
         }
 
         studentDO.setName(null);
-        getDBHelper().insertWithNull(studentDO);
+        assert getDBHelper().insertWithNull(studentDO) == 1;
         st = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert st.getName() == null;
     }

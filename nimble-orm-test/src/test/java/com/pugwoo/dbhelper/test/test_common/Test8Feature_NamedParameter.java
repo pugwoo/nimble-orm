@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.test.test_clickhouse.entity.StudentDO;
+import com.pugwoo.dbhelper.test.benchmark.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 
