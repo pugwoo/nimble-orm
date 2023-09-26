@@ -16,10 +16,9 @@ import com.pugwoo.dbhelper.test.vo.AreaVO;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.TypeAutoCast;
+import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -362,6 +361,24 @@ public abstract class Test9Other_Others {
         whereSQL.or("age=18");
         System.out.println(whereSQL.getSQLForWhereAppend());
         assert whereSQL.getSQLForWhereAppend().equals(" AND (name='nick' OR age=18) ");
+    }
+
+    @Test
+    public void testGetRawWithInNamedParam() {
+        List<StudentDO> studentDOS = CommonOps.insertBatch(getDBHelper(), 10);
+        List<Long> studentIds = ListUtils.transform(studentDOS, o -> o.getId());
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("studentIds", studentIds);
+
+        List<StudentDO> raw = getDBHelper().getRaw(StudentDO.class, "select *from t_student where id in (:studentIds)", params);
+        assert raw.size() == 10;
+
+        ListUtils.sortAscNullLast(studentIds);
+        List<Long> studentIds2 = ListUtils.transform(raw, o -> o.getId());
+        ListUtils.sortAscNullLast(studentIds2);
+
+        assert Objects.equals(studentIds, studentIds2);
     }
 
     @Test
