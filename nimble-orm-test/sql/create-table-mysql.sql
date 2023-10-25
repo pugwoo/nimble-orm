@@ -1,3 +1,5 @@
+create database nimbleorm;
+
 DROP TABLE IF EXISTS `t_student`;
 CREATE TABLE `t_student` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
