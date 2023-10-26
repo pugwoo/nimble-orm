@@ -21,6 +21,8 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -330,8 +332,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	private DatabaseTypeEnum getDatabaseType(JdbcTemplate jdbcTemplate) {
-		try {
-			String url = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection().getMetaData().getURL();
+		DataSource dataSource = jdbcTemplate.getDataSource();
+		if (dataSource == null) {
+			LOGGER.error("fail to get database type from jdbc url, dataSource is null, jdbcTemplate:{}, will try later", jdbcTemplate);
+			return null;
+		}
+
+		try (Connection connection = dataSource.getConnection()) {
+			String url = connection.getMetaData().getURL();
 			String type = url.split(":")[1];
 			return DatabaseTypeEnum.getByJdbcProtocol(type);
 		} catch (Exception e) {

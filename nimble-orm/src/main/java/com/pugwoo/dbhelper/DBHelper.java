@@ -254,7 +254,7 @@ public interface DBHelper {
 	 * 说明：Stream方式不会调用拦截器的afterQuery<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 【-支持@JoinTable-】
-	 * @return 返回不会是null
+	 * @return 返回不会是null【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
 	 */
 	<T> Stream<T> getAllForStream(Class<T> clazz);
 
@@ -275,7 +275,7 @@ public interface DBHelper {
 	 * 【会自动处理软删除记录】
 	 * @param clazz 【-支持@JoinTable-】
 	 * @param postSql where及后续语句，可包含order by,group by,limit等语句
-	 * @return 返回不会是null
+	 * @return 返回不会是null【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
 	 */
 	<T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args);
 
@@ -334,6 +334,7 @@ public interface DBHelper {
 	 * @param clazz 转换回来的DO类，也支持关联查询后处理；支持基本类型如Integer/Long/String等; 特别说明，对于Long和Integer，如果数据库返回的是null，由于ResultSet的getInt会返回0，所以这里也返回0
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
+	 * @return 【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
 	 */
 	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args);
 
@@ -345,6 +346,7 @@ public interface DBHelper {
 	 * @param clazz 转换回来的DO类，也支持关联查询后处理；支持基本类型如Integer/Long/String等; 特别说明，对于Long和Integer，如果数据库返回的是null，由于ResultSet的getInt会返回0，所以这里也返回0
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
+	 * @return 【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
 	 */
 	<T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, ?> args);
 

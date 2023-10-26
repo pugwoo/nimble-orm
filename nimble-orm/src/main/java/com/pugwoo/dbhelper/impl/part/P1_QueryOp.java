@@ -731,7 +731,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
                 String whereColumn = getWhereColumnForRelated(remoteField);
-                // 这里不能用DBHelper是因为拦截器会被重复触发；其次也必要，另外的DBHelper的实现也重新实现这个逻辑
+                // 这里不能用DBHelper是因为拦截器会被重复触发；其次也没必要，另外的DBHelper的实现也重新实现这个逻辑
                 P1_QueryOp _dbHelper = this;
                 if (InnerCommonUtils.isNotBlank(column.dbHelperBean())) {
                     String beanName = column.dbHelperBean().trim();

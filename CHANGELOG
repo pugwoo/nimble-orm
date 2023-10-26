@@ -1,4 +1,5 @@
-v1.5.7 - [enhance] 对于virtualTable的postSql，自动在前面加上回车符，避免自定义sql最后一行是注释且没有换行时，postSql失效
+v1.5.7 - [fix] 修复getDatabaseType方法没有关闭Connection的问题，它会占用一个数据库连接，修复后不占用
+       - [enhance] 对于virtualTable的postSql，自动在前面加上回车符，避免自定义sql最后一行是注释且没有换行时，postSql失效
        - [add] 新增getDatabaseType()方法，支持获得数据库类型
        - [compatible] 兼容Clickhouse不支持force index
 
