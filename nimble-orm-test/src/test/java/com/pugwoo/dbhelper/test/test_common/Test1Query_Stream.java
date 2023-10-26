@@ -53,6 +53,7 @@ public abstract class Test1Query_Stream {
         for (StudentDO s : list2) {
             assert ListUtils.filter(students, o -> o.getId().equals(s.getId())).size() == 1;
         }
+        stream.close();
 
         // 测试一下relatedcolumn是否正确
         Stream<StudentVO> stream2 = getDBHelper().getAllForStream(StudentVO.class,
@@ -64,12 +65,14 @@ public abstract class Test1Query_Stream {
             assert ListUtils.filter(students, o -> o.getId().equals(s.getId())).size() == 1;
             assert s.getSchoolDO().getName().equals(schoolDO.getName());
         }
+        stream2.close();
 
         // 测试没有参数的
         CommonOps.insertOne(getDBHelper());
         Stream<StudentVO> stream3 = getDBHelper().getAllForStream(StudentVO.class);
         List<StudentVO> list4 = stream3.collect(Collectors.toList());
         assert list4.size() == getDBHelper().getCount(StudentVO.class);
+        stream3.close();
     }
 
     @Test
@@ -103,6 +106,8 @@ public abstract class Test1Query_Stream {
             assert ListUtils.filter(students, o -> o.getId().equals(s.getId())).size() == 1;
         }
 
+        stream.close();
+
         // 测试一下relatedcolumn是否正确
         Stream<StudentVO> stream2 = getDBHelper().getRawForStream(StudentVO.class,
                 "select * from t_student where name like ?", prefix + "%");
@@ -113,6 +118,7 @@ public abstract class Test1Query_Stream {
             assert ListUtils.filter(students, o -> o.getId().equals(s.getId())).size() == 1;
             assert s.getSchoolDO().getName().equals(schoolDO.getName());
         }
+        stream2.close();
 
         // 再测一下namedParam
         stream = getDBHelper().getRawForStream(StudentDO.class, "select * from t_student where name like :name",
@@ -122,6 +128,7 @@ public abstract class Test1Query_Stream {
         for (StudentDO s : list2) {
             assert ListUtils.filter(students, o -> o.getId().equals(s.getId())).size() == 1;
         }
+        stream.close();
 
         stream2 = getDBHelper().getRawForStream(StudentVO.class,
                 "select * from t_student where name like :name", MapUtils.of("name", prefix + "%"));
@@ -131,17 +138,19 @@ public abstract class Test1Query_Stream {
             assert ListUtils.filter(students, o -> o.getId().equals(s.getId())).size() == 1;
             assert s.getSchoolDO().getName().equals(schoolDO.getName());
         }
+        stream2.close();
 
         // 测试没有参数的
-        List<StudentVO> list4 = getDBHelper().getRawForStream(StudentVO.class, "select * from t_student")
-                .collect(Collectors.toList());
+        Stream<StudentVO> stream3 = getDBHelper().getRawForStream(StudentVO.class, "select * from t_student");
+        List<StudentVO> list4 = stream3.collect(Collectors.toList());
         assert list4.size() == getDBHelper().getRawOne(Integer.class, "select count(*) from t_student");
+        stream3.close();
 
         // 测试空map参数的
-        list4 = getDBHelper().getRawForStream(StudentVO.class, "select * from t_student", new HashMap<>())
-                .collect(Collectors.toList());
+        stream3 = getDBHelper().getRawForStream(StudentVO.class, "select * from t_student", new HashMap<>());
+        list4 = stream3.collect(Collectors.toList());
         assert list4.size() == getDBHelper().getRawOne(Integer.class, "select count(*) from t_student");
-
+        stream3.close();
     }
 
 }
