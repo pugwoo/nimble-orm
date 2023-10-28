@@ -6,12 +6,14 @@ spring:
       password: devdev
       driver-class-name: com.mysql.cj.jdbc.Driver
       hikari:
-        maximum-pool-size: 200
+        maximum-pool-size: 2 # 使用最小的连接池，2是因为relatedColumn+Stream需要2个连接池同时来
     clickhouse:
       jdbc-url: jdbc:clickhouse://192.168.0.111:8123/nimbleorm
       username: root
       password: 123456
       driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
+      hikari:
+        maximum-pool-size: 2 # 使用最小的连接池，2是因为relatedColumn+Stream需要2个连接池同时来
 
 # 是否运行压测测试
 runBenchmarkTest: false

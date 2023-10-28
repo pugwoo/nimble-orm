@@ -3,7 +3,7 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
-import com.pugwoo.dbhelper.enums.DatabaseEnum;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
@@ -21,6 +21,8 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,7 +35,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
-	private DatabaseEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化
+	private DatabaseTypeEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
 	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
@@ -123,7 +125,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 				// 对于非batch的慢sql，自动explain一下检查是否加了索引
 				boolean autoExplainSlowSql = getFeature(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
-				if (autoExplainSlowSql && getDatabaseType() == DatabaseEnum.MYSQL) {
+				if (autoExplainSlowSql && getDatabaseType() == DatabaseTypeEnum.MYSQL) {
 					try {
 						String explainSql = "EXPLAIN " + sql;
 						List<Object> explainArgs = new ArrayList<>();
@@ -329,18 +331,25 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return sql;
 	}
 
-	private DatabaseEnum getDatabaseType(JdbcTemplate jdbcTemplate) {
-		try {
-			String url = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection().getMetaData().getURL();
+	private DatabaseTypeEnum getDatabaseType(JdbcTemplate jdbcTemplate) {
+		DataSource dataSource = jdbcTemplate.getDataSource();
+		if (dataSource == null) {
+			LOGGER.error("fail to get database type from jdbc url, dataSource is null, jdbcTemplate:{}, will try later", jdbcTemplate);
+			return null;
+		}
+
+		try (Connection connection = dataSource.getConnection()) {
+			String url = connection.getMetaData().getURL();
 			String type = url.split(":")[1];
-			return DatabaseEnum.getByJdbcProtocol(type);
+			return DatabaseTypeEnum.getByJdbcProtocol(type);
 		} catch (Exception e) {
 			LOGGER.error("fail to get database type from jdbc url, jdbcTemplate:{}, will try later", jdbcTemplate, e);
 			return null;
 		}
 	}
 
-	protected DatabaseEnum getDatabaseType() {
+	@Override
+	public DatabaseTypeEnum getDatabaseType() {
 		if (databaseType == null) {
 			databaseType = getDatabaseType(jdbcTemplate); // 尝试再次获取
 		}

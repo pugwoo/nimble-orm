@@ -67,7 +67,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>1.5.6</version>
+    <version>1.5.7</version>
 </dependency>
 ```
 
@@ -245,21 +245,13 @@ public class StudentSchoolJoinVO {
 
 2. 参数列表中不能出现null，否则会报`org.springframework.dao.InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'param1': No value registered for key 'param1'`
 
-3. 对于MySQL5.7及以上，默认会开启only_full_group_by特性，其是对SQL语义的加强，要求有group by的SQL语句中，所有select的字段要么是groupby字段要么是有聚合函数。在dbhelper中，大量需要“关闭only_full_group_by特性”,因此建议将此特性关闭掉。
+3. 对于内部类是由@RelatedColumn注解的@Table及其子类的，需要修饰为`public static class`，否则dbhelper访问不到，将导致数据转换成对象失败，从而返回null对象。详见测试代码中`SchoolWithInnerClassVO.java`例子。
 
-4. 在JoinTable的关联类中的计算列`@Column`，其value和computed值都要自行带上join表的别名，例如t1。
+4. 虽然mysql数据库支持使用单引号和双引号来表示字符串，但在SQL标准中，定义的是单引号，并没有双引号。因此，nimble-orm为了处理规范和简单，只支持单引号表示字符串。
 
-5. 对于内部类是由@RelatedColumn注解的@Table及其子类的，需要修饰为`public static class`，否则dbhelper访问不到，将导致数据转换成对象失败，从而返回null对象。详见测试代码中`SchoolWithInnerClassVO.java`例子。
+5. nimble-orm支持多数据源，在多数据源事务管理器的情况下，nimble-orm仍能正常工作。
 
-6. 关于`org.springframework.transaction.NoTransactionException: No transaction aspect-managed TransactionStatus in scope`异常，如果方法已经注解了@Transactional，那么要注意SpringAOP的生效条件，一个易错点是没有注解@Transactional的方法内用了类内部的另一个注解了@Transactional的方法，这样是没有生效的。
-
-7. 对于手动回滚事务rollback抛出`org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only`异常的情况，需要使用者保证满足以下两点中的任意一点：1) 调用rollback的代码所在的方法是注解了@Transactional最外层的方法；2) 调用rollback的代码最近的@Transactional注解加上propagation = Propagation.NESTED属性。
-
-8. 目前发现mysql的驱动依赖mysql-connector-java问题比较多，例如5.x的最新版本5.1.47就有bug，请退回到5.1.46。建议使用8.0.15+，目前spring boot官方也使用该版本。
-
-9. 虽然mysql数据库支持使用单引号和双引号来表示字符串，但在SQL标准中，定义的是单引号，并没有双引号。因此，nimble-orm为了处理规范和简单，只支持单引号表示字符串。
-
-10. nimble-orm支持多数据源，在多数据源事务管理器的情况下，nimble-orm仍能正常工作。
+6. 不建议使用java.sql.Timestamp/java.sql.Date/java.sql.Time类型，推荐使用LocalDate和LocalDateTime类型。目前clickhouse 0.4.6驱动仍不能正确处理java.sql.Timestamp类型。
 
 ## 未来规划
 

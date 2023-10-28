@@ -58,7 +58,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     public <T> long getCount(Class<T> clazz) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
-        String sql = SQLUtils.getSelectCountSQL(clazz) +
+        String sql = SQLUtils.getSelectCountSQL(clazz, getDatabaseType()) +
                 (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
         sql = addComment(sql);
 
@@ -77,8 +77,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
         String sqlSB = "SELECT count(*) FROM ("
-                + SQLUtils.getSelectSQL(clazz, false, true, features, postSql)
-                + (isVirtualTable ? postSql : SQLUtils.autoSetSoftDeleted(postSql, clazz))
+                + SQLUtils.getSelectSQL(clazz, false, true, features, postSql, getDatabaseType())
+                + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz))
                 + ") tff305c6";
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -141,7 +141,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         jdbcTemplate.setFetchSize(fetchSize);
 
         StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, postSql));
+        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, postSql, getDatabaseType()));
         sqlSB.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -443,14 +443,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      boolean selectOnlyKey, boolean withCount,
                                      Integer offset, Integer limit,
                                      String postSql, Object... args) {
-        if (postSql == null) {
-            postSql = "";
-        }
-
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
         StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features, postSql));
+        sqlSB.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features, postSql, getDatabaseType()));
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
         if (limit != null && !isVirtualTable) {
             try {
@@ -461,7 +457,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         clazz, postSql, e);
             }
         }
-        sqlSB.append(isVirtualTable ? (" " + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz));
+        sqlSB.append(isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz));
         sqlSB.append(SQLUtils.genLimitSQL(offset, limit));
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -735,7 +731,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
             } else {
                 String whereColumn = getWhereColumnForRelated(remoteField);
-                // 这里不能用DBHelper是因为拦截器会被重复触发；其次也必要，另外的DBHelper的实现也重新实现这个逻辑
+                // 这里不能用DBHelper是因为拦截器会被重复触发；其次也没必要，另外的DBHelper的实现也重新实现这个逻辑
                 P1_QueryOp _dbHelper = this;
                 if (InnerCommonUtils.isNotBlank(column.dbHelperBean())) {
                     String beanName = column.dbHelperBean().trim();

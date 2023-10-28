@@ -7,19 +7,15 @@ import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentNoTableNameDO;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@SpringBootTest
-public class Test8Feature_DynamicTable {
+public abstract class Test8Feature_DynamicTable {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     @Test
     public void testSetTableName() {
@@ -97,39 +93,39 @@ public class Test8Feature_DynamicTable {
         StudentNoTableNameDO studentNoTableNameDO = new StudentNoTableNameDO();
         studentNoTableNameDO.setName("nick");
 
-        dbHelper.insert(studentNoTableNameDO);
+        getDBHelper().insert(studentNoTableNameDO);
 
         assert studentNoTableNameDO.getId() != null;
 
         // 查询
-        StudentNoTableNameDO student2 = dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
+        StudentNoTableNameDO student2 = getDBHelper().getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
         assert student2.getId().equals(studentNoTableNameDO.getId());
         assert student2.getName().equals(studentNoTableNameDO.getName());
 
-        List<StudentNoTableNameDO> list = dbHelper.getAll(
+        List<StudentNoTableNameDO> list = getDBHelper().getAll(
                 StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId());
         assert list.get(0).getId().equals(studentNoTableNameDO.getId());
         assert list.get(0).getName().equals(studentNoTableNameDO.getName());
 
         // 更新
         studentNoTableNameDO.setName(UUID.randomUUID().toString().replace("-", ""));
-        int rows = dbHelper.update(studentNoTableNameDO);
+        int rows = getDBHelper().update(studentNoTableNameDO);
         assert rows == 1;
 
         // 再查询
-        student2 = dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
+        student2 = getDBHelper().getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
         assert student2.getId().equals(studentNoTableNameDO.getId());
         assert student2.getName().equals(studentNoTableNameDO.getName());
 
-        list = dbHelper.getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId());
+        list = getDBHelper().getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId());
         assert list.get(0).getId().equals(studentNoTableNameDO.getId());
         assert list.get(0).getName().equals(studentNoTableNameDO.getName());
 
         // 删除
-        rows = dbHelper.delete(studentNoTableNameDO);
+        rows = getDBHelper().delete(studentNoTableNameDO);
         assert rows == 1;
 
-        assert dbHelper.getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId())
+        assert getDBHelper().getAll(StudentNoTableNameDO.class, "where id=?", studentNoTableNameDO.getId())
                         .isEmpty();
 
         DBHelperContext.resetTableName(); // 清空
@@ -137,7 +133,7 @@ public class Test8Feature_DynamicTable {
         // 应该抛出异常
         boolean ex = false;
         try {
-            dbHelper.getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
+            getDBHelper().getByKey(StudentNoTableNameDO.class, studentNoTableNameDO.getId());
         } catch (Exception e) {
             ex = true;
         }

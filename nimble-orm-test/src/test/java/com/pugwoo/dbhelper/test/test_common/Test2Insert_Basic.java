@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentRandomNameDO;
@@ -10,18 +11,14 @@ import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-@SpringBootTest
-public class Test2Insert_Basic {
+public abstract class Test2Insert_Basic {
 
-    @Autowired
-    private DBHelper dbHelper;
+    public abstract DBHelper getDBHelper();
 
     private String uuidName() {
         return UUID.randomUUID().toString().replace("-", "");
@@ -32,18 +29,27 @@ public class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(uuidName());
         studentDO.setAge(12);
-        dbHelper.insert(studentDO);
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
 
-        StudentDO st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        getDBHelper().insert(studentDO);
+
+        StudentDO st = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert st.getName().equals(studentDO.getName());
         assert st.getAge().equals(studentDO.getAge());
 
         // 插入插入null值
         studentDO = new StudentDO();
-        studentDO.setId(null);
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        } else {
+            studentDO.setId(null);
+        }
+
         studentDO.setName(null);
-        dbHelper.insertWithNull(studentDO);
-        st = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        assert getDBHelper().insertWithNull(studentDO) == 1;
+        st = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert st.getName() == null;
     }
 
@@ -58,16 +64,16 @@ public class Test2Insert_Basic {
             list.add(studentDO);
         }
 
-        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+        getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
-        int rows = dbHelper.insertBatchWithoutReturnId(list);
+        int rows = getDBHelper().insertBatchWithoutReturnId(list);
         long end = System.currentTimeMillis();
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
 
         start = System.currentTimeMillis();
-        rows = dbHelper.insertBatchWithoutReturnId(new HashSet<>(list));
+        rows = getDBHelper().insertBatchWithoutReturnId(new HashSet<>(list));
         end = System.currentTimeMillis();
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
@@ -96,15 +102,15 @@ public class Test2Insert_Basic {
             list.add(studentMap);
         }
 
-        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+        getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
-        int rows = dbHelper.insertBatchWithoutReturnId("t_student", list);
+        int rows = getDBHelper().insertBatchWithoutReturnId("t_student", list);
         long end = System.currentTimeMillis();
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
 
-        assert dbHelper.getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
+        assert getDBHelper().getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
     }
 
     @Test
@@ -128,15 +134,15 @@ public class Test2Insert_Basic {
             data.add(args);
         }
 
-        dbHelper.setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+        getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
-        int rows = dbHelper.insertBatchWithoutReturnId("t_student", cols, data);
+        int rows = getDBHelper().insertBatchWithoutReturnId("t_student", cols, data);
         long end = System.currentTimeMillis();
         System.out.println("batch insert cost:" + (end - start) + "ms");
         assert rows == TOTAL;
 
-        assert dbHelper.getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
+        assert getDBHelper().getAll(StudentDO.class, "where name=?", uuidName).size() == TOTAL;
     }
 
     /**测试插入时指定了id，依然可以准确获得id的场景*/
@@ -144,7 +150,7 @@ public class Test2Insert_Basic {
     @Rollback(false)
     @Test 
     public void testInsertWithSpecificId() {
-        CommonOps.insertOne(dbHelper); // 先插入一个，占了自增id，下面开始用户自行指定的id
+        CommonOps.insertOne(getDBHelper()); // 先插入一个，占了自增id，下面开始用户自行指定的id
 
         // 测试插入时，如果自增id 同时 又指定了id，查回id是否正常
         Long id = (long) (new Random().nextInt(100000000) + 100001234);
@@ -152,11 +158,11 @@ public class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setId(id);
         studentDO.setName(name);
-        dbHelper.insert(studentDO);
+        getDBHelper().insert(studentDO);
 
         assert id.equals(studentDO.getId());
 
-        StudentDO studentDO2 = dbHelper.getByKey(StudentDO.class, id);
+        StudentDO studentDO2 = getDBHelper().getByKey(StudentDO.class, id);
         assert studentDO2.getName().equals(name);
 
         // 测试uuid的情况
@@ -164,7 +170,7 @@ public class Test2Insert_Basic {
         UuidDO2 uuidDO2 = new UuidDO2();
         uuidDO2.setUuid(uuidName);
         uuidDO2.setName("nick");
-        assert dbHelper.insert(uuidDO2) == 1;
+        assert getDBHelper().insert(uuidDO2) == 1;
         assert uuidName.equals(uuidDO2.getUuid());
     }
 
@@ -187,8 +193,12 @@ public class Test2Insert_Basic {
         studentDO.setName("nick888");
         // studentDO.setAge(28);
 
-        int row = dbHelper.insert(studentDO); // 如果值为null，则用数据库默认值
-        // int row = dbHelper.insertWithNull(studentDO); // 强制设置数据库
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
+        int row = getDBHelper().insert(studentDO); // 如果值为null，则用数据库默认值
+        // int row = getDBHelper().insertWithNull(studentDO); // 强制设置数据库
         System.out.println("affected rows:" + row);
         System.out.println(studentDO);
 
@@ -198,9 +208,12 @@ public class Test2Insert_Basic {
             StudentDO stu = new StudentDO();
             stu.setName("test" + i);
             stu.setAge(i);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                stu.setId(new Random().nextLong());
+            }
             students.add(stu);
         }
-        row = dbHelper.insert(students);
+        row = getDBHelper().insert(students);
         assert row == 10;
 
         // 测试批量写入，Set参数
@@ -209,77 +222,98 @@ public class Test2Insert_Basic {
             StudentDO stu = new StudentDO();
             stu.setName("test" + i);
             stu.setAge(i);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                stu.setId(new Random().nextLong());
+            }
             studentSet.add(stu);
         }
-        row = dbHelper.insert(studentSet);
+        row = getDBHelper().insert(studentSet);
         assert row == 10;
 
         // 测试random值
         StudentRandomNameDO studentRandomNameDO = new StudentRandomNameDO();
-        dbHelper.insert(studentRandomNameDO);
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentRandomNameDO.setId(new Random().nextLong());
+        }
+        getDBHelper().insert(studentRandomNameDO);
         assert studentRandomNameDO.getId() != null;
         assert !studentRandomNameDO.getName().isEmpty();
     }
 
     @Test
     public void testMaxStringLength() {
-        StudentDO studentDO = new StudentDO();
-        studentDO.setName("nick1111111111111111111111111111111111111111111111111111111111");
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper(), "nick1111111111111111111111111111111111111111111111111111111111");
 
-        dbHelper.insert(studentDO);
         assert studentDO.getName().length()==32; // 注解配置了32位长度
 
-        StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        StudentDO student2 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert student2.getName().length()==32;
 
         student2.setName("nick22222222222222222222222222222222222222222222222222222222222222222222");
-        dbHelper.update(student2);
+        getDBHelper().update(student2);
         assert student2.getName().length()==32;
 
-        StudentDO student3 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        StudentDO student3 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert student3.getName().length()==32;
     }
 
     @Test
     public void testInsertOrUpdateWithNull() {
-        assert dbHelper.insertOrUpdateWithNull(null) == 0;
+        assert getDBHelper().insertOrUpdateWithNull(null) == 0;
 
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
-        assert dbHelper.insertOrUpdateWithNull(null) == 0;
-        assert dbHelper.insertOrUpdateWithNull(studentDO) == 1;
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+        assert getDBHelper().insertOrUpdateWithNull(null) == 0;
+
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert getDBHelper().insertWithNull(studentDO) == 1;
+        } else {
+            assert getDBHelper().insertOrUpdateWithNull(studentDO) == 1;
+        }
         assert studentDO.getId() != null;
 
-        StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        StudentDO student2 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert student2.getName().equals(studentDO.getName());
 
         student2.setName(CommonOps.getRandomName("jim"));
-        assert dbHelper.insertOrUpdateWithNull(student2) == 1;
+        assert getDBHelper().insertOrUpdateWithNull(student2) == 1;
         assert student2.getId().equals(studentDO.getId());
 
-        StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
+        StudentDO student3 = getDBHelper().getByKey(StudentDO.class, student2.getId());
         assert student2.getName().equals(student3.getName());
     }
 
     @Test
     public void testInsertOrUpdate() {
-        assert dbHelper.insertOrUpdate(null) == 0;
+        assert getDBHelper().insertOrUpdate(null) == 0;
 
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
-        assert dbHelper.insertOrUpdate(null) == 0;
-        assert dbHelper.insertOrUpdate((StudentDO) null) == 0;
-        assert dbHelper.insertOrUpdate(studentDO) == 1;
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) { // clickhouse不支持自增id
+            studentDO.setId(new Random().nextLong());
+        }
+        assert getDBHelper().insertOrUpdate(null) == 0;
+        assert getDBHelper().insertOrUpdate((StudentDO) null) == 0;
+
+        // 所以这里对于clickhouse insertOrUpdate其实是update，要改成insert
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert getDBHelper().insert(studentDO) == 1;
+        } else {
+            assert getDBHelper().insertOrUpdate(studentDO) == 1;
+        }
         assert studentDO.getId() != null;
 
-        StudentDO student2 = dbHelper.getByKey(StudentDO.class, studentDO.getId());
+        StudentDO student2 = getDBHelper().getByKey(StudentDO.class, studentDO.getId());
         assert student2.getName().equals(studentDO.getName());
 
         student2.setName(CommonOps.getRandomName("jim"));
-        assert dbHelper.insertOrUpdate(student2) == 1;
+        assert getDBHelper().insertOrUpdate(student2) == 1;
         assert student2.getId().equals(studentDO.getId());
 
-        StudentDO student3 = dbHelper.getByKey(StudentDO.class, student2.getId());
+        StudentDO student3 = getDBHelper().getByKey(StudentDO.class, student2.getId());
         assert student2.getName().equals(student3.getName());
     }
 
@@ -288,10 +322,10 @@ public class Test2Insert_Basic {
         NoKeyStudentDO student = new NoKeyStudentDO();
         student.setName(uuidName());
 
-        assert dbHelper.insertOrUpdate(student) == 1; // 因为student没有key，所以会插入处理
+        assert getDBHelper().insertOrUpdate(student) == 1; // 因为student没有key，所以会插入处理
 
         // 重新查询数据，可以查得到
-        assert dbHelper.getOne(StudentDO.class, "where name=?", student.getName())
+        assert getDBHelper().getOne(StudentDO.class, "where name=?", student.getName())
                 .getName().equals(student.getName());
     }
 
@@ -310,7 +344,7 @@ public class Test2Insert_Basic {
         boolean isThrow = false;
         try {
             NoColumnDO noColumnDO = new NoColumnDO();
-            dbHelper.insertOrUpdate(noColumnDO);
+            getDBHelper().insertOrUpdate(noColumnDO);
         } catch (NoColumnAnnotationException e) {
             isThrow = true;
         }
@@ -319,7 +353,7 @@ public class Test2Insert_Basic {
         isThrow = false;
         try {
             NoColumnDO noColumnDO = new NoColumnDO();
-            dbHelper.insertOrUpdateWithNull(noColumnDO);
+            getDBHelper().insertOrUpdateWithNull(noColumnDO);
         } catch (NoColumnAnnotationException e) {
             isThrow = true;
         }
@@ -347,16 +381,27 @@ public class Test2Insert_Basic {
         students.add(s1);
         students.add(s2);
 
-        List<StudentDO> studentDOS = CommonOps.insertBatch(dbHelper, 3);
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            for (StudentDO stu :students) {
+                if (stu.getId() == null) {
+                    stu.setId(new Random().nextLong());
+                }
+            }
+            // clickhouse因为没有办法设置自增，所以没有办法正确用insertOrUpdate，因此这里就先insert
+            assert getDBHelper().insert(students) == 2;
+        }
+
+        List<StudentDO> studentDOS = CommonOps.insertBatch(getDBHelper(), 3);
         ListUtils.forEach(studentDOS, o -> o.setName(uuidName()));
 
         students.addAll(studentDOS);
 
-        assert dbHelper.insertOrUpdate(students) == 5;
-        assert dbHelper.getByKey(StudentDO.class, s1.getId()).getName().equals(s1.getName());
-        assert dbHelper.getByKey(StudentDO.class, s2.getId()).getName().equals(s2.getName());
+        assert getDBHelper().insertOrUpdate(students) == 5;
+
+        assert getDBHelper().getByKey(StudentDO.class, s1.getId()).getName().equals(s1.getName());
+        assert getDBHelper().getByKey(StudentDO.class, s2.getId()).getName().equals(s2.getName());
         ListUtils.forEach(studentDOS, o -> {
-            assert dbHelper.getByKey(StudentDO.class, o.getId()).getName().equals(o.getName());
+            assert getDBHelper().getByKey(StudentDO.class, o.getId()).getName().equals(o.getName());
         });
     }
 
@@ -365,8 +410,8 @@ public class Test2Insert_Basic {
         List<StudentDO> students = new ArrayList<>();
         students.add(null);
 
-        assert dbHelper.insert(students) == 0;
-        assert dbHelper.insertBatchWithoutReturnId(students) == 0;
+        assert getDBHelper().insert(students) == 0;
+        assert getDBHelper().insertBatchWithoutReturnId(students) == 0;
     }
 
     // 测试一个没有key的do，此时用户自己指定了id
@@ -389,6 +434,6 @@ public class Test2Insert_Basic {
             studentDOS.add(s);
         }
 
-        assert dbHelper.insert(studentDOS) == 2;
+        assert getDBHelper().insert(studentDOS) == 2;
     }
 }

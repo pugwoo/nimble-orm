@@ -4,7 +4,7 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
-import com.pugwoo.dbhelper.test.service.IGetCourseByStudentIdDataService;
+import com.pugwoo.dbhelper.test.test_common.GetCourseByStudentIdServiceImpl;
 
 import java.util.List;
 
@@ -23,9 +23,7 @@ public class StudentVOForHandleRelatedColumnOnly {
 	@RelatedColumn(localColumn = "school_id", remoteColumn = "id")
 	private SchoolDO schoolDO;
 	
-	// @RelatedColumn(localColumn = "id", remoteColumn = "student_id")
-	@RelatedColumn(localColumn = "id", remoteColumn = "student_id", /*一定要写remoteColumn*/
-			dataService = IGetCourseByStudentIdDataService.class)
+	@RelatedColumn(localColumn = "id", remoteColumn = "student_id")
 	private List<CourseDO> courses;
 	
 	@RelatedColumn(localColumn = "id", remoteColumn = "student_id", extraWhere = "where is_main=1")

@@ -48,7 +48,8 @@ public @interface Column {
 	/**
 	 * 写入到数据库的最大字符串长度（字符数，不是字节数）<br>
 	 * 当字段的值的字符串长度超过设置的值时，将自动截取前maxStringLength个字符。<br>
-	 * 说明：如果值为负数表示不限制。该限制只对String类型生效，其它类型不生效。特别的，当值为0时，字符串将截断成空字符串。
+	 * 说明：如果值为负数表示不限制。该限制只对String类型生效，其它类型不生效。特别的，当值为0时，字符串将截断成空字符串。<br>
+	 * 注意：在mysql中，varchar的长度是字符数，而text/mediumtext/longtext的长度是字节（不是字符），因此当使用的是text时，请注意估算字符的最大长度
 	 */
 	int maxStringLength() default -1;
 

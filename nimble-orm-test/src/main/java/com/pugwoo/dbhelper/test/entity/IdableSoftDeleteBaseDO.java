@@ -3,7 +3,6 @@ package com.pugwoo.dbhelper.test.entity;
 import com.pugwoo.dbhelper.annotation.Column;
 import lombok.Data;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -29,6 +28,6 @@ public class IdableSoftDeleteBaseDO {
 	private LocalDateTime updateTime;
 
 	@Column(value = "delete_time", setTimeWhenDelete = true)
-	private Timestamp deleteTime;
+	private LocalDateTime deleteTime;
 
 }

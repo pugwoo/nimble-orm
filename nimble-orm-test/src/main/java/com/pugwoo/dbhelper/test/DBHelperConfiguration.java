@@ -32,7 +32,8 @@ public class DBHelperConfiguration {
 
     @Primary
     @Bean("mysqlDataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.mysql.hikari") // 特别注意这一行，这样才能使hikari配置生效，配置加大了连接池的大小
+    // 特别注意这一行，这样才能使hikari配置生效，配置加大了连接池的大小
+    @ConfigurationProperties(prefix = "spring.datasource.mysql.hikari")
     public HikariDataSource mysqlDataSource() {
         return mysqlDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }

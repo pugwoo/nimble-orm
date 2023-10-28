@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.utils;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 
 import java.util.ArrayList;
@@ -18,8 +19,24 @@ public class CommonOps {
         return base + new Random().nextInt(bound);
     }
 
+    public static StudentDO insertOne(DBHelper dbHelper, String name) {
+        StudentDO studentDO = new StudentDO();
+        studentDO.setName(name);
+
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
+        dbHelper.insert(studentDO);
+        return  studentDO;
+    }
+
     public static StudentDO insertOne(DBHelper dbHelper) {
         StudentDO studentDO = new StudentDO();
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
         studentDO.setName(getRandomName("nick"));
         studentDO.setIntro(studentDO.getName().getBytes());
         dbHelper.insert(studentDO);
@@ -34,6 +51,13 @@ public class CommonOps {
         List<StudentDO> list = new ArrayList<StudentDO>();
         for(int i = 0; i < num; i++) {
             StudentDO studentDO = new StudentDO();
+
+            // clickhouse不支持自增id，所以对于clickhouse自动设置一个随机id
+            DatabaseTypeEnum databaseType = dbHelper.getDatabaseType();
+            if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
+                studentDO.setId(new Random().nextLong());
+            }
+
             studentDO.setName(getRandomName(prefix));
             list.add(studentDO);
         }
@@ -61,7 +85,5 @@ public class CommonOps {
 
         return list;
     }
-
-
 
 }
