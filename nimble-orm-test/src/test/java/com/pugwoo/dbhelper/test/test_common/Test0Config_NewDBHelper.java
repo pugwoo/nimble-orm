@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
+import com.pugwoo.dbhelper.test.entity.IdableSoftDeleteBaseDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
@@ -25,16 +26,16 @@ public abstract class Test0Config_NewDBHelper {
 	@Test
 	public void testNewDBHelper() {
 		DBHelper dbHelper2 = new SpringJdbcDBHelper(getJdbcTemplate());
-		assert getDBHelper().getAll(StudentDO.class).size() == dbHelper2.getAll(StudentDO.class).size();
+		assert getDBHelper().getAll(StudentDO.class, "limit 987").size() == dbHelper2.getAll(StudentDO.class, "limit 987").size();
 
 		// named jdbc template并不是必要的，但是保留这个这个口子，两个目的：向下兼容、提供给需要定制化nameJdbc的扩展
 		NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(getJdbcTemplate());
 		SpringJdbcDBHelper dbHelper3 = new SpringJdbcDBHelper();
 		dbHelper3.setJdbcTemplate(getJdbcTemplate());
 		dbHelper3.setNamedParameterJdbcTemplate(namedParameterJdbcTemplate);
-		List<StudentDO> all = getDBHelper().getAll(StudentDO.class);
+		List<StudentDO> all = getDBHelper().getAll(StudentDO.class, "limit 987");
 		assert all.size() == dbHelper3.getRaw(StudentDO.class,
-				"select * from t_student where id in (?)", ListUtils.transform(all, o -> o.getId())).size();
+				"select * from t_student where id in (?) ", ListUtils.transform(all, IdableSoftDeleteBaseDO::getId)).size();
 
 		// 测试获取jdbc
 		assert dbHelper3.getJdbcTemplate().equals(getJdbcTemplate());
