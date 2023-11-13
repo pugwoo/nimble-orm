@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.utils;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 
 import java.util.ArrayList;
@@ -84,6 +85,16 @@ public class CommonOps {
         assert rows == num;
 
         return list;
+    }
+
+    public static SchoolDO insertOneSchoolDO(DBHelper dbHelper, String name) {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName(name);
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            schoolDO.setId(new Random().nextLong());
+        }
+        dbHelper.insert(schoolDO);
+        return schoolDO;
     }
 
 }
