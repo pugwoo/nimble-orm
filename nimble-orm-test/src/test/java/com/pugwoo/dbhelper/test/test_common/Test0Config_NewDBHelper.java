@@ -34,8 +34,11 @@ public abstract class Test0Config_NewDBHelper {
 		dbHelper3.setJdbcTemplate(getJdbcTemplate());
 		dbHelper3.setNamedParameterJdbcTemplate(namedParameterJdbcTemplate);
 		List<StudentDO> all = getDBHelper().getAll(StudentDO.class, "limit 987");
-		assert all.size() == dbHelper3.getRaw(StudentDO.class,
+		System.out.println(all.size());
+		int size = dbHelper3.getRaw(StudentDO.class,
 				"select * from t_student where id in (?) ", ListUtils.transform(all, IdableSoftDeleteBaseDO::getId)).size();
+		System.out.println("==" + size);
+		assert all.size() == size;
 
 		// 测试获取jdbc
 		assert dbHelper3.getJdbcTemplate().equals(getJdbcTemplate());
