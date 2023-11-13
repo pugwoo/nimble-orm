@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.utils;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
+import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 
@@ -23,6 +24,18 @@ public class CommonOps {
     public static StudentDO insertOne(DBHelper dbHelper, String name) {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(name);
+
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(new Random().nextLong());
+        }
+
+        dbHelper.insert(studentDO);
+        return  studentDO;
+    }
+
+    public static StudentDO insertOne(DBHelper dbHelper, Long schoolId) {
+        StudentDO studentDO = new StudentDO();
+        studentDO.setSchoolId(schoolId);
 
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             studentDO.setId(new Random().nextLong());
@@ -95,6 +108,29 @@ public class CommonOps {
         }
         dbHelper.insert(schoolDO);
         return schoolDO;
+    }
+
+    public static CourseDO insertOneCourseDO(DBHelper dbHelper, String name, Long studentId) {
+        CourseDO courseDO = new CourseDO();
+        courseDO.setName(name);
+        courseDO.setStudentId(studentId);
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            courseDO.setId(new Random().nextLong());
+        }
+        dbHelper.insert(courseDO);
+        return courseDO;
+    }
+
+    public static CourseDO insertOneCourseDO(DBHelper dbHelper, String name, Long studentId, boolean isMain) {
+        CourseDO courseDO = new CourseDO();
+        courseDO.setName(name);
+        courseDO.setStudentId(studentId);
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            courseDO.setId(new Random().nextLong());
+        }
+        courseDO.setIsMain(isMain);
+        dbHelper.insert(courseDO);
+        return courseDO;
     }
 
 }
