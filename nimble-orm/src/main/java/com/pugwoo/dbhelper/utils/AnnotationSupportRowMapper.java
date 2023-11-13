@@ -138,7 +138,8 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					return TypeAutoCast.getFromRS(rs, columnName, field);
 				} catch (SQLException e) {
 					String message = e.getMessage();
-					if (!(message.startsWith("Column ") && message.endsWith(" not found."))) {
+					if (!(message.startsWith("Column ") && message.endsWith(" not found.") /*mysql*/ ||
+							message.startsWith("Column ") && message.contains("does not exist") /*clickhouse*/)) {
 						throw e;
 					}
 					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
