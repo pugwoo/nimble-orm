@@ -1,22 +1,22 @@
 create database nimbleorm;
 
 CREATE TABLE nimbleorm.t_student (
-   id Int64,
-   deleted Nullable(UInt8),
-   create_time Nullable(DateTime),
-   update_time Nullable(DateTime),
-   delete_time Nullable(DateTime),
-   name Nullable(String),
-   age Nullable(UInt8),
-   intro Nullable(String),
-   school_id Nullable(Int64),
-   school_snapshot Nullable(String),
-   course_snapshot Nullable(String)
+     id Int64,
+     deleted Nullable(Int64),
+     create_time Nullable(DateTime),
+     update_time Nullable(DateTime),
+     delete_time Nullable(DateTime),
+     name Nullable(String),
+     age Nullable(UInt8),
+     intro Nullable(String),
+     school_id Nullable(Int64),
+     school_snapshot Nullable(String),
+     course_snapshot Nullable(String)
 ) ENGINE=MergeTree ORDER BY(id);
 
 CREATE TABLE nimbleorm.t_student_del (
      id Int64,
-     deleted Nullable(UInt8),
+     deleted Nullable(Int64),
      create_time Nullable(DateTime),
      update_time Nullable(DateTime),
      delete_time Nullable(DateTime),
@@ -51,4 +51,16 @@ CREATE TABLE `t_course` (
      student_id Nullable(Int64),
      name Nullable(String),
      is_main Nullable(UInt8)
+) ENGINE=MergeTree ORDER BY(id);
+
+CREATE TABLE `t_json` (
+      id Int64,
+      json Nullable(String),
+      json2 Nullable(String)
+) ENGINE=MergeTree ORDER BY(id);
+
+CREATE TABLE `t_cas_version` (
+     `id` Int64,
+     `name` Nullable(String),
+     `version` Nullable(Int32)
 ) ENGINE=MergeTree ORDER BY(id);
