@@ -137,7 +137,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 			List<Object> params = new ArrayList<>();
 			SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(list, params, casVersionColumn,
-					keyColumns.get(0), notKeyColumns, clazz);
+					keyColumns.get(0), notKeyColumns, clazz, getDatabaseType());
 			if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
 				return 0; // not need to update, return actually update rows
 			}
@@ -183,7 +183,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		
 		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
+		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql, getDatabaseType());
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
@@ -251,7 +251,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
-		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
+		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql, getDatabaseType()); // 这里values里面的内容会在方法内增加
 		
 		List<Object> tList = new ArrayList<>();
 		tList.add(t);

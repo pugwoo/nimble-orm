@@ -147,7 +147,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 */
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values, getDatabaseType());
 			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
 			List<Object> values = new ArrayList<>();
@@ -258,7 +258,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsert(t);
 		}
 		
-		String sql1 = SQLUtils.getInsertSQL(t, values, isWithNullValue);
+		String sql1 = SQLUtils.getInsertSQL(t, values, isWithNullValue, getDatabaseType());
 		final String sql = addComment(sql1);
 		log(sql, 0, values);
 		

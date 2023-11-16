@@ -216,4 +216,12 @@ public class InnerCommonUtils {
         }
     }
 
+    public static String encodeBase64(byte[] bytes) {
+        return java.util.Base64.getEncoder().encodeToString(bytes);
+    }
+
+    public static byte[] decodeBase64(String str) {
+        return java.util.Base64.getDecoder().decode(str);
+    }
+
 }

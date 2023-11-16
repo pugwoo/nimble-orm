@@ -218,13 +218,13 @@ public class SQLUtils {
 	 * @throws NoKeyColumnAnnotationException 当t的类没有注解任何isKey=true的列时抛出
 	 * @throws NullKeyValueException 当t中的主键都是null时抛出
 	 */
-	public static <T> String getKeysWhereSQL(T t, List<Object> keyValues) 
+	public static <T> String getKeysWhereSQL(T t, List<Object> keyValues, DatabaseTypeEnum databaseType)
 	    throws NoKeyColumnAnnotationException, NullKeyValueException {
 		
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		List<Object> _keyValues = new ArrayList<>();
-		String where = joinWhereAndGetValue(keyFields, "AND", _keyValues, t);
+		String where = joinWhereAndGetValue(keyFields, "AND", _keyValues, t, databaseType);
 		
 		// 检查主键不允许为null
 		for(Object value : _keyValues) {
@@ -260,14 +260,14 @@ public class SQLUtils {
 	 * @param isWithNullValue 标记是否将null字段放到insert语句中
 	 * @return 生成的SQL
 	 */
-	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
+	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue, DatabaseTypeEnum databaseType) {
         StringBuilder sql = new StringBuilder("INSERT INTO ");
 
         List<Field> fields = DOInfoReader.getColumns(t.getClass());
 
         sql.append(getTableName(t.getClass())).append(" (");
         List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
-		String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue);
+		String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue, databaseType);
 
 		sql.append(insertSql);
         sql.append(") VALUES ");
@@ -432,7 +432,8 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> String getInsertSQLForBatchForJDBCTemplate(Collection<T> list, List<Object[]> values) {
+	public static <T> String getInsertSQLForBatchForJDBCTemplate(Collection<T> list, List<Object[]> values,
+																 DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
@@ -448,7 +449,7 @@ public class SQLUtils {
 		boolean isFirst = true;
 		for (T t : list) {
 			List<Object> _values = new ArrayList<>();
-			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
+			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true, databaseType);
 			if (isFirst) {
 				sql.append(insertSql);
 				sql.append(") VALUES ");
@@ -573,9 +574,16 @@ public class SQLUtils {
 			}
 
 			Object value = DOInfoReader.getValue(field, obj);
-			if(value != null && column.isJSON()) {
-				value = NimbleOrmJSON.toJson(value);
+			if(value != null) {
+				if (column.isJSON()) {
+					value = NimbleOrmJSON.toJson(value);
+				}
+				if (databaseType == DatabaseTypeEnum.CLICKHOUSE && field.getType().equals(byte[].class)
+				    && value instanceof byte[]) {
+					value = InnerCommonUtils.encodeBase64((byte[])value);
+				}
 			}
+
 			if (value == null) {
 				sb.append(SQLDialect.getInsertDefaultValue(databaseType));
 			} else {
@@ -627,7 +635,7 @@ public class SQLUtils {
 	 */
 	public static <T> BatchUpdateResultDTO getBatchUpdateSQL(
 			Collection<T> list, List<Object> values, Field casVersionColumn,
-			Field keyColumn, List<Field> notKeyColumns, Class<?> clazz) {
+			Field keyColumn, List<Field> notKeyColumns, Class<?> clazz, DatabaseTypeEnum databaseType) {
 
 		// 1. 找出所有的主键的值，如果值为null，这抛出异常
 		List<Object> keys = new ArrayList<>(list.size());
@@ -697,6 +705,11 @@ public class SQLUtils {
 						if (field.getAnnotation(Column.class).isJSON()) {
 							value = NimbleOrmJSON.toJson(value);
 						}
+						if (databaseType == DatabaseTypeEnum.CLICKHOUSE && field.getType().equals(byte[].class)
+						   && value instanceof byte[]) {
+							value = InnerCommonUtils.encodeBase64((byte[])value);
+						}
+
 						sql.append("?");
 						values.add(value);
 					}
@@ -713,6 +726,11 @@ public class SQLUtils {
 						if (field.getAnnotation(Column.class).isJSON()) {
 							value = NimbleOrmJSON.toJson(value);
 						}
+						if (databaseType == DatabaseTypeEnum.CLICKHOUSE && field.getType().equals(byte[].class)
+								&& value instanceof byte[]) {
+							value = InnerCommonUtils.encodeBase64((byte[])value);
+						}
+
 						sql.append("?");
 						values.add(value);
 					}
@@ -821,7 +839,7 @@ public class SQLUtils {
 	 * @param postSql 附带的where子句
 	 * @return 返回值为null表示不需要更新操作，这个是这个方法特别之处
 	 */
-	public static <T> String getUpdateSQL(T t, List<Object> values, boolean withNull, String postSql) {
+	public static <T> String getUpdateSQL(T t, List<Object> values, boolean withNull, String postSql, DatabaseTypeEnum databaseType) {
 		
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
@@ -832,7 +850,7 @@ public class SQLUtils {
 		sql.append(getTableName(t.getClass())).append(" SET ");
 		
 		List<Object> setValues = new ArrayList<>();
-		String setSql = joinSetAndGetValue(notKeyFields, setValues, t, withNull);
+		String setSql = joinSetAndGetValue(notKeyFields, setValues, t, withNull, databaseType);
 		if(setValues.isEmpty()) {
 			return null; // all field is empty, not need to update
 		}
@@ -840,7 +858,7 @@ public class SQLUtils {
 		values.addAll(setValues);
 		
 		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t, databaseType);
 		// 检查key值是否有null的，不允许有null
 		for(Object v : whereValues) {
 			if(v == null) {
@@ -854,7 +872,7 @@ public class SQLUtils {
 			List<Field> casVersionFields = new ArrayList<>();
 			casVersionFields.add(casVersionField);
 			List<Object> casValues = new ArrayList<>();
-			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
+			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t, databaseType);
 			if(casValues.size() != 1 || casValues.get(0) == null) {
 				throw new CasVersionNotMatchException("casVersion column value is null");
 			}
@@ -933,7 +951,7 @@ public class SQLUtils {
 	 * @param setSql set子句SQL
 	 * @return 生成的SQL
 	 */
-	public static <T> String getCustomUpdateSQL(T t, List<Object> values, String setSql) {
+	public static <T> String getCustomUpdateSQL(T t, List<Object> values, String setSql, DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
@@ -986,7 +1004,7 @@ public class SQLUtils {
 		}
 		
 		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t, databaseType);
 		
 		for(Object value : whereValues) {
 			if(value == null) {
@@ -1000,7 +1018,7 @@ public class SQLUtils {
 			List<Field> casVersionFields = new ArrayList<>();
 			casVersionFields.add(casVersionField);
 			List<Object> casValues = new ArrayList<>();
-			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
+			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t, databaseType);
 			if(casValues.size() != 1 || casValues.get(0) == null) {
 				throw new CasVersionNotMatchException("casVersion column value is null");
 			}
@@ -1019,7 +1037,7 @@ public class SQLUtils {
 	 * @param values 要传回给调用方的更新值
 	 * @return 生成的SQL
 	 */
-	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
+	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values, DatabaseTypeEnum databaseType) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		sql.append(getTableName(t.getClass())).append(" SET ");
@@ -1049,7 +1067,7 @@ public class SQLUtils {
 
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t, databaseType);
 		for(Object value : whereValues) {
 			if(value == null) {
 				throw new NullKeyValueException();
@@ -1099,7 +1117,7 @@ public class SQLUtils {
 	/**
 	 * 获得硬删除SQL
 	 */
-	public static <T> String getDeleteSQL(T t, List<Object> values) {
+	public static <T> String getDeleteSQL(T t, List<Object> values, DatabaseTypeEnum databaseType) {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		StringBuilder sql = new StringBuilder();
@@ -1108,7 +1126,7 @@ public class SQLUtils {
 		sql.append(getTableName(t.getClass()));
 		
 		List<Object> _values = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", _values, t);
+		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", _values, t, databaseType);
 		for(Object value : _values) { // 检查key的值是不是null
 			if(value == null) {
 				throw new NullKeyValueException();
@@ -1518,7 +1536,7 @@ public class SQLUtils {
 	 * @param values where条件的参数值
 	 */
 	private static String joinWhereAndGetValue(List<Field> fields,
-			String logicOperate, List<Object> values, Object obj) {
+			String logicOperate, List<Object> values, Object obj, DatabaseTypeEnum databaseType) {
 		StringBuilder sb = new StringBuilder();
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
@@ -1531,6 +1549,11 @@ public class SQLUtils {
 			if(val != null && column.isJSON()) {
 				val = NimbleOrmJSON.toJson(val);
 			}
+			if (val != null && databaseType == DatabaseTypeEnum.CLICKHOUSE
+					&& fields.get(i).getType().equals(byte[].class) && val instanceof byte[]) {
+				val = InnerCommonUtils.encodeBase64((byte[])val);
+			}
+
 			values.add(val);
 		}
 		return sb.toString();
@@ -1580,7 +1603,7 @@ public class SQLUtils {
      * @param isWithNullValue 是否把null值放到values中
      */
 	private static String joinAndGetValueForInsert(List<Field> fields, String sep,
-			List<Object> values, Object obj, boolean isWithNullValue) {
+			List<Object> values, Object obj, boolean isWithNullValue, DatabaseTypeEnum databaseType) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
 		}
@@ -1596,6 +1619,11 @@ public class SQLUtils {
 			if(value != null && column.isJSON()) {
 				value = NimbleOrmJSON.toJson(value);
 			}
+			if (value != null && databaseType == DatabaseTypeEnum.CLICKHOUSE &&
+					field.getType().equals(byte[].class) && value instanceof byte[]) {
+				value = InnerCommonUtils.encodeBase64((byte[])value);
+			}
+
 			if(isWithNullValue) {
 				values.add(value);
 			} else {
@@ -1631,7 +1659,7 @@ public class SQLUtils {
 	 * @param withNull 当为true时，如果field的值为null，也加入
 	 */
 	private static String joinSetAndGetValue(List<Field> fields,
-			List<Object> values, Object obj, boolean withNull) {
+			List<Object> values, Object obj, boolean withNull, DatabaseTypeEnum databaseType) {
 		StringBuilder sb = new StringBuilder();
 		for (Field field : fields) {
 			Column column = field.getAnnotation(Column.class);
@@ -1653,6 +1681,11 @@ public class SQLUtils {
 				if (value != null && column.isJSON()) {
 					value = NimbleOrmJSON.toJson(value);
 				}
+				if (value != null && databaseType == DatabaseTypeEnum.CLICKHOUSE
+						&& field.getType().equals(byte[].class) && value instanceof byte[]) {
+					value = InnerCommonUtils.encodeBase64((byte[]) value);
+				}
+
 				if (withNull || value != null) {
 					sb.append(getColumnName(column)).append("=?,");
 					values.add(value);

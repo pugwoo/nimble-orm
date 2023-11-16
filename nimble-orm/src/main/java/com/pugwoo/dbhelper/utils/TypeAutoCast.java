@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.utils;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class TypeAutoCast {
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
-	public static Object getFromRS(ResultSet rs, String columnName, Field field) throws Exception {
+	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType) throws Exception {
 		int columnIndex = rs.findColumn(columnName);
 		Object result = rs.getObject(columnIndex);
 		if(result == null) { // 保证null会返回null值
@@ -84,7 +85,7 @@ public class TypeAutoCast {
 				return valStr; // 作为string返回，交由上一级处理
 			}
 		}
-		
+
 		Class<?> clazz = field.getType();
 
 		if(clazz == String.class) {
@@ -103,6 +104,10 @@ public class TypeAutoCast {
 			return result instanceof Byte ? result : rs.getByte(columnIndex);
 		}
 		if(clazz == byte[].class) {
+			if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
+				return InnerCommonUtils.decodeBase64(result instanceof String ? (String) result :
+								rs.getString(columnIndex));
+			}
 			return result instanceof byte[] ? result : rs.getBytes(columnIndex);
 		}
 		if(clazz == Short.class || clazz == short.class) {
