@@ -7,7 +7,7 @@ import com.pugwoo.dbhelper.test.entity.StudentDO;
 import java.util.Date;
 import java.util.List;
 
-public class MyLogChangeInterceptor extends DBHelperInterceptor {
+public class MyLogChangeInterceptor implements DBHelperInterceptor {
 
 	@Override
 	public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {

@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
+import com.pugwoo.dbhelper.test.interceptor.DefaultInterceptor;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -58,7 +59,7 @@ public class DBHelperConfiguration {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
         dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
-        interceptors.add(new com.pugwoo.dbhelper.DBHelperInterceptor());
+        interceptors.add(new DefaultInterceptor());
         dbHelper.setInterceptors(interceptors);
         return dbHelper;
     }
