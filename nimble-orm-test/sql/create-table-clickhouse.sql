@@ -64,3 +64,17 @@ CREATE TABLE `t_cas_version` (
      `name` Nullable(String),
      `version` Nullable(Int32)
 ) ENGINE=MergeTree ORDER BY(id);
+
+CREATE TABLE `t_types` (
+       `id1` Int64,
+       `id2` Int64,
+       `my_byte` Nullable(Byte),
+       `my_short` Nullable(Int16),
+       `my_float` Nullable(Float32),
+       `my_double` Nullable(Float64),
+       `my_decimal` Nullable(DECIMAL(10, 2)),
+       `my_date` Nullable(date),
+       `my_datetime` Nullable(datetime32),
+       `my_timestamp` Nullable(datetime64),
+       `my_mediumint` Nullable(Int32)
+) ENGINE=MergeTree ORDER BY(id1, id2);

@@ -1,4 +1,4 @@
-package com.pugwoo.dbhelper.test;
+package com.pugwoo.dbhelper.test.config;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
@@ -9,7 +9,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -20,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-public class DBHelperConfiguration {
+public class MySQLDBHelperConfiguration {
 
     // mysql
 
@@ -81,27 +80,6 @@ public class DBHelperConfiguration {
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new com.pugwoo.dbhelper.test.interceptor.NotAllowInterceptor());
         dbHelper.setInterceptors(interceptors);
-        return dbHelper;
-    }
-
-    // clickhouse
-
-    @Bean
-    @ConfigurationProperties(prefix = "spring.datasource.clickhouse")
-    public DataSource clickhouseDataSource() {
-        return DataSourceBuilder.create().build();
-    }
-
-    @Bean(name = "clickhouseJdbcTemplate")
-    public JdbcTemplate clickhouseJdbcTemplate(@Qualifier("clickhouseDataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
-    }
-
-    @Bean
-    public DBHelper clickhouseDbHelper(@Qualifier("clickhouseJdbcTemplate") JdbcTemplate jdbcTemplate) {
-        SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
-        dbHelper.turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
         return dbHelper;
     }
 

@@ -29,7 +29,7 @@ public class CommonOps {
             studentDO.setId(new Random().nextLong());
         }
 
-        dbHelper.insert(studentDO);
+        assert dbHelper.insert(studentDO) == 1;
         return  studentDO;
     }
 
@@ -41,8 +41,8 @@ public class CommonOps {
             studentDO.setId(new Random().nextLong());
         }
 
-        dbHelper.insert(studentDO);
-        return  studentDO;
+        assert dbHelper.insert(studentDO) == 1;
+        return studentDO;
     }
 
     public static StudentDO insertOne(DBHelper dbHelper) {
@@ -53,7 +53,7 @@ public class CommonOps {
 
         studentDO.setName(getRandomName("nick"));
         studentDO.setIntro(studentDO.getName().getBytes());
-        dbHelper.insert(studentDO);
+        assert dbHelper.insert(studentDO) == 1;
         return studentDO;
     }
 
@@ -106,7 +106,7 @@ public class CommonOps {
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             schoolDO.setId(new Random().nextLong());
         }
-        dbHelper.insert(schoolDO);
+        assert dbHelper.insert(schoolDO) == 1;
         return schoolDO;
     }
 
@@ -117,7 +117,7 @@ public class CommonOps {
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             courseDO.setId(new Random().nextLong());
         }
-        dbHelper.insert(courseDO);
+        assert dbHelper.insert(courseDO) == 1;
         return courseDO;
     }
 
@@ -129,7 +129,7 @@ public class CommonOps {
             courseDO.setId(new Random().nextLong());
         }
         courseDO.setIsMain(isMain);
-        dbHelper.insert(courseDO);
+        assert dbHelper.insert(courseDO) == 1;
         return courseDO;
     }
 
