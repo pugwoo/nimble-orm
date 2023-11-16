@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.test.entity.*;
@@ -27,7 +28,11 @@ public abstract class Test4Delete_Basic {
         int rows = getDBHelper().delete(StudentDO.class, "where id=?", studentDO.getId());
         assert rows == 1;
         rows = getDBHelper().delete(StudentDO.class, "where id=?", studentDO.getId());
-        assert rows == 0;
+        // clickhouse没有办法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 0;
+        }
+
         assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
@@ -37,7 +42,10 @@ public abstract class Test4Delete_Basic {
         rows = getDBHelper().delete(studentDO);
         assert rows == 1;
         rows = getDBHelper().delete(studentDO);
-        assert rows == 0;
+        // clickhouse没有办法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 0;
+        }
         assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
     }
 
@@ -46,7 +54,11 @@ public abstract class Test4Delete_Basic {
     public void testDeleteWhere() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         assert getDBHelper().delete(StudentDO.class, "where name=?", studentDO.getName()) == 1;
-        assert getDBHelper().delete(StudentDO.class, "where name=?", studentDO.getName()) == 0;
+        int rows = getDBHelper().delete(StudentDO.class, "where name=?", studentDO.getName());
+        // clickhouse没法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 0;
+        }
     }
 
     /**通过key批量删除*/
@@ -56,7 +68,13 @@ public abstract class Test4Delete_Basic {
 
         List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(), random);
         int rows = getDBHelper().delete(insertBatch);
-        assert rows == insertBatch.size();
+        // clickhouse只会返回1
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == insertBatch.size();
+        } else {
+            assert rows == 1;
+        }
+
         for (StudentDO studentDO : insertBatch) {
             assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
         }
@@ -64,15 +82,19 @@ public abstract class Test4Delete_Basic {
         getDBHelper().deleteHard(StudentDO.class, "where 1=1");
         CommonOps.insertBatch(getDBHelper(),random);
         rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1);
-        assert rows == random;
+
+        // clickhouse只会返回1
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == random;
+        } else {
+            assert rows == 1;
+        }
 
         insertBatch = CommonOps.insertBatch(getDBHelper(),random);
 
         // 测试批量删除list是多种class类型
         List<Object> differents = new ArrayList<>(insertBatch);
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("school");
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "school");
         differents.add(schoolDO);
 
         rows = getDBHelper().delete(differents);
@@ -100,6 +122,9 @@ public abstract class Test4Delete_Basic {
     @Test
     public void testTrueDelete() {
         StudentHardDeleteDO studentHardDeleteDO = new StudentHardDeleteDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+        }
         studentHardDeleteDO.setName("john");
         getDBHelper().insert(studentHardDeleteDO);
 
@@ -107,11 +132,18 @@ public abstract class Test4Delete_Basic {
         assert rows == 1;
 
         rows = getDBHelper().delete(StudentHardDeleteDO.class, "where id=?", studentHardDeleteDO.getId());
-        assert rows == 0;
+
+        // clickhouse没有办法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 0;
+        }
 
         // 上下两种写法都可以，但是上面的适合当主键只有一个key的情况
 
         studentHardDeleteDO = new StudentHardDeleteDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+        }
         studentHardDeleteDO.setName("john");
         getDBHelper().insert(studentHardDeleteDO);
 
@@ -119,10 +151,18 @@ public abstract class Test4Delete_Basic {
         assert rows == 1;
 
         rows = getDBHelper().delete(studentHardDeleteDO);
-        assert rows == 0;
+        // clickhouse没有办法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 0;
+        } else {
+            assert rows == 1;
+        }
 
         //
         studentHardDeleteDO = new StudentHardDeleteDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+        }
         studentHardDeleteDO.setName("john");
         getDBHelper().insert(studentHardDeleteDO);
 
@@ -130,14 +170,21 @@ public abstract class Test4Delete_Basic {
         assert rows > 0;
 
         rows = getDBHelper().delete(StudentHardDeleteDO.class, "where name=?", "john");
-        assert rows == 0;
-
+        // clickhouse没有办法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 0;
+        } else {
+            assert rows == 1;
+        }
 
         // 批量物理删除
         List<StudentHardDeleteDO> list = new ArrayList<StudentHardDeleteDO>();
         int size = CommonOps.getRandomInt(10, 10);
         for(int i = 0; i < size; i++) {
             studentHardDeleteDO = new StudentHardDeleteDO();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+            }
             studentHardDeleteDO.setName(CommonOps.getRandomName("jack"));
             getDBHelper().insert(studentHardDeleteDO);
 
@@ -150,7 +197,12 @@ public abstract class Test4Delete_Basic {
         }
 
         rows = getDBHelper().delete(list);
-        assert rows == list.size();
+        // clickhouse没有办法正确返回修改条数
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == list.size();
+        } else {
+            assert rows == 1;
+        }
 
         List<StudentHardDeleteDO> all = getDBHelper().getAll(StudentHardDeleteDO.class, "where id in (?)", ids);
         assert all.isEmpty();

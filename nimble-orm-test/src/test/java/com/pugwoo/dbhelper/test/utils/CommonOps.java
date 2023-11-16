@@ -69,7 +69,7 @@ public class CommonOps {
             // clickhouse不支持自增id，所以对于clickhouse自动设置一个随机id
             DatabaseTypeEnum databaseType = dbHelper.getDatabaseType();
             if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-                studentDO.setId(new Random().nextLong());
+                studentDO.setId(Math.abs(new Random().nextLong()));
             }
 
             studentDO.setName(getRandomName(prefix));
