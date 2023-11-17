@@ -57,7 +57,7 @@ public abstract class Test7Interceptor_Default {
 		for (int i = 0; i < 10; i++) {
 			StudentDO s = new StudentDO();
 			if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-				s.setId(Math.abs(new Random().nextLong()));
+				s.setId(CommonOps.getRandomLong());
 			}
 			s.setName(UUID.randomUUID().toString().replace("-", ""));
 			students.add(s);
@@ -67,7 +67,7 @@ public abstract class Test7Interceptor_Default {
 
 		// 转换成set再插入一次
 		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-			ListUtils.forEach(students, studentDO -> studentDO.setId(Math.abs(new Random().nextLong())));
+			ListUtils.forEach(students, studentDO -> studentDO.setId(CommonOps.getRandomLong()));
 		} else {
 			ListUtils.forEach(students, studentDO -> studentDO.setId(null));
 		}

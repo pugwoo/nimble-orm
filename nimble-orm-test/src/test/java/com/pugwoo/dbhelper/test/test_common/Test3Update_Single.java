@@ -75,7 +75,7 @@ public abstract class Test3Update_Single {
     public void testCasVersion() {
         CasVersionDO casVersionDO = new CasVersionDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            casVersionDO.setId(Math.abs(new Random().nextInt()));
+            casVersionDO.setId(CommonOps.getRandomInt());
         }
         casVersionDO.setName("nick");
 
@@ -140,7 +140,7 @@ public abstract class Test3Update_Single {
         // 测试CAS版本字段是Long的情况
         CasVersionLongDO casVersionLongDO = new CasVersionLongDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            casVersionLongDO.setId(Math.abs(new Random().nextInt()));
+            casVersionLongDO.setId(CommonOps.getRandomInt());
         }
         casVersionLongDO.setName("nick");
 

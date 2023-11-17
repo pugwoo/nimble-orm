@@ -78,3 +78,22 @@ CREATE TABLE `t_types` (
        `my_timestamp` Nullable(datetime64),
        `my_mediumint` Nullable(Int32)
 ) ENGINE=MergeTree ORDER BY(id1, id2);
+
+CREATE TABLE `t_json_raw` (
+      `id` Int64,
+      `json` Nullable(String)
+) ENGINE=MergeTree ORDER BY(id);
+
+CREATE TABLE `t_area` (
+      `id` Int64,
+      `layer_code` Nullable(String),
+      `area_code` Nullable(String)
+) ENGINE=MergeTree ORDER BY(id);
+
+CREATE TABLE `t_area_location` (
+       `id` Int64,
+       `layer_code` Nullable(String),
+       `area_code` Nullable(String),
+       `longitude` Nullable(decimal(10,6)),
+       `latitude` Nullable(decimal(10,6))
+) ENGINE=MergeTree ORDER BY(id);

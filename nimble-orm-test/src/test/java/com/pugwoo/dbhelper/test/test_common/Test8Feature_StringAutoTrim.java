@@ -3,8 +3,12 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
+
+import java.util.Random;
 
 public abstract class Test8Feature_StringAutoTrim {
 
@@ -33,6 +37,9 @@ public abstract class Test8Feature_StringAutoTrim {
     @Test
     public void testTrim() {
         SchoolTableTrimDO schoolTableTrimDO = new SchoolTableTrimDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            schoolTableTrimDO.setId(CommonOps.getRandomLong());
+        }
         schoolTableTrimDO.setName("  123  ");
         getDBHelper().insert(schoolTableTrimDO);
         assert schoolTableTrimDO.getName().equals("123");
@@ -47,6 +54,10 @@ public abstract class Test8Feature_StringAutoTrim {
 
         SchoolColumnTrimDO schoolColumnTrimDO = new SchoolColumnTrimDO();
         schoolColumnTrimDO.setName("  123  ");
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            schoolColumnTrimDO.setId(CommonOps.getRandomLong());
+        }
+
         getDBHelper().insert(schoolColumnTrimDO);
         assert schoolColumnTrimDO.getName().equals("123");
         assert getDBHelper().getOne(SchoolColumnTrimDO.class, "where id=?", schoolColumnTrimDO.getId())

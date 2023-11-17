@@ -123,7 +123,7 @@ public abstract class Test4Delete_Basic {
     public void testTrueDelete() {
         StudentHardDeleteDO studentHardDeleteDO = new StudentHardDeleteDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+            studentHardDeleteDO.setId(CommonOps.getRandomLong());
         }
         studentHardDeleteDO.setName("john");
         getDBHelper().insert(studentHardDeleteDO);
@@ -142,7 +142,7 @@ public abstract class Test4Delete_Basic {
 
         studentHardDeleteDO = new StudentHardDeleteDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+            studentHardDeleteDO.setId(CommonOps.getRandomLong());
         }
         studentHardDeleteDO.setName("john");
         getDBHelper().insert(studentHardDeleteDO);
@@ -161,7 +161,7 @@ public abstract class Test4Delete_Basic {
         //
         studentHardDeleteDO = new StudentHardDeleteDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+            studentHardDeleteDO.setId(CommonOps.getRandomLong());
         }
         studentHardDeleteDO.setName("john");
         getDBHelper().insert(studentHardDeleteDO);
@@ -183,7 +183,7 @@ public abstract class Test4Delete_Basic {
         for(int i = 0; i < size; i++) {
             studentHardDeleteDO = new StudentHardDeleteDO();
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                studentHardDeleteDO.setId(Math.abs(new Random().nextLong()));
+                studentHardDeleteDO.setId(CommonOps.getRandomLong());
             }
             studentHardDeleteDO.setName(CommonOps.getRandomName("jack"));
             getDBHelper().insert(studentHardDeleteDO);

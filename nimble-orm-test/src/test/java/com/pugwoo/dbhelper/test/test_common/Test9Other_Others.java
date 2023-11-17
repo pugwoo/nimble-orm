@@ -1,7 +1,10 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
@@ -18,6 +21,7 @@ import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.TypeAutoCast;
 import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -40,6 +44,9 @@ public abstract class Test9Other_Others {
         AreaDO area = new AreaDO();
         area.setLayerCode("CITY");
         area.setAreaCode("SZ");
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            area.setId(CommonOps.getRandomLong());
+        }
 
         getDBHelper().insert(area);
 
@@ -48,6 +55,9 @@ public abstract class Test9Other_Others {
         areaLocationDO.setAreaCode("SZ");
         areaLocationDO.setLongitude(new BigDecimal("120"));
         areaLocationDO.setLatitude(new BigDecimal("22"));
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            areaLocationDO.setId(CommonOps.getRandomLong());
+        }
 
         getDBHelper().insert(areaLocationDO);
 
@@ -59,15 +69,20 @@ public abstract class Test9Other_Others {
     @Test 
     public void testTypes() {
         TypesDO typesDO = new TypesDO();
-        typesDO.setId1(new Random().nextLong());
-        typesDO.setId2(new Random().nextLong());
+        typesDO.setId1(CommonOps.getRandomLong());
+        typesDO.setId2(CommonOps.getRandomLong());
         typesDO.setMyByte("a".getBytes()[0]);
         typesDO.setS(Short.valueOf("11"));
         typesDO.setMyFloat(11.1f);
         typesDO.setMyDouble(22.2);
         typesDO.setMyDecimal(new BigDecimal("11.22"));
         typesDO.setMyDate(new java.sql.Date(new Date().getTime()));
-        typesDO.setMyTime(new java.sql.Time(new Date().getTime()));
+
+        // clickhouse不支持单独的时间类型(即没有日期的时间)
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            typesDO.setMyTime(new java.sql.Time(new Date().getTime()));
+        }
+
         typesDO.setMyTimestamp(new java.sql.Timestamp(new Date().getTime()));
         typesDO.setMyMediumint(123456);
 
@@ -247,6 +262,17 @@ public abstract class Test9Other_Others {
         private String name;
     }
 
+    @Data
+    @Table(value = "", sameTableNameAs = StudentDO.class)
+    public static class StudentForGroupDO {
+        @Column(value = "id1", computed = "max(id)")
+        private Long id;
+        @Column(value = "name1", computed = "max(name)")
+        private String name;
+        @Column(value = "age1", computed = "max(age)")
+        private Integer age;
+    }
+
     @Test
     public void testWhereSQL() {
         int num1 = 3 + new Random().nextInt(5);
@@ -302,50 +328,51 @@ public abstract class Test9Other_Others {
             assert all.get(i).getId() > all.get(i + 1).getId();
         }
 
+        whereSQL.resetOrderBy();
         whereSQL.addGroupBy("age");
-        assert  getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
+        assert  getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupBy("id", "name");
-        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupByWithParam("id + ?", 1); // 重复group id效果一样
         whereSQL.having("count(*) = ?", 0);
-        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
+        assert getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
 
         whereSQL.having("count(*) > ?", 0);
-        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.having("count(*) > 0");
-        assert getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetOrderBy();
-        whereSQL.addOrderBy("name desc", "age");
-        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == num1 + num2;
-        for (int i = 0; i < all.size() - 1; i++) {
-            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        whereSQL.addOrderBy("max(name) desc", "max(age)");
+        List<StudentForGroupDO> all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == num1 + num2;
+        for (int i = 0; i < all2.size() - 1; i++) {
+            assert all2.get(i).getName().compareTo(all2.get(i + 1).getName()) > 0;
         }
 
         whereSQL.resetOrderBy();
-        whereSQL.addOrderByWithParam("concat(name,?) desc", "abc");
-        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == num1 + num2;
-        for (int i = 0; i < all.size() - 1; i++) {
-            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        whereSQL.addOrderByWithParam("concat(max(name),?) desc", "abc");
+        all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == num1 + num2;
+        for (int i = 0; i < all2.size() - 1; i++) {
+            assert all2.get(i).getName().compareTo(all2.get(i + 1).getName()) > 0;
         }
 
         // test limit
 
         whereSQL.limit(5);
 
-        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == 5;
+        all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == 5;
 
         whereSQL.limit(3, 3);
-        all = getDBHelper().getAll(StudentDO.class, whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == 3;
+        all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == 3;
     }
 
     @Test
@@ -374,9 +401,9 @@ public abstract class Test9Other_Others {
         List<StudentDO> raw = getDBHelper().getRaw(StudentDO.class, "select *from t_student where id in (:studentIds)", params);
         assert raw.size() == 10;
 
-        ListUtils.sortAscNullLast(studentIds);
+        ListUtils.sortAscNullLast(studentIds, o -> o);
         List<Long> studentIds2 = ListUtils.transform(raw, o -> o.getId());
-        ListUtils.sortAscNullLast(studentIds2);
+        ListUtils.sortAscNullLast(studentIds2, o -> o);
 
         assert Objects.equals(studentIds, studentIds2);
     }
@@ -440,50 +467,61 @@ public abstract class Test9Other_Others {
             assert all.get(i).getId() > all.get(i + 1).getId();
         }
 
+        whereSQL.resetOrderBy();
         whereSQL.addGroupBy("age");
-        assert  getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
+        assert  getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == 1;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupBy("id", "name");
-        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " +
+                        whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetGroupBy();
         whereSQL.addGroupByWithParam("id + :one", MapUtils.of("one",1)); // 重复group id效果一样
         whereSQL.having("count(*) = :zero", MapUtils.of("zero",0));
-        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == 0;
+        assert getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " +whereSQL.getSQL(), whereSQL.getParams()).isEmpty();
 
         whereSQL.having("count(*) > :zero", MapUtils.of("zero",0));
-        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.having("count(*) > 0");
-        assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
+        assert getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " +whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
         whereSQL.resetOrderBy();
-        whereSQL.addOrderBy("name desc", "age");
-        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " +whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == num1 + num2;
-        for (int i = 0; i < all.size() - 1; i++) {
-            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        whereSQL.addOrderBy("max(name) desc", "max(age)");
+        List<StudentForGroupDO> all2 = getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " +whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == num1 + num2;
+        for (int i = 0; i < all2.size() - 1; i++) {
+            assert all2.get(i).getName().compareTo(all2.get(i + 1).getName()) > 0;
         }
 
         whereSQL.resetOrderBy();
-        whereSQL.addOrderByWithParam("concat(name,:abcname) desc", MapUtils.of("abcname","abc"));
-        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == num1 + num2;
-        for (int i = 0; i < all.size() - 1; i++) {
-            assert all.get(i).getName().compareTo(all.get(i + 1).getName()) > 0;
+        whereSQL.addOrderByWithParam("concat(max(name),:abcname) desc", MapUtils.of("abcname","abc"));
+        all2 = getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == num1 + num2;
+        for (int i = 0; i < all2.size() - 1; i++) {
+            assert all2.get(i).getName().compareTo(all2.get(i + 1).getName()) > 0;
         }
 
         // test limit
 
         whereSQL.limit(5);
 
-        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == 5;
+        all2 = getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == 5;
 
         whereSQL.limit(3, 3);
-        all = getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams());
-        assert all.size() == 3;
+        all2 = getDBHelper().getRaw(StudentForGroupDO.class,
+                "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " + whereSQL.getSQL(), whereSQL.getParams());
+        assert all2.size() == 3;
     }
 
     @Test

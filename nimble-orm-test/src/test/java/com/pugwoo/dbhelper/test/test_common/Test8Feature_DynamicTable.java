@@ -1,17 +1,16 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.test.entity.JsonDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentNoTableNameDO;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class Test8Feature_DynamicTable {
 
@@ -91,6 +90,9 @@ public abstract class Test8Feature_DynamicTable {
 
         // 插入
         StudentNoTableNameDO studentNoTableNameDO = new StudentNoTableNameDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentNoTableNameDO.setId(CommonOps.getRandomLong());
+        }
         studentNoTableNameDO.setName("nick");
 
         getDBHelper().insert(studentNoTableNameDO);

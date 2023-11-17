@@ -3,10 +3,14 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.ScriptErrorException;
 import com.pugwoo.dbhelper.test.entity.StudentScriptDO;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.utils.ScriptUtils;
 import org.junit.jupiter.api.Test;
+
+import java.util.Random;
 
 public abstract class Test9Other_Scripts {
 
@@ -15,6 +19,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testInsertScript() {
         StudentScriptDO studentDO = new StudentScriptDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(studentDO);
 
         StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
@@ -26,6 +33,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testUpdateScript1() {
         StudentScriptDO studentDO = new StudentScriptDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(studentDO);
 
         StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
@@ -38,6 +48,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testUpdateScript2() {
         StudentScriptDO studentDO = new StudentScriptDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(studentDO);
 
         StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
@@ -51,6 +64,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testUpdateScript3() {
         StudentScriptDO studentDO = new StudentScriptDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(studentDO);
 
         StudentScriptDO student2 = getDBHelper().getByKey(StudentScriptDO.class, studentDO.getId());
@@ -63,6 +79,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testDeleteScript() {
         StudentScriptDO studentDO = new StudentScriptDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(studentDO);
 
         getDBHelper().delete(studentDO);
@@ -74,6 +93,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testDeleteScript2() {
         StudentScriptDO studentDO = new StudentScriptDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(studentDO);
 
         getDBHelper().delete(StudentScriptDO.class, "where id=?", studentDO.getId());
@@ -85,6 +107,9 @@ public abstract class Test9Other_Scripts {
     @Test
     public void testWrongScript() {
         StudentTestScriptErrorDO student = new StudentTestScriptErrorDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            student.setId(CommonOps.getRandomLong());
+        }
 
         int i = 0;
         try {

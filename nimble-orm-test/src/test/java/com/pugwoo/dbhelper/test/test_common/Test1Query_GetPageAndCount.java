@@ -197,7 +197,7 @@ public abstract class Test1Query_GetPageAndCount {
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("sysu");
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            schoolDO.setId(new Random().nextLong());
+            schoolDO.setId(CommonOps.getRandomLong());
         }
         getDBHelper().insert(schoolDO);
         assert schoolDO.getId() != null;

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,11 @@ public abstract class Test8Feature_Comment {
 
     @Test
     public void testGlobalComment() throws Exception {
+        // 暂不支持clickhouse，clickhouse不支持传递注释
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            return;
+        }
+
         String globalComment = UUID.randomUUID().toString();
         DBHelper.setGlobalComment(globalComment);
 
@@ -48,6 +54,11 @@ public abstract class Test8Feature_Comment {
 
     @Test
     public void testLocalComment() throws Exception {
+        // 暂不支持clickhouse，clickhouse不支持传递注释
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            return;
+        }
+
         String localComment = UUID.randomUUID().toString();
         DBHelper.setLocalComment(localComment);
 

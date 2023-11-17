@@ -30,7 +30,7 @@ public abstract class Test2Insert_Basic {
         studentDO.setName(uuidName());
         studentDO.setAge(12);
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         getDBHelper().insert(studentDO);
@@ -42,7 +42,7 @@ public abstract class Test2Insert_Basic {
         // 插入插入null值
         studentDO = new StudentDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         } else {
             studentDO.setId(null);
         }
@@ -194,7 +194,7 @@ public abstract class Test2Insert_Basic {
         // studentDO.setAge(28);
 
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         int row = getDBHelper().insert(studentDO); // 如果值为null，则用数据库默认值
@@ -209,7 +209,7 @@ public abstract class Test2Insert_Basic {
             stu.setName("test" + i);
             stu.setAge(i);
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                stu.setId(new Random().nextLong());
+                stu.setId(CommonOps.getRandomLong());
             }
             students.add(stu);
         }
@@ -223,7 +223,7 @@ public abstract class Test2Insert_Basic {
             stu.setName("test" + i);
             stu.setAge(i);
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                stu.setId(new Random().nextLong());
+                stu.setId(CommonOps.getRandomLong());
             }
             studentSet.add(stu);
         }
@@ -233,7 +233,7 @@ public abstract class Test2Insert_Basic {
         // 测试random值
         StudentRandomNameDO studentRandomNameDO = new StudentRandomNameDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentRandomNameDO.setId(new Random().nextLong());
+            studentRandomNameDO.setId(CommonOps.getRandomLong());
         }
         getDBHelper().insert(studentRandomNameDO);
         assert studentRandomNameDO.getId() != null;
@@ -264,7 +264,7 @@ public abstract class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
         assert getDBHelper().insertOrUpdateWithNull(null) == 0;
 
@@ -293,7 +293,7 @@ public abstract class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) { // clickhouse不支持自增id
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
         assert getDBHelper().insertOrUpdate(null) == 0;
         assert getDBHelper().insertOrUpdate((StudentDO) null) == 0;
@@ -384,7 +384,7 @@ public abstract class Test2Insert_Basic {
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             for (StudentDO stu :students) {
                 if (stu.getId() == null) {
-                    stu.setId(new Random().nextLong());
+                    stu.setId(CommonOps.getRandomLong());
                 }
             }
             // clickhouse因为没有办法设置自增，所以没有办法正确用insertOrUpdate，因此这里就先insert
@@ -429,7 +429,7 @@ public abstract class Test2Insert_Basic {
         List<StudentNoKeyDO> studentDOS = new ArrayList<>();
         for (int i = 0; i < 2; i++) { // 这个实际上会有很小概率的偶发重复key，但是概率很低
             StudentNoKeyDO s = new StudentNoKeyDO();
-            s.setId((long) -Math.abs(new Random().nextInt())); // 取负值，这样不会影响自增
+            s.setId((long) -CommonOps.getRandomInt()); // 取负值，这样不会影响自增
             s.setName(UUID.randomUUID().toString().replace("-", ""));
             studentDOS.add(s);
         }

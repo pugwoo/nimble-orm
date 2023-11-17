@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.wooutils.collect.ListUtils;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,11 @@ public abstract class Test8Feature_ExecuteRaw {
     public void testCreateTruncateDropTable() {
         String name = UUID.randomUUID().toString().replace("-", "");
 
-        getDBHelper().executeRaw("create table t_raw_" + name + "(NAME varchar(1024))");
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            getDBHelper().executeRaw("create table t_raw_" + name + "(name String) ENGINE=MergeTree ORDER BY(name)");
+        } else {
+            getDBHelper().executeRaw("create table t_raw_" + name + "(name varchar(1024))");
+        }
 
         assert getDBHelper().executeRaw("insert into t_raw_" + name + "(name)values(?)", name) == 1;
 

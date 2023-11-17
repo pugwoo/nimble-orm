@@ -24,7 +24,7 @@ public abstract class Test4Delete_SoftDeleteTable {
         StudentDO studentDO = studentDOS.get(0);
         studentDO.setAge(new Random().nextInt(100));
         studentDO.setIntro("i like basketball".getBytes());
-        long schoolId = new Random().nextLong();
+        long schoolId = CommonOps.getRandomLong();
         studentDO.setSchoolId(schoolId % 100000L);
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setId(studentDO.getSchoolId());
@@ -34,7 +34,7 @@ public abstract class Test4Delete_SoftDeleteTable {
         List<CourseDO> courses = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             CourseDO courseDO = new CourseDO();
-            courseDO.setId(new Random().nextLong() % 100000L);
+            courseDO.setId(CommonOps.getRandomLong() % 100000L);
             courseDO.setName(UUID.randomUUID().toString());
             courses.add(courseDO);
         }

@@ -236,7 +236,7 @@ public abstract class Test3Update_Batch {
             for (int i = 0; i < 4; i++) {
                 JsonDO jsonDO = new JsonDO();
                 if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                    jsonDO.setId(new Random().nextLong());
+                    jsonDO.setId(CommonOps.getRandomLong());
                 }
                 jsonDO.setJson2(MapUtils.of("one", UUID.randomUUID().toString(),
                         "two", UUID.randomUUID().toString()));
@@ -268,7 +268,7 @@ public abstract class Test3Update_Batch {
             for (int i = 0; i < 3; i++) {
                 CasVersionWithJsonDO jsonDO = new CasVersionWithJsonDO();
                 if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                    jsonDO.setId(new Random().nextInt());
+                    jsonDO.setId(CommonOps.getRandomInt());
                 }
                 jsonDO.setName(MapUtils.of("a",
                         UUID.randomUUID().toString().replace("-","").substring(0, 16)));

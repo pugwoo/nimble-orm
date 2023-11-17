@@ -13,6 +13,16 @@ import java.util.UUID;
 
 public class CommonOps {
 
+    public static long getRandomLong() {
+        long result = Math.abs(new Random().nextLong());
+        return result == 0 ? result + 1 + Math.abs(new Random().nextLong()) : result;
+    }
+
+    public static int getRandomInt() {
+        int result = Math.abs(new Random().nextInt());
+        return result == 0 ? result + 1 + Math.abs(new Random().nextInt()) : result;
+    }
+
     public static String getRandomName(String prefix) {
         return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
@@ -26,7 +36,7 @@ public class CommonOps {
         studentDO.setName(name);
 
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         assert dbHelper.insert(studentDO) == 1;
@@ -38,7 +48,7 @@ public class CommonOps {
         studentDO.setSchoolId(schoolId);
 
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         assert dbHelper.insert(studentDO) == 1;
@@ -48,7 +58,7 @@ public class CommonOps {
     public static StudentDO insertOne(DBHelper dbHelper) {
         StudentDO studentDO = new StudentDO();
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         studentDO.setName(getRandomName("nick"));
@@ -69,7 +79,7 @@ public class CommonOps {
             // clickhouse不支持自增id，所以对于clickhouse自动设置一个随机id
             DatabaseTypeEnum databaseType = dbHelper.getDatabaseType();
             if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-                studentDO.setId(Math.abs(new Random().nextLong()));
+                studentDO.setId(CommonOps.getRandomLong());
             }
 
             studentDO.setName(getRandomName(prefix));
@@ -104,7 +114,7 @@ public class CommonOps {
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName(name);
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            schoolDO.setId(new Random().nextLong());
+            schoolDO.setId(CommonOps.getRandomLong());
         }
         assert dbHelper.insert(schoolDO) == 1;
         return schoolDO;
@@ -115,7 +125,7 @@ public class CommonOps {
         courseDO.setName(name);
         courseDO.setStudentId(studentId);
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            courseDO.setId(new Random().nextLong());
+            courseDO.setId(CommonOps.getRandomLong());
         }
         assert dbHelper.insert(courseDO) == 1;
         return courseDO;
@@ -126,7 +136,7 @@ public class CommonOps {
         courseDO.setName(name);
         courseDO.setStudentId(studentId);
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            courseDO.setId(new Random().nextLong());
+            courseDO.setId(CommonOps.getRandomLong());
         }
         courseDO.setIsMain(isMain);
         assert dbHelper.insert(courseDO) == 1;

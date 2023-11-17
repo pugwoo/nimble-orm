@@ -71,7 +71,7 @@ public abstract class Test4Delete_HardDelete {
             CasVersionDO d = new CasVersionDO();
             d.setName(getUuidName());
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                d.setId(Math.abs(new Random().nextInt()));
+                d.setId(CommonOps.getRandomInt());
             }
             getDBHelper().insert(d);
             list.add(d);
@@ -99,7 +99,7 @@ public abstract class Test4Delete_HardDelete {
             CasVersionDO d = new CasVersionDO();
             d.setName(getUuidName());
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                d.setId(Math.abs(new Random().nextInt()));
+                d.setId(CommonOps.getRandomInt());
             }
             getDBHelper().insert(d);
             list.add(d);

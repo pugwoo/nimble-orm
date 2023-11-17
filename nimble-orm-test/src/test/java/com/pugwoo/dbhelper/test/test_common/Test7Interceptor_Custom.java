@@ -56,7 +56,7 @@ public abstract class Test7Interceptor_Custom {
 		for (int i = 0; i < 10; i++) {
 			StudentDO s = new StudentDO();
 			if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-				s.setId(Math.abs(new Random().nextLong()));
+				s.setId(CommonOps.getRandomLong());
 			}
 			s.setName(UUID.randomUUID().toString().replace("-", ""));
 			students.add(s);
@@ -68,7 +68,7 @@ public abstract class Test7Interceptor_Custom {
 		ListUtils.forEach(students, studentDO -> studentDO.setId(null));
 
 		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-			ListUtils.forEach(students, studentDO -> studentDO.setId(Math.abs(new Random().nextLong())));
+			ListUtils.forEach(students, studentDO -> studentDO.setId(CommonOps.getRandomLong()));
 		}
 
 		Set<StudentDO> students2 = new HashSet<>(students);
@@ -77,10 +77,10 @@ public abstract class Test7Interceptor_Custom {
 
 	@Test 
 	public void testMultiKeyUpdateAll() {
-		Long long1 = new Random().nextLong();
-		Long long2 = new Random().nextLong();
-		Long long3 = new Random().nextLong();
-		Long long4 = new Random().nextLong();
+		Long long1 = CommonOps.getRandomLong();
+		Long long2 = CommonOps.getRandomLong();
+		Long long3 = CommonOps.getRandomLong();
+		Long long4 = CommonOps.getRandomLong();
 
 		TypesDO typesDO1 = new TypesDO();
 		typesDO1.setId1(long1);
