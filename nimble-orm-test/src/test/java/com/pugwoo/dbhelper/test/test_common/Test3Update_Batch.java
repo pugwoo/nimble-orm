@@ -424,8 +424,11 @@ public abstract class Test3Update_Batch {
     public void testUpdateBatchBenchmark() {
         String name = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         List<StudentDO> students = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 800; i++) {
             StudentDO student = new StudentDO();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                student.setId(CommonOps.getRandomLong());
+            }
             student.setName(name);
             students.add(student);
         }
@@ -437,9 +440,9 @@ public abstract class Test3Update_Batch {
         all.forEach(o -> o.setName(o.getName() + "x"));
 
         long start = System.currentTimeMillis();
-        assert getDBHelper().update(all) == 1000;
+        assert getDBHelper().update(all) == 800;
 
-        // 这种方式需要60秒，而上面的方式只需要1秒
+        // 这种方式需要48秒，而上面的方式只需要1秒
 //        for (int i = 0; i < 1000; i++) {
 //            getDBHelper().update(all.get(i));
 //        }

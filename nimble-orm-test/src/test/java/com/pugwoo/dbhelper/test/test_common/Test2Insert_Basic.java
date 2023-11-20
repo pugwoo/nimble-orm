@@ -60,6 +60,9 @@ public abstract class Test2Insert_Basic {
         List<StudentDO> list = new ArrayList<>();
         for (int i = 0; i < TOTAL; i++) {
             StudentDO studentDO = new StudentDO();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentDO.setId(CommonOps.getRandomLong());
+            }
             studentDO.setName(uuidName());
             list.add(studentDO);
         }
@@ -88,6 +91,9 @@ public abstract class Test2Insert_Basic {
         List<Map<String, Object>> list = new ArrayList<>();
         for (int i = 0; i < TOTAL - TOTAL / 2; i++) {
             Map<String, Object> studentMap = new HashMap<>();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentMap.put("id", CommonOps.getRandomLong());
+            }
             studentMap.put("deleted", 0);
             studentMap.put("name", uuidName);
             studentMap.put("age", 0);
@@ -96,6 +102,9 @@ public abstract class Test2Insert_Basic {
         }
         for (int i = 0; i < TOTAL / 2; i++) {
             Map<String, Object> studentMap = new HashMap<>();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentMap.put("id", CommonOps.getRandomLong());
+            }
             studentMap.put("deleted", 0);
             studentMap.put("name", uuidName);
             // 故意少掉2个属性
@@ -124,14 +133,27 @@ public abstract class Test2Insert_Basic {
         cols.add("name");
         cols.add("age");
         cols.add("school_id");
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            cols.add("id");
+        }
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < TOTAL - 3; i++) {
-            Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
-            data.add(args);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                Object[] args = new Object[]{0, uuidName, "0", random.nextInt(), CommonOps.getRandomLong()}; // age故意用字符串，测试转换
+                data.add(args);
+            } else {
+                Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
+                data.add(args);
+            }
         }
         for (int i = 0; i < 3; i++) {
-            Object[] args = new Object[]{0, uuidName, null, null}; // 加几个有null值的
-            data.add(args);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                Object[] args = new Object[]{0, uuidName, null, null, CommonOps.getRandomLong()}; // 加几个有null值的
+                data.add(args);
+            } else {
+                Object[] args = new Object[]{0, uuidName, null, null}; // 加几个有null值的
+                data.add(args);
+            }
         }
 
         getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
@@ -319,6 +341,10 @@ public abstract class Test2Insert_Basic {
 
     @Test
     public void testInsertOrUpdateNoKeyDO() {
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            return; // clickhouse没有id的插入，会导致插入id被设置为0，有重复，影响后续单元测试，因此为了避免影响单元测试，这里不测试
+        }
+
         NoKeyStudentDO student = new NoKeyStudentDO();
         student.setName(uuidName());
 

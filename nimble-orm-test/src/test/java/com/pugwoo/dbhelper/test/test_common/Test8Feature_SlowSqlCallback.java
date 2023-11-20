@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -70,10 +71,16 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         List<StudentDO> students = new ArrayList<>();
         StudentDO stu1 = new StudentDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            stu1.setId(CommonOps.getRandomLong());
+        }
         stu1.setName(UUID.randomUUID().toString().replace("-", ""));
         students.add(stu1);
 
         StudentDO stu2 = new StudentDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            stu2.setId(CommonOps.getRandomLong());
+        }
         stu2.setName(UUID.randomUUID().toString().replace("-", ""));
         students.add(stu2);
 
@@ -99,10 +106,16 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         List<StudentDO> students = new ArrayList<>();
         StudentDO stu1 = new StudentDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            stu1.setId(CommonOps.getRandomLong());
+        }
         stu1.setName(UUID.randomUUID().toString().replace("-", ""));
         students.add(stu1);
 
         StudentDO stu2 = new StudentDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            stu2.setId(CommonOps.getRandomLong());
+        }
         stu2.setName(UUID.randomUUID().toString().replace("-", ""));
         students.add(stu2);
 
