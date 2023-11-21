@@ -89,14 +89,14 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		String sql;
 		List<Object> values = new ArrayList<>();
 		if (isHard || softDelete == null) { // 物理删除
-			sql = SQLUtils.getDeleteSQL(t, values, getDatabaseType());
+			sql = SQLUtils.getDeleteSQL(getDatabaseType(), t, values);
 		} else { // 软删除
 			// 对于软删除，当有拦截器时，可能使用者会修改数据以记录删除时间或删除人信息等，此时要先update该条数据
 			if(InnerCommonUtils.isNotEmpty(interceptors)) {
 				updateForDelete(t);
 			}
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
-			sql = SQLUtils.getSoftDeleteSQL(t, softDeleteColumn, values, getDatabaseType());
+			sql = SQLUtils.getSoftDeleteSQL(getDatabaseType(), t, softDeleteColumn, values);
 		}
 
 		Table table = DOInfoReader.getTable(t.getClass());
@@ -106,7 +106,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 			// 查回数据并插入到软删除表
 			List<Object> keyParams = new ArrayList<>();
-			String keysWhereSQL = SQLUtils.getKeysWhereSQL(t, keyParams, getDatabaseType());
+			String keysWhereSQL = SQLUtils.getKeysWhereSQL(getDatabaseType(), t, keyParams);
 			Object dbT = getOne(t.getClass(), keysWhereSQL, keyParams.toArray());
 			try {
 				if (dbT == null) {
@@ -213,11 +213,11 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 
 			String sql;
-			String where = "where " + SQLUtils.getColumnName(keyField) + " in (?)";
+			String where = SQLUtils.getDeleteSqlByKeyField(getDatabaseType(), keyField);
 			if(isHard || softDelete == null) { // 物理删除
-				sql = SQLUtils.getCustomDeleteSQL(clazz, where);
+				sql = SQLUtils.getCustomDeleteSQL(getDatabaseType(), clazz, where);
 			} else { // 软删除
-				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, where, softDelete);
+				sql = SQLUtils.getCustomSoftDeleteSQL(getDatabaseType(), clazz, where, softDelete);
 			}
 
 			Table table = DOInfoReader.getTable(clazz);
@@ -282,9 +282,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 		if((interceptors == null || interceptors.isEmpty()) && !isUseDeleteValueScript(clazz)) { // 没有配置拦截器，则直接删除
 			if(isHard || softDelete == null) { // 物理删除
-				sql = SQLUtils.getCustomDeleteSQL(clazz, postSql);
+				sql = SQLUtils.getCustomDeleteSQL(getDatabaseType(), clazz, postSql);
 			} else { // 软删除
-				sql = SQLUtils.getCustomSoftDeleteSQL(clazz, postSql, softDelete);
+				sql = SQLUtils.getCustomSoftDeleteSQL(getDatabaseType(), clazz, postSql, softDelete);
 			}
 
 			Table table = DOInfoReader.getTable(clazz);
@@ -334,7 +334,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 	private <T> void updateForDelete(T t) throws NullKeyValueException {
 		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getUpdateSQL(t, values, false, null, getDatabaseType());
+		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, false, null);
 		if (sql != null) {
 			// 没有in (?)，因此用jdbcExecuteUpdate
 			jdbcExecuteUpdate(sql, values.toArray()); // ignore update result

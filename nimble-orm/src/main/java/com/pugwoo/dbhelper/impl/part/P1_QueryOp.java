@@ -32,7 +32,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
         SQLAssert.onlyOneKeyColumn(clazz);
 
-        String where = SQLUtils.getKeysWhereSQLWithoutSoftDelete(clazz);
+        String where = SQLUtils.getKeysWhereSQLWithoutSoftDelete(getDatabaseType(), clazz);
         return getOne(clazz, where, keyValue);
     }
 
@@ -58,8 +58,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     public <T> long getCount(Class<T> clazz) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
-        String sql = SQLUtils.getSelectCountSQL(clazz, getDatabaseType()) +
-                (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted("", clazz));
+        String sql = SQLUtils.getSelectCountSQL(getDatabaseType(), clazz) +
+                (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted(getDatabaseType(), "", clazz));
         sql = addComment(sql);
 
         log(sql, 0, null);
@@ -77,8 +77,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
         String sqlSB = "SELECT count(*) FROM ("
-                + SQLUtils.getSelectSQL(clazz, false, true, features, postSql, getDatabaseType())
-                + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz))
+                + SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, true, features, postSql)
+                + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz))
                 + ") tff305c6";
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -141,8 +141,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         jdbcTemplate.setFetchSize(fetchSize);
 
         StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, false, false, features, postSql, getDatabaseType()));
-        sqlSB.append(SQLUtils.autoSetSoftDeleted(postSql, clazz));
+        sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, false, features, postSql));
+        sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
@@ -418,7 +418,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         int size = cols.size();
         for (int i = 0; i < size; i++) {
-            sql.append(SQLUtils.getColumnName(cols.get(i))).append("=?");
+            sql.append(SQLUtils.getColumnName(getDatabaseType(), cols.get(i))).append("=?");
             if (i != size - 1) {
                 sql.append(" AND ");
             }
@@ -446,19 +446,19 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
         StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(clazz, selectOnlyKey, false, features, postSql, getDatabaseType()));
+        sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, selectOnlyKey, false, features, postSql));
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
         if (limit != null && !isVirtualTable) {
             try {
                 boolean autoAddOrderForPagination = getFeature(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION);
-                postSql = SQLUtils.removeLimitAndAddOrder(postSql, autoAddOrderForPagination, clazz);
+                postSql = SQLUtils.removeLimitAndAddOrder(getDatabaseType(), postSql, autoAddOrderForPagination, clazz);
             } catch (Exception e) {
                 LOGGER.error("removeLimitAndAddOrder fail for class:{}, postSql:{}",
                         clazz, postSql, e);
             }
         }
-        sqlSB.append(isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(postSql, clazz));
-        sqlSB.append(SQLUtils.genLimitSQL(offset, limit));
+        sqlSB.append(isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
+        sqlSB.append(SQLUtils.genLimitSQL(getDatabaseType(), offset, limit));
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
@@ -752,11 +752,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                     try {
                         if (SQLUtils.isContainsLimit(column.extraWhere())) {
                             String eqExpr = whereColumn + "=?";
-                            String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), eqExpr);
+                            String where = SQLUtils.insertWhereAndExpression(getDatabaseType(), column.extraWhere(), eqExpr);
                             relateValues = _dbHelper.getAllForRelatedColumnBySingleValue(remoteDOClass, where, values);
                         } else {
                             String inExpr = whereColumn + " in " + buildQuestionMark(values);
-                            String where = SQLUtils.insertWhereAndExpression(column.extraWhere(), inExpr);
+                            String where = SQLUtils.insertWhereAndExpression(getDatabaseType(), column.extraWhere(), inExpr);
                             relateValues = _dbHelper.getAllForRelatedColumn(remoteDOClass, where, values);
                         }
                     } catch (JSQLParserException e) {
@@ -851,10 +851,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             Column remoteColumn = remoteF.field.getAnnotation(Column.class);
             if (InnerCommonUtils.isBlank(remoteColumn.computed())) {
-                sb.append(remoteF.fieldPrefix).append(SQLUtils.getColumnName(remoteColumn.value()));
+                sb.append(remoteF.fieldPrefix).append(SQLUtils.getColumnName(getDatabaseType(), remoteColumn.value()));
             } else {
                 // 对于有remoteF.fieldPrefix的，由于计算列是用户自己写的，所以需要自己确保有fieldPrefix
-                sb.append(SQLUtils.getComputedColumn(remoteColumn, features));
+                sb.append(SQLUtils.getComputedColumn(getDatabaseType(), remoteColumn, features));
             }
         }
         sb.append(isSingleColumn ? "" : ")");

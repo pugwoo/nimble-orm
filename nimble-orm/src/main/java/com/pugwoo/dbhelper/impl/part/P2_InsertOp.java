@@ -147,11 +147,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 */
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values, getDatabaseType());
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(getDatabaseType(), list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
 			List<Object> values = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, list, values);
 			total = insertBatchDefaultMode(sqlDTO, values, list.size());
 		}
 
@@ -208,11 +208,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		int total;
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, list, values);
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(databaseType, tableName, list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
 			List<Object> values = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, list, values, databaseType);
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, tableName, list, values);
 			total = insertBatchDefaultMode(sqlDTO, values, list.size());
 		}
 
@@ -231,11 +231,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		DatabaseTypeEnum databaseType = getDatabaseType();
 		int total;
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(databaseType, tableName, cols);
 			total = insertBatchJDBCTemplateMode(sql, values2);
 		} else {
 			List<Object> values3 = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, cols, values2, databaseType, values3);
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, tableName, cols, values2, values3);
 			total = insertBatchDefaultMode(sqlDTO, values3, values2.size());
 		}
 
@@ -258,7 +258,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsert(t);
 		}
 		
-		String sql1 = SQLUtils.getInsertSQL(t, values, isWithNullValue, getDatabaseType());
+		String sql1 = SQLUtils.getInsertSQL(getDatabaseType(), t, values, isWithNullValue);
 		final String sql = addComment(sql1);
 		log(sql, 0, values);
 		

@@ -132,7 +132,7 @@ public abstract class Test1Query_GetPageAndCount {
         String where = "where name like ? ";
 
         try (MockedStatic<SQLUtils> utilities = Mockito.mockStatic(SQLUtils.class, Mockito.CALLS_REAL_METHODS)) {
-            utilities.when(() -> SQLUtils.removeLimitAndAddOrder(where, true, StudentDO.class))
+            utilities.when(() -> SQLUtils.removeLimitAndAddOrder(getDBHelper().getDatabaseType(), where, true, StudentDO.class))
                     .thenThrow(new RuntimeException("just test"));
 
             // 测试异常抛出exception情况下，仍然没有问题
