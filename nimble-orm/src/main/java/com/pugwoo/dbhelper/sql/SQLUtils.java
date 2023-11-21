@@ -75,13 +75,13 @@ public class SQLUtils {
                 sql.append(joinColumnForSelect(databaseType, fields2,  joinRightTable.alias() + ".", features));
             }
 
-	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
+	        sql.append(" FROM ").append(getTableName(databaseType, leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
 	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+	        sql.append(getTableName(databaseType, rightTableField.getType())).append(" ").append(joinRightTable.alias());
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
 			}
@@ -119,7 +119,7 @@ public class SQLUtils {
                 sql.append(joinColumnForSelect(databaseType, fields, null, features));
             }
 
-			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
+			sql.append(" FROM ").append(getTableName(databaseType, clazz)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -168,13 +168,13 @@ public class SQLUtils {
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 
-	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
+	        sql.append(" FROM ").append(getTableName(databaseType, leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
 	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+	        sql.append(getTableName(databaseType, rightTableField.getType())).append(" ").append(joinRightTable.alias());
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
 			}
@@ -203,7 +203,7 @@ public class SQLUtils {
 				return sql.toString();
 			}
 
-			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
+			sql.append(" FROM ").append(getTableName(databaseType, clazz)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -265,7 +265,7 @@ public class SQLUtils {
 
         List<Field> fields = DOInfoReader.getColumns(t.getClass());
 
-        sql.append(getTableName(t.getClass())).append(" (");
+        sql.append(getTableName(databaseType, t.getClass())).append(" (");
         List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
 		String insertSql = joinAndGetValueForInsert(databaseType, fields, ",", _values, t, isWithNullValue);
 
@@ -295,7 +295,7 @@ public class SQLUtils {
 		// 根据list的值，只留下有值的field和非computed的列
 		fields = filterFieldWithValue(fields, list);
 
-		appendTableName(sql, clazz);
+		appendTableName(databaseType, sql, clazz);
 		appendInsertColumnSql(databaseType, sql, fields);
 
 		int sqlLogEndIndex = 0;
@@ -323,9 +323,9 @@ public class SQLUtils {
 	public static InsertSQLForBatchDTO getInsertSQLForBatch(DatabaseTypeEnum databaseType,
 			String tableName, Collection<Map<String, Object>> list,
 			List<Object> values) {
-		StringBuilder sql = new StringBuilder("INSERT INTO `");
-		sql.append(tableName.trim());
-		sql.append("` (");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(getTableName(databaseType, tableName.trim()));
+		sql.append(" (");
 
 		boolean isFirst = true;
 		int sqlLogEndIndex = 0;
@@ -355,7 +355,7 @@ public class SQLUtils {
 					if (i != 0) {
 						sql.append(",");
 					}
-					sql.append("`").append(cols.get(i)).append("`");
+					sql.append(getColumnName(databaseType, cols.get(i)));
 				}
 				sql.append(") VALUES ");
 			} else {
@@ -383,9 +383,9 @@ public class SQLUtils {
 															String tableName, List<String> cols,
 															Collection<Object[]> list,
 															List<Object> values) {
-		StringBuilder sql = new StringBuilder("INSERT INTO `");
-		sql.append(tableName.trim());
-		sql.append("` (");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(getTableName(databaseType, tableName.trim()));
+		sql.append(" (");
 
 		boolean isFirst = true;
 		int sqlLogEndIndex = 0;
@@ -407,7 +407,7 @@ public class SQLUtils {
 					if (i != 0) {
 						sql.append(",");
 					}
-					sql.append("`").append(cols.get(i)).append("`");
+					sql.append(getColumnName(databaseType, cols.get(i)));
 				}
 				sql.append(") VALUES ");
 			} else {
@@ -445,7 +445,7 @@ public class SQLUtils {
 		// 根据list的值，只留下有值的field和非computed的列
 		fields = filterFieldWithValue(fields, list);
 
-		appendTableName(sql, clazz);
+		appendTableName(databaseType, sql, clazz);
 		sql.append(" (");
 
 		boolean isFirst = true;
@@ -476,9 +476,9 @@ public class SQLUtils {
 	 */
 	public static String getInsertSQLForBatchForJDBCTemplate(DatabaseTypeEnum databaseType, String tableName,
 			Collection<Map<String, Object>> list, List<Object[]> values) {
-		StringBuilder sql = new StringBuilder("INSERT INTO `");
-		sql.append(tableName.trim());
-		sql.append("` (");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(getTableName(databaseType, tableName.trim()));
+		sql.append(" (");
 
 		// 先从map获得所有的列
 		Set<String> colSet = new HashSet<>();
@@ -501,7 +501,7 @@ public class SQLUtils {
 					} else {
 						isColFirst = false;
 					}
-					sql.append("`").append(col.trim()).append("`");
+					sql.append(getColumnName(databaseType, col.trim()));
 				}
 
 				sql.append(") VALUES ");
@@ -526,8 +526,7 @@ public class SQLUtils {
 	public static String getInsertSQLForBatchForJDBCTemplate(DatabaseTypeEnum databaseType,
 															 String tableName, List<String> cols) {
 		StringBuilder sql = new StringBuilder();
-		sql.append("INSERT INTO `").append(tableName.trim())
-				.append("` (");
+		sql.append("INSERT INTO ").append(getTableName(databaseType, tableName.trim())).append(" (");
 		boolean isFirst = true;
 		for(String col : cols) {
 			if (!isFirst) {
@@ -535,7 +534,7 @@ public class SQLUtils {
 			} else {
 				isFirst = false;
 			}
-			sql.append("`").append(col.trim()).append("`");
+			sql.append(getColumnName(databaseType, col.trim()));
 		}
 		sql.append(") VALUES (").append(join("?", cols.size(), ",")).append(")");
 		return sql.toString();
@@ -671,7 +670,7 @@ public class SQLUtils {
 		List<Object> logParams = new ArrayList<>();
 
 		// 3. 生成update语句
-		sql.append("UPDATE ").append(getTableName(clazz)).append(" SET ");
+		sql.append("UPDATE ").append(getTableName(databaseType, clazz)).append(" SET ");
 		logSql.append(sql);
 
 		boolean isFirst = true;
@@ -851,7 +850,7 @@ public class SQLUtils {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
 		
-		sql.append(getTableName(t.getClass())).append(" SET ");
+		sql.append(getTableName(databaseType, t.getClass())).append(" SET ");
 		
 		List<Object> setValues = new ArrayList<>();
 		String setSql = joinSetAndGetValue(databaseType, notKeyFields, setValues, t, withNull);
@@ -915,7 +914,7 @@ public class SQLUtils {
 		
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		
-		sql.append(getTableName(clazz)).append(" ");
+		sql.append(getTableName(databaseType, clazz)).append(" ");
 		
 		if(setSql.trim().toLowerCase().startsWith("set ")) { // 这里必须有trim()
 			sql.append(setSql);
@@ -962,7 +961,7 @@ public class SQLUtils {
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
-		sql.append(getTableName(t.getClass())).append(" ");
+		sql.append(getTableName(databaseType, t.getClass())).append(" ");
 		
 		if(setSql.trim().toLowerCase().startsWith("set ")) {
 			sql.append(setSql);
@@ -1044,7 +1043,7 @@ public class SQLUtils {
 	public static <T> String getSoftDeleteSQL(DatabaseTypeEnum databaseType, T t, Column softDeleteColumn, List<Object> values) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
-		sql.append(getTableName(t.getClass())).append(" SET ");
+		sql.append(getTableName(databaseType, t.getClass())).append(" SET ");
 		sql.append(getColumnName(databaseType, softDeleteColumn)).append("=").append(softDeleteColumn.softDelete()[1]);
 
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
@@ -1087,7 +1086,7 @@ public class SQLUtils {
 	 * 获得自定义删除SQL，给物理删除的
 	 */
 	public static <T> String getCustomDeleteSQL(DatabaseTypeEnum databaseType, Class<T> clazz, String postSql) {
-		return "DELETE FROM " + getTableName(clazz) + " " + postSql;
+		return "DELETE FROM " + getTableName(databaseType, clazz) + " " + postSql;
 	}
 
 	public static <T> String getCustomSoftDeleteSQL(DatabaseTypeEnum databaseType,
@@ -1098,7 +1097,7 @@ public class SQLUtils {
 		
 		StringBuilder sql = new StringBuilder();
 		
-		sql.append("UPDATE ").append(getTableName(clazz));
+		sql.append("UPDATE ").append(getTableName(databaseType, clazz));
 		sql.append(" SET ").append(getColumnName(databaseType, softDeleteColumn));
 		sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		
@@ -1128,7 +1127,7 @@ public class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		
 		sql.append("DELETE FROM ");
-		sql.append(getTableName(t.getClass()));
+		sql.append(getTableName(databaseType, t.getClass()));
 		
 		List<Object> _values = new ArrayList<>();
 		String where = "WHERE " + joinWhereAndGetValue(databaseType, keyFields, "AND", _values, t);
@@ -1706,7 +1705,7 @@ public class SQLUtils {
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
 
-	private static String getTableName(Class<?> clazz) {
+	private static String getTableName(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
 		if (InnerCommonUtils.isBlank(tableName)) {
 			tableName = DOInfoReader.getTable(clazz).value();
@@ -1714,7 +1713,11 @@ public class SQLUtils {
 		return "`" + tableName + "`";
 	}
 
-	private static void appendTableName(StringBuilder sb, Class<?> clazz) {
+	private static String getTableName(DatabaseTypeEnum databaseType, String tableName) {
+		return "`" + tableName + "`";
+	}
+
+	private static void appendTableName(DatabaseTypeEnum databaseType, StringBuilder sb, Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
 		if (InnerCommonUtils.isBlank(tableName)) {
 			tableName = DOInfoReader.getTable(clazz).value();
