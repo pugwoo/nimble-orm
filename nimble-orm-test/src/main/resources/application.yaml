@@ -1,19 +1,22 @@
 spring:
   datasource:
     mysql:
-      url: jdbc:mysql://192.168.0.111:3306/nimbleorm?useCursorFetch=true&serverTimezone=GMT%2B8
+      url: jdbc:mysql://192.168.0.120:3306/nimbleorm?useCursorFetch=true&serverTimezone=GMT%2B8
       username: dev
       password: devdev
       driver-class-name: com.mysql.cj.jdbc.Driver
       hikari:
         maximum-pool-size: 2 # 使用最小的连接池，2是因为relatedColumn+Stream需要2个连接池同时来
     clickhouse:
-      jdbc-url: jdbc:clickhouse://192.168.0.111:8123/nimbleorm
+      jdbc-url: jdbc:clickhouse://192.168.0.120:8123/nimbleorm
       username: root
       password: 123456
       driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
-      hikari:
-        maximum-pool-size: 2 # 使用最小的连接池，2是因为relatedColumn+Stream需要2个连接池同时来
+    postgresql:
+      jdbc-url: jdbc:postgresql://192.168.0.120:5432/nimbleorm
+      username: postgres
+      password: homeserver
+      driver-class-name: org.postgresql.Driver
 
 # 是否运行压测测试
 runBenchmarkTest: false

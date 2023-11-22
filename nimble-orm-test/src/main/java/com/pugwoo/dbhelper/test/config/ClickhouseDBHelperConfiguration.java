@@ -5,6 +5,8 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.test.interceptor.DefaultInterceptor;
+import com.pugwoo.dbhelper.test.interceptor.MyLogChangeInterceptor;
+import com.pugwoo.dbhelper.test.interceptor.NotAllowInterceptor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -55,7 +57,7 @@ public class ClickhouseDBHelperConfiguration {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
         dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
-        interceptors.add(new com.pugwoo.dbhelper.test.interceptor.MyLogChangeInterceptor());
+        interceptors.add(new MyLogChangeInterceptor());
         dbHelper.setInterceptors(interceptors);
         return dbHelper;
     }
@@ -65,7 +67,7 @@ public class ClickhouseDBHelperConfiguration {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
         dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
-        interceptors.add(new com.pugwoo.dbhelper.test.interceptor.NotAllowInterceptor());
+        interceptors.add(new NotAllowInterceptor());
         dbHelper.setInterceptors(interceptors);
         return dbHelper;
     }
