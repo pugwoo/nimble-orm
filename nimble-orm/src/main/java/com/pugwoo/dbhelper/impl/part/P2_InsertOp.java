@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
@@ -264,6 +265,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		final long start = System.currentTimeMillis();
 
+		DatabaseTypeEnum databaseType = getDatabaseType();
+
 		int rows;
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
 		// 有自增注解且该字段值为null时才回查
@@ -272,17 +275,38 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			rows = jdbcTemplate.update(con -> {
 				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 				for (int i = 0; i < values.size(); i++) {
-					statement.setObject(i + 1, values.get(i));
+					if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
+						if (values.get(i) != null && values.get(i) instanceof java.util.Date) {
+							// postgresql不支持java.util.Date，只支持java.sql.Date
+							statement.setObject(i + 1, new java.sql.Date(((java.util.Date) values.get(i)).getTime()));
+						} else {
+							statement.setObject(i + 1, values.get(i));
+						}
+					} else {
+						statement.setObject(i + 1, values.get(i));
+					}
 				}
 				return statement;
 			}, holder);
 
 			if(rows > 0) {
-				Number key = holder.getKey();
-				logIfNull(key, autoIncrementField);
-				if (key != null)  {
-					long primaryKey = key.longValue();
-					DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+				if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
+					// 对于postgresql，会返回整个列的所有字段，所以这里需要取出来
+					Map<String, Object> map = holder.getKeys();
+					if (map != null) {
+						Object key = map.get(autoIncrementField.getAnnotation(Column.class).value());
+						logIfNull(key, autoIncrementField);
+						if (key != null) {
+							DOInfoReader.setValue(autoIncrementField, t, key);
+						}
+					}
+				} else {
+					Number key = holder.getKey();
+					logIfNull(key, autoIncrementField);
+					if (key != null)  {
+						long primaryKey = key.longValue();
+						DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+					}
 				}
 			}
 
@@ -301,7 +325,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	/**抽取出来是不对这个log进行覆盖率统计*/
 	@Generated
-	private void logIfNull(Number key, Field autoIncrementField) {
+	private void logIfNull(Object key, Field autoIncrementField) {
 		// 对于key为null的属于异常情况，仅log，不进行任何处理
 		if (key == null) {
 			LOGGER.error("get auto increment field:{} return null", autoIncrementField);

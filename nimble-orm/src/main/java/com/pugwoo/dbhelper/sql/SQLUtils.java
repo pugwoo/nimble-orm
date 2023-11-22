@@ -1528,9 +1528,9 @@ public class SQLUtils {
 				sb.append("(").append(SQLUtils.getComputedColumn(databaseType, column, features)).append(") AS ")
 						.append(getColumnName(databaseType, column, fieldPrefix)).append(sep);
 			} else {
-				// 非计算列的话，表的别名要放在`外边
+				// 非计算列的话，表的别名要放在列名外边
 				sb.append(fieldPrefix).append(getColumnName(databaseType, column))
-						.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"") // as里的列名不需要`
+						.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"")
 						.append(sep);
 			}
 		}
@@ -1705,16 +1705,23 @@ public class SQLUtils {
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
 
+	private static String getEscapeChar(DatabaseTypeEnum databaseType) {
+		return databaseType == DatabaseTypeEnum.POSTGRESQL ? "\"" : "`";
+	}
+
 	private static String getTableName(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
 		if (InnerCommonUtils.isBlank(tableName)) {
 			tableName = DOInfoReader.getTable(clazz).value();
 		}
-		return "`" + tableName + "`";
+
+		String escape = getEscapeChar(databaseType);
+		return escape + tableName + escape;
 	}
 
 	private static String getTableName(DatabaseTypeEnum databaseType, String tableName) {
-		return "`" + tableName + "`";
+		String escape = getEscapeChar(databaseType);
+		return escape + tableName + escape;
 	}
 
 	private static void appendTableName(DatabaseTypeEnum databaseType, StringBuilder sb, Class<?> clazz) {
@@ -1722,7 +1729,9 @@ public class SQLUtils {
 		if (InnerCommonUtils.isBlank(tableName)) {
 			tableName = DOInfoReader.getTable(clazz).value();
 		}
-		sb.append("`").append(tableName).append("`");
+
+		String escape = getEscapeChar(databaseType);
+		sb.append(escape).append(tableName).append(escape);
 	}
 
 	private static String getColumnName(DatabaseTypeEnum databaseType, Column column, String prefix) {
@@ -1743,15 +1752,18 @@ public class SQLUtils {
 	}
 
 	public static String getColumnName(DatabaseTypeEnum databaseType, String columnName) {
-		return "`" + columnName + "`";
+		String escape = getEscapeChar(databaseType);
+		return escape + columnName + escape;
 	}
 
 	private static String getColumnName(DatabaseTypeEnum databaseType, String columnName, String prefix) {
-		return "`" + prefix + columnName + "`";
+		String escape = getEscapeChar(databaseType);
+		return escape + prefix + columnName + escape;
 	}
 
 	private static void appendColumnName(DatabaseTypeEnum databaseType, StringBuilder sb, String columnName) {
-		sb.append("`").append(columnName).append("`");
+		String escape = getEscapeChar(databaseType);
+		sb.append(escape).append(columnName).append(escape);
 	}
 
 }
