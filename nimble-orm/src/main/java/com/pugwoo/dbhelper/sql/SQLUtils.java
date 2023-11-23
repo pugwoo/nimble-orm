@@ -1635,7 +1635,11 @@ public class SQLUtils {
 			}
 
 			if(isWithNullValue) {
-				values.add(value);
+				// 如果是主键，且为null，那么不加入该column
+				if (field.getAnnotation(Column.class).isKey() && value == null) {
+					continue;
+				}
+                values.add(value);
 			} else {
 				if(value == null) {
 					continue; // 不加入该column

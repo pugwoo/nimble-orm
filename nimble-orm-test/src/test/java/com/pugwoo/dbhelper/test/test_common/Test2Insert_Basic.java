@@ -94,7 +94,7 @@ public abstract class Test2Insert_Basic {
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
                 studentMap.put("id", CommonOps.getRandomLong());
             }
-            studentMap.put("deleted", 0);
+            studentMap.put("deleted", false);
             studentMap.put("name", uuidName);
             studentMap.put("age", 0);
             studentMap.put("school_id", random.nextInt());
@@ -105,7 +105,7 @@ public abstract class Test2Insert_Basic {
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
                 studentMap.put("id", CommonOps.getRandomLong());
             }
-            studentMap.put("deleted", 0);
+            studentMap.put("deleted", false);
             studentMap.put("name", uuidName);
             // 故意少掉2个属性
             list.add(studentMap);
@@ -139,19 +139,19 @@ public abstract class Test2Insert_Basic {
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < TOTAL - 3; i++) {
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                Object[] args = new Object[]{0, uuidName, "0", random.nextInt(), CommonOps.getRandomLong()}; // age故意用字符串，测试转换
+                Object[] args = new Object[]{false, uuidName, 18, random.nextInt(), CommonOps.getRandomLong()};
                 data.add(args);
             } else {
-                Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
+                Object[] args = new Object[]{false, uuidName, 18, random.nextInt()};
                 data.add(args);
             }
         }
         for (int i = 0; i < 3; i++) {
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                Object[] args = new Object[]{0, uuidName, null, null, CommonOps.getRandomLong()}; // 加几个有null值的
+                Object[] args = new Object[]{false, uuidName, null, null, CommonOps.getRandomLong()}; // 加几个有null值的
                 data.add(args);
             } else {
-                Object[] args = new Object[]{0, uuidName, null, null}; // 加几个有null值的
+                Object[] args = new Object[]{false, uuidName, null, null}; // 加几个有null值的
                 data.add(args);
             }
         }

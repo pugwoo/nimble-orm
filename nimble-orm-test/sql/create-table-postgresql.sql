@@ -47,3 +47,8 @@ CREATE TABLE t_course (
       name varchar(32),
       is_main boolean DEFAULT false
 );
+
+CREATE TABLE t_uuid (
+    uuid VARCHAR(64) PRIMARY KEY NOT NULL,
+    name VARCHAR(64)
+);
