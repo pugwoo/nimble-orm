@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -141,6 +142,15 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					keyColumns.get(0), notKeyColumns, clazz);
 			if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
 				return 0; // not need to update, return actually update rows
+			}
+
+			// 对于postgresql，对于这种批量update方式，需要把java.util.Date的参数转换成LocalDateTime
+			if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+				for (int i = 0; i < params.size(); i++) {
+					if (params.get(i) != null && params.get(i) instanceof java.util.Date) {
+						params.set(i, NimbleOrmDateUtils.toLocalDateTime((java.util.Date) params.get(i)));
+					}
+				}
 			}
 
 			rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),

@@ -36,3 +36,14 @@ CREATE TABLE t_school (
       delete_time timestamp,
       name varchar(32)
 );
+
+CREATE TABLE t_course (
+      id SERIAL PRIMARY KEY,
+      deleted boolean,
+      create_time timestamp,
+      update_time timestamp,
+      delete_time timestamp,
+      student_id integer,
+      name varchar(32),
+      is_main boolean DEFAULT false
+);

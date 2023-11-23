@@ -12,7 +12,7 @@ import java.util.List;
 public class StudentLimitVO extends StudentDO {
 
     @RelatedColumn(localColumn = "id", remoteColumn = "student_id",
-            extraWhere = "where is_main=1 limit 2")
+            extraWhere = "where is_main=true limit 2")
     private List<CourseDO> mainCourses;
 
     public List<CourseDO> getMainCourses() {

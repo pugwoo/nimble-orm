@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
@@ -281,6 +282,11 @@ public abstract class Test1Query_RelatedColumn {
 
     @Test
     public void testDiffClassTypeRelatedColumn() {
+        // postgresql不支持用string类型去查数字类型的字段，因此不测试
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            return;
+        }
+
         SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "sysu");
 
         StudentDO studentDO = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
@@ -293,7 +299,7 @@ public abstract class Test1Query_RelatedColumn {
         assert one.getSchools().get(0).getId().equals(schoolDO.getId()); // 不同类型的比对会转换成string进行
     }
 
-    /**这个DO的school id类型是字符串，故意映射的，这是允许的*/
+    /**这个DO的school id类型是字符串，故意映射的，这是允许的（对于pgsql，这种用string去查数字类型的方式会报错）*/
     @Data
     @Table("t_student")
     public static class StudentStringSchoolIdDO {

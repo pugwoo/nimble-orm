@@ -85,7 +85,7 @@ public class NimbleOrmDateUtils {
 		return toLocalDateTime(parseThrowException(date));
 	}
 
-	private static LocalDateTime toLocalDateTime(Date date) {
+	public static LocalDateTime toLocalDateTime(Date date) {
 		if(date == null) {return null;}
 		// java.sql.Date和java.sql.Time不支持date.toInstant()
 		if (date instanceof java.sql.Date || date instanceof java.sql.Time) {

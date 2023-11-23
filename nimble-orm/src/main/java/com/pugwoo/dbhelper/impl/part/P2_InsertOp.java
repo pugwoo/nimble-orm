@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -280,7 +281,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 						if (value != null) {
 							// postgresql不支持java.util.Date，需要转换
 							if (value instanceof java.util.Date) {
-								value = new java.sql.Timestamp(((java.util.Date) value).getTime());
+								value = NimbleOrmDateUtils.toLocalDateTime((java.util.Date) value);
 							}
 						}
 						statement.setObject(i + 1, value);

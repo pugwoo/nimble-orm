@@ -24,7 +24,7 @@ public class StudentVO extends StudentDO {
 	private List<CourseDO> courses;
 
 	/**localColumn/remoteColumn故意用大写*/
-	@RelatedColumn(localColumn = "ID", remoteColumn = "Student_Id", extraWhere = "where is_main=1")
+	@RelatedColumn(localColumn = "ID", remoteColumn = "Student_Id", extraWhere = "where is_main=true")
 	private List<CourseDO> mainCourses;
 	
 	// 计算列示例，生成的select字段为：CONCAT(name,'hi') AS nameWithHi
