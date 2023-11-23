@@ -101,14 +101,36 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return update(list.iterator().next());
 		}
 
+		boolean isSameClass = SQLAssert.isAllSameClass(list);
+		Class<?> clazz = list.iterator().next().getClass();
+
+		// pgsql的批量update，如果字段含有isJson字段，则降级为单条update，批量update目前driver会报错
+		if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+			List<Field> columns = DOInfoReader.getColumns(clazz);
+			boolean hasJsonColumn = false;
+			for (Field field : columns) {
+				if (field.getAnnotation(Column.class).isJSON()) {
+					hasJsonColumn = true;
+					break;
+				}
+			}
+			if (hasJsonColumn) {
+				int rows = 0;
+				for (T t : list) {
+					if (t != null) {
+						rows += update(t);
+					}
+				}
+				return rows;
+			}
+		}
+
 		doInterceptBeforeUpdate(list, null, null);
 
 		// 判断是否可以转化成批量update，使用update case when的方式
 		// 可以批量update的条件：
 		// 1) list里所有对象都是相同的类
 		// 2) DO类有主键且只有一个主键(暂不支持多个主键，这种情况太少，以后有时间再支持)
-		boolean isSameClass = SQLAssert.isAllSameClass(list);
-		Class<?> clazz = list.iterator().next().getClass();
 		List<Field> keyColumns = DOInfoReader.getKeyColumns(clazz);
 
 		int rows = 0;
@@ -179,7 +201,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	private <T> int _update(T t, boolean withNull, boolean withInterceptors,
 			String postSql, Object... args) throws NullKeyValueException {
-		
+		if (t == null) {
+			return 0;
+		}
+
 		if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
 			return 0; // not need to update
 		}

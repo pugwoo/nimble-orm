@@ -52,3 +52,15 @@ CREATE TABLE t_uuid (
     uuid VARCHAR(64) PRIMARY KEY NOT NULL,
     name VARCHAR(64)
 );
+
+CREATE TABLE t_json (
+    id SERIAL PRIMARY KEY,
+    json JSON,
+    json2 JSON
+);
+
+CREATE TABLE t_cas_version (
+   id SERIAL PRIMARY KEY,
+   name VARCHAR(32),
+   version INT
+);
