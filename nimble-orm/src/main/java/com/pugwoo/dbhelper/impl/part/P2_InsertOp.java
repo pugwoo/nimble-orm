@@ -276,12 +276,14 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 				for (int i = 0; i < values.size(); i++) {
 					if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
-						if (values.get(i) != null && values.get(i) instanceof java.util.Date) {
-							// postgresql不支持java.util.Date，只支持java.sql.Date
-							statement.setObject(i + 1, new java.sql.Date(((java.util.Date) values.get(i)).getTime()));
-						} else {
-							statement.setObject(i + 1, values.get(i));
+						Object value = values.get(i);
+						if (value != null) {
+							// postgresql不支持java.util.Date，需要转换
+							if (value instanceof java.util.Date) {
+								value = new java.sql.Timestamp(((java.util.Date) value).getTime());
+							}
 						}
+						statement.setObject(i + 1, value);
 					} else {
 						statement.setObject(i + 1, values.get(i));
 					}

@@ -146,8 +146,11 @@ public abstract class Test1Query_Basic {
         System.out.println(list.size());
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new short[]{50,51,52});
         System.out.println(list.size());
-        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
-        System.out.println(list.size());
+
+        // char非常不建议当数字使用，这里不再测试
+        //list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
+        //System.out.println(list.size());
+
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new float[]{50,51,52});
         System.out.println(list.size());
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new double[]{50,51,52});
@@ -352,13 +355,13 @@ public abstract class Test1Query_Basic {
         StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
         StudentDO studentDO3 = CommonOps.insertOne(getDBHelper());
 
-        List<String> studentNames = getDBHelper().getRaw(String.class, "select name from t_student where deleted=0");
+        List<String> studentNames = getDBHelper().getRaw(String.class, "select name from t_student where deleted=false");
 
         assert studentNames.contains(studentDO1.getName());
         assert studentNames.contains(studentDO2.getName());
         assert studentNames.contains(studentDO3.getName());
 
-        List<Integer> count = getDBHelper().getRaw(Integer.class, "select count(*) from t_student where deleted=0");
+        List<Integer> count = getDBHelper().getRaw(Integer.class, "select count(*) from t_student where deleted=false");
         assert count.get(0) >= 3;
 
         List<Boolean> bools = getDBHelper().getRaw(Boolean.class, "select 1");
@@ -372,16 +375,16 @@ public abstract class Test1Query_Basic {
         List<byte[]> bytes2 = getDBHelper().getRaw(byte[].class, "select 'a'");
         assert bytes2.get(0)[0] == 97;
 
-        List<Short> count2 = getDBHelper().getRaw(Short.class, "select count(*) from t_student where deleted=0");
+        List<Short> count2 = getDBHelper().getRaw(Short.class, "select count(*) from t_student where deleted=false");
         assert count2.get(0) >= 3;
 
-        List<Float> count3 = getDBHelper().getRaw(Float.class, "select count(*) from t_student where deleted=0");
+        List<Float> count3 = getDBHelper().getRaw(Float.class, "select count(*) from t_student where deleted=false");
         assert count3.get(0) >= 3;
 
-        List<Double> count4 = getDBHelper().getRaw(Double.class, "select count(*) from t_student where deleted=0");
+        List<Double> count4 = getDBHelper().getRaw(Double.class, "select count(*) from t_student where deleted=false");
         assert count4.get(0) >= 3;
 
-        List<BigDecimal> count5 = getDBHelper().getRaw(BigDecimal.class, "select count(*) from t_student where deleted=0");
+        List<BigDecimal> count5 = getDBHelper().getRaw(BigDecimal.class, "select count(*) from t_student where deleted=false");
         assert count5.get(0).compareTo(BigDecimal.valueOf(3)) >= 0;
 
         List<Date> dates = getDBHelper().getRaw(Date.class, "select now()");
@@ -415,7 +418,7 @@ public abstract class Test1Query_Basic {
         CommonOps.insertBatch(getDBHelper(), 30);
 
         PageData<StudentSumVO> pageData = getDBHelper().getPage(StudentSumVO.class,
-                1, 10, "where deleted=0 group by name order by ageSum");  // 注意，由于VO不再继承DO，所以这里要记得写deleted=0
+                1, 10, "where deleted=false group by name order by COALESCE(sum(age), 0)");  // 注意，由于VO不再继承DO，所以这里要记得写deleted=0
 
         assert pageData.getTotal() == 30;
         assert pageData.getData().size() == 10;
