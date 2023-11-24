@@ -21,9 +21,9 @@ public abstract class Test8Feature_ExecuteRaw {
         String name = UUID.randomUUID().toString();
         int rows = 0;
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,0,?)", CommonOps.getRandomLong(), name);
+            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,false,?)", CommonOps.getRandomLong(), name);
         } else {
-            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) values(0,?)", name);
+            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) values(false,?)", name);
         }
         assert rows == 1;
         StudentDO student = getDBHelper().getOne(StudentDO.class, "where name=?", name);
@@ -33,10 +33,10 @@ public abstract class Test8Feature_ExecuteRaw {
         String name1 = UUID.randomUUID().toString();
         String name2 = UUID.randomUUID().toString();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,0,?),(?,0,?)",
+            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,false,?),(?,false,?)",
                     CommonOps.getRandomLong(), name1, CommonOps.getRandomLong(), name2);
         } else {
-            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) values(0,?),(0,?)", name1, name2);
+            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) values(false,?),(false,?)", name1, name2);
         }
         assert rows == 2;
         StudentDO student1 = getDBHelper().getOne(StudentDO.class, "where name=?", name1);
@@ -51,9 +51,9 @@ public abstract class Test8Feature_ExecuteRaw {
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             params.put("id1", CommonOps.getRandomLong());
             params.put("id2", CommonOps.getRandomLong());
-            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(:id1,0,:name1),(:id2,0,:name2)", params);
+            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(:id1,false,:name1),(:id2,false,:name2)", params);
         } else {
-            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) values(0,:name1),(0,:name2)", params);
+            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) values(false,:name1),(false,:name2)", params);
         }
         assert rows == 2;
         student1 = getDBHelper().getOne(StudentDO.class, "where name=?", params.get("name1"));
@@ -63,20 +63,20 @@ public abstract class Test8Feature_ExecuteRaw {
 
         // 测试没有paramMap的插入，插入1个
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            assert getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(rand(),0,'nick')",
+            assert getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(rand(),false,'nick')",
                     (Map<String, Object>) null) == 1;
         } else {
-            assert getDBHelper().executeRaw("insert into t_student(deleted,name) values(0,'nick')",
+            assert getDBHelper().executeRaw("insert into t_student(deleted,name) values(false,'nick')",
                     (Map<String, Object>) null) == 1;
         }
 
         // 复制的方式插入2个
         List<String> names = ListUtils.newArrayList(name1, name2);
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) select rand(),0,name from t_student"
+            rows = getDBHelper().executeRaw("insert into t_student(id,deleted,name) select rand(),false,name from t_student"
                     + " where name in (?)", names);
         } else {
-            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) select 0,name from t_student"
+            rows = getDBHelper().executeRaw("insert into t_student(deleted,name) select false,name from t_student"
                     + " where name in (?)", names);
         }
         assert rows == 2;
@@ -88,9 +88,9 @@ public abstract class Test8Feature_ExecuteRaw {
     public void testUpdate() {
         String name = UUID.randomUUID().toString();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,0,?)", CommonOps.getRandomLong(), name);
+            getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,false,?)", CommonOps.getRandomLong(), name);
         } else {
-            getDBHelper().executeRaw("insert into t_student(deleted,name) values(0,?)", name);
+            getDBHelper().executeRaw("insert into t_student(deleted,name) values(false,?)", name);
         }
 
         String name1 = UUID.randomUUID().toString();
@@ -106,9 +106,10 @@ public abstract class Test8Feature_ExecuteRaw {
         String name = UUID.randomUUID().toString();
 
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,0,?)", CommonOps.getRandomLong(), name);
+            getDBHelper().executeRaw("insert into t_student(id,deleted,name) values(?,false,?)",
+                    CommonOps.getRandomLong(), name);
         } else {
-            getDBHelper().executeRaw("insert into t_student(deleted,name) values(0,?)", name);
+            getDBHelper().executeRaw("insert into t_student(deleted,name) values(false,?)", name);
         }
 
         int rows = getDBHelper().executeRaw("delete from t_student where name=?", name);

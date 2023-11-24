@@ -17,8 +17,9 @@ public abstract class Test8Feature_Comment {
 
     @Test
     public void testGlobalComment() throws Exception {
-        // 暂不支持clickhouse，clickhouse不支持传递注释
-        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+        // 暂不支持clickhouse和postgresql，它们不支持传递注释
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE
+           || getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
             return;
         }
 
@@ -54,8 +55,9 @@ public abstract class Test8Feature_Comment {
 
     @Test
     public void testLocalComment() throws Exception {
-        // 暂不支持clickhouse，clickhouse不支持传递注释
-        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+        // 暂不支持clickhouse和postgresql，它们不支持传递注释
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE
+          || getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
             return;
         }
 

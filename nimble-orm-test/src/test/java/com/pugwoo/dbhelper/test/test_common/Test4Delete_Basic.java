@@ -104,6 +104,11 @@ public abstract class Test4Delete_Basic {
     /**测试deleted的值设置为id的情况*/
     @Test
     public void deleteAndSetId() {
+        // postgresql的删除现在用boolean，所以不支持这个设置为id的情况，这里就不测试了
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            return;
+        }
+
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
         StudentDeleteSetIdDO stu1 = new StudentDeleteSetIdDO();
@@ -282,7 +287,7 @@ public abstract class Test4Delete_Basic {
     private static class StudentWithDeleteScriptDO {
         @Column(value = "id", isKey = true, isAutoIncrement = true)
         private Long id;
-        @Column(value = "deleted", softDelete = {"0", "1"})
+        @Column(value = "deleted", softDelete = {"false", "true"})
         private Boolean deleted;
         @Column(value = "name", deleteValueScript = "'deleted' + 'data'")
         private String name;

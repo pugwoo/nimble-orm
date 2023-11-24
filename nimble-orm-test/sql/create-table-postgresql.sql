@@ -64,3 +64,18 @@ CREATE TABLE t_cas_version (
    name VARCHAR(32),
    version INT
 );
+
+CREATE TABLE t_types (
+     id1 bigint NOT NULL,
+     id2 bigint NOT NULL,
+     my_byte smallint DEFAULT NULL,
+     my_short integer DEFAULT NULL,
+     my_float real DEFAULT NULL,
+     my_double double precision DEFAULT NULL,
+     my_decimal numeric(10,2) DEFAULT NULL,
+     my_date date DEFAULT NULL,
+     my_datetime time DEFAULT NULL,
+     my_timestamp timestamp DEFAULT NULL,
+     my_mediumint integer DEFAULT NULL,
+     PRIMARY KEY (id1, id2)
+);
