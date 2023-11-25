@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_mysql;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.test_common.WithTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
-public class MysqlWithTransactionService {
+public class MysqlWithTransactionService implements WithTransactionService {
 
     @Autowired
     private DBHelper dbHelper;
