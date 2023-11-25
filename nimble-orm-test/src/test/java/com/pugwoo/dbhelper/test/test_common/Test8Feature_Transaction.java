@@ -2,13 +2,14 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.test_mysql.MysqlWithTransactionService;
 import org.junit.jupiter.api.Test;
 
 public abstract class Test8Feature_Transaction {
 
     public abstract DBHelper getDBHelper();
 
-    public abstract WithTransactionService getWithTransactionService();
+    public abstract MysqlWithTransactionService getWithTransactionService();
 
     /**测试事务是否生效*/
     @Test
