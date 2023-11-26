@@ -132,10 +132,10 @@ public class WhereSQL {
 
         if (limit != null) {
             sql.append(" LIMIT ");
-            if (offset != null) {
-                sql.append(offset).append(",");
-            }
             sql.append(limit);
+            if (offset != null) {
+                sql.append(" OFFSET ").append(offset);
+            }
         }
 
         sql.append(" "); // 留一个空格，减少和后续sql直接拼接的错误

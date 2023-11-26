@@ -79,3 +79,22 @@ CREATE TABLE t_types (
      my_mediumint integer DEFAULT NULL,
      PRIMARY KEY (id1, id2)
 );
+
+CREATE TABLE "t_json_raw" (
+      "id" SERIAL PRIMARY KEY,
+      "json" varchar(4096)
+);
+
+CREATE TABLE t_area (
+    id bigserial PRIMARY KEY,
+    layer_code varchar(20),
+    area_code varchar(20)
+);
+
+CREATE TABLE t_area_location (
+     id bigserial PRIMARY KEY,
+     layer_code varchar(20),
+     area_code varchar(20),
+     longitude decimal(10,6),
+     latitude decimal(10,6)
+);

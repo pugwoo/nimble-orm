@@ -356,7 +356,11 @@ public abstract class Test9Other_Others {
         }
 
         whereSQL.resetOrderBy();
-        whereSQL.addOrderByWithParam("concat(max(name),?) desc", "abc");
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            whereSQL.addOrderByWithParam("concat(max(name),?::text) desc", "abc"); // pg识别不了这个参数的类型，需要加::text
+        } else {
+            whereSQL.addOrderByWithParam("concat(max(name),?) desc", "abc");
+        }
         all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all2.size() == num1 + num2;
         for (int i = 0; i < all2.size() - 1; i++) {
@@ -418,29 +422,29 @@ public abstract class Test9Other_Others {
         String prefix2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         List<StudentDO> student2 = CommonOps.insertBatch(getDBHelper(), num2, prefix2);
 
-        WhereSQLForNamedParam whereSQL = new WhereSQLForNamedParam("deleted=0 and name like :name",
+        WhereSQLForNamedParam whereSQL = new WhereSQLForNamedParam("deleted=false and name like :name",
                 MapUtils.of("name", prefix1 + "%"));
         assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
-        whereSQL = new WhereSQLForNamedParam("deleted=0").and("name like :name", MapUtils.of("name", prefix1 + "%")); // 等价写法
+        whereSQL = new WhereSQLForNamedParam("deleted=false").and("name like :name", MapUtils.of("name", prefix1 + "%")); // 等价写法
         assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
         whereSQL.and(new WhereSQLForNamedParam()); // 加一个空的，等于没有任何约束
         assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1;
 
-        whereSQL.or(new WhereSQLForNamedParam("deleted=0 and name like :name2", MapUtils.of("name2", prefix2 + "%")));
+        whereSQL.or(new WhereSQLForNamedParam("deleted=false and name like :name2", MapUtils.of("name2", prefix2 + "%")));
         assert getDBHelper().getRaw(StudentDO.class, "select * from t_student " + whereSQL.getSQL(), whereSQL.getParams()).size() == num1 + num2;
 
-        whereSQL.not().and("deleted=0");
+        whereSQL.not().and("deleted=false");
         int size = getDBHelper().getRawOne(Integer.class, "select count(*) from t_student "+ whereSQL.getSQL(), whereSQL.getParams());
         long size2 = getDBHelper().getCount(StudentDO.class, "where name is not null") - (num1 + num2);
         assert size == size2;
 
-        whereSQL.not().and("deleted=0");
+        whereSQL.not().and("deleted=false");
         assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(),
                 whereSQL.getParams()) == num1 + num2;
 
-        whereSQL.and("1=:one", MapUtils.of("one", 1)).and("deleted=0");
+        whereSQL.and("1=:one", MapUtils.of("one", 1)).and("deleted=false");
         assert getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + whereSQL.getSQL(), whereSQL.getParams()) == num1 + num2;
 
         whereSQL = whereSQL.copy();
@@ -448,7 +452,7 @@ public abstract class Test9Other_Others {
 
         // 测试空的not，等于没有约束
         assert getDBHelper().getAll(StudentDO.class).size() ==
-                getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + new WhereSQL().not().and("deleted=0").getSQL());
+                getDBHelper().getRawOne(Integer.class, "select count(*) from t_student " + new WhereSQL().not().and("deleted=false").getSQL());
 
         // =============================== 重新new WhereSQL
 
@@ -502,7 +506,12 @@ public abstract class Test9Other_Others {
         }
 
         whereSQL.resetOrderBy();
-        whereSQL.addOrderByWithParam("concat(max(name),:abcname) desc", MapUtils.of("abcname","abc"));
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            // pg识别不了这个参数的类型，需要加::text
+            whereSQL.addOrderByWithParam("concat(max(name),:abcname::text) desc", MapUtils.of("abcname","abc"));
+        } else {
+            whereSQL.addOrderByWithParam("concat(max(name),:abcname) desc", MapUtils.of("abcname","abc"));
+        }
         all2 = getDBHelper().getRaw(StudentForGroupDO.class,
                 "select max(id) as id1, max(name) as name1, max(age) as age1 from t_student " + whereSQL.getSQL(), whereSQL.getParams());
         assert all2.size() == num1 + num2;

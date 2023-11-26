@@ -119,7 +119,7 @@ public abstract class Test9Other_Json {
         assert list.size() > 0;
 
         // json查询的两种写法，不适合于：clickhouse、
-        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.MYSQL) {
             list = getDBHelper().getAll(JsonDO.class, "WHERE json2->'$.score'=?", score);
             assert list.size() == 1;
             assert score.equals(list.get(0).getJson2().get("score").toString());
@@ -128,6 +128,14 @@ public abstract class Test9Other_Json {
             assert list.size() == 1;
             assert score.equals(list.get(0).getJson2().get("score").toString());
         }
+
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            list = getDBHelper().getAll(JsonDO.class, "WHERE json2->>'score'=?", score);
+            assert list.size() == 1;
+            assert score.equals(list.get(0).getJson2().get("score").toString());
+        }
+
+        // TODO clickhouse的json字段查询待写单元测试
     }
 
     @Test 
