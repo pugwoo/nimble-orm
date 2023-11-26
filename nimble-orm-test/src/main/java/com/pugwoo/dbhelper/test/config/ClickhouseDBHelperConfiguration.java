@@ -21,8 +21,6 @@ import java.util.List;
 @Configuration
 public class ClickhouseDBHelperConfiguration {
 
-    // clickhouse
-
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.clickhouse")
     public DataSource clickhouseDataSource() {
