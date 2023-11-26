@@ -7,13 +7,16 @@ package com.pugwoo.dbhelper.enums;
 public enum JoinTypeEnum {
 
 	/**默认join*/
-	JOIN("join", "default join"),
+	JOIN("JOIN", "default join"),
 	/**left join左连接*/
-	LEFT_JOIN("left join", "left join"),
+	LEFT_JOIN("LEFT JOIN", "left join"),
 	/**right join右连接*/
-	RIGHT_JOIN("right join", "right join"),
+	RIGHT_JOIN("RIGHT JOIN", "right join"),
     /**STRAIGHT_JOIN强制左表为驱动表进行join*/
-	STRAIGHT_JOIN("STRAIGHT_JOIN", "STRAIGHT JOIN ");
+	STRAIGHT_JOIN("STRAIGHT_JOIN", "straight join"),
+    /**full outer join，适用于postgresql*/
+    FULL_OUTER_JOIN("FULL OUTER JOIN", "full outer join"),
+	;
 	
 	private final String code;
 	
