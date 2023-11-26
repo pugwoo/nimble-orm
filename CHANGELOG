@@ -1,4 +1,5 @@
-v1.5.8 - [enhance] 【升级须知】对于clickhouse，byte[]数据类型自动转换成base64存储，查询时自动还原；
+v1.6.0 - [add] 增加PostgreSQL的支持
+       - [enhance] 【升级须知】对于clickhouse，byte[]数据类型自动转换成base64存储，查询时自动还原；
                               对于历史的使用了byte[]类型存储到clickhouse的数据，需要手工转换成base64以保证查回正确
        - [enhance] 【升级须知】拦截器基类DBHelperInterceptor改成接口
 
