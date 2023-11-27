@@ -135,63 +135,86 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 		int rows = 0;
 
+		boolean isUpdateOneByOne = true;
 		if (isSameClass && keyColumns.size() == 1) { // 满足批量条件
-			List<Field> notKeyColumns = DOInfoReader.getNotKeyColumns(clazz);
-			if(notKeyColumns.isEmpty()) {
-				return 0; // not need to update
-			}
+			try {
+				List<Field> notKeyColumns = DOInfoReader.getNotKeyColumns(clazz);
+				if(notKeyColumns.isEmpty()) {
+					return 0; // not need to update
+				}
 
-			list.forEach(PreHandleObject::preHandleUpdate);
+				list.forEach(PreHandleObject::preHandleUpdate);
 
-			// 找到notKeyColumns中的casVersionColumn，并从notKeyColumns中移除
-			Field casVersionColumn = null;
-			for (Field field : notKeyColumns) {
-				if (field.getAnnotation(Column.class).casVersion()) {
-					if (casVersionColumn != null) {
-						throw new RuntimeException("class:" + clazz.getName() + " has more than one casVersion column");
-					} else {
-						casVersionColumn = field;
+				// 找到notKeyColumns中的casVersionColumn，并从notKeyColumns中移除
+				Field casVersionColumn = null;
+				for (Field field : notKeyColumns) {
+					if (field.getAnnotation(Column.class).casVersion()) {
+						if (casVersionColumn != null) {
+							throw new RuntimeException("class:" + clazz.getName() + " has more than one casVersion column");
+						} else {
+							casVersionColumn = field;
+						}
 					}
 				}
-			}
-			if (casVersionColumn != null) {
-				notKeyColumns.remove(casVersionColumn);
-			}
+				if (casVersionColumn != null) {
+					notKeyColumns.remove(casVersionColumn);
+				}
 
-			List<Object> params = new ArrayList<>();
-			SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(getDatabaseType(),
-					list, params, casVersionColumn,
-					keyColumns.get(0), notKeyColumns, clazz);
-			if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
-				return 0; // not need to update, return actually update rows
-			}
+				List<Object> params = new ArrayList<>();
+				SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(getDatabaseType(),
+						list, params, casVersionColumn,
+						keyColumns.get(0), notKeyColumns, clazz);
+				if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
+					return 0; // not need to update, return actually update rows
+				}
 
-			// 对于postgresql，对于这种批量update方式，需要把java.util.Date的参数转换成LocalDateTime
-			if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
-				for (int i = 0; i < params.size(); i++) {
-					if (params.get(i) != null && params.get(i) instanceof java.util.Date) {
-						params.set(i, NimbleOrmDateUtils.toLocalDateTime((java.util.Date) params.get(i)));
+				// 对于postgresql，对于这种批量update方式，需要把java.util.Date的参数转换成LocalDateTime
+				if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+					for (int i = 0; i < params.size(); i++) {
+						if (params.get(i) != null && params.get(i) instanceof java.util.Date) {
+							params.set(i, NimbleOrmDateUtils.toLocalDateTime((java.util.Date) params.get(i)));
+						}
 					}
 				}
-			}
 
-			rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
-					batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
+				rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
+						batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
 
-			// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
-			if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-				if (rows > 0) {
-					rows = list.size();
+				// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
+				if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+					if (rows > 0) {
+						rows = list.size();
+					}
 				}
+
+				postHandleCasVersion(list, rows, casVersionColumn, clazz);
+				isUpdateOneByOne = false;
+			} catch (Exception e) {
+				if (e.getMessage().contains("has more than one casVersion column")) {
+					throw e;
+				}
+				LOGGER.warn("batch update error, class:{}, data size:{}, will fallback to update one by one",
+						clazz.getName(), list.size(), e);
 			}
+		}
 
-			postHandleCasVersion(list, rows, casVersionColumn, clazz);
-
-		} else {
+		if (isUpdateOneByOne) {
+			boolean isThrowCasVersionNotMatchException = false;
+			List<T> casUpdateFailList = new ArrayList<>();
 			for(T t : list) {
 				if(t != null) {
-					rows += _update(t, false, false, null);
+					try {
+						rows += _update(t, false, false, null);
+					} catch (CasVersionNotMatchException e) {
+						casUpdateFailList.add(t);
+						isThrowCasVersionNotMatchException = true;
+						// ignore exception log
+					}
 				}
+			}
+			if(isThrowCasVersionNotMatchException) {
+				throw new CasVersionNotMatchException(rows, "update fail for class:"
+						+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(casUpdateFailList));
 			}
 		}
 
