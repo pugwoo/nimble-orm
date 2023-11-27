@@ -80,7 +80,11 @@ public class SQLUtils {
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
-	        sql.append(joinTable.joinType().getCode()).append(" ");
+
+			String join = InnerCommonUtils.isBlank(joinTable.joinTypeAsString()) ?
+					joinTable.joinType().getCode() : joinTable.joinTypeAsString();
+	        sql.append(join).append(" ");
+
 	        sql.append(getTableName(databaseType, rightTableField.getType())).append(" ").append(joinRightTable.alias());
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
@@ -173,7 +177,11 @@ public class SQLUtils {
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
-	        sql.append(joinTable.joinType().getCode()).append(" ");
+
+			String join = InnerCommonUtils.isBlank(joinTable.joinTypeAsString()) ?
+					joinTable.joinType().getCode() : joinTable.joinTypeAsString();
+	        sql.append(join).append(" ");
+
 	        sql.append(getTableName(databaseType, rightTableField.getType())).append(" ").append(joinRightTable.alias());
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");

@@ -2,6 +2,9 @@ package com.pugwoo.dbhelper.enums;
 
 /**
  * 两表join的方式枚举
+ * <br>
+ * 其它类型的join，请使用字符串形式的join，详见`@JoinTable`的joinTypeAsString属性
+ *
  * @author pugwoo
  */
 public enum JoinTypeEnum {
@@ -11,11 +14,7 @@ public enum JoinTypeEnum {
 	/**left join左连接*/
 	LEFT_JOIN("LEFT JOIN", "left join"),
 	/**right join右连接*/
-	RIGHT_JOIN("RIGHT JOIN", "right join"),
-    /**STRAIGHT_JOIN强制左表为驱动表进行join*/
-	STRAIGHT_JOIN("STRAIGHT_JOIN", "straight join"),
-    /**full outer join，适用于postgresql*/
-    FULL_OUTER_JOIN("FULL OUTER JOIN", "full outer join"),
+	RIGHT_JOIN("RIGHT JOIN", "right join")
 	;
 	
 	private final String code;

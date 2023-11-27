@@ -338,13 +338,23 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			return null;
 		}
 
-		try (Connection connection = dataSource.getConnection()) {
+		Connection connection = null;
+		try {
+			connection = dataSource.getConnection();
 			String url = connection.getMetaData().getURL();
 			String type = url.split(":")[1];
 			return DatabaseTypeEnum.getByJdbcProtocol(type);
 		} catch (Exception e) {
 			LOGGER.error("fail to get database type from jdbc url, jdbcTemplate:{}, will try later", jdbcTemplate, e);
 			return null;
+		} finally {
+			if (connection != null) {
+				try {
+					connection.close();
+				} catch (Exception e) {
+					LOGGER.error("fail to close connection, jdbcTemplate:{}, ignored", jdbcTemplate, e);
+				}
+			}
 		}
 	}
 
