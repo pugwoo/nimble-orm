@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.test.entity.CasVersionDO;
 import com.pugwoo.dbhelper.test.entity.CasVersionLongDO;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public abstract class Test3Update_Single {
 
@@ -72,6 +74,9 @@ public abstract class Test3Update_Single {
     @Test
     public void testCasVersion() {
         CasVersionDO casVersionDO = new CasVersionDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            casVersionDO.setId(CommonOps.getRandomInt());
+        }
         casVersionDO.setName("nick");
 
         assert getDBHelper().insert(casVersionDO) > 0; // 插入时会自动写入casVersion字段的值
@@ -109,7 +114,11 @@ public abstract class Test3Update_Single {
                 exOccur = true;
             }
         }
-        assert exOccur;
+
+        // clickhouse没有办法获得实际更新行数，所以无法判断cas是否成功
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert exOccur;
+        }
 
         // 再把version设置为3，就正常了
         casVersionDO.setVersion(3);
@@ -130,6 +139,9 @@ public abstract class Test3Update_Single {
 
         // 测试CAS版本字段是Long的情况
         CasVersionLongDO casVersionLongDO = new CasVersionLongDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            casVersionLongDO.setId(CommonOps.getRandomInt());
+        }
         casVersionLongDO.setName("nick");
 
         assert getDBHelper().insert(casVersionLongDO) > 0; // 插入时会自动写入casVersion字段的值

@@ -2,6 +2,8 @@ package com.pugwoo.dbhelper.test.utils;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
+import com.pugwoo.dbhelper.test.entity.CourseDO;
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 
 import java.util.ArrayList;
@@ -10,6 +12,16 @@ import java.util.Random;
 import java.util.UUID;
 
 public class CommonOps {
+
+    public static long getRandomLong() {
+        long result = Math.abs(new Random().nextLong());
+        return result == 0 ? result + 1 + Math.abs(new Random().nextLong()) : result;
+    }
+
+    public static int getRandomInt() {
+        int result = Math.abs(new Random().nextInt());
+        return result == 0 ? result + 1 + Math.abs(new Random().nextInt()) : result;
+    }
 
     public static String getRandomName(String prefix) {
         return prefix + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
@@ -24,22 +36,34 @@ public class CommonOps {
         studentDO.setName(name);
 
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
-        dbHelper.insert(studentDO);
+        assert dbHelper.insert(studentDO) == 1;
         return  studentDO;
+    }
+
+    public static StudentDO insertOne(DBHelper dbHelper, Long schoolId) {
+        StudentDO studentDO = new StudentDO();
+        studentDO.setSchoolId(schoolId);
+
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
+
+        assert dbHelper.insert(studentDO) == 1;
+        return studentDO;
     }
 
     public static StudentDO insertOne(DBHelper dbHelper) {
         StudentDO studentDO = new StudentDO();
         if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         studentDO.setName(getRandomName("nick"));
         studentDO.setIntro(studentDO.getName().getBytes());
-        dbHelper.insert(studentDO);
+        assert dbHelper.insert(studentDO) == 1;
         return studentDO;
     }
 
@@ -55,7 +79,7 @@ public class CommonOps {
             // clickhouse不支持自增id，所以对于clickhouse自动设置一个随机id
             DatabaseTypeEnum databaseType = dbHelper.getDatabaseType();
             if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-                studentDO.setId(new Random().nextLong());
+                studentDO.setId(CommonOps.getRandomLong());
             }
 
             studentDO.setName(getRandomName(prefix));
@@ -84,6 +108,39 @@ public class CommonOps {
         assert rows == num;
 
         return list;
+    }
+
+    public static SchoolDO insertOneSchoolDO(DBHelper dbHelper, String name) {
+        SchoolDO schoolDO = new SchoolDO();
+        schoolDO.setName(name);
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            schoolDO.setId(CommonOps.getRandomLong());
+        }
+        assert dbHelper.insert(schoolDO) == 1;
+        return schoolDO;
+    }
+
+    public static CourseDO insertOneCourseDO(DBHelper dbHelper, String name, Long studentId) {
+        CourseDO courseDO = new CourseDO();
+        courseDO.setName(name);
+        courseDO.setStudentId(studentId);
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            courseDO.setId(CommonOps.getRandomLong());
+        }
+        assert dbHelper.insert(courseDO) == 1;
+        return courseDO;
+    }
+
+    public static CourseDO insertOneCourseDO(DBHelper dbHelper, String name, Long studentId, boolean isMain) {
+        CourseDO courseDO = new CourseDO();
+        courseDO.setName(name);
+        courseDO.setStudentId(studentId);
+        if (dbHelper.getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            courseDO.setId(CommonOps.getRandomLong());
+        }
+        courseDO.setIsMain(isMain);
+        assert dbHelper.insert(courseDO) == 1;
+        return courseDO;
     }
 
 }

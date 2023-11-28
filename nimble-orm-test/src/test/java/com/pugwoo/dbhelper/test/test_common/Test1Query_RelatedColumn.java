@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
@@ -29,23 +30,9 @@ public abstract class Test1Query_RelatedColumn {
     public void testRelatedColumnWithLimit() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
-        CourseDO courseDO1 = new CourseDO();
-        courseDO1.setName("math");
-        courseDO1.setStudentId(studentDO.getId());
-        courseDO1.setIsMain(true); // math是主课程
-        getDBHelper().insert(courseDO1);
-
-        CourseDO courseDO2 = new CourseDO();
-        courseDO2.setName("eng");
-        courseDO2.setStudentId(studentDO.getId());
-        courseDO2.setIsMain(true); // eng是主课程
-        getDBHelper().insert(courseDO2);
-
-        CourseDO courseDO3 = new CourseDO();
-        courseDO3.setName("chinese");
-        courseDO3.setStudentId(studentDO.getId());
-        courseDO3.setIsMain(true); // chinese是主课程
-        getDBHelper().insert(courseDO3);
+        CommonOps.insertOneCourseDO(getDBHelper(), "math", studentDO.getId(), true);
+        CommonOps.insertOneCourseDO(getDBHelper(), "eng", studentDO.getId(), true);
+        CommonOps.insertOneCourseDO(getDBHelper(), "chinese", studentDO.getId(), true);
 
         StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
 
@@ -77,32 +64,16 @@ public abstract class Test1Query_RelatedColumn {
         String course1 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         String course2 = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
 
-        CourseDO courseDO = new CourseDO();
-        courseDO.setName(course1);
-        courseDO.setStudentId(student1.getId());
-        courseDO.setIsMain(true);
-        getDBHelper().insert(courseDO);
+        CourseDO courseDO = CommonOps.insertOneCourseDO(getDBHelper(), course1, student1.getId(), true);
         Long id1 = courseDO.getId();
 
-        courseDO = new CourseDO();
-        courseDO.setName(course1);
-        courseDO.setStudentId(student2.getId());
-        courseDO.setIsMain(false);
-        getDBHelper().insert(courseDO);
+        courseDO = CommonOps.insertOneCourseDO(getDBHelper(), course1, student2.getId(), false);
         Long id2 = courseDO.getId();
 
-        courseDO = new CourseDO();
-        courseDO.setName(course2);
-        courseDO.setStudentId(student1.getId());
-        courseDO.setIsMain(false);
-        getDBHelper().insert(courseDO);
+        courseDO = CommonOps.insertOneCourseDO(getDBHelper(), course2, student1.getId(), false);
         Long id3 = courseDO.getId();
 
-        courseDO = new CourseDO();
-        courseDO.setName(course2);
-        courseDO.setStudentId(student2.getId());
-        courseDO.setIsMain(true);
-        getDBHelper().insert(courseDO);
+        courseDO = CommonOps.insertOneCourseDO(getDBHelper(), course2, student2.getId(), true);
         Long id4 = courseDO.getId();
 
         CourseVO courseVO = getDBHelper().getOne(CourseVO.class, "where id=?", id1);
@@ -140,39 +111,21 @@ public abstract class Test1Query_RelatedColumn {
     @Test
     public void testRelatedColumn() {
 
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("sysu");
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "sysu");
 
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         studentDO.setSchoolId(schoolDO.getId());
         getDBHelper().update(studentDO);
 
-        CourseDO courseDO1 = new CourseDO();
-        courseDO1.setName("math");
-        courseDO1.setStudentId(studentDO.getId());
-        courseDO1.setIsMain(true); // math是主课程
-        getDBHelper().insert(courseDO1);
-
-        CourseDO courseDO2 = new CourseDO();
-        courseDO2.setName("eng");
-        courseDO2.setStudentId(studentDO.getId());
-        getDBHelper().insert(courseDO2);
+        CourseDO courseDO1 = CommonOps.insertOneCourseDO(getDBHelper(), "math", studentDO.getId(), true);
+        CourseDO courseDO2 = CommonOps.insertOneCourseDO(getDBHelper(), "eng", studentDO.getId(), false);
 
         StudentDO studentDO2  = CommonOps.insertOne(getDBHelper());
         studentDO2.setSchoolId(schoolDO.getId());
         getDBHelper().update(studentDO2);
 
-        CourseDO courseDO3 = new CourseDO();
-        courseDO3.setName("math");
-        courseDO3.setStudentId(studentDO2.getId());
-        courseDO3.setIsMain(true); // math是主课程
-        getDBHelper().insert(courseDO3);
-
-        CourseDO courseDO4 = new CourseDO();
-        courseDO4.setName("chinese");
-        courseDO4.setStudentId(studentDO2.getId());
-        getDBHelper().insert(courseDO4);
+        CourseDO courseDO3 = CommonOps.insertOneCourseDO(getDBHelper(), "math", studentDO2.getId(), true);
+        CourseDO courseDO4 = CommonOps.insertOneCourseDO(getDBHelper(), "chinese", studentDO2.getId(), false);
 
         /////////////////// 下面是查询 ///////////////////
 
@@ -245,10 +198,9 @@ public abstract class Test1Query_RelatedColumn {
             assert sVO.getMainCourses().size() == 1 &&
                     studentVO1.getMainCourses().get(0).getName().equals("math"); // math是主课程
 
-            if(sVO.getId().equals(studentDO2.getId())) {
-                assert
-                        sVO.getCourses().get(0).getId().equals(courseDO3.getId())
-                                || sVO.getCourses().get(1).getId().equals(courseDO4.getId());
+            if (sVO.getId().equals(studentDO2.getId())) {
+                assert sVO.getCourses().get(0).getId().equals(courseDO3.getId()) && sVO.getCourses().get(1).getId().equals(courseDO4.getId()) ||
+                        sVO.getCourses().get(0).getId().equals(courseDO4.getId()) && sVO.getCourses().get(1).getId().equals(courseDO3.getId());
             }
 
             assert sVO.getNameWithHi().equals(sVO.getName() + "hi"); // 测试计算列
@@ -313,13 +265,9 @@ public abstract class Test1Query_RelatedColumn {
     public void testComputedRelatedColumn() {
         String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 24);
 
-        StudentDO studentDO = new StudentDO();
-        studentDO.setName(uuid);
-        getDBHelper().insert(studentDO);
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper(), uuid);
 
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName(uuid);
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), uuid);
 
         Student1VO one = getDBHelper().getOne(Student1VO.class, "where name=?", uuid);
         assert one.getName1().equals("S" + uuid);
@@ -334,13 +282,14 @@ public abstract class Test1Query_RelatedColumn {
 
     @Test
     public void testDiffClassTypeRelatedColumn() {
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("sysu");
-        getDBHelper().insert(schoolDO);
+        // postgresql不支持用string类型去查数字类型的字段，因此不测试
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            return;
+        }
 
-        StudentDO studentDO = CommonOps.insertOne(getDBHelper());
-        studentDO.setSchoolId(schoolDO.getId());
-        getDBHelper().update(studentDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "sysu");
+
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
 
         StudentStringSchoolIdDO one = getDBHelper().getOne(StudentStringSchoolIdDO.class, "where id=?", studentDO.getId());
         assert one.getId().equals(studentDO.getId());
@@ -350,7 +299,7 @@ public abstract class Test1Query_RelatedColumn {
         assert one.getSchools().get(0).getId().equals(schoolDO.getId()); // 不同类型的比对会转换成string进行
     }
 
-    /**这个DO的school id类型是字符串，故意映射的，这是允许的*/
+    /**这个DO的school id类型是字符串，故意映射的，这是允许的（对于pgsql，这种用string去查数字类型的方式会报错）*/
     @Data
     @Table("t_student")
     public static class StudentStringSchoolIdDO {
@@ -390,9 +339,8 @@ public abstract class Test1Query_RelatedColumn {
 
     @Test
     public void testRelatedColumnEmptyList() {
-        CourseDO courseDO = new CourseDO();
-        // courseDO.setStudentId(-1L); // student id不设置
-        getDBHelper().insert(courseDO);
+        // student id不设置
+        CourseDO courseDO = CommonOps.insertOneCourseDO(getDBHelper(), null, null);
 
         CourseEmptyListVO one = getDBHelper().getOne(CourseEmptyListVO.class, "where id=?", courseDO.getId());
         assert one.getStudents() != null; // 不会是null，框架会自动设置
@@ -465,10 +413,7 @@ public abstract class Test1Query_RelatedColumn {
     @Test
     public void testWrongExtraWhere() {
         // 先插入一条数据
-        CourseDO courseDO = new CourseDO();
-        courseDO.setName("some course");
-        courseDO.setStudentId(1L);
-        getDBHelper().insert(courseDO);
+        CourseDO courseDO = CommonOps.insertOneCourseDO(getDBHelper(), "some course", 1L);
 
         boolean isThrow = false;
         try {
@@ -497,9 +442,7 @@ public abstract class Test1Query_RelatedColumn {
     public void testNullDataService() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
-        CourseDO courseDO = new CourseDO();
-        courseDO.setStudentId(studentDO.getId());
-        getDBHelper().insert(courseDO);
+        CourseDO courseDO = CommonOps.insertOneCourseDO(getDBHelper(), null, studentDO.getId());
 
         CourseNullDataServiceVO one = getDBHelper().getOne(CourseNullDataServiceVO.class, "where id=?", courseDO.getId());
         assert one.getStudents() != null; // 不会是null，框架会自动设置

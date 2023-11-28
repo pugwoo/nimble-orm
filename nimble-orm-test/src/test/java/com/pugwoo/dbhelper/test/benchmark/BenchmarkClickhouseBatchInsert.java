@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.benchmark;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class BenchmarkClickhouseBatchInsert {
     public void testBatch() {
         int total = 99999;
 
-        long randomId = new Random().nextLong();
+        long randomId = CommonOps.getRandomLong();
 
         List<StudentDO> list = new ArrayList<>();
         for (int i = 0; i < total; i++) {

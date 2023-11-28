@@ -10,7 +10,7 @@ public class StudentVOForGroup {
     /**
      * 软删除标记为，0 未删除，1已删除
      */
-    @Column(value = "deleted", softDelete = {"0", "1"})
+    @Column(value = "deleted", softDelete = {"false", "true"})
     private Boolean deleted;
 
     @Column(value = "name", maxStringLength = 32)

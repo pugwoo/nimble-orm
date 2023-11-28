@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
@@ -23,7 +24,7 @@ public abstract class Test4Delete_SoftDeleteTable {
         StudentDO studentDO = studentDOS.get(0);
         studentDO.setAge(new Random().nextInt(100));
         studentDO.setIntro("i like basketball".getBytes());
-        long schoolId = new Random().nextLong();
+        long schoolId = CommonOps.getRandomLong();
         studentDO.setSchoolId(schoolId % 100000L);
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setId(studentDO.getSchoolId());
@@ -33,7 +34,7 @@ public abstract class Test4Delete_SoftDeleteTable {
         List<CourseDO> courses = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             CourseDO courseDO = new CourseDO();
-            courseDO.setId(new Random().nextLong() % 100000L);
+            courseDO.setId(CommonOps.getRandomLong() % 100000L);
             courseDO.setName(UUID.randomUUID().toString());
             courses.add(courseDO);
         }
@@ -74,7 +75,11 @@ public abstract class Test4Delete_SoftDeleteTable {
         List<Long> ids = ListUtils.transform(studentDOS, o -> o.getId());
         Map<Long, StudentDO> map = ListUtils.toMap(studentDOS, o -> o.getId(), o -> o);
 
-        assert getDBHelper().delete(studentDOS) == 9;
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert getDBHelper().delete(studentDOS) == 1;
+        } else {
+            assert getDBHelper().delete(studentDOS) == 9;
+        }
 
         // 测试数据已经被删除了
         assert getDBHelper().getAll(StudentDO.class, " where id in (?)", ids).size() == 0;
@@ -99,7 +104,12 @@ public abstract class Test4Delete_SoftDeleteTable {
 
         Map<Long, StudentDO> map = ListUtils.toMap(studentDOS, o -> o.getId(), o -> o);
 
-        assert getDBHelper().delete(StudentDO.class, "where name like ?", prefix + "%") == 9;
+        int rows = getDBHelper().delete(StudentDO.class, "where name like ?", prefix + "%");
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 9;
+        } else {
+            assert rows == 1;
+        }
 
         // 测试数据已经被删除了
         assert getDBHelper().getAll(StudentDO.class, " where name like ?", prefix + "%").size() == 0;

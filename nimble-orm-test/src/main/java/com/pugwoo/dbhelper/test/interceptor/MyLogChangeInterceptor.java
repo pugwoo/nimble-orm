@@ -4,10 +4,9 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 
-import java.util.Date;
 import java.util.List;
 
-public class MyLogChangeInterceptor extends DBHelperInterceptor {
+public class MyLogChangeInterceptor implements DBHelperInterceptor {
 
 	@Override
 	public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {
@@ -53,8 +52,8 @@ public class MyLogChangeInterceptor extends DBHelperInterceptor {
     public boolean beforeUpdateAll(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams, List<Object> args) {
 		if(clazz.equals(StudentDO.class)) {
-			customsSets.add("name=?");
-			customsParams.add("beforeUpdateAll" + new Date());
+			customsSets.add("school_snapshot=?");
+			customsParams.add("{}");
 		}
 		System.out.println(">U> " + clazz.getSimpleName() + ",sql:" + sql + "\n    args:" + NimbleOrmJSON.toJson(args));
     	return true;

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
@@ -126,11 +127,14 @@ public abstract class Test1Query_Basic {
         assert byExample.get(0).getId().equals(studentDO.getId());
         assert byExample.get(0).getName().equals(studentDO.getName());
 
-        example.setIntro(studentDO.getIntro());
-        byExample = getDBHelper().getByExample(example, 10);
-        assert byExample.size() == 1;
-        assert byExample.get(0).getId().equals(studentDO.getId());
-        assert byExample.get(0).getName().equals(studentDO.getName());
+        // clickhosue没有byte[]类型，所以不测试这个
+        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
+            example.setIntro(studentDO.getIntro());
+            byExample = getDBHelper().getByExample(example, 10);
+            assert byExample.size() == 1;
+            assert byExample.get(0).getId().equals(studentDO.getId());
+            assert byExample.get(0).getName().equals(studentDO.getName());
+        }
     }
 
     @Test 
@@ -142,8 +146,11 @@ public abstract class Test1Query_Basic {
         System.out.println(list.size());
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new short[]{50,51,52});
         System.out.println(list.size());
-        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
-        System.out.println(list.size());
+
+        // char非常不建议当数字使用，这里不再测试
+        //list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
+        //System.out.println(list.size());
+
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new float[]{50,51,52});
         System.out.println(list.size());
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new double[]{50,51,52});
@@ -158,9 +165,7 @@ public abstract class Test1Query_Basic {
 
     @Test
     public void testGetJoin() {
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("sysu");
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "sysu");
 
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         studentDO.setSchoolId(schoolDO.getId());
@@ -251,7 +256,9 @@ public abstract class Test1Query_Basic {
     @Test 
     public void testJoinTrueDelete() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
-        StudentSelfTrueDeleteJoinVO joinVO = getDBHelper().getOne(StudentSelfTrueDeleteJoinVO.class, "where t1.id=?", studentDO.getId());
+        // 说明：clickhouse如果不加and t2.id=?会慢到30秒超时
+        StudentSelfTrueDeleteJoinVO joinVO = getDBHelper().getOne(StudentSelfTrueDeleteJoinVO.class,
+                "where t1.id=? and t2.id=?", studentDO.getId(), studentDO.getId());
         assert joinVO.getStudent1().getId().equals(studentDO.getId());
         assert joinVO.getStudent2().getId().equals(studentDO.getId());
     }
@@ -348,13 +355,13 @@ public abstract class Test1Query_Basic {
         StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
         StudentDO studentDO3 = CommonOps.insertOne(getDBHelper());
 
-        List<String> studentNames = getDBHelper().getRaw(String.class, "select name from t_student where deleted=0");
+        List<String> studentNames = getDBHelper().getRaw(String.class, "select name from t_student where deleted=false");
 
         assert studentNames.contains(studentDO1.getName());
         assert studentNames.contains(studentDO2.getName());
         assert studentNames.contains(studentDO3.getName());
 
-        List<Integer> count = getDBHelper().getRaw(Integer.class, "select count(*) from t_student where deleted=0");
+        List<Integer> count = getDBHelper().getRaw(Integer.class, "select count(*) from t_student where deleted=false");
         assert count.get(0) >= 3;
 
         List<Boolean> bools = getDBHelper().getRaw(Boolean.class, "select 1");
@@ -362,22 +369,22 @@ public abstract class Test1Query_Basic {
         bools = getDBHelper().getRaw(Boolean.class, "select 0");
         assert !bools.get(0);
 
-        List<Byte> bytes = getDBHelper().getRaw(Byte.class, "select 'a'");
+        List<Byte> bytes = getDBHelper().getRaw(Byte.class, "select 97");
         assert bytes.get(0) == 97;
 
         List<byte[]> bytes2 = getDBHelper().getRaw(byte[].class, "select 'a'");
         assert bytes2.get(0)[0] == 97;
 
-        List<Short> count2 = getDBHelper().getRaw(Short.class, "select count(*) from t_student where deleted=0");
+        List<Short> count2 = getDBHelper().getRaw(Short.class, "select count(*) from t_student where deleted=false");
         assert count2.get(0) >= 3;
 
-        List<Float> count3 = getDBHelper().getRaw(Float.class, "select count(*) from t_student where deleted=0");
+        List<Float> count3 = getDBHelper().getRaw(Float.class, "select count(*) from t_student where deleted=false");
         assert count3.get(0) >= 3;
 
-        List<Double> count4 = getDBHelper().getRaw(Double.class, "select count(*) from t_student where deleted=0");
+        List<Double> count4 = getDBHelper().getRaw(Double.class, "select count(*) from t_student where deleted=false");
         assert count4.get(0) >= 3;
 
-        List<BigDecimal> count5 = getDBHelper().getRaw(BigDecimal.class, "select count(*) from t_student where deleted=0");
+        List<BigDecimal> count5 = getDBHelper().getRaw(BigDecimal.class, "select count(*) from t_student where deleted=false");
         assert count5.get(0).compareTo(BigDecimal.valueOf(3)) >= 0;
 
         List<Date> dates = getDBHelper().getRaw(Date.class, "select now()");
@@ -404,18 +411,17 @@ public abstract class Test1Query_Basic {
     @Test
     public void testSum() {
         // 故意让sum的记录不存在
-        StudentSumVO one = getDBHelper().getOne(StudentSumVO.class, "where id = -1");
+        StudentSumVO one = getDBHelper().getOne(StudentSumVO.class, "where id=-1");
         assert one.getAgeSum() == 0;
 
         getDBHelper().delete(StudentDO.class, "where 1=1");
         CommonOps.insertBatch(getDBHelper(), 30);
 
         PageData<StudentSumVO> pageData = getDBHelper().getPage(StudentSumVO.class,
-                1, 10, "group by name order by ageSum");
+                1, 10, "where deleted=false group by name order by COALESCE(sum(age), 0)");  // 注意，由于VO不再继承DO，所以这里要记得写deleted=0
 
         assert pageData.getTotal() == 30;
         assert pageData.getData().size() == 10;
-
     }
 
     /**
@@ -426,8 +432,14 @@ public abstract class Test1Query_Basic {
     public void testSameColumn() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
+        // 注意：这个where字段写表名.name是因为name在VO中是computed字段且覆盖了原来的列名，对于mysql和pg来说，都不用处理
+        String where = "where name=?";
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            where = "where t_student.name=?";
+        }
+
         StudentSameColumnNameVO one = getDBHelper().getOne(
-                StudentSameColumnNameVO.class, "where name=?", studentDO.getName());
+                StudentSameColumnNameVO.class, where, studentDO.getName());
 
         assert one.getName().endsWith("FFFFFFFF");
         assert one.getName2() == null;
@@ -435,9 +447,7 @@ public abstract class Test1Query_Basic {
 
     @Test
     public void testReadIfNull() {
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName(null);
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), null);
 
         SchoolForReadNullDO one = getDBHelper().getOne(SchoolForReadNullDO.class, "where id=?", schoolDO.getId());
         assert one.getId().equals(schoolDO.getId());
@@ -447,15 +457,21 @@ public abstract class Test1Query_Basic {
 
     @Test
     public void testVirtualTable() {
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName("collageA");
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "collageA");
 
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
+        StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
+
+        // 对于clickhouse，id是随机的，而下面的test是按id排序来测试的，所以这里调换一下顺序以确保id是自增的
+        if (studentDO.getId().compareTo(studentDO2.getId()) > 0) {
+            StudentDO tmp = studentDO;
+            studentDO = studentDO2;
+            studentDO2 = tmp;
+        }
+
         studentDO.setSchoolId(schoolDO.getId());
         getDBHelper().update(studentDO);
 
-        StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
         studentDO2.setSchoolId(schoolDO.getId());
         getDBHelper().update(studentDO2);
 

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.wooutils.collect.ListUtils;
@@ -14,10 +15,7 @@ public abstract class Test7Interceptor_Default {
 
 	@Test
 	public void testQuery() {
-		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick");
-		studentDO.setAge(29);
-		getDBHelper().insert(studentDO);
+		StudentDO studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		Long id = studentDO.getId();
 
 		getDBHelper().getByKey(StudentDO.class, id);
@@ -31,10 +29,10 @@ public abstract class Test7Interceptor_Default {
 	public void testInsertUpdate() {
 		String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 24);
 
-		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick" + uuid);
+		StudentDO studentDO = CommonOps.insertOne(getDBHelper(), "nick" + uuid);
 		studentDO.setAge(29);
-		assert getDBHelper().insert(studentDO) == 1;
+		getDBHelper().update(studentDO);
+
 		Long id = studentDO.getId();
 		assert id != null;
 
@@ -58,6 +56,9 @@ public abstract class Test7Interceptor_Default {
 		List<StudentDO> students = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			StudentDO s = new StudentDO();
+			if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+				s.setId(CommonOps.getRandomLong());
+			}
 			s.setName(UUID.randomUUID().toString().replace("-", ""));
 			students.add(s);
 		}
@@ -65,7 +66,11 @@ public abstract class Test7Interceptor_Default {
 		assert getDBHelper().insert(students) == 10;
 
 		// 转换成set再插入一次
-		ListUtils.forEach(students, studentDO -> studentDO.setId(null));
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+			ListUtils.forEach(students, studentDO -> studentDO.setId(CommonOps.getRandomLong()));
+		} else {
+			ListUtils.forEach(students, studentDO -> studentDO.setId(null));
+		}
 		Set<StudentDO> students2 = new HashSet<>(students);
 		assert getDBHelper().insert(students2) == 10;
 	}
@@ -95,27 +100,35 @@ public abstract class Test7Interceptor_Default {
 	public void batchDelete() {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(),10);
 		int rows = getDBHelper().delete(insertBatch);
-		assert rows == insertBatch.size();
-		
+
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+			assert rows == 1;
+		} else {
+			assert rows == insertBatch.size();
+		}
+
 		insertBatch = CommonOps.insertBatch(getDBHelper(),20);
 		rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1);
-		assert rows >= 20;
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+			assert rows == 1;
+		} else {
+			assert rows >= 20;
+		}
+
 	}
 	
 	@Test 
 	public void testCustomsUpdateDelete() {
-		StudentDO studentDO = new StudentDO();
-		studentDO.setName("nick");
+		StudentDO studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		studentDO.setAge(29);
-		getDBHelper().insert(studentDO);
+		getDBHelper().update(studentDO);
 		
 		getDBHelper().updateCustom(studentDO, "age=age+1");
 		getDBHelper().delete(StudentDO.class, "where 1=1");
-		
-		studentDO = new StudentDO();
-		studentDO.setName("nick");
+
+		studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		studentDO.setAge(29);
-		getDBHelper().insert(studentDO);
+		getDBHelper().update(studentDO);
 		getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1");
 	}
 }

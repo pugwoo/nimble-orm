@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -100,65 +101,120 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return update(list.iterator().next());
 		}
 
+		boolean isSameClass = SQLAssert.isAllSameClass(list);
+		Class<?> clazz = list.iterator().next().getClass();
+
+		// pgsql的批量update，如果字段含有isJson字段，则降级为单条update，批量update目前driver会报错
+		if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+			List<Field> columns = DOInfoReader.getColumns(clazz);
+			boolean hasJsonColumn = false;
+			for (Field field : columns) {
+				if (field.getAnnotation(Column.class).isJSON()) {
+					hasJsonColumn = true;
+					break;
+				}
+			}
+			if (hasJsonColumn) {
+				int rows = 0;
+				for (T t : list) {
+					if (t != null) {
+						rows += update(t);
+					}
+				}
+				return rows;
+			}
+		}
+
 		doInterceptBeforeUpdate(list, null, null);
 
 		// 判断是否可以转化成批量update，使用update case when的方式
 		// 可以批量update的条件：
 		// 1) list里所有对象都是相同的类
 		// 2) DO类有主键且只有一个主键(暂不支持多个主键，这种情况太少，以后有时间再支持)
-		boolean isSameClass = SQLAssert.isAllSameClass(list);
-		Class<?> clazz = list.iterator().next().getClass();
 		List<Field> keyColumns = DOInfoReader.getKeyColumns(clazz);
 
 		int rows = 0;
 
+		boolean isUpdateOneByOne = true;
 		if (isSameClass && keyColumns.size() == 1) { // 满足批量条件
-			List<Field> notKeyColumns = DOInfoReader.getNotKeyColumns(clazz);
-			if(notKeyColumns.isEmpty()) {
-				return 0; // not need to update
+			try {
+				List<Field> notKeyColumns = DOInfoReader.getNotKeyColumns(clazz);
+				if(notKeyColumns.isEmpty()) {
+					return 0; // not need to update
+				}
+
+				list.forEach(PreHandleObject::preHandleUpdate);
+
+				// 找到notKeyColumns中的casVersionColumn，并从notKeyColumns中移除
+				Field casVersionColumn = null;
+				for (Field field : notKeyColumns) {
+					if (field.getAnnotation(Column.class).casVersion()) {
+						if (casVersionColumn != null) {
+							throw new RuntimeException("class:" + clazz.getName() + " has more than one casVersion column");
+						} else {
+							casVersionColumn = field;
+						}
+					}
+				}
+				if (casVersionColumn != null) {
+					notKeyColumns.remove(casVersionColumn);
+				}
+
+				List<Object> params = new ArrayList<>();
+				SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(getDatabaseType(),
+						list, params, casVersionColumn,
+						keyColumns.get(0), notKeyColumns, clazz);
+				if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
+					return 0; // not need to update, return actually update rows
+				}
+
+				// 对于postgresql，对于这种批量update方式，需要把java.util.Date的参数转换成LocalDateTime
+				if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+					for (int i = 0; i < params.size(); i++) {
+						if (params.get(i) != null && params.get(i) instanceof java.util.Date) {
+							params.set(i, NimbleOrmDateUtils.toLocalDateTime((java.util.Date) params.get(i)));
+						}
+					}
+				}
+
+				rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
+						batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
+
+				// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
+				if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+					if (rows > 0) {
+						rows = list.size();
+					}
+				}
+
+				postHandleCasVersion(list, rows, casVersionColumn, clazz);
+				isUpdateOneByOne = false;
+			} catch (Exception e) {
+				if (e.getMessage().contains("has more than one casVersion column")) {
+					throw e;
+				}
+				LOGGER.warn("batch update error, class:{}, data size:{}, will fallback to update one by one",
+						clazz.getName(), list.size(), e);
 			}
+		}
 
-			list.forEach(PreHandleObject::preHandleUpdate);
-
-			// 找到notKeyColumns中的casVersionColumn，并从notKeyColumns中移除
-			Field casVersionColumn = null;
-			for (Field field : notKeyColumns) {
-				if (field.getAnnotation(Column.class).casVersion()) {
-					if (casVersionColumn != null) {
-						throw new RuntimeException("class:" + clazz.getName() + " has more than one casVersion column");
-					} else {
-						casVersionColumn = field;
+		if (isUpdateOneByOne) {
+			boolean isThrowCasVersionNotMatchException = false;
+			List<T> casUpdateFailList = new ArrayList<>();
+			for(T t : list) {
+				if(t != null) {
+					try {
+						rows += _update(t, false, false, null);
+					} catch (CasVersionNotMatchException e) {
+						casUpdateFailList.add(t);
+						isThrowCasVersionNotMatchException = true;
+						// ignore exception log
 					}
 				}
 			}
-			if (casVersionColumn != null) {
-				notKeyColumns.remove(casVersionColumn);
-			}
-
-			List<Object> params = new ArrayList<>();
-			SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(list, params, casVersionColumn,
-					keyColumns.get(0), notKeyColumns, clazz);
-			if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
-				return 0; // not need to update, return actually update rows
-			}
-
-			rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
-					batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
-
-			// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
-			if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-				if (rows > 0) {
-					rows = list.size();
-				}
-			}
-
-			postHandleCasVersion(list, rows, casVersionColumn, clazz);
-
-		} else {
-			for(T t : list) {
-				if(t != null) {
-					rows += _update(t, false, false, null);
-				}
+			if(isThrowCasVersionNotMatchException) {
+				throw new CasVersionNotMatchException(rows, "update fail for class:"
+						+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(casUpdateFailList));
 			}
 		}
 
@@ -168,7 +224,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	private <T> int _update(T t, boolean withNull, boolean withInterceptors,
 			String postSql, Object... args) throws NullKeyValueException {
-		
+		if (t == null) {
+			return 0;
+		}
+
 		if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
 			return 0; // not need to update
 		}
@@ -183,7 +242,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		
 		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getUpdateSQL(t, values, withNull, postSql);
+		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, withNull, postSql);
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
@@ -251,7 +310,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(args != null) {
 			values.addAll(Arrays.asList(args));
 		}
-		String sql = SQLUtils.getCustomUpdateSQL(t, values, setSql); // 这里values里面的内容会在方法内增加
+		String sql = SQLUtils.getCustomUpdateSQL(getDatabaseType(), t, values, setSql); // 这里values里面的内容会在方法内增加
 		
 		List<Object> tList = new ArrayList<>();
 		tList.add(t);
@@ -275,7 +334,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		List<Object> values;
 
-		String sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
+		String sql = SQLUtils.getUpdateAllSQL(getDatabaseType(), clazz, setSql, whereSql, null);
 		
 		List<String> customsSets = new ArrayList<>();
 		List<Object> customsParams = new ArrayList<>();
@@ -302,7 +361,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			values = new ArrayList<>(argsList);
 		}
 		
-		sql = SQLUtils.getUpdateAllSQL(clazz, setSql, whereSql, null);
+		sql = SQLUtils.getUpdateAllSQL(getDatabaseType(), clazz, setSql, whereSql, null);
 
 		return namedJdbcExecuteUpdate(sql, values.toArray());
 	}

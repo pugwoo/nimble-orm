@@ -1,8 +1,10 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
+import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
@@ -147,11 +149,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		 */
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(list, values);
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(getDatabaseType(), list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
 			List<Object> values = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(list, values, databaseType);
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, list, values);
 			total = insertBatchDefaultMode(sqlDTO, values, list.size());
 		}
 
@@ -208,11 +210,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		int total;
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 			List<Object[]> values = new ArrayList<>();
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, list, values);
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(databaseType, tableName, list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
 			List<Object> values = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, list, values, databaseType);
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, tableName, list, values);
 			total = insertBatchDefaultMode(sqlDTO, values, list.size());
 		}
 
@@ -231,11 +233,11 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		DatabaseTypeEnum databaseType = getDatabaseType();
 		int total;
 		if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(tableName, cols);
+			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(databaseType, tableName, cols);
 			total = insertBatchJDBCTemplateMode(sql, values2);
 		} else {
 			List<Object> values3 = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(tableName, cols, values2, databaseType, values3);
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, tableName, cols, values2, values3);
 			total = insertBatchDefaultMode(sqlDTO, values3, values2.size());
 		}
 
@@ -258,11 +260,13 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			doInterceptBeforeInsert(t);
 		}
 		
-		String sql1 = SQLUtils.getInsertSQL(t, values, isWithNullValue);
+		String sql1 = SQLUtils.getInsertSQL(getDatabaseType(), t, values, isWithNullValue);
 		final String sql = addComment(sql1);
 		log(sql, 0, values);
 		
 		final long start = System.currentTimeMillis();
+
+		DatabaseTypeEnum databaseType = getDatabaseType();
 
 		int rows;
 		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
@@ -272,17 +276,40 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			rows = jdbcTemplate.update(con -> {
 				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 				for (int i = 0; i < values.size(); i++) {
-					statement.setObject(i + 1, values.get(i));
+					if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
+						Object value = values.get(i);
+						if (value != null) {
+							// postgresql不支持java.util.Date，需要转换
+							if (value instanceof java.util.Date) {
+								value = NimbleOrmDateUtils.toLocalDateTime((java.util.Date) value);
+							}
+						}
+						statement.setObject(i + 1, value);
+					} else {
+						statement.setObject(i + 1, values.get(i));
+					}
 				}
 				return statement;
 			}, holder);
 
 			if(rows > 0) {
-				Number key = holder.getKey();
-				logIfNull(key, autoIncrementField);
-				if (key != null)  {
-					long primaryKey = key.longValue();
-					DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+				if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
+					// 对于postgresql，会返回整个列的所有字段，所以这里需要取出来
+					Map<String, Object> map = holder.getKeys();
+					if (map != null) {
+						Object key = map.get(autoIncrementField.getAnnotation(Column.class).value());
+						logIfNull(key, autoIncrementField);
+						if (key != null) {
+							DOInfoReader.setValue(autoIncrementField, t, key);
+						}
+					}
+				} else {
+					Number key = holder.getKey();
+					logIfNull(key, autoIncrementField);
+					if (key != null)  {
+						long primaryKey = key.longValue();
+						DOInfoReader.setValue(autoIncrementField, t, primaryKey);
+					}
 				}
 			}
 
@@ -301,7 +328,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	/**抽取出来是不对这个log进行覆盖率统计*/
 	@Generated
-	private void logIfNull(Number key, Field autoIncrementField) {
+	private void logIfNull(Object key, Field autoIncrementField) {
 		// 对于key为null的属于异常情况，仅log，不进行任何处理
 		if (key == null) {
 			LOGGER.error("get auto increment field:{} return null", autoIncrementField);

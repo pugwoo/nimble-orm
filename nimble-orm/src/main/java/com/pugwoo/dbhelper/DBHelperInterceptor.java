@@ -12,7 +12,7 @@ import java.util.List;
  * 2. 修改拦截器，用于在修改、插入、删除之前和之后做一些操作。
  * @author pugwoo
  */
-public class DBHelperInterceptor {
+public interface DBHelperInterceptor {
 
 	/**
 	 * select前执行。不会拦截getCount计算总数和getAllKey只查询key这2个接口。
@@ -21,7 +21,7 @@ public class DBHelperInterceptor {
 	 * @param args 查询的完整参数。理论上，拦截器就有可能修改args里面的object的值的，请小心。不建议修改args的值。
 	 * @return 返回true，则查询继续; 返回false将终止查询并抛出NotAllowQueryException
 	 */
-	public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {
+	default boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {
 		return true;
 	}
 	
@@ -35,7 +35,7 @@ public class DBHelperInterceptor {
 	 * @return DBHelper会使用返回值作为新的查询结果值，因此，没修改时请务必将result返回。
 	 *         对于机密的数据，请直接设置result的对象属性为null。
 	 */
-	public <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args,
+	default <T> List<T> afterSelect(Class<?> clazz, String sql, List<Object> args,
 			List<T> result, long count) {
 		return result;
 	}
@@ -45,7 +45,7 @@ public class DBHelperInterceptor {
 	 * @param list 插入的对象列表。可以修改list中的元素，请小心操作；但删除list元素则不一定会影响insert。
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-	public boolean beforeInsert(List<Object> list) {
+	default boolean beforeInsert(List<Object> list) {
 		return true;
 	}
 	
@@ -54,7 +54,7 @@ public class DBHelperInterceptor {
 	 * @param list 插入的对象列表，对于有自增id的值，返回的list已经设置上了主键。
 	 * @param affectedRows 实际影响的数据库条数。注意list可能有值而affectedRows数据小于list个数，说明有的没有插入到数据库
 	 */
-	public void afterInsert(List<Object> list, int affectedRows) {
+	default void afterInsert(List<Object> list, int affectedRows) {
 	}
 	
 	// 对于更新拦截器，只提供当前要更新的值。由于更新有自写set语句的接口，因此提供两个beforeUpdate
@@ -67,7 +67,7 @@ public class DBHelperInterceptor {
 	 *        注意，修改此值会修改实际被设置的值，谨慎!
 	 * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
 	 */
-    public boolean beforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
+	default boolean beforeUpdate(List<Object> tList, String setSql, List<Object> setSqlArgs) {
     	return true;
     }
     
@@ -80,7 +80,7 @@ public class DBHelperInterceptor {
      * @param customsParams 允许拦截器自行添加若干set语句，这里是对应的参数
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public boolean beforeUpdateAll(Class<?> clazz, String sql,
+	default boolean beforeUpdateAll(Class<?> clazz, String sql,
     		List<String> customsSets, List<Object> customsParams,
     		List<Object> args) {
     	return true;
@@ -90,7 +90,7 @@ public class DBHelperInterceptor {
      * update后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public void afterUpdate(List<Object> tList, int affectedRows) {
+	default void afterUpdate(List<Object> tList, int affectedRows) {
     }
     
     // 删除相关的
@@ -100,7 +100,7 @@ public class DBHelperInterceptor {
      * @param tList 删除前的对象列表
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
-    public boolean beforeDelete(List<Object> tList) {
+	default boolean beforeDelete(List<Object> tList) {
     	return true;
     }
 
@@ -108,7 +108,7 @@ public class DBHelperInterceptor {
      * delete后执行
      * @param affectedRows 实际修改数据库条数
      */
-    public void afterDelete(List<Object> tList, int affectedRows) {
+	default void afterDelete(List<Object> tList, int affectedRows) {
     }
 
 }

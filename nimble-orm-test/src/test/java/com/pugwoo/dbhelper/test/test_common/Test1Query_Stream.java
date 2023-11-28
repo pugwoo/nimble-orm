@@ -30,9 +30,7 @@ public abstract class Test1Query_Stream {
 
         getDBHelper().setFetchSize(5);
 
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName(UUID.randomUUID().toString().replace("-", ""));
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), UUID.randomUUID().toString().replace("-", ""));
 
         int size = 9;
         String prefix = UUID.randomUUID().toString().replace("-", "");
@@ -81,9 +79,7 @@ public abstract class Test1Query_Stream {
 
         getDBHelper().setFetchSize(5);
 
-        SchoolDO schoolDO = new SchoolDO();
-        schoolDO.setName(UUID.randomUUID().toString().replace("-", ""));
-        getDBHelper().insert(schoolDO);
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), UUID.randomUUID().toString().replace("-", ""));
 
         int size = 9;
         String prefix = UUID.randomUUID().toString().replace("-", "");

@@ -12,6 +12,9 @@ public enum DatabaseTypeEnum {
     MYSQL("MYSQL", "MySQL"),
 
     CLICKHOUSE("CLICKHOUSE", "ClickHouse"),
+
+    POSTGRESQL("POSTGRESQL", "Postgresql"),
+
     ;
 
     final private String code;
@@ -25,9 +28,10 @@ public enum DatabaseTypeEnum {
     public static DatabaseTypeEnum getByJdbcProtocol(String jdbcProtocol) {
         if ("mysql".equalsIgnoreCase(jdbcProtocol)) {
             return MYSQL;
-        } else if ("clickhouse".equalsIgnoreCase(jdbcProtocol)
-                || "ch".equalsIgnoreCase(jdbcProtocol)) {
+        } else if ("clickhouse".equalsIgnoreCase(jdbcProtocol) || "ch".equalsIgnoreCase(jdbcProtocol)) {
             return CLICKHOUSE;
+        } else if ("postgresql".equalsIgnoreCase(jdbcProtocol) || "pgsql".equalsIgnoreCase(jdbcProtocol)) {
+            return POSTGRESQL;
         }
         return UNKNOWN;
     }

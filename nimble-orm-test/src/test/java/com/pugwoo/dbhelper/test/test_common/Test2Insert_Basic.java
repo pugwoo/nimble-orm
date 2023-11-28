@@ -30,7 +30,7 @@ public abstract class Test2Insert_Basic {
         studentDO.setName(uuidName());
         studentDO.setAge(12);
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         getDBHelper().insert(studentDO);
@@ -42,7 +42,7 @@ public abstract class Test2Insert_Basic {
         // 插入插入null值
         studentDO = new StudentDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         } else {
             studentDO.setId(null);
         }
@@ -60,6 +60,9 @@ public abstract class Test2Insert_Basic {
         List<StudentDO> list = new ArrayList<>();
         for (int i = 0; i < TOTAL; i++) {
             StudentDO studentDO = new StudentDO();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentDO.setId(CommonOps.getRandomLong());
+            }
             studentDO.setName(uuidName());
             list.add(studentDO);
         }
@@ -88,7 +91,10 @@ public abstract class Test2Insert_Basic {
         List<Map<String, Object>> list = new ArrayList<>();
         for (int i = 0; i < TOTAL - TOTAL / 2; i++) {
             Map<String, Object> studentMap = new HashMap<>();
-            studentMap.put("deleted", 0);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentMap.put("id", CommonOps.getRandomLong());
+            }
+            studentMap.put("deleted", false);
             studentMap.put("name", uuidName);
             studentMap.put("age", 0);
             studentMap.put("school_id", random.nextInt());
@@ -96,7 +102,10 @@ public abstract class Test2Insert_Basic {
         }
         for (int i = 0; i < TOTAL / 2; i++) {
             Map<String, Object> studentMap = new HashMap<>();
-            studentMap.put("deleted", 0);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentMap.put("id", CommonOps.getRandomLong());
+            }
+            studentMap.put("deleted", false);
             studentMap.put("name", uuidName);
             // 故意少掉2个属性
             list.add(studentMap);
@@ -124,14 +133,27 @@ public abstract class Test2Insert_Basic {
         cols.add("name");
         cols.add("age");
         cols.add("school_id");
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            cols.add("id");
+        }
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < TOTAL - 3; i++) {
-            Object[] args = new Object[]{0, uuidName, "0", random.nextInt()}; // age故意用字符串，测试转换
-            data.add(args);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                Object[] args = new Object[]{false, uuidName, 18, random.nextInt(), CommonOps.getRandomLong()};
+                data.add(args);
+            } else {
+                Object[] args = new Object[]{false, uuidName, 18, random.nextInt()};
+                data.add(args);
+            }
         }
         for (int i = 0; i < 3; i++) {
-            Object[] args = new Object[]{0, uuidName, null, null}; // 加几个有null值的
-            data.add(args);
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                Object[] args = new Object[]{false, uuidName, null, null, CommonOps.getRandomLong()}; // 加几个有null值的
+                data.add(args);
+            } else {
+                Object[] args = new Object[]{false, uuidName, null, null}; // 加几个有null值的
+                data.add(args);
+            }
         }
 
         getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
@@ -194,7 +216,7 @@ public abstract class Test2Insert_Basic {
         // studentDO.setAge(28);
 
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
 
         int row = getDBHelper().insert(studentDO); // 如果值为null，则用数据库默认值
@@ -209,7 +231,7 @@ public abstract class Test2Insert_Basic {
             stu.setName("test" + i);
             stu.setAge(i);
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                stu.setId(new Random().nextLong());
+                stu.setId(CommonOps.getRandomLong());
             }
             students.add(stu);
         }
@@ -223,7 +245,7 @@ public abstract class Test2Insert_Basic {
             stu.setName("test" + i);
             stu.setAge(i);
             if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-                stu.setId(new Random().nextLong());
+                stu.setId(CommonOps.getRandomLong());
             }
             studentSet.add(stu);
         }
@@ -233,7 +255,7 @@ public abstract class Test2Insert_Basic {
         // 测试random值
         StudentRandomNameDO studentRandomNameDO = new StudentRandomNameDO();
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentRandomNameDO.setId(new Random().nextLong());
+            studentRandomNameDO.setId(CommonOps.getRandomLong());
         }
         getDBHelper().insert(studentRandomNameDO);
         assert studentRandomNameDO.getId() != null;
@@ -264,7 +286,7 @@ public abstract class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
         assert getDBHelper().insertOrUpdateWithNull(null) == 0;
 
@@ -293,7 +315,7 @@ public abstract class Test2Insert_Basic {
         StudentDO studentDO = new StudentDO();
         studentDO.setName(CommonOps.getRandomName("tom"));
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) { // clickhouse不支持自增id
-            studentDO.setId(new Random().nextLong());
+            studentDO.setId(CommonOps.getRandomLong());
         }
         assert getDBHelper().insertOrUpdate(null) == 0;
         assert getDBHelper().insertOrUpdate((StudentDO) null) == 0;
@@ -319,6 +341,10 @@ public abstract class Test2Insert_Basic {
 
     @Test
     public void testInsertOrUpdateNoKeyDO() {
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            return; // clickhouse没有id的插入，会导致插入id被设置为0，有重复，影响后续单元测试，因此为了避免影响单元测试，这里不测试
+        }
+
         NoKeyStudentDO student = new NoKeyStudentDO();
         student.setName(uuidName());
 
@@ -384,7 +410,7 @@ public abstract class Test2Insert_Basic {
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             for (StudentDO stu :students) {
                 if (stu.getId() == null) {
-                    stu.setId(new Random().nextLong());
+                    stu.setId(CommonOps.getRandomLong());
                 }
             }
             // clickhouse因为没有办法设置自增，所以没有办法正确用insertOrUpdate，因此这里就先insert
@@ -429,7 +455,7 @@ public abstract class Test2Insert_Basic {
         List<StudentNoKeyDO> studentDOS = new ArrayList<>();
         for (int i = 0; i < 2; i++) { // 这个实际上会有很小概率的偶发重复key，但是概率很低
             StudentNoKeyDO s = new StudentNoKeyDO();
-            s.setId((long) -Math.abs(new Random().nextInt())); // 取负值，这样不会影响自增
+            s.setId((long) -CommonOps.getRandomInt()); // 取负值，这样不会影响自增
             s.setName(UUID.randomUUID().toString().replace("-", ""));
             studentDOS.add(s);
         }

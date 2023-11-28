@@ -135,20 +135,21 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
 			if (!throwErrorIfColumnNotExist) {
 				try {
-					return TypeAutoCast.getFromRS(rs, columnName, field);
+					return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType());
 				} catch (SQLException e) {
 					String message = e.getMessage();
-					if (!(message.startsWith("Column ") && message.endsWith(" not found."))) {
+					if (!(message.contains("not found") /*mysql/pg*/ || message.contains("does not exist") /*clickhouse*/
+					      || message.contains("找不到") /*pg*/)) {
 						throw e;
 					}
 					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
 					return null;
 				}
 			} else {
-				return TypeAutoCast.getFromRS(rs, columnName, field);
+				return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType());
 			}
 		} else {
-			return TypeAutoCast.getFromRS(rs, columnName, field);
+			return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType());
 		}
 	}
 

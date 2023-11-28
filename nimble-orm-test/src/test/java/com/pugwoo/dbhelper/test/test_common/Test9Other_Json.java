@@ -1,9 +1,11 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.*;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -20,6 +22,9 @@ public abstract class Test9Other_Json {
     @Test
     public void testJSON() {
         StudentDO studentDO = new StudentDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            studentDO.setId(CommonOps.getRandomLong());
+        }
         SchoolDO schoolDO = new SchoolDO();
         schoolDO.setName("SYSU");
 
@@ -57,6 +62,10 @@ public abstract class Test9Other_Json {
 
     private long insert(String score, Integer age) {
         JsonDO jsonDO = new JsonDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            jsonDO.setId(CommonOps.getRandomLong());
+        }
+
         Map<String, List<BigDecimal>> json = new HashMap<>();
 
         List<BigDecimal> scores = new ArrayList<>();
@@ -84,8 +93,8 @@ public abstract class Test9Other_Json {
     @Test
     public void testJsonQuery() {
 
-        String score = String.valueOf(new Random().nextInt());
-        int age = new Random().nextInt();
+        String score = String.valueOf(CommonOps.getRandomInt());
+        int age = CommonOps.getRandomInt();
 
         long id = insert(score, age);
         assert id > 0;
@@ -109,22 +118,33 @@ public abstract class Test9Other_Json {
         List<JsonDO> list = getDBHelper().getAll(JsonDO.class);
         assert list.size() > 0;
 
-        // json查询的两种写法
+        // json查询的两种写法，不适合于：clickhouse、
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.MYSQL) {
+            list = getDBHelper().getAll(JsonDO.class, "WHERE json2->'$.score'=?", score);
+            assert list.size() == 1;
+            assert score.equals(list.get(0).getJson2().get("score").toString());
 
-        list = getDBHelper().getAll(JsonDO.class, "WHERE json2->'$.score'=?", score);
-        assert list.size() == 1;
-        assert score.equals(list.get(0).getJson2().get("score").toString());
+            list = getDBHelper().getAll(JsonDO.class, "WHERE JSON_EXTRACT(json2, '$.score')=?", score);
+            assert list.size() == 1;
+            assert score.equals(list.get(0).getJson2().get("score").toString());
+        }
 
-        list = getDBHelper().getAll(JsonDO.class, "WHERE JSON_EXTRACT(json2, '$.score')=?", score);
-        assert list.size() == 1;
-        assert score.equals(list.get(0).getJson2().get("score").toString());
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            list = getDBHelper().getAll(JsonDO.class, "WHERE json2->>'score'=?", score);
+            assert list.size() == 1;
+            assert score.equals(list.get(0).getJson2().get("score").toString());
+        }
+
+        // TODO clickhouse的json字段查询待写单元测试
     }
 
     @Test 
     public void testJsonRaw() {
         JsonRawDO jsonRawDO = new JsonRawDO();
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"1960-06-08 12:13:14\"}");
-
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            jsonRawDO.setId(CommonOps.getRandomLong());
+        }
         getDBHelper().insert(jsonRawDO);
         assert jsonRawDO.getId() != null;
 
@@ -134,6 +154,9 @@ public abstract class Test9Other_Json {
         assert NimbleOrmDateUtils.format(teacherDO.getTeacher().getBirth()).equals("1960-06-08 12:13:14");
 
         jsonRawDO = new JsonRawDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            jsonRawDO.setId(CommonOps.getRandomLong());
+        }
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":\"\"}");
         getDBHelper().insert(jsonRawDO);
         teacherDO = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
@@ -141,6 +164,9 @@ public abstract class Test9Other_Json {
         assert teacherDO.getTeacher().getBirth() == null;
 
         jsonRawDO = new JsonRawDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            jsonRawDO.setId(CommonOps.getRandomLong());
+        }
         jsonRawDO.setJson("{\"name\":\"wu\",\"birth\":null,null:null}");
         getDBHelper().insert(jsonRawDO);
         teacherDO = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());

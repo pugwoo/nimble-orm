@@ -4,7 +4,7 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 
 import java.util.List;
 
-public class NotAllowInterceptor extends DBHelperInterceptor  {
+public class NotAllowInterceptor implements DBHelperInterceptor  {
 
     @Override
     public boolean beforeSelect(Class<?> clazz, String sql, List<Object> args) {

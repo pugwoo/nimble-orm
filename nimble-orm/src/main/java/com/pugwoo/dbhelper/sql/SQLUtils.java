@@ -40,9 +40,9 @@ public class SQLUtils {
 	 * @param postSql 将postSql传入，目前仅用于确定select 1字段的附加computed字段是否加入
 	 * @return 返回拼凑返回的SQL
 	 */
-	public static String getSelectSQL(Class<?> clazz, boolean selectOnlyKey, boolean isSelect1,
-									  Map<FeatureEnum, Boolean> features, String postSql,
-									  DatabaseTypeEnum databaseType) {
+	public static String getSelectSQL(DatabaseTypeEnum databaseType, Class<?> clazz,
+									  boolean selectOnlyKey, boolean isSelect1,
+									  Map<FeatureEnum, Boolean> features, String postSql) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
 
@@ -57,12 +57,12 @@ public class SQLUtils {
 
 			if(isSelect1) {
 			    sql.append("1");
-				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
+				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(databaseType,
 						leftTableField.getType(), joinLeftTable.alias() + ".", features, postSql);
 				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
-				computedColumnsForCountSelect = getComputedColumnsForCountSelect(
+				computedColumnsForCountSelect = getComputedColumnsForCountSelect(databaseType,
 						rightTableField.getType(), joinRightTable.alias() + ".", features, postSql);
 				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
@@ -70,18 +70,22 @@ public class SQLUtils {
             } else {
                 List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
                 List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
-                sql.append(joinColumnForSelect(fields1,  joinLeftTable.alias() + ".", features));
+                sql.append(joinColumnForSelect(databaseType, fields1,  joinLeftTable.alias() + ".", features));
                 sql.append(",");
-                sql.append(joinColumnForSelect(fields2,  joinRightTable.alias() + ".", features));
+                sql.append(joinColumnForSelect(databaseType, fields2,  joinRightTable.alias() + ".", features));
             }
 
-	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
+	        sql.append(" FROM ").append(getTableName(databaseType, leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
-	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+
+			String join = InnerCommonUtils.isBlank(joinTable.joinTypeAsString()) ?
+					joinTable.joinType().getCode() : joinTable.joinTypeAsString();
+	        sql.append(join).append(" ");
+
+	        sql.append(getTableName(databaseType, rightTableField.getType())).append(" ").append(joinRightTable.alias());
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
 			}
@@ -109,17 +113,17 @@ public class SQLUtils {
 
 			if(isSelect1) {
 			    sql.append("1");
-				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(
+				String computedColumnsForCountSelect = getComputedColumnsForCountSelect(databaseType,
 						clazz, null, features, postSql);
 				if (InnerCommonUtils.isNotBlank(computedColumnsForCountSelect)) {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 			} else {
                 List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
-                sql.append(joinColumnForSelect(fields, null, features));
+                sql.append(joinColumnForSelect(databaseType, fields, null, features));
             }
 
-			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
+			sql.append(" FROM ").append(getTableName(databaseType, clazz)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -128,7 +132,7 @@ public class SQLUtils {
 	/**
 	 * 获得计算列同时也是postSql中出现的列的Column的集合
 	 */
-	private static String getComputedColumnsForCountSelect(Class<?> clazz, String fieldPrefix,
+	private static String getComputedColumnsForCountSelect(DatabaseTypeEnum databaseType, Class<?> clazz, String fieldPrefix,
 													Map<FeatureEnum, Boolean> features, String postSql) {
 		List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, false);
 
@@ -146,7 +150,7 @@ public class SQLUtils {
 		if (field2.isEmpty()) {
 			return "";
 		} else {
-			return joinColumnForSelect(field2,  fieldPrefix, features);
+			return joinColumnForSelect(databaseType, field2,  fieldPrefix, features);
 		}
 	}
 	
@@ -155,7 +159,7 @@ public class SQLUtils {
 	 * @param clazz 注解了Table的表
 	 * @return 生成的SQL
 	 */
-	public static String getSelectCountSQL(Class<?> clazz, DatabaseTypeEnum databaseType) {
+	public static String getSelectCountSQL(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT count(*)");
 		
@@ -168,13 +172,17 @@ public class SQLUtils {
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 
-	        sql.append(" FROM ").append(getTableName(leftTableField.getType()))
+	        sql.append(" FROM ").append(getTableName(databaseType, leftTableField.getType()))
 	           .append(" ").append(joinLeftTable.alias()).append(" ");
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinLeftTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinLeftTable.forceIndex()).append(") ");
 			}
-	        sql.append(joinTable.joinType().getCode()).append(" ");
-	        sql.append(getTableName(rightTableField.getType())).append(" ").append(joinRightTable.alias());
+
+			String join = InnerCommonUtils.isBlank(joinTable.joinTypeAsString()) ?
+					joinTable.joinType().getCode() : joinTable.joinTypeAsString();
+	        sql.append(join).append(" ");
+
+	        sql.append(getTableName(databaseType, rightTableField.getType())).append(" ").append(joinRightTable.alias());
 			if (databaseType == DatabaseTypeEnum.MYSQL && InnerCommonUtils.isNotBlank(joinRightTable.forceIndex())) {
 				sql.append(" FORCE INDEX(").append(joinRightTable.forceIndex()).append(") ");
 			}
@@ -203,7 +211,7 @@ public class SQLUtils {
 				return sql.toString();
 			}
 
-			sql.append(" FROM ").append(getTableName(clazz)).append(" ").append(table.alias());
+			sql.append(" FROM ").append(getTableName(databaseType, clazz)).append(" ").append(table.alias());
 		}
 		
 		return sql.toString();
@@ -218,13 +226,13 @@ public class SQLUtils {
 	 * @throws NoKeyColumnAnnotationException 当t的类没有注解任何isKey=true的列时抛出
 	 * @throws NullKeyValueException 当t中的主键都是null时抛出
 	 */
-	public static <T> String getKeysWhereSQL(T t, List<Object> keyValues) 
+	public static <T> String getKeysWhereSQL(DatabaseTypeEnum databaseType, T t, List<Object> keyValues)
 	    throws NoKeyColumnAnnotationException, NullKeyValueException {
 		
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		List<Object> _keyValues = new ArrayList<>();
-		String where = joinWhereAndGetValue(keyFields, "AND", _keyValues, t);
+		String where = joinWhereAndGetValue(databaseType, keyFields, "AND", _keyValues, t);
 		
 		// 检查主键不允许为null
 		for(Object value : _keyValues) {
@@ -237,7 +245,7 @@ public class SQLUtils {
 			keyValues.addAll(_keyValues);
 		}
 		
-		return autoSetSoftDeleted("WHERE " + where, t.getClass());
+		return autoSetSoftDeleted(databaseType, "WHERE " + where, t.getClass());
 	}
 	
 	/**
@@ -246,10 +254,10 @@ public class SQLUtils {
 	 * @param clazz 注解了Table的类
 	 * @throws NoKeyColumnAnnotationException 当没有注解isKey=1的列时抛出
 	 */
-	public static String getKeysWhereSQLWithoutSoftDelete(Class<?> clazz)
+	public static String getKeysWhereSQLWithoutSoftDelete(DatabaseTypeEnum databaseType, Class<?> clazz)
 			throws NoKeyColumnAnnotationException {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
-		String where = joinWhere(keyFields, "AND");
+		String where = joinWhere(databaseType, keyFields, "AND");
 		return "WHERE " + where;
 	}
 
@@ -260,14 +268,14 @@ public class SQLUtils {
 	 * @param isWithNullValue 标记是否将null字段放到insert语句中
 	 * @return 生成的SQL
 	 */
-	public static <T> String getInsertSQL(T t, List<Object> values, boolean isWithNullValue) {
+	public static <T> String getInsertSQL(DatabaseTypeEnum databaseType, T t, List<Object> values, boolean isWithNullValue) {
         StringBuilder sql = new StringBuilder("INSERT INTO ");
 
         List<Field> fields = DOInfoReader.getColumns(t.getClass());
 
-        sql.append(getTableName(t.getClass())).append(" (");
+        sql.append(getTableName(databaseType, t.getClass())).append(" (");
         List<Object> _values = new ArrayList<>(); // 之所以增加一个临时变量，是避免values初始不是空的易错情况
-		String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, isWithNullValue);
+		String insertSql = joinAndGetValueForInsert(databaseType, fields, ",", _values, t, isWithNullValue);
 
 		sql.append(insertSql);
         sql.append(") VALUES ");
@@ -284,8 +292,8 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> InsertSQLForBatchDTO getInsertSQLForBatch(Collection<T> list, List<Object> values,
-																DatabaseTypeEnum databaseType) {
+	public static <T> InsertSQLForBatchDTO getInsertSQLForBatch(DatabaseTypeEnum databaseType,
+																Collection<T> list, List<Object> values) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
@@ -295,8 +303,8 @@ public class SQLUtils {
 		// 根据list的值，只留下有值的field和非computed的列
 		fields = filterFieldWithValue(fields, list);
 
-		appendTableName(sql, clazz);
-		appendInsertColumnSql(sql, fields);
+		appendTableName(databaseType, sql, clazz);
+		appendInsertColumnSql(databaseType, sql, fields);
 
 		int sqlLogEndIndex = 0;
 		int paramLogEndIndex = 0;
@@ -320,11 +328,12 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, Collection<Map<String, Object>> list,
-			List<Object> values, DatabaseTypeEnum databaseType) {
-		StringBuilder sql = new StringBuilder("INSERT INTO `");
-		sql.append(tableName.trim());
-		sql.append("` (");
+	public static InsertSQLForBatchDTO getInsertSQLForBatch(DatabaseTypeEnum databaseType,
+			String tableName, Collection<Map<String, Object>> list,
+			List<Object> values) {
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(getTableName(databaseType, tableName.trim()));
+		sql.append(" (");
 
 		boolean isFirst = true;
 		int sqlLogEndIndex = 0;
@@ -354,7 +363,7 @@ public class SQLUtils {
 					if (i != 0) {
 						sql.append(",");
 					}
-					sql.append("`").append(cols.get(i)).append("`");
+					sql.append(getColumnName(databaseType, cols.get(i)));
 				}
 				sql.append(") VALUES ");
 			} else {
@@ -378,12 +387,13 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static InsertSQLForBatchDTO getInsertSQLForBatch(String tableName, List<String> cols,
-															Collection<Object[]> list, DatabaseTypeEnum databaseType,
+	public static InsertSQLForBatchDTO getInsertSQLForBatch(DatabaseTypeEnum databaseType,
+															String tableName, List<String> cols,
+															Collection<Object[]> list,
 															List<Object> values) {
-		StringBuilder sql = new StringBuilder("INSERT INTO `");
-		sql.append(tableName.trim());
-		sql.append("` (");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(getTableName(databaseType, tableName.trim()));
+		sql.append(" (");
 
 		boolean isFirst = true;
 		int sqlLogEndIndex = 0;
@@ -405,7 +415,7 @@ public class SQLUtils {
 					if (i != 0) {
 						sql.append(",");
 					}
-					sql.append("`").append(cols.get(i)).append("`");
+					sql.append(getColumnName(databaseType, cols.get(i)));
 				}
 				sql.append(") VALUES ");
 			} else {
@@ -432,7 +442,8 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static <T> String getInsertSQLForBatchForJDBCTemplate(Collection<T> list, List<Object[]> values) {
+	public static <T> String getInsertSQLForBatchForJDBCTemplate(DatabaseTypeEnum databaseType,
+																 Collection<T> list, List<Object[]> values) {
 		StringBuilder sql = new StringBuilder("INSERT INTO ");
 
 		// 获得元素的class，list非空，因此clazz和t肯定有值
@@ -442,13 +453,13 @@ public class SQLUtils {
 		// 根据list的值，只留下有值的field和非computed的列
 		fields = filterFieldWithValue(fields, list);
 
-		appendTableName(sql, clazz);
+		appendTableName(databaseType, sql, clazz);
 		sql.append(" (");
 
 		boolean isFirst = true;
 		for (T t : list) {
 			List<Object> _values = new ArrayList<>();
-			String insertSql = joinAndGetValueForInsert(fields, ",", _values, t, true);
+			String insertSql = joinAndGetValueForInsert(databaseType, fields, ",", _values, t, true);
 			if (isFirst) {
 				sql.append(insertSql);
 				sql.append(") VALUES ");
@@ -471,11 +482,11 @@ public class SQLUtils {
 	 * @param values 返回的参数列表
 	 * @return 插入的SQL
 	 */
-	public static String getInsertSQLForBatchForJDBCTemplate(String tableName,
+	public static String getInsertSQLForBatchForJDBCTemplate(DatabaseTypeEnum databaseType, String tableName,
 			Collection<Map<String, Object>> list, List<Object[]> values) {
-		StringBuilder sql = new StringBuilder("INSERT INTO `");
-		sql.append(tableName.trim());
-		sql.append("` (");
+		StringBuilder sql = new StringBuilder("INSERT INTO ");
+		sql.append(getTableName(databaseType, tableName.trim()));
+		sql.append(" (");
 
 		// 先从map获得所有的列
 		Set<String> colSet = new HashSet<>();
@@ -498,7 +509,7 @@ public class SQLUtils {
 					} else {
 						isColFirst = false;
 					}
-					sql.append("`").append(col.trim()).append("`");
+					sql.append(getColumnName(databaseType, col.trim()));
 				}
 
 				sql.append(") VALUES ");
@@ -520,10 +531,10 @@ public class SQLUtils {
 	 * @param cols 列和列表
 	 * @return 插入的SQL
 	 */
-	public static String getInsertSQLForBatchForJDBCTemplate(String tableName, List<String> cols) {
+	public static String getInsertSQLForBatchForJDBCTemplate(DatabaseTypeEnum databaseType,
+															 String tableName, List<String> cols) {
 		StringBuilder sql = new StringBuilder();
-		sql.append("INSERT INTO `").append(tableName.trim())
-				.append("` (");
+		sql.append("INSERT INTO ").append(getTableName(databaseType, tableName.trim())).append(" (");
 		boolean isFirst = true;
 		for(String col : cols) {
 			if (!isFirst) {
@@ -531,7 +542,7 @@ public class SQLUtils {
 			} else {
 				isFirst = false;
 			}
-			sql.append("`").append(col.trim()).append("`");
+			sql.append(getColumnName(databaseType, col.trim()));
 		}
 		sql.append(") VALUES (").append(join("?", cols.size(), ",")).append(")");
 		return sql.toString();
@@ -573,9 +584,16 @@ public class SQLUtils {
 			}
 
 			Object value = DOInfoReader.getValue(field, obj);
-			if(value != null && column.isJSON()) {
-				value = NimbleOrmJSON.toJson(value);
+			if(value != null) {
+				if (column.isJSON()) {
+					value = NimbleOrmJSON.toJson(value);
+				}
+				if (databaseType == DatabaseTypeEnum.CLICKHOUSE && field.getType().equals(byte[].class)
+				    && value instanceof byte[]) {
+					value = InnerCommonUtils.encodeBase64((byte[])value);
+				}
 			}
+
 			if (value == null) {
 				sb.append(SQLDialect.getInsertDefaultValue(databaseType));
 			} else {
@@ -625,7 +643,7 @@ public class SQLUtils {
 	 * @param notKeyColumns 非主键列
 	 * @return 批量update的sql；如果返回空字符串表示不需要更新，且应该当成功处理
 	 */
-	public static <T> BatchUpdateResultDTO getBatchUpdateSQL(
+	public static <T> BatchUpdateResultDTO getBatchUpdateSQL(DatabaseTypeEnum databaseType,
 			Collection<T> list, List<Object> values, Field casVersionColumn,
 			Field keyColumn, List<Field> notKeyColumns, Class<?> clazz) {
 
@@ -660,7 +678,7 @@ public class SQLUtils {
 		List<Object> logParams = new ArrayList<>();
 
 		// 3. 生成update语句
-		sql.append("UPDATE ").append(getTableName(clazz)).append(" SET ");
+		sql.append("UPDATE ").append(getTableName(databaseType, clazz)).append(" SET ");
 		logSql.append(sql);
 
 		boolean isFirst = true;
@@ -672,8 +690,8 @@ public class SQLUtils {
 				logSql.append(",");
 			}
 
-			sql.append(getColumnName(field)).append("=(CASE");
-			logSql.append(getColumnName(field)).append("=(CASE");
+			sql.append(getColumnName(databaseType, field)).append("=(CASE");
+			logSql.append(getColumnName(databaseType, field)).append("=(CASE");
 
 			boolean isFirstT = true;
 			for (T t : list) {
@@ -687,41 +705,51 @@ public class SQLUtils {
 				}
 
 				if (casVersionColumn == null) { // 没有CAS的场景
-					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? THEN ");
+					sql.append(" WHEN ").append(getColumnName(databaseType, keyColumn)).append("=? THEN ");
 					values.add(DOInfoReader.getValue(keyColumn, t));
 
 					Object value = DOInfoReader.getValue(field, t);
 					if (value == null) {
-						sql.append(getColumnName(field));
+						sql.append(getColumnName(databaseType, field));
 					} else {
 						if (field.getAnnotation(Column.class).isJSON()) {
 							value = NimbleOrmJSON.toJson(value);
 						}
+						if (databaseType == DatabaseTypeEnum.CLICKHOUSE && field.getType().equals(byte[].class)
+						   && value instanceof byte[]) {
+							value = InnerCommonUtils.encodeBase64((byte[])value);
+						}
+
 						sql.append("?");
 						values.add(value);
 					}
 				} else {
-					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
-							.append(getColumnName(casVersionColumn)).append("=? THEN ");
+					sql.append(" WHEN ").append(getColumnName(databaseType, keyColumn)).append("=? AND ")
+							.append(getColumnName(databaseType, casVersionColumn)).append("=? THEN ");
 					values.add(DOInfoReader.getValue(keyColumn, t));
 					values.add(DOInfoReader.getValue(casVersionColumn, t));
 
 					Object value = DOInfoReader.getValue(field, t);
 					if (value == null) {
-						sql.append(getColumnName(field));
+						sql.append(getColumnName(databaseType, field));
 					} else {
 						if (field.getAnnotation(Column.class).isJSON()) {
 							value = NimbleOrmJSON.toJson(value);
 						}
+						if (databaseType == DatabaseTypeEnum.CLICKHOUSE && field.getType().equals(byte[].class)
+								&& value instanceof byte[]) {
+							value = InnerCommonUtils.encodeBase64((byte[])value);
+						}
+
 						sql.append("?");
 						values.add(value);
 					}
 
-					sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
-							.append(getColumnName(casVersionColumn)).append("!=? THEN ");
+					sql.append(" WHEN ").append(getColumnName(databaseType, keyColumn)).append("=? AND ")
+							.append(getColumnName(databaseType, casVersionColumn)).append("!=? THEN ");
 					values.add(DOInfoReader.getValue(keyColumn, t));
 					values.add(DOInfoReader.getValue(casVersionColumn, t));
-					sql.append(getColumnName(field));
+					sql.append(getColumnName(databaseType, field));
 				}
 
 				if (isFirstT) {
@@ -745,8 +773,8 @@ public class SQLUtils {
 				sql.append(",");
 				logSql.append(",");
 			}
-			sql.append(getColumnName(casVersionColumn)).append("=(CASE");
-			logSql.append(getColumnName(casVersionColumn)).append("=(CASE");
+			sql.append(getColumnName(databaseType, casVersionColumn)).append("=(CASE");
+			logSql.append(getColumnName(databaseType, casVersionColumn)).append("=(CASE");
 
 			boolean isFirstT = true;
 			for (T t : list) {
@@ -759,14 +787,14 @@ public class SQLUtils {
 					values = new ArrayList<>();
 				}
 
-				sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
-						.append(getColumnName(casVersionColumn)).append("=? THEN ")
-						.append(getColumnName(casVersionColumn)).append("+1");
+				sql.append(" WHEN ").append(getColumnName(databaseType, keyColumn)).append("=? AND ")
+						.append(getColumnName(databaseType, casVersionColumn)).append("=? THEN ")
+						.append(getColumnName(databaseType, casVersionColumn)).append("+1");
 				values.add(DOInfoReader.getValue(keyColumn, t));
 				values.add(DOInfoReader.getValue(casVersionColumn, t));
-				sql.append(" WHEN ").append(getColumnName(keyColumn)).append("=? AND ")
-						.append(getColumnName(casVersionColumn)).append("!=? THEN ")
-						.append(getColumnName(casVersionColumn));
+				sql.append(" WHEN ").append(getColumnName(databaseType, keyColumn)).append("=? AND ")
+						.append(getColumnName(databaseType, casVersionColumn)).append("!=? THEN ")
+						.append(getColumnName(databaseType, casVersionColumn));
 				values.add(DOInfoReader.getValue(keyColumn, t));
 				values.add(DOInfoReader.getValue(casVersionColumn, t));
 
@@ -785,12 +813,12 @@ public class SQLUtils {
 			logSql.append(" END)");
 		}
 
-		String where = "WHERE " + getColumnName(keyColumn) + " IN (?)";
+		String where = "WHERE " + getColumnName(databaseType, keyColumn) + " IN (?)";
 		values.add(keys);
 
 		// 对于casVersion，要将cas版本加入到where子句中，因为返回的affected rows应该是where match到的行数，而不是实际修改的行数
 		if (casVersionColumn != null) {
-			where += " AND (" + getColumnName(keyColumn) + "," + getColumnName(casVersionColumn) + ") IN (?)";
+			where += " AND (" + getColumnName(databaseType, keyColumn) + "," + getColumnName(databaseType, casVersionColumn) + ") IN (?)";
 			List<Object[]> idAndCas = new ArrayList<>();
 			for (T t : list) {
 				idAndCas.add(new Object[]{
@@ -801,7 +829,7 @@ public class SQLUtils {
 			values.add(idAndCas);
 		}
 
-		where = autoSetSoftDeleted(where, clazz);
+		where = autoSetSoftDeleted(databaseType, where, clazz);
 		sql.append(where);
 		logSql.append(where);
 
@@ -821,7 +849,8 @@ public class SQLUtils {
 	 * @param postSql 附带的where子句
 	 * @return 返回值为null表示不需要更新操作，这个是这个方法特别之处
 	 */
-	public static <T> String getUpdateSQL(T t, List<Object> values, boolean withNull, String postSql) {
+	public static <T> String getUpdateSQL(DatabaseTypeEnum databaseType,
+										  T t, List<Object> values, boolean withNull, String postSql) {
 		
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
@@ -829,10 +858,10 @@ public class SQLUtils {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		List<Field> notKeyFields = DOInfoReader.getNotKeyColumns(t.getClass());
 		
-		sql.append(getTableName(t.getClass())).append(" SET ");
+		sql.append(getTableName(databaseType, t.getClass())).append(" SET ");
 		
 		List<Object> setValues = new ArrayList<>();
-		String setSql = joinSetAndGetValue(notKeyFields, setValues, t, withNull);
+		String setSql = joinSetAndGetValue(databaseType, notKeyFields, setValues, t, withNull);
 		if(setValues.isEmpty()) {
 			return null; // all field is empty, not need to update
 		}
@@ -840,7 +869,7 @@ public class SQLUtils {
 		values.addAll(setValues);
 		
 		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(databaseType, keyFields, "AND", whereValues, t);
 		// 检查key值是否有null的，不允许有null
 		for(Object v : whereValues) {
 			if(v == null) {
@@ -854,7 +883,7 @@ public class SQLUtils {
 			List<Field> casVersionFields = new ArrayList<>();
 			casVersionFields.add(casVersionField);
 			List<Object> casValues = new ArrayList<>();
-			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
+			String casWhere = joinWhereAndGetValue(databaseType, casVersionFields, "AND", casValues, t);
 			if(casValues.size() != 1 || casValues.get(0) == null) {
 				throw new CasVersionNotMatchException("casVersion column value is null");
 			}
@@ -873,7 +902,7 @@ public class SQLUtils {
 			}
 		}
 		
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		sql.append(autoSetSoftDeleted(databaseType, where, t.getClass()));
 		
 		return sql.toString();
 	}
@@ -886,14 +915,14 @@ public class SQLUtils {
 	 * @param extraWhereSql 会放在最后，以满足update子select语句的要求
 	 * @return 生成的SQL
 	 */
-	public static <T> String getUpdateAllSQL(Class<T> clazz, String setSql, String whereSql,
+	public static <T> String getUpdateAllSQL(DatabaseTypeEnum databaseType, Class<T> clazz, String setSql, String whereSql,
 			String extraWhereSql) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		
-		sql.append(getTableName(clazz)).append(" ");
+		sql.append(getTableName(databaseType, clazz)).append(" ");
 		
 		if(setSql.trim().toLowerCase().startsWith("set ")) { // 这里必须有trim()
 			sql.append(setSql);
@@ -908,7 +937,7 @@ public class SQLUtils {
 			if(column.setTimeWhenUpdate()) {
 				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
 				if (nowDateTime != null) {
-					sql.append(",").append(getColumnName(column))
+					sql.append(",").append(getColumnName(databaseType, column))
 						.append("='").append(nowDateTime).append("'");
 				}
 			}
@@ -916,13 +945,13 @@ public class SQLUtils {
 			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
 				Object value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.updateValueScript());
 				if(value != null) {
-					sql.append(",").append(getColumnName(column)).append("=")
+					sql.append(",").append(getColumnName(databaseType, column)).append("=")
 							.append(TypeAutoCast.toSqlValueStr(value));
 				}
 			}
 		}
 		
-		sql.append(autoSetSoftDeleted(whereSql, clazz, extraWhereSql));
+		sql.append(autoSetSoftDeleted(databaseType, whereSql, clazz, extraWhereSql));
 		return sql.toString();
 	}
 
@@ -933,14 +962,14 @@ public class SQLUtils {
 	 * @param setSql set子句SQL
 	 * @return 生成的SQL
 	 */
-	public static <T> String getCustomUpdateSQL(T t, List<Object> values, String setSql) {
+	public static <T> String getCustomUpdateSQL(DatabaseTypeEnum databaseType, T t, List<Object> values, String setSql) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
 		
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
-		sql.append(getTableName(t.getClass())).append(" ");
+		sql.append(getTableName(databaseType, t.getClass())).append(" ");
 		
 		if(setSql.trim().toLowerCase().startsWith("set ")) {
 			sql.append(setSql);
@@ -955,7 +984,7 @@ public class SQLUtils {
 			if(column.setTimeWhenUpdate()) {
 				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
 				if (nowDateTime != null) {
-					sql.append(",").append(getColumnName(column))
+					sql.append(",").append(getColumnName(databaseType, column))
 							.append("='").append(nowDateTime).append("'");
 				}
 			}
@@ -973,20 +1002,20 @@ public class SQLUtils {
 				} else {
 					throw new CasVersionNotMatchException("casVersion column value type must be Integer or Long");
 				}
-				sql.append(",").append(getColumnName(column)).append("=").append(_v + 1);
+				sql.append(",").append(getColumnName(databaseType, column)).append("=").append(_v + 1);
 			}
 
 			if(InnerCommonUtils.isNotBlank(column.updateValueScript())) {
 				Object value = ScriptUtils.getValueFromScript(t, column.ignoreScriptError(), column.updateValueScript());
 				if(value != null) {
-					sql.append(",").append(getColumnName(column)).append("=")
+					sql.append(",").append(getColumnName(databaseType, column)).append("=")
 							.append(TypeAutoCast.toSqlValueStr(value));
 				}
 			}
 		}
 		
 		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(databaseType, keyFields, "AND", whereValues, t);
 		
 		for(Object value : whereValues) {
 			if(value == null) {
@@ -1000,7 +1029,7 @@ public class SQLUtils {
 			List<Field> casVersionFields = new ArrayList<>();
 			casVersionFields.add(casVersionField);
 			List<Object> casValues = new ArrayList<>();
-			String casWhere = joinWhereAndGetValue(casVersionFields, "AND", casValues, t);
+			String casWhere = joinWhereAndGetValue(databaseType, casVersionFields, "AND", casValues, t);
 			if(casValues.size() != 1 || casValues.get(0) == null) {
 				throw new CasVersionNotMatchException("casVersion column value is null");
 			}
@@ -1008,7 +1037,7 @@ public class SQLUtils {
 			where = where + " AND " + casWhere;
 		}
 		
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		sql.append(autoSetSoftDeleted(databaseType, where, t.getClass()));
 		
 		return sql.toString();
 	}
@@ -1019,11 +1048,11 @@ public class SQLUtils {
 	 * @param values 要传回给调用方的更新值
 	 * @return 生成的SQL
 	 */
-	public static <T> String getSoftDeleteSQL(T t, Column softDeleteColumn, List<Object> values) {
+	public static <T> String getSoftDeleteSQL(DatabaseTypeEnum databaseType, T t, Column softDeleteColumn, List<Object> values) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
-		sql.append(getTableName(t.getClass())).append(" SET ");
-		sql.append(getColumnName(softDeleteColumn)).append("=").append(softDeleteColumn.softDelete()[1]);
+		sql.append(getTableName(databaseType, t.getClass())).append(" SET ");
+		sql.append(getColumnName(databaseType, softDeleteColumn)).append("=").append(softDeleteColumn.softDelete()[1]);
 
 		List<Field> fields = DOInfoReader.getColumns(t.getClass());
 		for(Field field : fields) {
@@ -1032,7 +1061,7 @@ public class SQLUtils {
 			if(column.setTimeWhenDelete()) {
 				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
 				if (nowDateTime != null) {
-					sql.append(",").append(getColumnName(column))
+					sql.append(",").append(getColumnName(databaseType, column))
 							.append("='").append(nowDateTime).append("'");
 				}
 			}
@@ -1041,7 +1070,7 @@ public class SQLUtils {
 				// 这里不需要再执行deleteValueScript脚本了 ，因为前面preHandleDelete已经执行了
 				Object value = DOInfoReader.getValue(field, t);
 				if(value != null) {
-					sql.append(",").append(getColumnName(column))
+					sql.append(",").append(getColumnName(databaseType, column))
 							.append("=").append(TypeAutoCast.toSqlValueStr(value));
 				}
 			}
@@ -1049,7 +1078,7 @@ public class SQLUtils {
 
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		List<Object> whereValues = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", whereValues, t);
+		String where = "WHERE " + joinWhereAndGetValue(databaseType, keyFields, "AND", whereValues, t);
 		for(Object value : whereValues) {
 			if(value == null) {
 				throw new NullKeyValueException();
@@ -1057,26 +1086,27 @@ public class SQLUtils {
 		}
 		values.addAll(whereValues);
 
-		sql.append(autoSetSoftDeleted(where, t.getClass()));
+		sql.append(autoSetSoftDeleted(databaseType, where, t.getClass()));
 		return sql.toString();
 	}
 	
 	/**
 	 * 获得自定义删除SQL，给物理删除的
 	 */
-	public static <T> String getCustomDeleteSQL(Class<T> clazz, String postSql) {
-		return "DELETE FROM " + getTableName(clazz) + " " + postSql;
+	public static <T> String getCustomDeleteSQL(DatabaseTypeEnum databaseType, Class<T> clazz, String postSql) {
+		return "DELETE FROM " + getTableName(databaseType, clazz) + " " + postSql;
 	}
 
-	public static <T> String getCustomSoftDeleteSQL(Class<T> clazz, String postSql, Field softDelete) {
+	public static <T> String getCustomSoftDeleteSQL(DatabaseTypeEnum databaseType,
+													Class<T> clazz, String postSql, Field softDelete) {
 		
 		List<Field> fields = DOInfoReader.getColumns(clazz);
 		Column softDeleteColumn = softDelete.getAnnotation(Column.class);
 		
 		StringBuilder sql = new StringBuilder();
 		
-		sql.append("UPDATE ").append(getTableName(clazz));
-		sql.append(" SET ").append(getColumnName(softDeleteColumn));
+		sql.append("UPDATE ").append(getTableName(databaseType, clazz));
+		sql.append(" SET ").append(getColumnName(databaseType, softDeleteColumn));
 		sql.append("=").append(softDeleteColumn.softDelete()[1]);
 		
 		// 特殊处理@Column setTimeWhenDelete时间
@@ -1085,13 +1115,13 @@ public class SQLUtils {
 			if(column.setTimeWhenDelete()) {
 				String nowDateTime = PreHandleObject.getNowDateTime(field.getType());
 				if (nowDateTime != null) {
-					sql.append(",").append(getColumnName(column)).append("='");
+					sql.append(",").append(getColumnName(databaseType, column)).append("='");
 					sql.append(nowDateTime).append("'");
 				}
 			}
 		}
 
-		sql.append(autoSetSoftDeleted(postSql, clazz));
+		sql.append(autoSetSoftDeleted(databaseType, postSql, clazz));
 		
 		return sql.toString();
 	}
@@ -1099,16 +1129,16 @@ public class SQLUtils {
 	/**
 	 * 获得硬删除SQL
 	 */
-	public static <T> String getDeleteSQL(T t, List<Object> values) {
+	public static <T> String getDeleteSQL(DatabaseTypeEnum databaseType, T t, List<Object> values) {
 		List<Field> keyFields = DOInfoReader.getKeyColumns(t.getClass());
 		
 		StringBuilder sql = new StringBuilder();
 		
 		sql.append("DELETE FROM ");
-		sql.append(getTableName(t.getClass()));
+		sql.append(getTableName(databaseType, t.getClass()));
 		
 		List<Object> _values = new ArrayList<>();
-		String where = "WHERE " + joinWhereAndGetValue(keyFields, "AND", _values, t);
+		String where = "WHERE " + joinWhereAndGetValue(databaseType, keyFields, "AND", _values, t);
 		for(Object value : _values) { // 检查key的值是不是null
 			if(value == null) {
 				throw new NullKeyValueException();
@@ -1118,6 +1148,11 @@ public class SQLUtils {
 
 		sql.append(where);
 		return sql.toString();
+	}
+
+
+	public static String getDeleteSqlByKeyField(DatabaseTypeEnum databaseType, Field keyField) {
+		return "where " + getColumnName(databaseType, keyField) + " in (?)";
 	}
 
 	/**
@@ -1131,7 +1166,7 @@ public class SQLUtils {
 	 * @return 注意返回字符串前面没有空格
 	 * @throws JSQLParserException SQL解析错误时抛出
 	 */
-	public static String insertWhereAndExpression(String whereSql, String condExpression) 
+	public static String insertWhereAndExpression(DatabaseTypeEnum databaseType, String whereSql, String condExpression)
 			throws JSQLParserException {
 		
 		if(InnerCommonUtils.isBlank(condExpression)) {
@@ -1163,11 +1198,11 @@ public class SQLUtils {
 		return result.replace(magic, condExpression);
 	}
 
-	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz) {
-		return autoSetSoftDeleted(whereSql, clazz, "");
+	public static String autoSetSoftDeleted(DatabaseTypeEnum databaseType, String whereSql, Class<?> clazz) {
+		return autoSetSoftDeleted(databaseType, whereSql, clazz, "");
 	}
 
-	private static String _getDefaultOrderBy(Class<?> clazz, String prefix) {
+	private static String _getDefaultOrderBy(DatabaseTypeEnum databaseType, Class<?> clazz, String prefix) {
 		List<Field> orderColumn = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
 		if (orderColumn.isEmpty()) { // 如果没有主键，那么全字段排序
 			orderColumn = DOInfoReader.getColumns(clazz);
@@ -1177,27 +1212,27 @@ public class SQLUtils {
 			if (i > 0) {
 				sb.append(",");
 			}
-			sb.append(prefix).append(getColumnName(orderColumn.get(i)));
+			sb.append(prefix).append(getColumnName(databaseType, orderColumn.get(i)));
 		}
 		return sb.toString();
 	}
 
-	private static String getDefaultOrderBy(Class<?> clazz) {
+	private static String getDefaultOrderBy(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
 		if (joinTable == null) {
-			return "ORDER BY " + _getDefaultOrderBy(clazz, "");
+			return "ORDER BY " + _getDefaultOrderBy(databaseType, clazz, "");
 		} else {
 			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
 			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
-			String orderBy1 = _getDefaultOrderBy(leftTableField.getType(), joinLeftTable.alias() + ".");
-			String orderBy2 = _getDefaultOrderBy(rightTableField.getType(), joinRightTable.alias() + ".");
+			String orderBy1 = _getDefaultOrderBy(databaseType, leftTableField.getType(), joinLeftTable.alias() + ".");
+			String orderBy2 = _getDefaultOrderBy(databaseType, rightTableField.getType(), joinRightTable.alias() + ".");
 			return "ORDER BY " + orderBy1 + "," + orderBy2;
 		}
 	}
 
-	private static List<OrderByElement> _getDefaultOrderByElement(Class<?> clazz, String prefix) {
+	private static List<OrderByElement> _getDefaultOrderByElement(DatabaseTypeEnum databaseType, Class<?> clazz, String prefix) {
 		List<Field> orderColumn = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
 		if (orderColumn.isEmpty()) { // 如果没有主键，那么全字段排序
 			orderColumn = DOInfoReader.getColumns(clazz);
@@ -1207,27 +1242,27 @@ public class SQLUtils {
 			OrderByElement ele = new OrderByElement();
 			Column column = field.getAnnotation(Column.class);
 			if (InnerCommonUtils.isBlank(column.computed())) {
-				ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(field)));
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(databaseType, field)));
 			} else {
-				ele.setExpression(new net.sf.jsqlparser.schema.Column(getColumnName(field, prefix)));
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(getColumnName(databaseType, field, prefix)));
 			}
 			list.add(ele);
 		}
 		return list;
 	}
 
-	private static List<OrderByElement> getDefaultOrderByElement(Class<?> clazz) {
+	private static List<OrderByElement> getDefaultOrderByElement(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
 		if (joinTable == null) {
-			return _getDefaultOrderByElement(clazz, "");
+			return _getDefaultOrderByElement(databaseType, clazz, "");
 		} else {
 			Field leftTableField = DOInfoReader.getJoinLeftTable(clazz);
 			Field rightTableField = DOInfoReader.getJoinRightTable(clazz);
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 			List<OrderByElement> list = new ArrayList<>();
-			list.addAll(_getDefaultOrderByElement(leftTableField.getType(), joinLeftTable.alias() + "."));
-			list.addAll(_getDefaultOrderByElement(rightTableField.getType(), joinRightTable.alias() + "."));
+			list.addAll(_getDefaultOrderByElement(databaseType, leftTableField.getType(), joinLeftTable.alias() + "."));
+			list.addAll(_getDefaultOrderByElement(databaseType, rightTableField.getType(), joinRightTable.alias() + "."));
 			return list;
 		}
 	}
@@ -1245,10 +1280,11 @@ public class SQLUtils {
 	/**
 	 * 移除whereSql中的limit子句；检查并加上order by子句
 	 */
-	public static String removeLimitAndAddOrder(String whereSql, boolean autoAddOrderForPagination, Class<?> clazz) {
+	public static String removeLimitAndAddOrder(DatabaseTypeEnum databaseType,
+												String whereSql, boolean autoAddOrderForPagination, Class<?> clazz) {
 		// 当查询条件是空字符串时，默认带上order by主键
 		if (InnerCommonUtils.isBlank(whereSql) && autoAddOrderForPagination) {
-			return getDefaultOrderBy(clazz);
+			return getDefaultOrderBy(databaseType, clazz);
 		}
 
 		String selectSql = "SELECT * FROM dual "; // 辅助where sql解析用，这个大小写不能改动！
@@ -1278,7 +1314,7 @@ public class SQLUtils {
 			List<Expression> groupByList = groupBys == null ? null : groupBys.getExpressions();
 			if (orderBy == null || orderBy.isEmpty()) {
 				if (groupByList == null || groupByList.isEmpty()) {
-					plainSelect.setOrderByElements(getDefaultOrderByElement(clazz));
+					plainSelect.setOrderByElements(getDefaultOrderByElement(databaseType, clazz));
 				} else {
 					plainSelect.setOrderByElements(getDefaultOrderByGroup(groupByList));
 				}
@@ -1327,7 +1363,7 @@ public class SQLUtils {
 	 * @param extraWhere 附带的where语句，会加进去，不能带where关键字，仅能是where的条件字句，该子句会放到最后
 	 * @return 无论如何前面会加空格，更安全
 	 */
-	public static String autoSetSoftDeleted(String whereSql, Class<?> clazz, String extraWhere) {
+	public static String autoSetSoftDeleted(DatabaseTypeEnum databaseType, String whereSql, Class<?> clazz, String extraWhere) {
 		if (whereSql == null) {
 			whereSql = "";
 		}
@@ -1352,7 +1388,7 @@ public class SQLUtils {
 			
 			if(softDeleteT1 == null && softDeleteT2 == null) {
 				try {
-					return " " + insertWhereAndExpression(whereSql, extraWhere);
+					return " " + insertWhereAndExpression(databaseType, whereSql, extraWhere);
 				} catch (JSQLParserException e) {
 					LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
 							whereSql, deletedExpression, e);
@@ -1363,7 +1399,7 @@ public class SQLUtils {
 			StringBuilder deletedExpressionSb = new StringBuilder();
 			if(softDeleteT1 != null) {
 				Column softDeleteColumn = softDeleteT1.getAnnotation(Column.class);
-				String columnName = getColumnName(softDeleteColumn);
+				String columnName = getColumnName(databaseType, softDeleteColumn);
 				if(joinTable.joinType() == JoinTypeEnum.RIGHT_JOIN) {
 					deletedExpressionSb.append("(").append(joinLeftTable.alias()).append(".")
 							.append(columnName).append("=").append(softDeleteColumn.softDelete()[0])
@@ -1380,7 +1416,7 @@ public class SQLUtils {
 					deletedExpressionSb.append(" AND ");
 				}
 				Column softDeleteColumn = softDeleteT2.getAnnotation(Column.class);
-				String columnName = getColumnName(softDeleteColumn);
+				String columnName = getColumnName(databaseType, softDeleteColumn);
 				if(joinTable.joinType() == JoinTypeEnum.LEFT_JOIN) {
 					deletedExpressionSb.append("(").append(joinRightTable.alias()).append(".")
 							.append(columnName).append("=").append(softDeleteColumn.softDelete()[0])
@@ -1397,7 +1433,7 @@ public class SQLUtils {
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz);
 			if(softDelete == null) {
 				try {
-					return " " + insertWhereAndExpression(whereSql, extraWhere);
+					return " " + insertWhereAndExpression(databaseType, whereSql, extraWhere);
 				} catch (JSQLParserException e) {
 					LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
 							whereSql, deletedExpression, e);
@@ -1406,7 +1442,7 @@ public class SQLUtils {
 			}
 			
 			Column softDeleteColumn = softDelete.getAnnotation(Column.class);
-			deletedExpression = getColumnName(softDeleteColumn) + "=" 
+			deletedExpression = getColumnName(databaseType, softDeleteColumn) + "="
 			                        + softDeleteColumn.softDelete()[0];
 		}
 		
@@ -1414,7 +1450,7 @@ public class SQLUtils {
 			if(!extraWhere.isEmpty()) {
 				deletedExpression = "(" + deletedExpression + " and " + extraWhere + ")";
 			}
-			return " " + SQLUtils.insertWhereAndExpression(whereSql, deletedExpression);
+			return " " + SQLUtils.insertWhereAndExpression(databaseType, whereSql, deletedExpression);
 		} catch (JSQLParserException e) {
 			LOGGER.error("Bad sql syntax,whereSql:{},deletedExpression:{}",
 					whereSql, deletedExpression, e);
@@ -1428,7 +1464,7 @@ public class SQLUtils {
 	 * @param limit 不能为null
 	 * @return 生成的SQL
 	 */
-	public static String genLimitSQL(Integer offset, Integer limit) {
+	public static String genLimitSQL(DatabaseTypeEnum databaseType, Integer offset, Integer limit) {
 		StringBuilder sb = new StringBuilder();
 		if (limit != null) {
 			sb.append(" LIMIT ");
@@ -1446,7 +1482,7 @@ public class SQLUtils {
 	 * @param features 特性开关map
 	 * @return 返回计算列的结果SQL
 	 */
-	public static String getComputedColumn(Column column, Map<FeatureEnum, Boolean> features) {
+	public static String getComputedColumn(DatabaseTypeEnum databaseType, Column column, Map<FeatureEnum, Boolean> features) {
 		String computed = column.computed();
 
 		Boolean autoSumNullToZero = features.get(FeatureEnum.AUTO_SUM_NULL_TO_ZERO);
@@ -1487,7 +1523,7 @@ public class SQLUtils {
 	/**
 	 * 拼凑字段逗号,分隔子句（用于select）。会处理computed的@Column字段
 	 */
-    private static String joinColumnForSelect(List<Field> fields, String fieldPrefix, Map<FeatureEnum, Boolean> features) {
+    private static String joinColumnForSelect(DatabaseTypeEnum databaseType, List<Field> fields, String fieldPrefix, Map<FeatureEnum, Boolean> features) {
 		String sep = ",";
 		fieldPrefix = fieldPrefix == null ? "" : fieldPrefix.trim();
 
@@ -1497,12 +1533,12 @@ public class SQLUtils {
 
 			if(InnerCommonUtils.isNotBlank(column.computed())) {
 				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
-				sb.append("(").append(SQLUtils.getComputedColumn(column, features)).append(") AS ")
-						.append(getColumnName(column, fieldPrefix)).append(sep);
+				sb.append("(").append(SQLUtils.getComputedColumn(databaseType, column, features)).append(") AS ")
+						.append(getColumnName(databaseType, column, fieldPrefix)).append(sep);
 			} else {
-				// 非计算列的话，表的别名要放在`外边
-				sb.append(fieldPrefix).append(getColumnName(column))
-						.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"") // as里的列名不需要`
+				// 非计算列的话，表的别名要放在列名外边
+				sb.append(fieldPrefix).append(getColumnName(databaseType, column))
+						.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"")
 						.append(sep);
 			}
 		}
@@ -1517,13 +1553,13 @@ public class SQLUtils {
 	 * @param logicOperate 操作符，例如AND
 	 * @param values where条件的参数值
 	 */
-	private static String joinWhereAndGetValue(List<Field> fields,
+	private static String joinWhereAndGetValue(DatabaseTypeEnum databaseType, List<Field> fields,
 			String logicOperate, List<Object> values, Object obj) {
 		StringBuilder sb = new StringBuilder();
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
 			Column column = fields.get(i).getAnnotation(Column.class);
-			sb.append(getColumnName(column)).append("=?");
+			sb.append(getColumnName(databaseType, column)).append("=?");
 			if(i < fieldSize - 1) {
 				sb.append(" ").append(logicOperate).append(" ");
 			}
@@ -1531,6 +1567,11 @@ public class SQLUtils {
 			if(val != null && column.isJSON()) {
 				val = NimbleOrmJSON.toJson(val);
 			}
+			if (val != null && databaseType == DatabaseTypeEnum.CLICKHOUSE
+					&& fields.get(i).getType().equals(byte[].class) && val instanceof byte[]) {
+				val = InnerCommonUtils.encodeBase64((byte[])val);
+			}
+
 			values.add(val);
 		}
 		return sb.toString();
@@ -1540,12 +1581,12 @@ public class SQLUtils {
 	 * 拼凑where子句。返回sql【不】包含where关键字
 	 * @param logicOperate 操作符，例如AND
 	 */
-	private static String joinWhere(List<Field> fields, String logicOperate) {
+	private static String joinWhere(DatabaseTypeEnum databaseType, List<Field> fields, String logicOperate) {
 		StringBuilder sb = new StringBuilder();
 		int fieldSize = fields.size();
 		for(int i = 0; i < fieldSize; i++) {
 			Column column = fields.get(i).getAnnotation(Column.class);
-			sb.append(getColumnName(column)).append("=?");
+			sb.append(getColumnName(databaseType, column)).append("=?");
 			if(i < fieldSize - 1) {
 				sb.append(" ").append(logicOperate).append(" ");
 			}
@@ -1557,7 +1598,7 @@ public class SQLUtils {
 	 * 获得指定字段拼凑而成的插入列，例如(name,age)。
 	 * @param fields 由调用方保证有Column注解且没有computed值
 	 */
-	private static void appendInsertColumnSql(StringBuilder sb, List<Field> fields) {
+	private static void appendInsertColumnSql(DatabaseTypeEnum databaseType, StringBuilder sb, List<Field> fields) {
 		sb.append("(");
 		if (fields != null) {
 			for(int i = 0; i < fields.size(); i++) {
@@ -1566,7 +1607,7 @@ public class SQLUtils {
 				}
 				Field field = fields.get(i);
 				Column column = field.getAnnotation(Column.class);
-				appendColumnName(sb, column.value());
+				appendColumnName(databaseType, sb, column.value());
 			}
 		}
 		sb.append(")");
@@ -1579,7 +1620,7 @@ public class SQLUtils {
      * @param obj 不应该为null
      * @param isWithNullValue 是否把null值放到values中
      */
-	private static String joinAndGetValueForInsert(List<Field> fields, String sep,
+	private static String joinAndGetValueForInsert(DatabaseTypeEnum databaseType, List<Field> fields, String sep,
 			List<Object> values, Object obj, boolean isWithNullValue) {
 		if(values == null || obj == null) {
 			throw new InvalidParameterException("joinAndGetValueForInsert require values and obj");
@@ -1596,8 +1637,17 @@ public class SQLUtils {
 			if(value != null && column.isJSON()) {
 				value = NimbleOrmJSON.toJson(value);
 			}
+			if (value != null && databaseType == DatabaseTypeEnum.CLICKHOUSE &&
+					field.getType().equals(byte[].class) && value instanceof byte[]) {
+				value = InnerCommonUtils.encodeBase64((byte[])value);
+			}
+
 			if(isWithNullValue) {
-				values.add(value);
+				// 如果是主键，且为null，那么不加入该column
+				if (field.getAnnotation(Column.class).isKey() && value == null) {
+					continue;
+				}
+                values.add(value);
 			} else {
 				if(value == null) {
 					continue; // 不加入该column
@@ -1606,7 +1656,7 @@ public class SQLUtils {
 				}
 			}
     		
-        	sb.append(getColumnName(column)).append(sep);
+        	sb.append(getColumnName(databaseType, column)).append(sep);
     	}
     	int len = sb.length();
     	return len == 0 ? "" : sb.substring(0, len - 1);
@@ -1630,7 +1680,7 @@ public class SQLUtils {
 	 * 拼凑set子句，将会处理casVersion的字段自动+1
 	 * @param withNull 当为true时，如果field的值为null，也加入
 	 */
-	private static String joinSetAndGetValue(List<Field> fields,
+	private static String joinSetAndGetValue(DatabaseTypeEnum databaseType, List<Field> fields,
 			List<Object> values, Object obj, boolean withNull) {
 		StringBuilder sb = new StringBuilder();
 		for (Field field : fields) {
@@ -1648,13 +1698,18 @@ public class SQLUtils {
 				} else {
 					throw new CasVersionNotMatchException("casVersion column type must be Integer or Long");
 				}
-				sb.append(getColumnName(column)).append("=").append(_v + 1).append(",");
+				sb.append(getColumnName(databaseType, column)).append("=").append(_v + 1).append(",");
 			} else {
 				if (value != null && column.isJSON()) {
 					value = NimbleOrmJSON.toJson(value);
 				}
+				if (value != null && databaseType == DatabaseTypeEnum.CLICKHOUSE
+						&& field.getType().equals(byte[].class) && value instanceof byte[]) {
+					value = InnerCommonUtils.encodeBase64((byte[]) value);
+				}
+
 				if (withNull || value != null) {
-					sb.append(getColumnName(column)).append("=?,");
+					sb.append(getColumnName(databaseType, column)).append("=?,");
 					values.add(value);
 				}
 			}
@@ -1662,49 +1717,65 @@ public class SQLUtils {
 		return sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1);
 	}
 
-	private static String getTableName(Class<?> clazz) {
+	private static String getEscapeChar(DatabaseTypeEnum databaseType) {
+		return databaseType == DatabaseTypeEnum.POSTGRESQL ? "\"" : "`";
+	}
+
+	private static String getTableName(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
 		if (InnerCommonUtils.isBlank(tableName)) {
 			tableName = DOInfoReader.getTable(clazz).value();
 		}
-		return "`" + tableName + "`";
+
+		String escape = getEscapeChar(databaseType);
+		return escape + tableName + escape;
 	}
 
-	private static void appendTableName(StringBuilder sb, Class<?> clazz) {
+	private static String getTableName(DatabaseTypeEnum databaseType, String tableName) {
+		String escape = getEscapeChar(databaseType);
+		return escape + tableName + escape;
+	}
+
+	private static void appendTableName(DatabaseTypeEnum databaseType, StringBuilder sb, Class<?> clazz) {
 		String tableName = DBHelperContext.getTableName(clazz);
 		if (InnerCommonUtils.isBlank(tableName)) {
 			tableName = DOInfoReader.getTable(clazz).value();
 		}
-		sb.append("`").append(tableName).append("`");
+
+		String escape = getEscapeChar(databaseType);
+		sb.append(escape).append(tableName).append(escape);
 	}
 
-	private static String getColumnName(Column column, String prefix) {
-		return getColumnName(column.value(), prefix);
+	private static String getColumnName(DatabaseTypeEnum databaseType, Column column, String prefix) {
+		return getColumnName(databaseType, column.value(), prefix);
 	}
 
-	private static String getColumnName(Column column) {
-		return getColumnName(column.value());
+	private static String getColumnName(DatabaseTypeEnum databaseType, Column column) {
+		return getColumnName(databaseType, column.value());
 	}
 
 	/**返回字段名称，重要: 请自行确保field上有注解了@Column*/
-	public static String getColumnName(Field field) {
-		return getColumnName(field.getAnnotation(Column.class));
+	private static String getColumnName(DatabaseTypeEnum databaseType, Field field) {
+		return getColumnName(databaseType, field.getAnnotation(Column.class));
 	}
 
-	public static String getColumnName(Field field, String prefix) {
-		return getColumnName(field.getAnnotation(Column.class), prefix);
+	private static String getColumnName(DatabaseTypeEnum databaseType, Field field, String prefix) {
+		return getColumnName(databaseType, field.getAnnotation(Column.class), prefix);
 	}
 
-	public static String getColumnName(String columnName) {
-		return "`" + columnName + "`";
+	public static String getColumnName(DatabaseTypeEnum databaseType, String columnName) {
+		String escape = getEscapeChar(databaseType);
+		return escape + columnName + escape;
 	}
 
-	private static String getColumnName(String columnName, String prefix) {
-		return "`" + prefix + columnName + "`";
+	private static String getColumnName(DatabaseTypeEnum databaseType, String columnName, String prefix) {
+		String escape = getEscapeChar(databaseType);
+		return escape + prefix + columnName + escape;
 	}
 
-	private static void appendColumnName(StringBuilder sb, String columnName) {
-		sb.append("`").append(columnName).append("`");
+	private static void appendColumnName(DatabaseTypeEnum databaseType, StringBuilder sb, String columnName) {
+		String escape = getEscapeChar(databaseType);
+		sb.append(escape).append(columnName).append(escape);
 	}
 
 }

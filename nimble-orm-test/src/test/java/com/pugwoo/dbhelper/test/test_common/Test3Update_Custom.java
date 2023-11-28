@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,13 @@ public abstract class Test3Update_Custom {
         assert rows > 0;
 
         List<StudentDO> list = getDBHelper().getAll(StudentDO.class, "where name=?", newName);
-        assert list.size() == rows;
+
+        // clickhouse没有办法返回更新的行数，所以这里只能判断list.size() >= 101
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert list.size() >= 101;
+        } else {
+            assert list.size() == rows;
+        }
 
         // 测试异常参数
         assert getDBHelper().updateAll(StudentDO.class, null, "where 1=1") == 0;

@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.test.entity.CasVersionDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.StudentHardDeleteDO;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 public abstract class Test4Delete_HardDelete {
@@ -30,7 +32,12 @@ public abstract class Test4Delete_HardDelete {
         // 删除2条记录
         students.remove(1);
         rows = getDBHelper().deleteHard(students);
-        assert rows == 2;
+        // clickhouse没有办法返回真实的删除条数
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 1;
+        } else {
+            assert rows == 2;
+        }
 
         one = getDBHelper().getOne(StudentHardDeleteDO.class, "where id=?", students.get(0).getId());
         assert null == one;
@@ -42,7 +49,12 @@ public abstract class Test4Delete_HardDelete {
         String prefix = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         students = CommonOps.insertBatch(getDBHelper(), 3, prefix);
         rows = getDBHelper().deleteHard(StudentDO.class, "where name like ?", prefix + "%");
-        assert rows == 3;
+        // clickhouse没有办法返回真实的删除条数
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 1;
+        } else {
+            assert rows == 3;
+        }
 
         one = getDBHelper().getOne(StudentHardDeleteDO.class, "where id=?", students.get(0).getId());
         assert null == one;
@@ -58,6 +70,9 @@ public abstract class Test4Delete_HardDelete {
         for (int i = 0; i < 3; i++) {
             CasVersionDO d = new CasVersionDO();
             d.setName(getUuidName());
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                d.setId(CommonOps.getRandomInt());
+            }
             getDBHelper().insert(d);
             list.add(d);
         }
@@ -69,7 +84,11 @@ public abstract class Test4Delete_HardDelete {
 
         list.remove(1);
         rows = getDBHelper().deleteHard(list);
-        assert rows == 2;
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 1;
+        } else {
+            assert rows == 2;
+        }
 
         assert getDBHelper().getOne(CasVersionDO.class, "where id=?", list.get(0).getId()) == null;
         assert getDBHelper().getOne(CasVersionDO.class, "where id=?", list.get(1).getId()) == null;
@@ -79,12 +98,19 @@ public abstract class Test4Delete_HardDelete {
         for (int i = 0; i < 3; i++) {
             CasVersionDO d = new CasVersionDO();
             d.setName(getUuidName());
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                d.setId(CommonOps.getRandomInt());
+            }
             getDBHelper().insert(d);
             list.add(d);
         }
 
         rows = getDBHelper().delete(CasVersionDO.class, "where id in (?)", ListUtils.transform(list, d -> d.getId()));
-        assert rows == 3;
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            assert rows == 1;
+        } else {
+            assert rows == 3;
+        }
 
         assert getDBHelper().getOne(CasVersionDO.class, "where id=?", list.get(0).getId()) == null;
         assert getDBHelper().getOne(CasVersionDO.class, "where id=?", list.get(1).getId()) == null;
