@@ -21,11 +21,6 @@ public @interface Table {
 	String value();
 
 	/**
-	 * 指定和另外一个DO/VO类同名，当指定别名时，value()值失效，建议将其留空，以免有歧义
-	 */
-	Class<?> sameTableNameAs() default void.class;
-
-	/**
 	 * 指定软删除表名，本表删除时，会将删除的数据插入到该表中，该表的结构必须和本表一致。<br>
 	 */
 	String softDeleteTable() default "";
