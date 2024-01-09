@@ -21,9 +21,16 @@ dbHelper.getAll(StudentDO.class, "where (name,school) in (?)", 参数); // 那�
 
 ```java
 List<Object[]> param = new ArrayList();
-names.add(new Object[]{"tom", "school1"});
-names.add(new Object[]{"james", "school2"});
-names.add(new Object[]{"neo", "school3"});
+param.add(new Object[]{"tom", "school1"});
+param.add(new Object[]{"james", "school2"});
+param.add(new Object[]{"neo", "school3"});
 
 List<StudentDO> list = dbHelper.getAll(StudentDO.class, "where (name,school) in (?)", param);
+```
+
+说明：对于单列的in，可以传空List，但是对于多列的in，必须传入非空List，值为:
+    
+```java
+    List<Object[]> param = new ArrayList();
+    param.add(new Object[]{null, null}); // 根据实际的列数来加对应个数的null值
 ```
