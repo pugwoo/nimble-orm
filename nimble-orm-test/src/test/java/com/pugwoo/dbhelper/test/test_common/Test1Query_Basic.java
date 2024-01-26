@@ -27,12 +27,17 @@ public abstract class Test1Query_Basic {
 
     public abstract DBHelper getDBHelper();
 
-    @Test 
-    public void testSameTableNameAs() {
+    @Test
+    public void testTableNameWithDot() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
-        StudentCalVO db = getDBHelper().getOne(StudentCalVO.class, "where id=?", studentDO.getId());
-        assert db != null;
-        assert db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi");
+
+        Map<Class<?>, String> tableName = new HashMap<>();
+        tableName.put(StudentDO.class, "nimbleorm.t_student");
+        DBHelper.withTableNames(tableName, () -> {
+            StudentDO one = getDBHelper().getOne(StudentDO.class, "where id=?", studentDO.getId());
+            assert one.getId().equals(studentDO.getId());
+            assert one.getName().equals(studentDO.getName());
+        });
     }
 
     @Test 
