@@ -263,7 +263,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public void setTimeoutWarningValve(long timeMS) {
+	public void setSlowSqlWarningValve(long timeMS) {
 		timeoutWarningValve = timeMS;
 	}
 

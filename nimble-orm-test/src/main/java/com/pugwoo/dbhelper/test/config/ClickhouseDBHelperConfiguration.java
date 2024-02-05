@@ -35,7 +35,7 @@ public class ClickhouseDBHelperConfiguration {
     @Bean
     public DBHelper clickhouseDbHelper(@Qualifier("clickhouseJdbcTemplate") JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         dbHelper.turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
         return dbHelper;
     }
@@ -43,7 +43,7 @@ public class ClickhouseDBHelperConfiguration {
     @Bean
     public DBHelper clickhouseDbHelperWithDefaultInterceptor(@Qualifier("clickhouseJdbcTemplate") JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new DefaultInterceptor());
         dbHelper.setInterceptors(interceptors);
@@ -53,7 +53,7 @@ public class ClickhouseDBHelperConfiguration {
     @Bean
     public DBHelper clickhouseDbHelperWithInterceptor(@Qualifier("clickhouseJdbcTemplate") JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new MyLogChangeInterceptor());
         dbHelper.setInterceptors(interceptors);
@@ -63,7 +63,7 @@ public class ClickhouseDBHelperConfiguration {
     @Bean
     public DBHelper clickhouseDbHelperWithNotAllowInterceptor(@Qualifier("clickhouseJdbcTemplate") JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new NotAllowInterceptor());
         dbHelper.setInterceptors(interceptors);

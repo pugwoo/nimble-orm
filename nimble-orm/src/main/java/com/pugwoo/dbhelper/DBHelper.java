@@ -140,7 +140,7 @@ public interface DBHelper {
 	 * 设置SQL执行超时的WARN log，超时时间默认为1秒
 	 * @param timeMS 毫秒
 	 */
-	void setTimeoutWarningValve(long timeMS);
+	void setSlowSqlWarningValve(long timeMS);
 
 	/**
 	 * 设置允许的每页最大的个数，当页数超过允许的最大页数时，设置为最大页数。
