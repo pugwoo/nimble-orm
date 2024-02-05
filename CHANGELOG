@@ -1,3 +1,8 @@
+2024年2月5日
+v1.6.1 - [del] 移除@Table的sameTableNameAs属性，原因：表名非常重要，经常通过搜索来确定表有没有DO类，而用sameTableNameAs则较难找到
+       - [add] 支持@Table写其它数据库的名称，查到到其它数据库的表
+       - [modify] 【升级须知】DBHelper的setTimeoutWarningValve更名为setSlowSqlWarningValve，setTimeoutWarningCallback更名为setSlowSqlWarningCallback，功能不变
+
 2023年11月28日
 v1.6.0 - [add] 增加PostgreSQL的支持
        - [enhance] 【升级须知】对于clickhouse，byte[]数据类型自动转换成base64存储，查询时自动还原；

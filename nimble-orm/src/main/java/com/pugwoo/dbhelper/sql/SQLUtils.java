@@ -1727,7 +1727,19 @@ public class SQLUtils {
 			tableName = DOInfoReader.getTable(clazz).value();
 		}
 
+		if (InnerCommonUtils.isBlank(tableName)) {
+			throw new NoTableNameException("table name is blank, class:" + clazz.getName());
+		}
+
 		String escape = getEscapeChar(databaseType);
+		if (tableName.startsWith(escape) && tableName.endsWith(escape)) { // 已经自己加了转义符，则不处理
+			return tableName;
+		}
+
+		if (tableName.contains(".")) {
+			return tableName;
+		}
+
 		return escape + tableName + escape;
 	}
 
@@ -1737,13 +1749,8 @@ public class SQLUtils {
 	}
 
 	private static void appendTableName(DatabaseTypeEnum databaseType, StringBuilder sb, Class<?> clazz) {
-		String tableName = DBHelperContext.getTableName(clazz);
-		if (InnerCommonUtils.isBlank(tableName)) {
-			tableName = DOInfoReader.getTable(clazz).value();
-		}
-
-		String escape = getEscapeChar(databaseType);
-		sb.append(escape).append(tableName).append(escape);
+		String tableName = getTableName(databaseType, clazz);
+		sb.append(tableName);
 	}
 
 	private static String getColumnName(DatabaseTypeEnum databaseType, Column column, String prefix) {

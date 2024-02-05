@@ -58,7 +58,7 @@ public class MySQLDBHelperConfiguration {
     @Bean
     public DBHelper dbHelper(JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         dbHelper.turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
         return dbHelper;
     }
@@ -66,7 +66,7 @@ public class MySQLDBHelperConfiguration {
     @Bean
     public DBHelper dbHelperWithDefaultInterceptor(JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new DefaultInterceptor());
         dbHelper.setInterceptors(interceptors);
@@ -76,7 +76,7 @@ public class MySQLDBHelperConfiguration {
     @Bean
     public DBHelper dbHelperWithInterceptor(JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new MyLogChangeInterceptor());
         dbHelper.setInterceptors(interceptors);
@@ -86,7 +86,7 @@ public class MySQLDBHelperConfiguration {
     @Bean
     public DBHelper dbHelperWithNotAllowInterceptor(JdbcTemplate jdbcTemplate) {
         SpringJdbcDBHelper dbHelper = new SpringJdbcDBHelper(jdbcTemplate);
-        dbHelper.setTimeoutWarningValve(1000); // 超过1秒的话就告警
+        dbHelper.setSlowSqlWarningValve(1000); // 超过1秒的话就告警
         List<DBHelperInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new NotAllowInterceptor());
         dbHelper.setInterceptors(interceptors);

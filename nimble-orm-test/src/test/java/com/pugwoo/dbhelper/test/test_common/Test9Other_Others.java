@@ -263,7 +263,7 @@ public abstract class Test9Other_Others {
     }
 
     @Data
-    @Table(value = "", sameTableNameAs = StudentDO.class)
+    @Table(value = "t_student")
     public static class StudentForGroupDO {
         @Column(value = "id1", computed = "max(id)")
         private Long id;

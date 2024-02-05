@@ -67,7 +67,7 @@ public abstract class Test2Insert_Basic {
             list.add(studentDO);
         }
 
-        getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+        getDBHelper().setSlowSqlWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
         int rows = getDBHelper().insertBatchWithoutReturnId(list);
@@ -111,7 +111,7 @@ public abstract class Test2Insert_Basic {
             list.add(studentMap);
         }
 
-        getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+        getDBHelper().setSlowSqlWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
         int rows = getDBHelper().insertBatchWithoutReturnId("t_student", list);
@@ -156,7 +156,7 @@ public abstract class Test2Insert_Basic {
             }
         }
 
-        getDBHelper().setTimeoutWarningValve(1); // 改小超时阈值，让慢sql打印出来
+        getDBHelper().setSlowSqlWarningValve(1); // 改小超时阈值，让慢sql打印出来
 
         long start = System.currentTimeMillis();
         int rows = getDBHelper().insertBatchWithoutReturnId("t_student", cols, data);

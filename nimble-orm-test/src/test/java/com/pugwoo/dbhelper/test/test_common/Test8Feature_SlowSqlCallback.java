@@ -19,8 +19,8 @@ public abstract class Test8Feature_SlowSqlCallback {
     public void testSlowLog() {
         final StringBuilder sb = new StringBuilder();
 
-        getDBHelper().setTimeoutWarningValve(1);
-        getDBHelper().setTimeoutWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningValve(1);
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
             System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
                     + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
             sb.append(sql);
@@ -33,16 +33,16 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         assert !sb.toString().isEmpty();
 
-        getDBHelper().setTimeoutWarningValve(1000);
-        getDBHelper().setTimeoutWarningCallback(null);
+        getDBHelper().setSlowSqlWarningValve(1000);
+        getDBHelper().setSlowSqlWarningCallback(null);
     }
 
     @Test
     public void testSlowLogEx() {
         final StringBuilder sb = new StringBuilder();
 
-        getDBHelper().setTimeoutWarningValve(1);
-        getDBHelper().setTimeoutWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningValve(1);
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
             if (true) {
                 throw new RuntimeException("just test");
             }
@@ -54,16 +54,16 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         assert sb.toString().isEmpty();
 
-        getDBHelper().setTimeoutWarningValve(1000);
-        getDBHelper().setTimeoutWarningCallback(null);
+        getDBHelper().setSlowSqlWarningValve(1000);
+        getDBHelper().setSlowSqlWarningCallback(null);
     }
 
     @Test
     public void testSlowLogForBatch() {
         final StringBuilder sb = new StringBuilder();
 
-        getDBHelper().setTimeoutWarningValve(1);
-        getDBHelper().setTimeoutWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningValve(1);
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
             System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
                     + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
             sb.append(sql);
@@ -88,16 +88,16 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         assert !sb.toString().isEmpty();
 
-        getDBHelper().setTimeoutWarningValve(1000);
-        getDBHelper().setTimeoutWarningCallback(null);
+        getDBHelper().setSlowSqlWarningValve(1000);
+        getDBHelper().setSlowSqlWarningCallback(null);
     }
 
     @Test
     public void testSlowLogForBatchEx() {
         final StringBuilder sb = new StringBuilder();
 
-        getDBHelper().setTimeoutWarningValve(1);
-        getDBHelper().setTimeoutWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningValve(1);
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
             if (true) {
                 throw new RuntimeException("just test");
             }
@@ -123,8 +123,8 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         assert sb.toString().isEmpty();
 
-        getDBHelper().setTimeoutWarningValve(1000);
-        getDBHelper().setTimeoutWarningCallback(null);
+        getDBHelper().setSlowSqlWarningValve(1000);
+        getDBHelper().setSlowSqlWarningCallback(null);
     }
 
 }

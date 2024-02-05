@@ -27,12 +27,17 @@ public abstract class Test1Query_Basic {
 
     public abstract DBHelper getDBHelper();
 
-    @Test 
-    public void testSameTableNameAs() {
+    @Test
+    public void testTableNameWithDot() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
-        StudentCalVO db = getDBHelper().getOne(StudentCalVO.class, "where id=?", studentDO.getId());
-        assert db != null;
-        assert db.getNameWithHi() != null && db.getNameWithHi().endsWith("hi");
+
+        Map<Class<?>, String> tableName = new HashMap<>();
+        tableName.put(StudentDO.class, "nimbleorm.t_student");
+        DBHelper.withTableNames(tableName, () -> {
+            StudentDO one = getDBHelper().getOne(StudentDO.class, "where id=?", studentDO.getId());
+            assert one.getId().equals(studentDO.getId());
+            assert one.getName().equals(studentDO.getName());
+        });
     }
 
     @Test 
@@ -72,8 +77,6 @@ public abstract class Test1Query_Basic {
         }
         assert isThrowException;
     }
-
-
 
     @Test 
     public void testExists() {
@@ -115,6 +118,39 @@ public abstract class Test1Query_Basic {
         System.out.println("===============================");
     }
 
+    @Test
+    public void testMultiInWhere() {
+        List<StudentDO> studentDOS = CommonOps.insertBatch(getDBHelper(), 3);
+        ListUtils.sortAscNullLast(studentDOS, IdableSoftDeleteBaseDO::getId);
+
+        List<Object[]> param = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            param.add(new Object[]{studentDOS.get(i).getId(), studentDOS.get(i).getName()});
+        }
+
+        List<StudentDO> studentDOS2 = getDBHelper().getAll(StudentDO.class, "where (id,name) in (?)", param);
+        assert studentDOS2.size() == 3;
+        ListUtils.sortAscNullLast(studentDOS2, IdableSoftDeleteBaseDO::getId);
+
+        for (int i = 0; i < 3; i++) {
+            assert studentDOS2.get(i).getId().equals(studentDOS.get(i).getId());
+            assert studentDOS2.get(i).getName().equals(studentDOS.get(i).getName());
+        }
+
+        // 测试一个异常的场景，就是参数是空的情况，目前只有pg是支持的
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+            param = new ArrayList<>();
+            // param.add(new Object[]{null, null}); // pg这一行可以省略
+            studentDOS2 = getDBHelper().getAll(StudentDO.class, "where (id,name) in (?)", param);
+            assert studentDOS2.isEmpty();
+        } else {
+            param = new ArrayList<>();
+            param.add(new Object[]{null, null});
+            studentDOS2 = getDBHelper().getAll(StudentDO.class, "where (id,name) in (?)", param);
+            assert studentDOS2.isEmpty();
+        }
+    }
+
     @Test 
     public void testGetByExample() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
@@ -137,9 +173,11 @@ public abstract class Test1Query_Basic {
         }
     }
 
+    /**
+     * 以array数组方式传入容易有歧义，推荐传入List参数值；因此这里只是测试正确性，实际上不建议这样用
+     */
     @Test 
     public void testGetByArray() {
-        // 但是这种写法容易有歧义，推荐传入List参数值
         List<StudentDO> list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
         System.out.println(list.size());
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new int[]{50,51,52});
@@ -148,8 +186,8 @@ public abstract class Test1Query_Basic {
         System.out.println(list.size());
 
         // char非常不建议当数字使用，这里不再测试
-        //list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
-        //System.out.println(list.size());
+        // list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
+        // System.out.println(list.size());
 
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new float[]{50,51,52});
         System.out.println(list.size());
