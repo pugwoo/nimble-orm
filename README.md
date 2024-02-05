@@ -80,21 +80,13 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
 		<property name="dataSource" ref="dataSource" />
 	</bean>
-	
-	<!-- 配置namedParameterTemplate -->
-	<bean id="namedParameterJdbcTemplate" 
-	    class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
-	    <constructor-arg ref="dataSource" />
-	</bean>
-	
+
 	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
 	    <property name="jdbcTemplate" ref="jdbcTemplate" />
-	    <property name="namedParameterJdbcTemplate" ref="namedParameterJdbcTemplate" />
-	    <property name="timeoutWarningValve" value="1000" /> <!-- 超过1秒的话就告警打log -->
 	</bean>
 ```
 
-请确保项目是使用Spring和SpringJDBC并有引入下面两个maven依赖，版本支持2.x、3.x、4.x：
+请确保项目是使用Spring和SpringJDBC并有引入下面两个maven依赖：
 
 ```xml
 		<dependency>
