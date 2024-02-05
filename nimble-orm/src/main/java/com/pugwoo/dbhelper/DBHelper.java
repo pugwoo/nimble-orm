@@ -159,7 +159,7 @@ public interface DBHelper {
 	 * 设置SQL执行超时回调，可用于自行实现将慢sql存放到db
 	 * @param callback 执行的回调方法
 	 */
-	void setTimeoutWarningCallback(IDBHelperSlowSqlCallback callback);
+	void setSlowSqlWarningCallback(IDBHelperSlowSqlCallback callback);
 
 	/**
 	 * 数据库拦截器
