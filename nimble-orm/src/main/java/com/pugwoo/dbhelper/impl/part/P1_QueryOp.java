@@ -294,6 +294,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args) {
+        if (args != null && args.length == 1 && args[0] instanceof Map) {
+            LOGGER.error("getRawForStream(Class<T> clazz, String sql, Object... args) should not use Map as args");
+            return getRawByNamedParamForStream(clazz, sql, (Map<String, ?>) args[0]);
+        }
+
         jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
@@ -336,6 +341,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
+        if (args != null && args.length == 1 && args[0] instanceof Map) {
+            LOGGER.error("getRaw(Class<T> clazz, String sql, Object... args) should not use Map as args");
+            return getRawByNamedParam(clazz, sql, (Map<String, ?>) args[0]);
+        }
+
         List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
         if (args != null) {
             argsList.addAll(Arrays.asList(args));
