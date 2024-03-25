@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.utils;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,6 +45,32 @@ public class InnerCommonUtils {
             if (t == null) {
                 // 因为list中出现null是小概率事件，所以这里不会每次都产生新list
                 return filter(list, Objects::nonNull);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 转换list为另一个类型的list
+     * @param list
+     * @param mapper 支持lambda写法
+     * @return
+     */
+    public static <T, R> List<R> transform(Collection<T> list,
+                                           Function<? super T, ? extends R> mapper) {
+        if(list == null) {
+            return new ArrayList<>();
+        }
+        return list.stream().map(mapper).collect(Collectors.toList());
+    }
+
+    public static <T, R> List<R> transform(T[] array,
+                                           Function<? super T, ? extends R> mapper) {
+        List<R> list = new ArrayList<>();
+        if (array != null) {
+            for (T t : array) {
+                R r = mapper.apply(t);
+                list.add(r);
             }
         }
         return list;
@@ -134,6 +161,41 @@ public class InnerCommonUtils {
             }
         }
         return result;
+    }
+
+    /**
+     * 将容器元素collection 用分隔符splitLetter连起来。特别说明：空字符串不会参与<br>
+     * 这个方法提供的可变长的参数
+     *
+     * @param splitLetter 分隔符
+     * @return 不会返回null
+     */
+    public static String join(String splitLetter, Collection<?> collection) {
+        if (collection == null || collection.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        boolean isEmpty = true;
+        for(Object obj : collection) {
+            if(obj == null) {
+                continue;
+            }
+            String objStr = obj.toString();
+            if(isEmpty(objStr)) {
+                continue;
+            }
+
+            if(!isEmpty) {
+                sb.append(splitLetter);
+            }
+            sb.append(objStr);
+            isEmpty = false;
+        }
+        return sb.toString();
+    }
+
+    public static boolean isEmpty(String str) {
+        return str == null || str.isEmpty();
     }
 
     public static String firstLetterUpperCase(String str) {

@@ -1186,8 +1186,7 @@ public class SQLUtils {
 		
 		String selectSql = "select * from dual "; // 辅助where sql解析用
 		Statement statement = CCJSqlParserUtil.parse(selectSql + whereSql);
-		Select selectStatement = (Select) statement;
-		PlainSelect plainSelect = (PlainSelect)selectStatement.getSelectBody();
+		PlainSelect plainSelect = (PlainSelect) statement;
 		
 		Expression ce = CCJSqlParserUtil.parseCondExpression(magic);
 		Expression oldWhere = plainSelect.getWhere();
@@ -1296,8 +1295,7 @@ public class SQLUtils {
 			return whereSql;
 		}
 		boolean isChange = false;
-		Select selectStatement = (Select) statement;
-		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+		PlainSelect plainSelect = (PlainSelect) statement;
 
 		// 移除limit
 		Limit limit = plainSelect.getLimit();
@@ -1510,8 +1508,7 @@ public class SQLUtils {
 		String selectSql = "select * from dual "; // 辅助where sql解析用
 
 		Statement statement = CCJSqlParserUtil.parse(selectSql + postSql);
-		Select selectStatement = (Select) statement;
-		PlainSelect plainSelect = (PlainSelect) selectStatement.getSelectBody();
+		PlainSelect plainSelect = (PlainSelect) statement;
 		Limit limit = plainSelect.getLimit();
 		boolean isContainsLimit = limit != null;
 		containsLimitCache.put(postSql, isContainsLimit); // 这里能用缓存是因为该postSql来自于注解，数量固定

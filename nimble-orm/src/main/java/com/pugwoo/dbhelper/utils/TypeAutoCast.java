@@ -414,11 +414,14 @@ public class TypeAutoCast {
 			return "''";
 		}
 
-		if(object instanceof Date) {
+		if (object instanceof Number || object instanceof Boolean) {
+			return object.toString();
+		}
+		if (object instanceof Date) {
 			return "'" + NimbleOrmDateUtils.formatWithMs((Date) object) + "'";
 		}
 
-		return "'" + object.toString().replace("'", "\\'") + "'";
+		return "'" + object.toString().replace("'", "''") + "'";
 	}
 
 }
