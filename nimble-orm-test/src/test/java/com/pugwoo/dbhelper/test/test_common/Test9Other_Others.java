@@ -571,12 +571,12 @@ public abstract class Test9Other_Others {
         }
 
         {
-            String sql = "select * from t_student where (name,age) in (?)";
+            String sql = "select * from t_student where (name,age) in (?) and age between ? and ?";
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[]{"nick1", 18});
             params.add(new Object[]{"nick2", 19});
-            String finalSql = SQLAssemblyUtils.assembleSql(sql, params);
-            assert "select * from t_student where (name,age) in (('nick1',18),('nick2',19))".equals(finalSql);
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, params, 30, 80);
+            assert "select * from t_student where (name,age) in (('nick1',18),('nick2',19)) and age between 30 and 80".equals(finalSql);
         }
 
         // 2. 命名参数测试
@@ -596,12 +596,13 @@ public abstract class Test9Other_Others {
         }
 
         {
-            String sql = "select * from t_student where (name,age) in (:nameAndAges)";
+            String sql = "select * from t_student where (name,age) in (:nameAndAges) and age between :min and :max";
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[]{"nick1", 18});
             params.add(new Object[]{"nick2", 19});
-            String finalSql = SQLAssemblyUtils.assembleSql(sql, MapUtils.of("nameAndAges", params));
-            assert "select * from t_student where (name,age) in (('nick1',18),('nick2',19))".equals(finalSql);
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, MapUtils.of("nameAndAges", params,
+                    "min", 30, "max", 80));
+            assert "select * from t_student where (name,age) in (('nick1',18),('nick2',19)) and age between 30 and 80".equals(finalSql);
         }
 
     }

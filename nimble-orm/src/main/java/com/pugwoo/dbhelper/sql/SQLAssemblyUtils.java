@@ -1,9 +1,11 @@
 package com.pugwoo.dbhelper.sql;
 
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +71,8 @@ public class SQLAssemblyUtils {
             return "null";
         } else if (value instanceof Number || value instanceof Boolean) {
             return value.toString();
+        } else if (value instanceof Date) {
+            return "'" + NimbleOrmDateUtils.format((Date) value) + "'";
         } else {
             return "'" + value.toString().replace("'", "''") + "'"; // SQL中单引号转义是2个单引号
         }
