@@ -9,7 +9,7 @@
 | Clickhouse | 支持 |
 | TiDB       | 支持  |
 
-这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成Mysql(其它数据库是否可用未测试过)的增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
+这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
 
 1. Hibernate因为比较复杂难以使用好，互联网公司大都没有采用，用得多的是MyBatis。而MyBatis的xml文件中，会出现大量相同的列名。增删一个列或修改一个列名，对于xml文件都是很大的变动。有一种方式是用MyBatis的Generator生成xml，但是这样的xml文件如果修改过，下次生成就会覆盖，很容易出错。因此，这种xml方式维护sql，虽然足够灵活，但也非常繁琐。
 
@@ -69,7 +69,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>1.6.1</version>
+    <version>1.6.2</version>
 </dependency>
 ```
 
@@ -84,20 +84,6 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 	<bean id="dbHelper" class="com.pugwoo.dbhelper.impl.SpringJdbcDBHelper">
 	    <property name="jdbcTemplate" ref="jdbcTemplate" />
 	</bean>
-```
-
-请确保项目是使用Spring和SpringJDBC并有引入下面两个maven依赖：
-
-```xml
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-jdbc</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context-support</artifactId>
-		</dependency>
 ```
 
 nimble-orm提供了spring-boot-starter接入方式，详见：https://github.com/pugwoo/nimbleorm-spring-boot-starter
@@ -115,31 +101,6 @@ nimble-orm提供了spring-boot-starter接入方式，详见：https://github.com
 ```
 
 然后增删改查，nimble-orm的接口都会自动处理好软删除的事。例如调用dbHelper.delete方法，会自动update软删除位为1，不会真的删除；例如调用dbHelper.getPage时，会自动给where条件加上deleted=0条件，不会把软删除的查出来。除了DO注解外，你完全不需要在代码中出现deleted字样。
-
-**兑奖记录表，每个手机号只出现一次**
-
-如果你在写一个兑奖逻辑，先查询数据表A里面有没有手机号，如果没有则插入一条并发奖。伪代码：
-
-```java
-boolean haveGot = db.getByPhone(phone); // 查询手机号是否存在
-if(!haveGot) {
-   db.insertPhone(phone); // 插入手机号
-   sendGift(); // 发奖
-}
-```
-
-这样的逻辑在高并发下会有问题，表现为数据库有多条相同手机号的记录并发了多次奖。有一种解决方式是给phone字段加上唯一索引，使得插入时如果已经存在就插入不进去。但是这种方式并不推荐，应用的逻辑正确性不应该依赖于数据库的索引，规范上我们认为索引仅用于性能优化，不应该同时保证业务逻辑正确性。
-
-如果没有数据库的唯一索引，同时又是分布式系统，要使用线程同步来实现也不容易。可以使用Redis的CAS功能来实现高并发，但引入redis并要求redis保存该持久化数据，也不太好。
-
-nimble-orm推荐的做法是，使用mysql的insert select from where not exists 的写法，保证插入数据库有且只有一条：
-
-```java
-int row = dbHelper.insertWhereNotExist(XXXDO.class, "where phone=?", phone);
-if(row > 0) {
-   sendGift(); // 发奖
-}
-```
 
 **关联查询**
 
@@ -213,16 +174,9 @@ public class StudentSchoolJoinVO {
 </details>
 
 <details>
-  <summary>为什么要提供`void rollback()`方法，手工来回滚事务？</summary>
-
-> 答：DAO层和service层向上层抛出异常以表达错误，是不太建议的方式。我知道有些建议会推荐使用显式抛异常的方式来表达错误，但上层的处理就会变得麻烦。更好的做法我认为是尽量靠返回值来表示处理的结果，而异常仅用在“无法预测”的不正常情况或者返回值无法表达更多信息的情况下。而@Transational事务回滚，需要抛出RuntimeException，这个行为显然会干扰调用者。所以，为了保证用返回值表达结果，就必须手动回滚事务。
-
-</details>
-
-<details>
   <summary>为什么@Column的注解要显示指定value值，不做自动根据字段名配置映射成驼峰形式或下划线形式？</summary>
 
-> 答：`约定优于配置`是一种很常用的指导方向。但需要明确的是，适合约定的内容是什么？它应该是大家乐于接受的，表达明确的，且不易改变的，能支持绝大多数的功能的。例如我们约定linux操作系统的文件夹路径用`/`分隔，就是一个好的约定，在整个linux操作系统内，没有额外的需求需要用另外一个符号来表示。相反的，像webx框架中，约定url到方法的映射关系，可以支持驼峰或下划线的多种混合格式时，就是一个差的约定，例如Java中sayHi的方法，就默认支持url中`say_hi`、`sayHi`，`say_Hi`、`SayHi`等多种不同方式的映射。约定有一个副作用是，失去了追查系统实现的线索，例如你维护一个老系统，前端过来请求`say_Hi`，你怎样快速准确地找到这个url对应的方法？显然你也只能猜测去查找，java中是sayHi，或者say_Hi?。所以Spring MVC明确注解`@RequestMapping`就是一个很不错的方式，它明确了前后端映射的准确对应关系。同样的道理，`@Column`要求明确写value值。
+> 答：`约定优于配置`是一种很常用的指导方向。但需要明确的是，适合约定的内容是什么？它应该是大家乐于接受的，表达明确的，且不易改变的，能支持绝大多数的功能的。例如我们约定linux操作系统的文件夹路径用`/`分隔，就是一个好的约定，在整个linux操作系统内，没有额外的需求需要用另外一个符号来表示。相反的，像一些web框架，约定url到方法的映射关系，可以支持驼峰或下划线的多种混合格式时，就是一个差的约定，例如Java中sayHi的方法，就默认支持url中`say_hi`、`sayHi`，`say_Hi`、`SayHi`等多种不同方式的映射。约定有一个副作用是，失去了追查系统实现的线索，例如你维护一个老系统，前端过来请求`say_Hi`，你怎样快速准确地找到这个url对应的方法？显然你也只能猜测去查找，java中是sayHi，或者say_Hi?。所以Spring MVC明确注解`@RequestMapping`就是一个很不错的方式，它明确了前后端映射的准确对应关系。同样的道理，`@Column`要求明确写value值。
 
 </details>
 
@@ -246,13 +200,3 @@ public class StudentSchoolJoinVO {
 5. nimble-orm支持多数据源，在多数据源事务管理器的情况下，nimble-orm仍能正常工作。
 
 6. 不建议使用java.sql.Timestamp/java.sql.Date/java.sql.Time类型，推荐使用LocalDate和LocalDateTime类型。目前clickhouse 0.4.6驱动仍不能正确处理java.sql.Timestamp类型。
-
-## 未来规划
-
-1. 拦截器设计。(0.5.0+ 已实现)
-
-2. Join方式设计。(0.3.0+ 已实现)
-
-3. json支持。（0.7.0+ 已实现）
-
-

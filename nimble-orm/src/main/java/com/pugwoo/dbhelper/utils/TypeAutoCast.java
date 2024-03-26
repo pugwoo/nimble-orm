@@ -414,11 +414,14 @@ public class TypeAutoCast {
 			return "''";
 		}
 
-		if(object instanceof Date) {
-			return "'" + NimbleOrmDateUtils.formatWithMs((Date) object) + "'";
+		if (object instanceof Number || object instanceof Boolean) {
+			return object.toString();
+		}
+		if (object instanceof Date) {
+			return "'" + NimbleOrmDateUtils.formatWithMs((Date) object) + "'"; // 这里保留毫秒是为了让数据库自行处理时间的四舍五入
 		}
 
-		return "'" + object.toString().replace("'", "\\'") + "'";
+		return "'" + object.toString().replace("'", "''") + "'";
 	}
 
 }

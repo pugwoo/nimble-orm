@@ -8,6 +8,7 @@ import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.sql.WhereSQLForNamedParam;
 import com.pugwoo.dbhelper.test.entity.AreaDO;
@@ -549,6 +550,60 @@ public abstract class Test9Other_Others {
 
         assert TypeAutoCast.cast(new Date(), java.sql.Date.class) instanceof java.sql.Date;
         assert TypeAutoCast.cast(new Date(), java.sql.Time.class) instanceof java.sql.Time;
+
+    }
+
+
+    @Test
+    public void testAssembleSql() {
+        // 1. 问号占位符测试
+        {
+            String sql = "select * from t_student where name=? and age=?";
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, "nick", 18);
+            assert "select * from t_student where name='nick' and age=18".equals(finalSql);
+        }
+
+        {
+            String sql = "select * from t_student where name in (?) and age between ? and ?";
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, ListUtils.newList("nick1", "nick2", "nick3"),
+                    30, 80);
+            assert "select * from t_student where name in ('nick1','nick2','nick3') and age between 30 and 80".equals(finalSql);
+        }
+
+        {
+            String sql = "select * from t_student where (name,age) in (?) and age between ? and ?";
+            List<Object[]> params = new ArrayList<>();
+            params.add(new Object[]{"nick1", 18});
+            params.add(new Object[]{"nick2", 19});
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, params, 30, 80);
+            assert "select * from t_student where (name,age) in (('nick1',18),('nick2',19)) and age between 30 and 80".equals(finalSql);
+        }
+
+        // 2. 命名参数测试
+        {
+            String sql = "select * from t_student where name=:name and age=:age";
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, MapUtils.of("name", "nick", "age", 18));
+            System.out.println(finalSql);
+            assert "select * from t_student where name='nick' and age=18".equals(finalSql);
+        }
+
+        {
+            String sql = "select * from t_student where name in (:names) and age between :min and :max";
+            String finalSql = SQLAssemblyUtils.assembleSql(sql,
+                    MapUtils.of("names", ListUtils.newList("nick1", "nick2", "nick3"),
+                    "min", 30, "max", 80));
+            assert "select * from t_student where name in ('nick1','nick2','nick3') and age between 30 and 80".equals(finalSql);
+        }
+
+        {
+            String sql = "select * from t_student where (name,age) in (:nameAndAges) and age between :min and :max";
+            List<Object[]> params = new ArrayList<>();
+            params.add(new Object[]{"nick1", 18});
+            params.add(new Object[]{"nick2", 19});
+            String finalSql = SQLAssemblyUtils.assembleSql(sql, MapUtils.of("nameAndAges", params,
+                    "min", 30, "max", 80));
+            assert "select * from t_student where (name,age) in (('nick1',18),('nick2',19)) and age between 30 and 80".equals(finalSql);
+        }
 
     }
 
