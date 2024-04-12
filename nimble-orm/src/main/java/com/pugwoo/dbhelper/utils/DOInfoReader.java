@@ -1,20 +1,30 @@
 package com.pugwoo.dbhelper.utils;
 
-import com.pugwoo.dbhelper.annotation.*;
+import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.JoinLeftTable;
+import com.pugwoo.dbhelper.annotation.JoinRightTable;
+import com.pugwoo.dbhelper.annotation.JoinTable;
+import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
+import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 2015年1月12日 16:42:26 读取DO的注解信息:
@@ -23,7 +33,30 @@ import java.util.Set;
 public class DOInfoReader {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DOInfoReader.class);
-	
+
+	/**
+	 * 获取所有方法名，注意重载只算一个
+	 * @param clz class
+	 * @return set string
+	 */
+	public static Set<String> getAllPublicMethodsStr(Class<?> clz) {
+		Set<Method> allPublicMethods = getAllPublicMethods(clz);
+		return allPublicMethods.stream()
+				.map((o)-> o.getDeclaringClass().getName() + "." + o.getName())
+				.collect(Collectors.toSet());
+	}
+
+	public static Set<Method> getAllPublicMethods(Class<?> clz) {
+		try {
+			Method[] methods = clz.getMethods();
+			return new HashSet<>(Arrays.asList(methods));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new HashSet<>();
+	}
+
+
 	/**
 	 * 获取DO的@Table信息，如果子类没有，会往父类查找
 	 *
