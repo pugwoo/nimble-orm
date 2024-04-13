@@ -64,23 +64,34 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
      * @param args 参数
      */
     protected void log(String sql, int batchSize, Object args) {
-        String firstCallMethodStr = getFirstCallMethodStr();
         if (batchSize > 0) { // 批量log
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-                LOGGER.info("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
-                        firstCallMethodStr,  sql, batchSize, NimbleOrmJSON.toJson(args));
+				if (LOGGER.isInfoEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					LOGGER.info("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
+							firstCallMethodStr,  sql, batchSize, NimbleOrmJSON.toJson(args));
+				}
             } else {
-                LOGGER.debug("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
-                        firstCallMethodStr , sql, batchSize, NimbleOrmJSON.toJson(args));
+				if (LOGGER.isDebugEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					LOGGER.debug("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
+							firstCallMethodStr , sql, batchSize, NimbleOrmJSON.toJson(args));
+				}
             }
         } else {
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-                LOGGER.info("{} ExecSQL:{}; params:{}",firstCallMethodStr,sql, NimbleOrmJSON.toJson(args));
+				if (LOGGER.isInfoEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					LOGGER.info("{} ExecSQL:{}; params:{}",firstCallMethodStr,sql, NimbleOrmJSON.toJson(args));
+				}
             } else {
-                LOGGER.debug("{} ExecSQL:{}; params:{}",firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
-            }
-        }
-    }
+				if (LOGGER.isDebugEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					LOGGER.debug("{} ExecSQL:{}; params:{}",firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+				}
+			}
+		}
+	}
 
     private String getFirstCallMethodStr() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
