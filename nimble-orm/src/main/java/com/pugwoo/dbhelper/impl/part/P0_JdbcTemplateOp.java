@@ -1,8 +1,6 @@
 package com.pugwoo.dbhelper.impl.part;
 
 
-import static com.pugwoo.dbhelper.utils.DOInfoReader.getAllPublicMethodsStr;
-
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
@@ -13,15 +11,6 @@ import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -32,6 +21,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * jdbcTemplate原生操作接口封装
@@ -62,12 +56,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
-    protected static Set<String> allPublicMethods;
-
-    static {
-        allPublicMethods = getAllPublicMethodsStr(SpringJdbcDBHelper.class);
-    }
-
     /**
      * 批量和非批量的log
      *
@@ -79,44 +67,34 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
         String firstCallMethodStr = getFirstCallMethodStr();
         if (batchSize > 0) { // 批量log
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-                LOGGER.info("{};Batch ExecSQL:{}; batch size:{}, first row params:{}",
+                LOGGER.info("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
                         firstCallMethodStr,  sql, batchSize, NimbleOrmJSON.toJson(args));
             } else {
-                LOGGER.debug("{};Batch ExecSQL:{}; batch size:{}, first row params:{}",
+                LOGGER.debug("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
                         firstCallMethodStr , sql, batchSize, NimbleOrmJSON.toJson(args));
             }
         } else {
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-                LOGGER.info("{}; ExecSQL:{}; params:{}",firstCallMethodStr,sql, NimbleOrmJSON.toJson(args));
+                LOGGER.info("{} ExecSQL:{}; params:{}",firstCallMethodStr,sql, NimbleOrmJSON.toJson(args));
             } else {
-                LOGGER.debug("{}; ExecSQL:{}; params:{}",firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+                LOGGER.debug("{} ExecSQL:{}; params:{}",firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
             }
         }
     }
 
-    private String getStackTraceKey(StackTraceElement stackTraceElement){
-        return stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName();
-    }
-
-    protected String getFirstCallMethodStr(){
-        StackTraceElement firstCallMethod = getFirstCallMethod();
-        if (firstCallMethod == null) {
-            return "";
-        }
-        return String.format("(%s:%s)", firstCallMethod.getFileName(), firstCallMethod.getLineNumber());
-    }
-
-    protected StackTraceElement getFirstCallMethod(){
+    private String getFirstCallMethodStr() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (int i = 0, j = 16; i < stackTrace.length && j >= 0; i++, j--) {
-            if (allPublicMethods.contains(getStackTraceKey(stackTrace[i])) ){
-                while (i + 1 < stackTrace.length  && allPublicMethods.contains(getStackTraceKey(stackTrace[i+1]))){
-                    i++;
-                }
-                return stackTrace[++i];
-            }
-        }
-        return null;
+		for (StackTraceElement st : stackTrace) {
+			String className = st.getClassName();
+			if (className.startsWith("java.") || className.startsWith("org.springframework.")) {
+				continue;
+			}
+			if (className.startsWith("com.pugwoo.dbhelper.") && !className.startsWith("com.pugwoo.dbhelper.test")) {
+				continue;
+			}
+			return "(" + st.getFileName() + ":" + st.getLineNumber() + ")";
+		}
+        return "";
     }
 
     /**
@@ -132,7 +110,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
         if (cost > timeoutWarningValve) {
             String firstCallMethodStr = getFirstCallMethodStr();
             if (batchSize > 0) {
-                LOGGER.warn("{}; SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",firstCallMethodStr, sql, cost,
+                LOGGER.warn("{} SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",firstCallMethodStr, sql, cost,
                         batchSize, NimbleOrmJSON.toJson(args));
                 try {
                     if (slowSqlCallback != null) {
@@ -149,7 +127,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
                             sql, cost, batchSize, NimbleOrmJSON.toJson(args), e);
                 }
             } else {
-                LOGGER.warn("{}; SlowSQL:{}; cost:{}ms, params:{}",
+                LOGGER.warn("{} SlowSQL:{}; cost:{}ms, params:{}",
                         firstCallMethodStr, sql, cost, NimbleOrmJSON.toJson(args));
                 try {
                     if (slowSqlCallback != null) {
