@@ -1,3 +1,5 @@
+v1.6.3 - [add] 打印SQL时增加打印该SQL对应的源码文件和行号
+
 2024年3月26日
 v1.6.2 - [enhance] 当getRaw/getRawOne/getRawForStream的args参数只传入Map类型时，自动转成单Map参数的方法
        - [add] 增加将SQL和参数整合成可执行SQL的工具类SQLAssemblyUtils
