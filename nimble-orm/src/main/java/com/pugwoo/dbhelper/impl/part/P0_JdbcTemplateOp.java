@@ -93,21 +93,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
-    private String getFirstCallMethodStr() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		for (StackTraceElement st : stackTrace) {
-			String className = st.getClassName();
-			if (className.startsWith("java.") || className.startsWith("org.springframework.")) {
-				continue;
-			}
-			if (className.startsWith("com.pugwoo.dbhelper.") && !className.startsWith("com.pugwoo.dbhelper.test")) {
-				continue;
-			}
-			return "(" + st.getFileName() + ":" + st.getLineNumber() + ")";
-		}
-        return "";
-    }
-
     /**
      * 记录慢sql请求
      *
@@ -397,4 +382,20 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 		return databaseType;
 	}
+
+	private String getFirstCallMethodStr() {
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		for (StackTraceElement st : stackTrace) {
+			String className = st.getClassName();
+			if (className.startsWith("java.") || className.startsWith("org.springframework.")) {
+				continue;
+			}
+			if (className.startsWith("com.pugwoo.dbhelper.") && !className.startsWith("com.pugwoo.dbhelper.test")) {
+				continue;
+			}
+			return "(" + st.getFileName() + ":" + st.getLineNumber() + ")";
+		}
+		return "";
+	}
+
 }
