@@ -50,11 +50,33 @@ public class InnerCommonUtils {
         return list;
     }
 
+    @SafeVarargs
+    public static <E> List<E> newList(E... elements) {
+        if(elements == null || elements.length == 0) {
+            return new ArrayList<>();
+        }
+
+        List<E> list = new ArrayList<>(elements.length);
+        for (E e : elements) {
+            list.add(e);
+        }
+        return list;
+    }
+
+    public static List<Object> arrayToList(Object[] array) {
+        if (array == null) {
+            return new ArrayList<>();
+        }
+        List<Object> list = new ArrayList<>(array.length);
+        for (Object e : array) {
+            list.add(e);
+        }
+        return list;
+    }
+
     /**
      * 转换list为另一个类型的list
-     * @param list
      * @param mapper 支持lambda写法
-     * @return
      */
     public static <T, R> List<R> transform(Collection<T> list,
                                            Function<? super T, ? extends R> mapper) {

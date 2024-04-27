@@ -166,7 +166,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	private int insertBatchDefaultMode(InsertSQLForBatchDTO sqlDTO, List<Object> values, int listSize) {
 		String sql = addComment(sqlDTO.getSql());
 		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
-		Object paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
+		List<Object> paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
 		log(sqlForLog, listSize, paramForLog);
 
 		long start = System.currentTimeMillis();
@@ -178,7 +178,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 
 	private int insertBatchJDBCTemplateMode(String sql, List<Object[]> values) {
 		sql = addComment(sql);
-		Object paramForLog = values.isEmpty() ? null : values.get(0);
+		List<Object> paramForLog = values.isEmpty() ? null : InnerCommonUtils.arrayToList(values.get(0));
 		log(sql, values.size(), paramForLog);
 		String sqlForLog = sql;
 

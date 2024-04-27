@@ -64,7 +64,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
      * @param batchSize 如果大于0，则是批量log方式
      * @param args 参数
      */
-    protected void log(String sql, int batchSize, Object args) {
+    protected void log(String sql, int batchSize, List<Object> args) {
         if (batchSize > 0) { // 批量log
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 				if (LOGGER.isInfoEnabled()) {
@@ -204,11 +204,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, 0, args);
+		log(sql, 0, InnerCommonUtils.arrayToList(args));
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, 0, args == null ? new ArrayList<>() : Arrays.asList(args));
+		logSlow(cost, sql, 0, InnerCommonUtils.arrayToList(args));
 		return rows;
 	}
 
@@ -217,12 +217,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, 0, args);
+		List<Object> argsList = InnerCommonUtils.arrayToList(args);
+		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
-		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-		if(args != null) {
-			argsList.addAll(Arrays.asList(args));
-		}
 		int rows = namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
@@ -243,10 +240,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		sql = addComment(sql);
 		log(logSql, batchSize, logArgs);
 		long start = System.currentTimeMillis();
-		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-		if(args != null) {
-			argsList.addAll(Arrays.asList(args));
-		}
+		List<Object> argsList = InnerCommonUtils.arrayToList(args);
 		int rows = namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
