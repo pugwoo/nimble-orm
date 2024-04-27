@@ -94,18 +94,21 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
 		list = InnerCommonUtils.filterNonNull(list);
+		doInterceptBeforeUpdate(list, null, null);
+		list = InnerCommonUtils.filterNonNull(list);
+
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
-		if (list.size() == 1) { // 只有一个元素，直接调用update(T t)
-			return update(list.iterator().next());
+		if (list.size() == 1) {
+			return _update(list.iterator().next(), false, false, null);
 		}
 
 		boolean isSameClass = SQLAssert.isAllSameClass(list);
 		Class<?> clazz = list.iterator().next().getClass();
 
 		// pgsql的批量update，如果字段含有isJson字段，则降级为单条update，批量update目前driver会报错
-		if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+		if (getDatabaseType() == DatabaseTypeEnum.POSTGRESQL && isSameClass) {
 			List<Field> columns = DOInfoReader.getColumns(clazz);
 			boolean hasJsonColumn = false;
 			for (Field field : columns) {
@@ -118,14 +121,12 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 				int rows = 0;
 				for (T t : list) {
 					if (t != null) {
-						rows += update(t);
+						rows += _update(t, false, false, null);
 					}
 				}
 				return rows;
 			}
 		}
-
-		doInterceptBeforeUpdate(list, null, null);
 
 		// 判断是否可以转化成批量update，使用update case when的方式
 		// 可以批量update的条件：
@@ -188,7 +189,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 				}
 
 				postHandleCasVersion(list, rows, casVersionColumn, clazz);
-				isUpdateOneByOne = false;
+				isUpdateOneByOne = false; // 成功批量更新
 			} catch (Exception e) {
 				if (e.getMessage().contains("has more than one casVersion column")) {
 					throw e;
@@ -198,7 +199,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 
-		if (isUpdateOneByOne) {
+		if (isUpdateOneByOne) { // fallback to update one by one
 			boolean isThrowCasVersionNotMatchException = false;
 			List<T> casUpdateFailList = new ArrayList<>();
 			for(T t : list) {
