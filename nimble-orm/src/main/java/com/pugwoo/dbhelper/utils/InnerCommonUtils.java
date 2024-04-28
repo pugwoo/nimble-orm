@@ -139,6 +139,24 @@ public class InnerCommonUtils {
     }
 
     /**
+     * 按Map的key排序。对于null值，无论正序或逆序，都排最后。
+     * @return 返回的是一个LinkedHashMap
+     */
+    public static <V> Map<String, V> sortByKeyLengthDesc(Map<String, V> map) {
+        if(map == null || map.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        Map<String, V> result = new LinkedHashMap<>();
+        List<Map.Entry<String, V>> list = new ArrayList<>(map.entrySet());
+        list.sort((o1, o2) -> -(o1.getKey().length() - o2.getKey().length())); // o1,o2不会是null
+
+        for(Map.Entry<String, V> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
+    /**
      * 判断给定的数组是否非空
      */
     public static boolean isNotEmpty(String[] strings) {

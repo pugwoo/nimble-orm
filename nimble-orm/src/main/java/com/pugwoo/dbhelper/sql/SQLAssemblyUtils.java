@@ -37,6 +37,9 @@ public class SQLAssemblyUtils {
             return sql;
         }
 
+        // params从长度大到小排序，这样可以避免替换时出现问题
+        params = InnerCommonUtils.sortByKeyLengthDesc(params);
+
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             // 根据参数的值来确定替换的最终样子
             Object value = entry.getValue();
