@@ -9,6 +9,7 @@ import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
@@ -69,26 +70,48 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 				if (LOGGER.isInfoEnabled()) {
 					String firstCallMethodStr = getFirstCallMethodStr();
-					LOGGER.info("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
-							firstCallMethodStr,  sql, batchSize, NimbleOrmJSON.toJson(args));
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}",
+								firstCallMethodStr, batchSize, assembledSql);
+					} else {
+						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
+								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJson(args));
+					}
 				}
             } else {
 				if (LOGGER.isDebugEnabled()) {
 					String firstCallMethodStr = getFirstCallMethodStr();
-					LOGGER.debug("{} Batch ExecSQL:{}; batch size:{}, first row params:{}",
-							firstCallMethodStr , sql, batchSize, NimbleOrmJSON.toJson(args));
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}",
+								firstCallMethodStr, batchSize, assembledSql);
+					} else {
+						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
+								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJson(args));
+					}
 				}
             }
         } else {
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 				if (LOGGER.isInfoEnabled()) {
 					String firstCallMethodStr = getFirstCallMethodStr();
-					LOGGER.info("{} ExecSQL:{}; params:{}",firstCallMethodStr,sql, NimbleOrmJSON.toJson(args));
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.info("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
+					} else {
+						LOGGER.info("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+					}
 				}
             } else {
 				if (LOGGER.isDebugEnabled()) {
 					String firstCallMethodStr = getFirstCallMethodStr();
-					LOGGER.debug("{} ExecSQL:{}; params:{}",firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.debug("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
+					} else {
+						LOGGER.debug("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+					}
 				}
 			}
 		}
@@ -103,38 +126,38 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
      * @param args 参数
      */
     @SuppressWarnings("unchecked")
-    protected void logSlow(long cost, String sql, int batchSize, Object args) {
+    protected void logSlow(long cost, String sql, int batchSize, List<Object> args) {
         if (cost > timeoutWarningValve) {
             String firstCallMethodStr = getFirstCallMethodStr();
             if (batchSize > 0) {
-                LOGGER.warn("{} SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",firstCallMethodStr, sql, cost,
-                        batchSize, NimbleOrmJSON.toJson(args));
+				String assembledSql = getAssembledSql(sql, args);
+				if (assembledSql != null) {
+					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}",
+							firstCallMethodStr, cost, batchSize, assembledSql);
+				} else {
+					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}, params:{}",
+							firstCallMethodStr, cost, batchSize, sql, NimbleOrmJSON.toJson(args));
+				}
+
                 try {
                     if (slowSqlCallback != null) {
-                        if (args instanceof List) {
-                            slowSqlCallback.callback(cost, sql, (List<Object>) args);
-                        } else if (args instanceof Object[]) {
-                            slowSqlCallback.callback(cost, sql, Arrays.asList((Object[]) args));
-                        } else {
-                            slowSqlCallback.callback(cost, sql, Collections.singletonList(args));
-                        }
+						slowSqlCallback.callback(cost, sql, args);
                     }
                 } catch (Throwable e) {
                     LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
                             sql, cost, batchSize, NimbleOrmJSON.toJson(args), e);
                 }
             } else {
-                LOGGER.warn("{} SlowSQL:{}; cost:{}ms, params:{}",
-                        firstCallMethodStr, sql, cost, NimbleOrmJSON.toJson(args));
+				String assembledSql = getAssembledSql(sql, args);
+				if (assembledSql != null) {
+					LOGGER.warn("{} SlowSQL(cost:{}ms):{}", firstCallMethodStr, cost, assembledSql);
+				} else {
+					LOGGER.warn("{} SlowSQL(cost:{}ms):{}; params:{}", firstCallMethodStr, cost, sql, NimbleOrmJSON.toJson(args));
+				}
+
                 try {
                     if (slowSqlCallback != null) {
-                        if (args instanceof List) {
-                            slowSqlCallback.callback(cost, sql, (List<Object>) args);
-                        } else if (args instanceof Object[]) {
-                            slowSqlCallback.callback(cost, sql, Arrays.asList((Object[]) args));
-                        } else {
-                            slowSqlCallback.callback(cost, sql, Collections.singletonList(args));
-                        }
+						slowSqlCallback.callback(cost, sql, args);
                     }
                 } catch (Throwable e) {
                     LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
@@ -145,28 +168,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				boolean autoExplainSlowSql = getFeature(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
 				if (autoExplainSlowSql && getDatabaseType() == DatabaseTypeEnum.MYSQL) {
 					try {
-						String explainSql = "EXPLAIN " + sql;
-						List<Object> explainArgs = new ArrayList<>();
-						boolean isMap = false;
-						if (args != null) {
-							if (args instanceof List) {
-								explainArgs = ((List<Object>) args);
-							} else if (args instanceof Object[]) {
-								explainArgs = Arrays.asList((Object[]) args);
-							} else if (args instanceof Map) {
-								isMap = true;
-							}
+						if (assembledSql != null) {
+							String explainSql = "EXPLAIN " + assembledSql;
+							List<Map<String, Object>> explainResult = jdbcTemplate.queryForList(explainSql);
+							LOGGER.warn("Explain SlowSQL(cost:{}ms):{}; explain result:{}",
+									cost, assembledSql, NimbleOrmJSON.toJson(explainResult));
 						}
-						List<Map<String, Object>> explainResult;
-						if (!isMap) {
-							explainResult = namedParameterJdbcTemplate.queryForList(
-									NamedParameterUtils.trans(explainSql, explainArgs),
-									NamedParameterUtils.transParam(explainArgs));
-						} else {
-							explainResult = namedParameterJdbcTemplate.queryForList(explainSql, (Map<String, ?>) args);
-						}
-						LOGGER.warn("Explain SlowSQL:{}; cost:{}ms, params:{} explain result:{}", sql,
-								   cost, NimbleOrmJSON.toJson(args), NimbleOrmJSON.toJson(explainResult));
 					} catch (Throwable e) {
 						LOGGER.error("SlowSQL explain fail, SlowSQL:{}; cost:{}ms, params:{}",
 								sql, cost, NimbleOrmJSON.toJson(args), e);
@@ -392,4 +399,16 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return "";
 	}
 
+	/**当处理失败时返回null*/
+	private String getAssembledSql(String sql, List<Object> params) {
+		try {
+			if (params == null) {
+				return sql;
+			}
+			return SQLAssemblyUtils.assembleSql(sql, params.toArray());
+		} catch (Exception e) {
+			LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJson(params), e);
+			return null;
+		}
+	}
 }

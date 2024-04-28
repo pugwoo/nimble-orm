@@ -101,7 +101,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, null);
+        logSlow(cost, sql, 0, argsList);
         return rows == null ? 0 : rows;
     }
 
