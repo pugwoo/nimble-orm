@@ -23,7 +23,7 @@ import java.util.Set;
 public class DOInfoReader {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DOInfoReader.class);
-	
+
 	/**
 	 * 获取DO的@Table信息，如果子类没有，会往父类查找
 	 *

@@ -81,10 +81,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz))
                 + ") tff305c6";
 
-        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-        if (args != null) {
-            argsList.addAll(Arrays.asList(args));
-        }
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
         String sql = sqlSB;
         sql = addComment(sql);
@@ -104,7 +101,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, null);
+        logSlow(cost, sql, 0, argsList);
         return rows == null ? 0 : rows;
     }
 
@@ -144,10 +141,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, false, features, postSql));
         sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
 
-        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-        if (args != null) {
-            argsList.addAll(Arrays.asList(args));
-        }
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
         doInterceptBeforeQuery(clazz, sqlSB, argsList);
 
@@ -301,10 +295,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         jdbcTemplate.setFetchSize(fetchSize);
 
-        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-        if (args != null) {
-            argsList.addAll(Arrays.asList(args));
-        }
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         sql = addComment(sql);
@@ -346,10 +337,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return getRawByNamedParam(clazz, sql, (Map<String, ?>) args[0]);
         }
 
-        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-        if (args != null) {
-            argsList.addAll(Arrays.asList(args));
-        }
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         sql = addComment(sql);
@@ -470,10 +458,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sqlSB.append(isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
         sqlSB.append(SQLUtils.genLimitSQL(getDatabaseType(), offset, limit));
 
-        List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-        if (args != null) {
-            argsList.addAll(Arrays.asList(args));
-        }
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
         if (!selectOnlyKey) {
             doInterceptBeforeQuery(clazz, sqlSB, argsList);

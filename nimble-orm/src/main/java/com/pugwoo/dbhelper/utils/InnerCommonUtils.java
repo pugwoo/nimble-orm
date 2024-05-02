@@ -50,11 +50,33 @@ public class InnerCommonUtils {
         return list;
     }
 
+    @SafeVarargs
+    public static <E> List<E> newList(E... elements) {
+        if(elements == null || elements.length == 0) {
+            return new ArrayList<>();
+        }
+
+        List<E> list = new ArrayList<>(elements.length);
+        for (E e : elements) {
+            list.add(e);
+        }
+        return list;
+    }
+
+    public static List<Object> arrayToList(Object[] array) {
+        if (array == null) {
+            return new ArrayList<>();
+        }
+        List<Object> list = new ArrayList<>(array.length);
+        for (Object e : array) {
+            list.add(e);
+        }
+        return list;
+    }
+
     /**
      * 转换list为另一个类型的list
-     * @param list
      * @param mapper 支持lambda写法
-     * @return
      */
     public static <T, R> List<R> transform(Collection<T> list,
                                            Function<? super T, ? extends R> mapper) {
@@ -114,6 +136,24 @@ public class InnerCommonUtils {
                 }), Stream.generate(() -> currentBatch.get(0).isEmpty() ? null : currentBatch.get(0))
                 .limit(1)
         ).filter(Objects::nonNull);
+    }
+
+    /**
+     * 按Map的key排序。对于null值，无论正序或逆序，都排最后。
+     * @return 返回的是一个LinkedHashMap
+     */
+    public static <V> Map<String, V> sortByKeyLengthDesc(Map<String, V> map) {
+        if(map == null || map.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        Map<String, V> result = new LinkedHashMap<>();
+        List<Map.Entry<String, V>> list = new ArrayList<>(map.entrySet());
+        list.sort((o1, o2) -> -(o1.getKey().length() - o2.getKey().length())); // o1,o2不会是null
+
+        for(Map.Entry<String, V> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return result;
     }
 
     /**

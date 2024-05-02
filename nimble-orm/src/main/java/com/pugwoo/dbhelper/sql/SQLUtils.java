@@ -815,6 +815,9 @@ public class SQLUtils {
 
 		String where = "WHERE " + getColumnName(databaseType, keyColumn) + " IN (?)";
 		values.add(keys);
+		if (!keys.isEmpty()) {
+			logParams.add(keys.get(0)); // logParams只记录第一个key，也即第一行
+		}
 
 		// 对于casVersion，要将cas版本加入到where子句中，因为返回的affected rows应该是where match到的行数，而不是实际修改的行数
 		if (casVersionColumn != null) {

@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.impl.part;
 
+
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
@@ -8,6 +9,7 @@ import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -55,100 +58,122 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
 	private IDBHelperSlowSqlCallback slowSqlCallback;
 
-	/**
-	 * 批量和非批量的log
-	 * @param sql 要log的sql
-	 * @param batchSize 如果大于0，则是批量log方式
-	 * @param args 参数
-	 */
-	protected void log(String sql, int batchSize, Object args) {
-		if (batchSize > 0) { // 批量log
-			if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-				LOGGER.info("Batch ExecSQL:{}; batch size:{}, first row params:{}",
-						sql, batchSize, NimbleOrmJSON.toJson(args));
-			} else {
-				LOGGER.debug("Batch ExecSQL:{}; batch size:{}, first row params:{}",
-						sql, batchSize, NimbleOrmJSON.toJson(args));
-			}
-		} else {
-			if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
-				LOGGER.info("ExecSQL:{}; params:{}", sql, NimbleOrmJSON.toJson(args));
-			} else {
-				LOGGER.debug("ExecSQL:{}; params:{}", sql, NimbleOrmJSON.toJson(args));
+    /**
+     * 批量和非批量的log
+     *
+     * @param sql 要log的sql
+     * @param batchSize 如果大于0，则是批量log方式
+     * @param args 参数
+     */
+    protected void log(String sql, int batchSize, List<Object> args) {
+        if (batchSize > 0) { // 批量log
+            if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+				if (LOGGER.isInfoEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}",
+								firstCallMethodStr, batchSize, assembledSql);
+					} else {
+						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
+								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJson(args));
+					}
+				}
+            } else {
+				if (LOGGER.isDebugEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}",
+								firstCallMethodStr, batchSize, assembledSql);
+					} else {
+						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
+								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJson(args));
+					}
+				}
+            }
+        } else {
+            if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
+				if (LOGGER.isInfoEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.info("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
+					} else {
+						LOGGER.info("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+					}
+				}
+            } else {
+				if (LOGGER.isDebugEnabled()) {
+					String firstCallMethodStr = getFirstCallMethodStr();
+					String assembledSql = getAssembledSql(sql, args);
+					if (assembledSql != null) {
+						LOGGER.debug("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
+					} else {
+						LOGGER.debug("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+					}
+				}
 			}
 		}
 	}
 
-	/**
-	 * 记录慢sql请求
-	 * @param cost 请求耗时，毫秒
-	 * @param sql 要记录的sql
-	 * @param batchSize 批量大小，如果大于0，则是批量
-	 * @param args 参数
-	 */
-	@SuppressWarnings("unchecked")
-	protected void logSlow(long cost, String sql, int batchSize, Object args) {
-		if(cost > timeoutWarningValve) {
-			if (batchSize > 0) {
-				LOGGER.warn("SlowSQL:{}; cost:{}ms, listSize:{}, params:{}", sql, cost,
-						batchSize, NimbleOrmJSON.toJson(args));
-				try {
-					if(slowSqlCallback != null) {
-						if (args instanceof List) {
-							slowSqlCallback.callback(cost, sql, (List<Object>) args);
-						} else if (args instanceof Object[]) {
-							slowSqlCallback.callback(cost, sql, Arrays.asList((Object[]) args));
-						} else {
-							slowSqlCallback.callback(cost, sql, Collections.singletonList(args));
-						}
-					}
-				} catch (Throwable e) {
-					LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
-							sql, cost, batchSize, NimbleOrmJSON.toJson(args), e);
+    /**
+     * 记录慢sql请求
+     *
+     * @param cost 请求耗时，毫秒
+     * @param sql 要记录的sql
+     * @param batchSize 批量大小，如果大于0，则是批量
+     * @param args 参数
+     */
+    @SuppressWarnings("unchecked")
+    protected void logSlow(long cost, String sql, int batchSize, List<Object> args) {
+        if (cost > timeoutWarningValve) {
+            String firstCallMethodStr = getFirstCallMethodStr();
+            if (batchSize > 0) {
+				String assembledSql = getAssembledSql(sql, args);
+				if (assembledSql != null) {
+					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}",
+							firstCallMethodStr, cost, batchSize, assembledSql);
+				} else {
+					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}, params:{}",
+							firstCallMethodStr, cost, batchSize, sql, NimbleOrmJSON.toJson(args));
 				}
-			} else {
-				LOGGER.warn("SlowSQL:{}; cost:{}ms, params:{}", sql, cost, NimbleOrmJSON.toJson(args));
-				try {
-					if(slowSqlCallback != null) {
-						if (args instanceof List) {
-							slowSqlCallback.callback(cost, sql, (List<Object>) args);
-						} else if (args instanceof Object[]) {
-							slowSqlCallback.callback(cost, sql, Arrays.asList((Object[]) args));
-						} else {
-							slowSqlCallback.callback(cost, sql, Collections.singletonList(args));
-						}
-					}
-				} catch (Throwable e) {
-					LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
-							sql, cost, NimbleOrmJSON.toJson(args), e);
+
+                try {
+                    if (slowSqlCallback != null) {
+						slowSqlCallback.callback(cost, sql, args);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
+                            sql, cost, batchSize, NimbleOrmJSON.toJson(args), e);
+                }
+            } else {
+				String assembledSql = getAssembledSql(sql, args);
+				if (assembledSql != null) {
+					LOGGER.warn("{} SlowSQL(cost:{}ms):{}", firstCallMethodStr, cost, assembledSql);
+				} else {
+					LOGGER.warn("{} SlowSQL(cost:{}ms):{}; params:{}", firstCallMethodStr, cost, sql, NimbleOrmJSON.toJson(args));
 				}
+
+                try {
+                    if (slowSqlCallback != null) {
+						slowSqlCallback.callback(cost, sql, args);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
+                            sql, cost, NimbleOrmJSON.toJson(args), e);
+                }
 
 				// 对于非batch的慢sql，自动explain一下检查是否加了索引
 				boolean autoExplainSlowSql = getFeature(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
 				if (autoExplainSlowSql && getDatabaseType() == DatabaseTypeEnum.MYSQL) {
 					try {
-						String explainSql = "EXPLAIN " + sql;
-						List<Object> explainArgs = new ArrayList<>();
-						boolean isMap = false;
-						if (args != null) {
-							if (args instanceof List) {
-								explainArgs = ((List<Object>) args);
-							} else if (args instanceof Object[]) {
-								explainArgs = Arrays.asList((Object[]) args);
-							} else if (args instanceof Map) {
-								isMap = true;
-							}
+						if (assembledSql != null) {
+							String explainSql = "EXPLAIN " + assembledSql;
+							List<Map<String, Object>> explainResult = jdbcTemplate.queryForList(explainSql);
+							LOGGER.warn("Explain SlowSQL(cost:{}ms):{}; explain result:{}",
+									cost, assembledSql, NimbleOrmJSON.toJson(explainResult));
 						}
-						List<Map<String, Object>> explainResult;
-						if (!isMap) {
-							explainResult = namedParameterJdbcTemplate.queryForList(
-									NamedParameterUtils.trans(explainSql, explainArgs),
-									NamedParameterUtils.transParam(explainArgs));
-						} else {
-							explainResult = namedParameterJdbcTemplate.queryForList(explainSql, (Map<String, ?>) args);
-						}
-						LOGGER.warn("Explain SlowSQL:{}; cost:{}ms, params:{} explain result:{}", sql,
-								   cost, NimbleOrmJSON.toJson(args), NimbleOrmJSON.toJson(explainResult));
 					} catch (Throwable e) {
 						LOGGER.error("SlowSQL explain fail, SlowSQL:{}; cost:{}ms, params:{}",
 								sql, cost, NimbleOrmJSON.toJson(args), e);
@@ -186,11 +211,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int jdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, 0, args);
+		log(sql, 0, InnerCommonUtils.arrayToList(args));
 		long start = System.currentTimeMillis();
 		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, 0, args == null ? new ArrayList<>() : Arrays.asList(args));
+		logSlow(cost, sql, 0, InnerCommonUtils.arrayToList(args));
 		return rows;
 	}
 
@@ -199,12 +224,9 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
 		sql = addComment(sql);
-		log(sql, 0, args);
+		List<Object> argsList = InnerCommonUtils.arrayToList(args);
+		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
-		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-		if(args != null) {
-			argsList.addAll(Arrays.asList(args));
-		}
 		int rows = namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
@@ -225,10 +247,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		sql = addComment(sql);
 		log(logSql, batchSize, logArgs);
 		long start = System.currentTimeMillis();
-		List<Object> argsList = new ArrayList<>(); // 不要直接用Arrays.asList，它不支持clear方法
-		if(args != null) {
-			argsList.addAll(Arrays.asList(args));
-		}
+		List<Object> argsList = InnerCommonUtils.arrayToList(args);
 		int rows = namedParameterJdbcTemplate.update(
 				NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
@@ -278,8 +297,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext)
-			throws BeansException {
+	public void setApplicationContext(@Nullable ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
 	}
 
@@ -364,5 +382,33 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			databaseType = getDatabaseType(jdbcTemplate); // 尝试再次获取
 		}
 		return databaseType;
+	}
+
+	private String getFirstCallMethodStr() {
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		for (StackTraceElement st : stackTrace) {
+			String className = st.getClassName();
+			if (className.startsWith("java.") || className.startsWith("org.springframework.")) {
+				continue;
+			}
+			if (className.startsWith("com.pugwoo.dbhelper.") && !className.startsWith("com.pugwoo.dbhelper.test")) {
+				continue;
+			}
+			return "(" + st.getFileName() + ":" + st.getLineNumber() + ")";
+		}
+		return "";
+	}
+
+	/**当处理失败时返回null*/
+	private String getAssembledSql(String sql, List<Object> params) {
+		try {
+			if (params == null) {
+				return sql;
+			}
+			return SQLAssemblyUtils.assembleSql(sql, params.toArray());
+		} catch (Exception e) {
+			LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJson(params), e);
+			return null;
+		}
 	}
 }
