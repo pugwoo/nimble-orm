@@ -14,6 +14,12 @@ import java.util.Map;
  */
 public class SQLAssemblyUtils {
 
+    /**
+     * 将SQL和参数拼凑成可以执行的SQL
+     * @param sql 带占位符的sql，占位符为?
+     * @param params 参数
+     * @return 实际可以执行的SQL
+     */
     public static String assembleSql(String sql, Object... params) {
         if (params == null) {
             return sql;
@@ -28,8 +34,44 @@ public class SQLAssemblyUtils {
         return assembleNamedParameterSql(namedSql, namedParams);
     }
 
+    /**
+     * 将SQL和参数拼凑成可以执行的SQL
+     * @param sql 带占位符的sql，占位符为:paramName
+     * @param params 参数
+     * @return 实际可以执行的SQL
+     */
     public static String assembleSql(String sql, Map<String, Object> params) {
         return assembleNamedParameterSql(sql, params);
+    }
+
+    /**
+     * 将WhereSQL对象拼凑成可以执行的where片段的SQL
+     */
+    public static String assembleWhereSql(WhereSQL whereSQL) {
+        if (whereSQL == null) {
+            return "";
+        }
+        String sql = whereSQL.getSQL();
+        Object[] params = whereSQL.getParams();
+        String selectPrefix = "SELECT 1 ";
+        sql = selectPrefix + sql;
+        String assembledSql = assembleSql(sql, params);
+        return assembledSql.substring(selectPrefix.length());
+    }
+
+    /**
+     * 将WhereSQL对象拼凑成可以执行的where片段的SQL
+     */
+    public static String assembleWhereSql(WhereSQLForNamedParam whereSQLForNamedParam) {
+        if (whereSQLForNamedParam == null) {
+            return "";
+        }
+        String sql = whereSQLForNamedParam.getSQL();
+        Map<String, Object> params = whereSQLForNamedParam.getParams();
+        String selectPrefix = "SELECT 1 ";
+        sql = selectPrefix + sql;
+        String assembledSql = assembleSql(sql, params);
+        return assembledSql.substring(selectPrefix.length());
     }
 
     private static String assembleNamedParameterSql(String sql, Map<String, Object> params) {
