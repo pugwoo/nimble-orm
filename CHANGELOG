@@ -1,4 +1,5 @@
-v1.6.4 - [add] SQLAssemblyUtils增加拼凑WhereSQL为实际可执行sql的工具方法
+v1.6.4 - [add] 增加@SqlColumn注解，用以获得DO对应的实际执行的sql
+       - [add] SQLAssemblyUtils增加拼凑WhereSQL为实际可执行sql的工具方法
 
 2024年5月2日
 v1.6.3 - [add] 打印SQL时增加打印该SQL对应的源码文件和行号

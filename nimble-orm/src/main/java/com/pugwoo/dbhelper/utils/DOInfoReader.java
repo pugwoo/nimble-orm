@@ -191,6 +191,13 @@ public class DOInfoReader {
 
 		return result;
 	}
+
+	public static List<Field> getSqlColumns(Class<?> clazz) {
+		if (clazz == null) {
+			throw new NoColumnAnnotationException("class is null");
+		}
+		return ClassInfoCache.getSqlColumnFields(clazz);
+	}
 	
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。

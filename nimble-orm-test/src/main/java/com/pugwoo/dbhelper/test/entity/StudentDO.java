@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.entity;
 
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.SqlColumn;
 import com.pugwoo.dbhelper.annotation.Table;
 import lombok.Data;
 
@@ -14,6 +15,9 @@ import java.util.List;
 @Data
 @Table(value = "t_student", softDeleteTable = "t_student_del")
 public class StudentDO extends IdableSoftDeleteBaseDO {
+
+	@SqlColumn
+	private String executeSql;
 		
 	@Column(value = "name", maxStringLength = 32)
 	private String name;
