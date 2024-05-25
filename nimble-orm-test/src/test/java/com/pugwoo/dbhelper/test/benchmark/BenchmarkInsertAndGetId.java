@@ -2,14 +2,17 @@ package com.pugwoo.dbhelper.test.benchmark;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
-import com.pugwoo.wooutils.task.ExecuteThem;
-
+import com.pugwoo.wooutils.thread.ThreadPoolUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SpringBootTest
@@ -49,10 +52,11 @@ public class BenchmarkInsertAndGetId {
         t.start();
 
         // 起400个线程
-        ExecuteThem executeThem = new ExecuteThem(400);
+        ThreadPoolExecutor executeThem = ThreadPoolUtils.createThreadPool(400, 100000, 400, "benchmark");
 
+        List<Future<String>> futureList = new ArrayList<>();
         for (int i = 0; i < 400; i++) {
-            executeThem.add(new Runnable() {
+            futureList.add(executeThem.submit(new Runnable() {
                 @Override
                 public void run() {
                     for (int i = 0; i < 10000; i++) {
@@ -78,10 +82,12 @@ public class BenchmarkInsertAndGetId {
                         }
                     }
                 }
-            });
+            }, ""));
         }
 
-        executeThem.waitAllTerminate();
+        ThreadPoolUtils.waitAllFuturesDone(futureList);
+        executeThem.shutdown();
+
         System.out.println("insert:" + insert.get() + ",insertFail:" + insertFail.get()
            + ",getIdFail:" + getIdFail.get());
 

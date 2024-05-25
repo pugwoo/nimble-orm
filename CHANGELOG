@@ -1,3 +1,4 @@
+2024年5月23日
 v1.6.4 - [add] 增加@SqlColumn注解，用以获得DO对应的实际执行的sql
        - [add] SQLAssemblyUtils增加拼凑WhereSQL为实际可执行sql的工具方法
 
