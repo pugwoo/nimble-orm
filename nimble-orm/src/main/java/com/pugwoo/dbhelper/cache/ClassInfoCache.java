@@ -2,6 +2,7 @@ package com.pugwoo.dbhelper.cache;
 
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
+import com.pugwoo.dbhelper.annotation.SqlColumn;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
@@ -112,7 +113,8 @@ public class ClassInfoCache {
 
     // ==================================================================================
 
-    private static final Map<Class<?>, List<Field>> classFieldMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> classColumnFieldMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> classSqlColumnFieldMap = new ConcurrentHashMap<>();
 
     /**
      * 获得clazz的所有Column字段
@@ -122,17 +124,41 @@ public class ClassInfoCache {
         boolean isCacheEnable = DBHelperContext.isCacheEnabled();
 
         if (isCacheEnable) {
-            fields = classFieldMap.get(clazz);
+            fields = classColumnFieldMap.get(clazz);
             if (fields != null) {
                 return fields;
             }
         }
 
         List<Class<?>> classLink = getClassAndParentClasses(clazz);
-        fields = getFields(classLink);
+        fields = getFieldsForColumn(classLink);
 
         if (isCacheEnable) {
-            classFieldMap.put(clazz, fields);
+            classColumnFieldMap.put(clazz, fields);
+        }
+
+        return fields;
+    }
+
+    /**
+     * 获得clazz的所有SqlColumn字段
+     */
+    public static List<Field> getSqlColumnFields(Class<?> clazz) {
+        List<Field> fields;
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        if (isCacheEnable) {
+            fields = classSqlColumnFieldMap.get(clazz);
+            if (fields != null) {
+                return fields;
+            }
+        }
+
+        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+        fields = getFieldsForSqlColumn(classLink);
+
+        if (isCacheEnable) {
+            classSqlColumnFieldMap.put(clazz, fields);
         }
 
         return fields;
@@ -159,11 +185,11 @@ public class ClassInfoCache {
 
     /**
      * 获取classLink多个类中，注解了annotationClazz的Field字段。<br>
-     * 目前annotationClazz的取值有@Column @JoinLeftTable @JoinRightTable <br>
+     * 目前annotationClazz的取值有@Column <br>
      * 对于Column注解，如果子类和父类字段同名，那么子类将代替父类，父类的Field不会加进来；<br>
      * 如果子类出现相同的Field，那么也只拿第一个；一旦出现字段同名，那么进行error log，正常是不建议覆盖和同名操作的，风险很大 <br>
      */
-    private static List<Field> getFields(List<Class<?>> classLink) {
+    private static List<Field> getFieldsForColumn(List<Class<?>> classLink) {
         List<Field> result = new ArrayList<>();
         if(classLink == null || classLink.isEmpty()) {
             return result;
@@ -203,6 +229,22 @@ public class ClassInfoCache {
 
         return result;
     }
+
+    private static List<Field> getFieldsForSqlColumn(List<Class<?>> classLink) {
+        List<Field> result = new ArrayList<>();
+        if(classLink == null || classLink.isEmpty()) {
+            return result;
+        }
+
+        List<Field> fieldList = new ArrayList<>();
+        for (int i = classLink.size() - 1; i >= 0; i--) {
+            Field[] fields = classLink.get(i).getDeclaredFields();
+            fieldList.addAll(InnerCommonUtils.filter(fields, o -> o.getAnnotation(SqlColumn.class) != null));
+        }
+
+        return fieldList;
+    }
+
 
     // ==================================================================================
 

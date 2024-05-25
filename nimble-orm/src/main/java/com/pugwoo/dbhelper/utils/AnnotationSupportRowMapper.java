@@ -8,6 +8,8 @@ import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.RowMapperFailException;
 import com.pugwoo.dbhelper.impl.part.P0_JdbcTemplateOp;
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -39,14 +41,23 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 
 	private boolean selectOnlyKey = false; // 是否只选择主键列，默认false
 
-	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz) {
+	private String sql;
+	private List<Object> args;
+	private volatile String assembledSql;
+
+	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, String sql, List<Object> args) {
 		this.dbHelper = dbHelper;
+		this.sql = sql;
+		this.args = args;
 		handleClazz(clazz);
 	}
 
-	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, boolean selectOnlyKey) {
+	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, boolean selectOnlyKey,
+			String sql, List<Object> args) {
 		this.dbHelper = dbHelper;
 		this.selectOnlyKey = selectOnlyKey;
+		this.sql = sql;
+		this.args = args;
 		handleClazz(clazz);
 	}
 
@@ -111,6 +122,12 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					DOInfoReader.setValue(field, obj, value);
 					currentField.set(0, null);
 				}
+
+				List<Field> sqlColumnForSelect = DOInfoReader.getSqlColumns(clazz);
+				for (Field field : sqlColumnForSelect) {
+					String assembledSql = getAssembleSql();
+					DOInfoReader.setValue(field, obj, assembledSql);
+				}
 			}
 
 			return obj;
@@ -174,5 +191,27 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			currentField.set(0, null);
 		}
 		return isAllNull;
+	}
+
+	private String getAssembleSql() {
+		if (assembledSql == null) {
+			synchronized (this) {
+				if (assembledSql == null) {
+					try {
+						if (args == null) {
+							assembledSql = sql;
+						} else {
+							assembledSql = SQLAssemblyUtils.assembleSql(sql, args.toArray());
+						}
+					} catch (Exception e) {
+						LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJson(args), e);
+						assembledSql = "";
+					}
+				}
+			}
+			return assembledSql;
+		} else {
+			return assembledSql;
+		}
 	}
 }

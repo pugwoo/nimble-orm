@@ -12,6 +12,7 @@ import com.pugwoo.dbhelper.test.vo.*;
 import com.pugwoo.wooutils.collect.ListUtils;
 import com.pugwoo.wooutils.collect.MapUtils;
 import com.pugwoo.wooutils.lang.DateUtils;
+import com.pugwoo.wooutils.lang.EqualUtils;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -567,6 +568,42 @@ public abstract class Test1Query_Basic {
             assert page.getData().get(1).getName().equals(studentDO2.getName());
             assert page.getData().get(0).getSchoolName().equals(schoolDO.getName());
             assert page.getData().get(1).getSchoolName().equals(schoolDO.getName());
+        }
+
+    }
+
+    @Test
+    public void testSqlColumn() {
+        // 由于comment会导致前后两条comment不一样，所以这里清除掉来测试
+        DBHelper.setLocalComment("");
+        DBHelper.setGlobalComment("");
+
+        {
+            StudentDO studentDO = CommonOps.insertOne(getDBHelper());
+            StudentDO one = getDBHelper().getOne(StudentDO.class, "where id=?", studentDO.getId());
+
+            String executeSql = one.getExecuteSql();
+            StudentDO two = getDBHelper().getRawOne(StudentDO.class, executeSql);
+
+            System.out.println("====one====" + one.getExecuteSql());
+            System.out.println("====two====" + two.getExecuteSql());
+            assert new EqualUtils().isEqual(one, two);
+
+            StudentDO three = getDBHelper().getRawOne(StudentDO.class, two.getExecuteSql());
+            assert new EqualUtils().isEqual(two, three);
+        }
+
+        {
+            List<StudentDO> studentDOS = CommonOps.insertBatch(getDBHelper(), 5);
+            ListUtils.sortAscNullLast(studentDOS, IdableSoftDeleteBaseDO::getId);
+            List<Long> ids = ListUtils.transform(studentDOS, IdableSoftDeleteBaseDO::getId);
+            List<StudentDO> one = getDBHelper().getAll(StudentDO.class, "where id in (?) order by id", ids);
+
+            List<StudentDO> two = getDBHelper().getRaw(StudentDO.class, one.get(0).getExecuteSql());
+            assert new EqualUtils().isEqual(one, two);
+
+            List<StudentDO> three = getDBHelper().getRaw(StudentDO.class, two.get(0).getExecuteSql());
+            assert new EqualUtils().isEqual(two, three);
         }
 
     }

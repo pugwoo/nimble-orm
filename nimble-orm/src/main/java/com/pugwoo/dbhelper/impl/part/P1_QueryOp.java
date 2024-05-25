@@ -153,7 +153,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         Stream<T> list;
 
-        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz);
+        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, sql, argsList);
         if (argsList.isEmpty()) {
             list = jdbcTemplate.queryForStream(sql, mapper);
         } else {
@@ -233,10 +233,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         Stream<T> stream;
         if (args == null || args.isEmpty()) {
             stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         } else {
             stream = namedParameterJdbcTemplate.queryForStream(sql, args,
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         }
 
         Stream<T> result;
@@ -270,10 +270,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list;
         if (args == null || args.isEmpty()) {
             list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         } else {
             list = namedParameterJdbcTemplate.query(sql, args,
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         }
 
         handleRelatedColumn(list);
@@ -305,12 +305,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         Stream<T> stream;
         if (argsList.isEmpty()) {
             stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
         } else {
             stream = namedParameterJdbcTemplate.queryForStream(
                     NamedParameterUtils.trans(sql, argsList),
                     NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
         }
 
         Stream<T> result;
@@ -347,12 +347,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list;
         if (argsList.isEmpty()) {
             list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
         } else {
             list = namedParameterJdbcTemplate.query(
                     NamedParameterUtils.trans(sql, argsList),
                     NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(this, clazz, false));
+                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
         }
 
         handleRelatedColumn(list);
@@ -472,17 +472,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list;
         if (argsList.isEmpty()) {
             list = jdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
+                    new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
         } else {
             if (isUseNamedTemplate) {
                 // 因为有in (?)所以用namedParameterJdbcTemplate
                 list = namedParameterJdbcTemplate.query(
                         NamedParameterUtils.trans(sql, argsList),
                         NamedParameterUtils.transParam(argsList),
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey));
+                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
             } else {
                 list = jdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey), argsList.toArray());
+                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList), argsList.toArray());
             }
         }
 

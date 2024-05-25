@@ -258,7 +258,7 @@ public class InnerCommonUtils {
         if (in == null) {
             throw new RuntimeException(new FileNotFoundException(path));
         }
-        return readAll(in, "UTF-8");
+        return readAllAndClose(in, "UTF-8");
     }
 
     /**
@@ -288,7 +288,7 @@ public class InnerCommonUtils {
      * 读取input所有数据到String中，可用于读取文件内容到String。
      * @param in 输入流会被关闭
      */
-    private static String readAll(InputStream in, String charset) {
+    private static String readAllAndClose(InputStream in, String charset) {
         BufferedReader reader = null;
         try {
             InputStreamReader inputStreamReader = new InputStreamReader(in, charset);

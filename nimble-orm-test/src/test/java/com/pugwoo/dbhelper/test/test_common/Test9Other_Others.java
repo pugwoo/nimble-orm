@@ -553,6 +553,29 @@ public abstract class Test9Other_Others {
 
     }
 
+    @Test
+    public void testAssembleWhereSql() {
+        // 1. 占位符测试
+        {
+            WhereSQL whereSQL = new WhereSQL();
+            whereSQL.and("name=?", "nick").and("age=?", 18);
+
+            String sql = SQLAssemblyUtils.assembleWhereSql(whereSQL);
+            assert sql.equals(" WHERE name='nick' AND age=18 ");
+        }
+
+        // 2. 命名参数测试
+        {
+            WhereSQLForNamedParam whereSQL = new WhereSQLForNamedParam();
+            whereSQL.and("name=:name", MapUtils.of("name", "nick"))
+                    .and("age=:age", MapUtils.of("age", 18));
+
+            String sql = SQLAssemblyUtils.assembleWhereSql(whereSQL);
+            assert sql.equals(" WHERE name='nick' AND age=18 ");
+        }
+
+    }
+
 
     @Test
     public void testAssembleSql() {
