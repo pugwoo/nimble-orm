@@ -876,7 +876,7 @@ public class SQLUtils {
 		// 检查key值是否有null的，不允许有null
 		for(Object v : whereValues) {
 			if(v == null) {
-				throw new NullKeyValueException();
+				throw new NullKeyValueException("The key of the update object must not be null.");
 			}
 		}
 		values.addAll(whereValues);
