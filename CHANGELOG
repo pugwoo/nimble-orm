@@ -1,4 +1,5 @@
 v1.6.5 - [enhance] 优化select SQL，减少不必要的AS写法
+       - [fix] 修复getRaw方法当参数是Map.class形式，值为空List和空Set时，没有自动处理的问题
 
 2024年5月23日
 v1.6.4 - [add] 增加@SqlColumn注解，用以获得DO对应的实际执行的sql

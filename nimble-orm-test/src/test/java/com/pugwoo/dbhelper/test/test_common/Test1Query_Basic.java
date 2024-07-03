@@ -195,12 +195,39 @@ public abstract class Test1Query_Basic {
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new double[]{50,51,52});
         System.out.println(list.size());
 
+    }
+
+    /**
+     * 测试参数是空的List和Set的情况
+     */
+    @Test
+    public void testEmptyListSet() {
+        List<StudentDO> list;
+
         // 测试空list或空set
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new ArrayList<Long>());
         assert list.isEmpty();
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new HashSet<Long>());
         assert list.isEmpty();
+
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("idsList", new ArrayList<>());
+        params.put("idsSet", new HashSet<>());
+
+        // 再测试getRaw的情况
+        list = getDBHelper().getRaw(StudentDO.class, "select * from t_student where id in (?)", new ArrayList<>());
+        assert list.isEmpty();
+        list = getDBHelper().getRaw(StudentDO.class, "select * from t_student where id in (?)", new HashSet<>());
+        assert list.isEmpty();
+
+        list = getDBHelper().getRaw(StudentDO.class, "select * from t_student where id in (:idsList)", params);
+        assert list.isEmpty();
+        list = getDBHelper().getRaw(StudentDO.class, "select * from t_student where id in (:idsSet)", params);
+        assert list.isEmpty();
     }
+
+
 
     @Test
     public void testGetJoin() {
