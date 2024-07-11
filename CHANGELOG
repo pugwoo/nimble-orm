@@ -1,3 +1,4 @@
+2024年7月11日
 v1.6.5 - [enhance] 优化select SQL，减少不必要的AS写法
        - [fix] 修复getRaw方法当参数是Map.class形式，值为空List和空Set时，没有自动处理的问题
        - [add] 支持设置延迟探测数据库类型，默认关闭
