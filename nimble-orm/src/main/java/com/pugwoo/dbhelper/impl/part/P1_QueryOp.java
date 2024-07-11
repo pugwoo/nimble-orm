@@ -235,6 +235,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
                     new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         } else {
+            NamedParameterUtils.preHandleParams(args);
             stream = namedParameterJdbcTemplate.queryForStream(sql, args,
                     new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         }
@@ -272,6 +273,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             list = namedParameterJdbcTemplate.query(sql,
                     new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         } else {
+            NamedParameterUtils.preHandleParams(args);
             list = namedParameterJdbcTemplate.query(sql, args,
                     new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
         }

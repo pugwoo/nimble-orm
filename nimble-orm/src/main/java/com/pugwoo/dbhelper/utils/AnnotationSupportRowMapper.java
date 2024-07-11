@@ -17,8 +17,8 @@ import org.springframework.jdbc.core.RowMapper;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 2015年1月13日 17:48:30<br>
@@ -74,8 +74,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet rs, int index) {
 		// 保存当前正在处理的field，存null表示没有正在处理的field，这个记录是为了log打印出来，方便问题排查
-		List<Field> currentField = new ArrayList<>(1);
-		currentField.add(null);
+		AtomicReference<Field> currentField = new AtomicReference<>(null);
 
 		try {
 			// 支持基本的类型
@@ -87,31 +86,31 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			T obj = clazz.newInstance();
 
 			if(isJoinVO) {
-				currentField.set(0, leftJoinField);
+				currentField.set(leftJoinField);
 				Object t1 = leftJoinField.getType().newInstance();
 				JoinLeftTable joinLeftTable = leftJoinField.getAnnotation(JoinLeftTable.class);
 
 				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType(), selectOnlyKey);
 				boolean isT1AllNull = handleFieldAndIsAllFieldNull(fieldsT1, joinLeftTable.alias(), t1, rs, currentField);
-				currentField.set(0, leftJoinField); // 因为handleFieldAndIsAllFieldNull中会修改currentField，所以重新设置
+				currentField.set(leftJoinField); // 因为handleFieldAndIsAllFieldNull中会修改currentField，所以重新设置
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
 				DOInfoReader.setValue(leftJoinField, obj, isT1AllNull ? null : t1);
-				currentField.set(0, null);
+				currentField.set(null);
 
-				currentField.set(0, rightJoinField);
+				currentField.set(rightJoinField);
 				Object t2 = rightJoinField.getType().newInstance();
 				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
 
 				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType(), selectOnlyKey);
 				boolean isT2AllNull = handleFieldAndIsAllFieldNull(fieldsT2, joinRightTable.alias(), t2, rs, currentField);
-				currentField.set(0, rightJoinField);
+				currentField.set(rightJoinField);
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
-				currentField.set(0, null);
+				currentField.set(null);
 
 			} else {
 				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
 				for (Field field : fields) {
-					currentField.set(0, field);
+					currentField.set(field);
 
 					Column column = field.getAnnotation(Column.class);
 					Object value = getFromRS(rs, column.value(), field);
@@ -120,7 +119,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					}
 
 					DOInfoReader.setValue(field, obj, value);
-					currentField.set(0, null);
+					currentField.set(null);
 				}
 
 				List<Field> sqlColumnForSelect = DOInfoReader.getSqlColumns(clazz);
@@ -132,10 +131,10 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 
 			return obj;
 		} catch (Exception e) {
-			boolean isHandleField = !currentField.isEmpty() && currentField.get(0) != null;
+			boolean isHandleField = currentField.get() != null;
 			if (isHandleField) {
-				LOGGER.error("mapRow exception, class:{}, field:{}", clazz, currentField.get(0), e);
-				throw new RowMapperFailException(e, currentField.get(0));
+				LOGGER.error("mapRow exception, class:{}, field:{}", clazz, currentField.get(), e);
+				throw new RowMapperFailException(e, currentField.get());
 			} else {
 				LOGGER.error("mapRow exception, class:{}", clazz, e);
 				throw new RowMapperFailException(e);
@@ -171,10 +170,10 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	}
 
 	private boolean handleFieldAndIsAllFieldNull(List<Field> fields, String tableAlias, Object t, ResultSet rs,
-												 List<Field> currentField) throws Exception {
+												 AtomicReference<Field> currentField) throws Exception {
 		boolean isAllNull = true;
 		for (Field field : fields) {
-			currentField.set(0, field);
+			currentField.set(field);
 
 			Column column = field.getAnnotation(Column.class);
 			String columnName = tableAlias + "." + column.value();;
@@ -188,7 +187,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			}
 			DOInfoReader.setValue(field, t, value);
 
-			currentField.set(0, null);
+			currentField.set(null);
 		}
 		return isAllNull;
 	}

@@ -876,7 +876,7 @@ public class SQLUtils {
 		// 检查key值是否有null的，不允许有null
 		for(Object v : whereValues) {
 			if(v == null) {
-				throw new NullKeyValueException();
+				throw new NullKeyValueException("The key of the update object must not be null.");
 			}
 		}
 		values.addAll(whereValues);
@@ -1536,10 +1536,21 @@ public class SQLUtils {
 				sb.append("(").append(SQLUtils.getComputedColumn(databaseType, column, features)).append(") AS ")
 						.append(getColumnName(databaseType, column, fieldPrefix)).append(sep);
 			} else {
-				// 非计算列的话，表的别名要放在列名外边
-				sb.append(fieldPrefix).append(getColumnName(databaseType, column))
-						.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"")
-						.append(sep);
+				if (fieldPrefix.isEmpty()) {
+					String columnName = getColumnName(databaseType, column);
+					String asName = column.value();
+					int length = columnName.length();
+					if (length > 2 && Objects.equals(columnName.substring(1, length - 1), asName)) { // 尽量减少AS写法
+						sb.append(columnName).append(sep);
+					} else {
+						sb.append(columnName).append(" AS \"").append(asName).append("\"").append(sep);
+					}
+				} else {
+					// 非计算列的话，表的别名要放在列名外边
+					sb.append(fieldPrefix).append(getColumnName(databaseType, column))
+							.append(" AS \"").append(fieldPrefix).append(column.value()).append("\"")
+							.append(sep);
+				}
 			}
 		}
 		int len = sb.length();

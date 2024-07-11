@@ -60,7 +60,7 @@ public class NamedParameterUtils {
 					}
 				}
 				
-				// 转换后，对于param是空的List或Set，则List或Set插入null
+				// 转换后，对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
 						List<String> list = new ArrayList<>(1);
@@ -155,5 +155,27 @@ public class NamedParameterUtils {
 
 		return sb.toString();
 	}
-	
+
+	public static void preHandleParams(Map<String, ?> params) {
+		if (params == null) {
+			return;
+		}
+
+		for (Map.Entry<String, ?> entry : params.entrySet()) {
+			if(entry.getValue() instanceof List<?>) {
+				if(((List<?>) entry.getValue()).isEmpty()) {
+					List<String> list = new ArrayList<>(1);
+					list.add(null);
+					((Map<String, Object>) params).put(entry.getKey(), list);
+				}
+			} else if (entry.getValue() instanceof Set<?>) {
+				if(((Set<?>) entry.getValue()).isEmpty()) {
+					Set<String> set = new HashSet<>(1);
+					set.add(null);
+					((Map<String, Object>) params).put(entry.getKey(), set);
+				}
+			}
+		}
+	}
+
 }

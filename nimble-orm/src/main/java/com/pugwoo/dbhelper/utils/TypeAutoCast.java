@@ -199,49 +199,38 @@ public class TypeAutoCast {
 		if(clazz == String.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getString(1));
-		}
-		if(clazz == Integer.class || clazz == int.class) {
+		} else if(clazz == Integer.class || clazz == int.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getInt(1));
-		}
-		if(clazz == Long.class || clazz == long.class) {
+		} else if(clazz == Long.class || clazz == long.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getLong(1));
-		}
-		if(clazz == Boolean.class || clazz == boolean.class) {
+		} else if(clazz == Boolean.class || clazz == boolean.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getBoolean(1));
-		}
-		if(clazz == Byte.class || clazz == byte.class) {
+		} else if(clazz == Byte.class || clazz == byte.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getByte(1));
-		}
-		if(clazz == byte[].class) {
+		} else if(clazz == byte[].class) {
 			result.setBasicType(true);
 			result.setValue(rs.getBytes(1));
-		}
-		if(clazz == Short.class || clazz == short.class) {
+		} else if(clazz == Short.class || clazz == short.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getShort(1));
-		}
-		if(clazz == Float.class || clazz == float.class) {
+		} else if(clazz == Float.class || clazz == float.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getFloat(1));
-		}
-		if(clazz == Double.class || clazz == double.class) {
+		} else if(clazz == Double.class || clazz == double.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getDouble(1));
-		}
-		if(clazz == BigDecimal.class) {
+		} else if(clazz == BigDecimal.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getBigDecimal(1));
-		}
-		if (clazz == java.util.Date.class) {
+		} else if (clazz == java.util.Date.class) {
 			result.setBasicType(true);
 			Date date = getDate(rs, 1);
 			result.setValue(date);
-		}
-		if (clazz == LocalDateTime.class) {
+		} else if (clazz == LocalDateTime.class) {
 			result.setBasicType(true);
 			Date date = getDate(rs, 1);
 			if (date == null) {
@@ -249,8 +238,7 @@ public class TypeAutoCast {
 			} else {
 				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
 			}
-		}
-		if (clazz == LocalDate.class) {
+		} else if (clazz == LocalDate.class) {
 			result.setBasicType(true);
 			Date date = getDate(rs, 1);
 			if (date == null) {
@@ -258,8 +246,7 @@ public class TypeAutoCast {
 			} else {
 				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
 			}
-		}
-		if (clazz == LocalTime.class) {
+		} else if (clazz == LocalTime.class) {
 			result.setBasicType(true);
 			Date date = getDate(rs, 1);
 			if (date == null) {
@@ -267,21 +254,16 @@ public class TypeAutoCast {
 			} else {
 				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime());
 			}
-		}
-		if (clazz == java.sql.Date.class) {
+		} else if (clazz == java.sql.Date.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getDate(1));
-		}
-		if (clazz == java.sql.Time.class) {
+		} else if (clazz == java.sql.Time.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getDate(1));
-		}
-		if (clazz == java.sql.Timestamp.class) {
+		} else if (clazz == java.sql.Timestamp.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getTimestamp(1));
-		}
-
-		if (clazz == Map.class) {
+		} else if (clazz == Map.class) {
 			result.setBasicType(true);
 			ResultSetMetaData md = rs.getMetaData();
 			int columns = md.getColumnCount();
