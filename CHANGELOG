@@ -1,3 +1,6 @@
+2024年7月15日
+v1.6.6 - [downgrade] 由于jsqlparser 5.0只支持java 11以上，因此先降级jsqlparser为4.9，最后一个支持jdk8的版本，1年后orm将升级到java11以上
+
 2024年7月11日
 v1.6.5 - [enhance] 优化select SQL，减少不必要的AS写法
        - [fix] 修复getRaw方法当参数是Map.class形式，值为空List和空Set时，没有自动处理的问题
