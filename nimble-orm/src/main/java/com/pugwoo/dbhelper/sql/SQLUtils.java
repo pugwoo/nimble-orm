@@ -1154,7 +1154,7 @@ public class SQLUtils {
 	}
 
 
-	public static String getDeleteSqlByKeyField(DatabaseTypeEnum databaseType, Field keyField) {
+	public static String getDeleteWhereSqlByKeyField(DatabaseTypeEnum databaseType, Field keyField) {
 		return "where " + getColumnName(databaseType, keyField) + " in (?)";
 	}
 

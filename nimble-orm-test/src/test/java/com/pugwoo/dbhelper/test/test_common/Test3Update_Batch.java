@@ -454,7 +454,7 @@ public abstract class Test3Update_Batch {
         if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
             assert end - start < 6000; // 最多6秒
         } else if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
-            assert end - start < 10000; // 因为studentDO有json字段，这里会被降级为逐条更新，所以最多10秒
+            assert end - start < 30000; // 因为studentDO有json字段，这里会被降级为逐条更新，所以最多30秒(考虑网络延迟)
         } else {
             assert end - start < 3000; // 一般600ms完成，最多3秒
         }
