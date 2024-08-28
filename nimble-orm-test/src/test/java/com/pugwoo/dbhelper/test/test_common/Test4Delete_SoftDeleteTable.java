@@ -82,14 +82,16 @@ public abstract class Test4Delete_SoftDeleteTable {
         }
 
         // 测试数据已经被删除了
-        assert getDBHelper().getAll(StudentDO.class, " where id in (?)", ids).size() == 0;
+        assert getDBHelper().getAll(StudentDO.class, " where id in (?)", ids).isEmpty();
 
         // 从另外一张表里查出数据，再比较
         Map<Class<?>, String> tableNames = new HashMap<>();
         tableNames.put(StudentDO.class, "t_student_del");
 
         DBHelper.withTableNames(tableNames, () -> {
-            getDBHelper().getAll(StudentDO.class, " where id in (?)", ids).forEach(s -> {
+            List<StudentDO> all = getDBHelper().getAll(StudentDO.class, " where id in (?)", ids);
+            assert all.size() == ids.size();
+            all.forEach(s -> {
                 assert ids.contains(s.getId());
                 StudentDO oldStudent = map.get(s.getId());
                 assert s.getName().equals(oldStudent.getName());

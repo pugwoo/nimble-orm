@@ -213,7 +213,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 
 			String sql;
-			String where = SQLUtils.getDeleteSqlByKeyField(getDatabaseType(), keyField);
+			String where = SQLUtils.getDeleteWhereSqlByKeyField(getDatabaseType(), keyField);
 			if(isHard || softDelete == null) { // 物理删除
 				sql = SQLUtils.getCustomDeleteSQL(getDatabaseType(), clazz, where);
 			} else { // 软删除
@@ -226,7 +226,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				DBHelper dbHelper = getDBHelper(table.softDeleteDBHelperBean());
 
 				// 查回数据并插入到软删除表
-				List<?> all = dbHelper.getAll(clazz, where, keys.toArray());
+				List<?> all = dbHelper.getAll(clazz, where, keys);
 				try {
 					if (all == null || all.isEmpty()) {
 						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, key:{}",

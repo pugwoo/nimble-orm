@@ -823,13 +823,17 @@ public class SQLUtils {
 		if (casVersionColumn != null) {
 			where += " AND (" + getColumnName(databaseType, keyColumn) + "," + getColumnName(databaseType, casVersionColumn) + ") IN (?)";
 			List<Object[]> idAndCas = new ArrayList<>();
+			List<Object[]> idAndCasForLogParams = new ArrayList<>();
 			for (T t : list) {
-				idAndCas.add(new Object[]{
-						DOInfoReader.getValue(keyColumn, t),
-						DOInfoReader.getValue(casVersionColumn, t)
-				});
+				Object key = DOInfoReader.getValue(keyColumn, t);
+				Object cas = DOInfoReader.getValue(casVersionColumn, t);
+				idAndCas.add(new Object[]{key, cas});
+				if (idAndCasForLogParams.isEmpty()) {
+					idAndCasForLogParams.add(new Object[]{key, cas});
+				}
 			}
 			values.add(idAndCas);
+			logParams.add(idAndCasForLogParams);
 		}
 
 		where = autoSetSoftDeleted(databaseType, where, clazz);
@@ -1154,7 +1158,7 @@ public class SQLUtils {
 	}
 
 
-	public static String getDeleteSqlByKeyField(DatabaseTypeEnum databaseType, Field keyField) {
+	public static String getDeleteWhereSqlByKeyField(DatabaseTypeEnum databaseType, Field keyField) {
 		return "where " + getColumnName(databaseType, keyField) + " in (?)";
 	}
 
