@@ -109,8 +109,9 @@ public abstract class Test1Query_Basic {
         ids[2] = 6L;
         //List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
         //		ids); // 这样是错误的范例，getAll只会取ids的第一个参数传入in (?)中
-        List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in (?)",
-                ids, 1); // 这是一种hack的写法，后面带上的参数1，可以让Java把ids当作单个参数处理
+        // List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in (?)",
+        //        ids, 1); // 这是一种hack的写法，后面带上的参数1，可以让Java把ids当作单个参数处理；但还是不建议这样用
+        List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in (?)", new Object[]{ids}); // 推荐写法
         System.out.println("total:" + list2.size());
         for(StudentDO studentDO : list2) {
             System.out.println(studentDO);
