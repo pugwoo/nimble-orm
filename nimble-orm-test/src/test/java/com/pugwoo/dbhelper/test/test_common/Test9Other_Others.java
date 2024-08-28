@@ -630,4 +630,25 @@ public abstract class Test9Other_Others {
 
     }
 
+    /**
+     * 这是一个比较异常的场景，传入参数不是数组，而是list
+     */
+    @Test
+    public void testPassParamAsList() {
+        StudentDO student1 = CommonOps.insertOne(getDBHelper());
+        StudentDO student2 = CommonOps.insertOne(getDBHelper());
+
+        List<Object> params = new ArrayList<>();
+        params.add(student1.getId());
+        params.add(student2.getId());
+
+        List<StudentDO> all = getDBHelper().getAll(StudentDO.class, "where id=? or id=?", params);// 正常应该是传入params.toArray()
+        assert all.size() == 2;
+        assert all.get(0).getId().equals(student1.getId())
+                 || all.get(1).getId().equals(student1.getId());
+        assert all.get(0).getId().equals(student2.getId())
+                 || all.get(1).getId().equals(student2.getId());
+        assert !all.get(0).getId().equals(all.get(1).getId());
+    }
+
 }

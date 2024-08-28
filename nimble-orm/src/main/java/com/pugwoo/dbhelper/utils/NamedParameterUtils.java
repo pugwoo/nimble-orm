@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.utils;
 
+import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,9 +149,20 @@ public class NamedParameterUtils {
 			isPreAsterisk = ch == '*';
 		}
 
-        if (currParamIndex - 1 != args.size()) {
-			LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}",
-					args.size(), currParamIndex - 1, sql);
+		int paramCount = currParamIndex - 1;
+        if (paramCount != args.size()) {
+			LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}, params:{}",
+					args.size(), paramCount, sql, NimbleOrmJSON.toJson(args));
+			// 尝试将args里的list转换成数组，仅为防御性处理，不建议用户这样使用
+			if (paramCount > 1 && args.size() == 1 && args.get(0) instanceof List<?>) {
+				LOGGER.error("SQL args is a List, please convert to array, provide args {}, SQL:{}. "
+						+ " NimbleOrm will automatically convert it for you, although it is not recommended.",
+						NimbleOrmJSON.toJson(args), sql);
+				List<?> list = (List<?>) args.get(0);
+				args.clear();
+				args.addAll(list);
+			}
+			// 如果sql参数只有一个(?)，同时args大于1个【这种不处理，这个误处理的几率大】
 		}
 
 		return sb.toString();
