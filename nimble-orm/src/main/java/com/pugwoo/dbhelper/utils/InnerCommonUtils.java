@@ -125,6 +125,19 @@ public class InnerCommonUtils {
         return list;
     }
 
+    /**
+     * list按指定的数量分组
+     * @param list 这里明确用List类型，不支持Collection
+     * @param groupNum 分组的数量，必须大于等于1，当小于1时返回空数组
+     */
+    public static <T> List<List<T>> partition(Collection<T> list, int groupNum) {
+        if (list == null || groupNum < 1) {
+            return new ArrayList<>();
+        }
+
+        return partition(list.stream(), groupNum).collect(Collectors.toList());
+    }
+
     public static <T> Stream<List<T>> partition(Stream<T> stream, int groupNum) {
         List<List<T>> currentBatch = new ArrayList<>(); //just to make it mutable
         currentBatch.add(new ArrayList<>(groupNum));

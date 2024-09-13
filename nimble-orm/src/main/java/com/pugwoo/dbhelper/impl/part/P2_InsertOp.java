@@ -152,15 +152,38 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			String sql = SQLUtils.getInsertSQLForBatchForJDBCTemplate(getDatabaseType(), list, values);
 			total = insertBatchJDBCTemplateMode(sql, values);
 		} else {
-			List<Object> values = new ArrayList<>();
-			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, list, values);
-			total = insertBatchDefaultMode(sqlDTO, values, list.size());
+			total = insertBatchDefaultModeWithAutoSplit(databaseType, list);
 		}
 
 		if (withInterceptor) {
 			doInterceptAfterInsertList(list, total);
 		}
 		return total;
+	}
+
+	/**支持自动降级处理mysql max package太小的限制*/
+	private <T> int insertBatchDefaultModeWithAutoSplit(DatabaseTypeEnum databaseType, Collection<T> list) {
+		try {
+			List<Object> values = new ArrayList<>();
+			InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, list, values);
+            return insertBatchDefaultMode(sqlDTO, values, list.size());
+		} catch (Exception e) {
+			if (e.getCause() != null && "PacketTooBigException".equals(e.getCause().getClass().getSimpleName())) {
+				// 对于因为mysql max package allowed限制的情况，降级为拆分并插入，给出error log
+				LOGGER.error("Batch insert failed. Now splitting into smaller lists and retrying. You might consider increasing the max_allowed_packet or reducing the list size.", e);
+				// 什么每批100个？因为降级后的首要任务是插入成功，而不再是性能；mysql 5.6/5.7默认4M，100个一批可以支持最大每条40K，覆盖绝大部分场景
+				List<List<T>> partition = InnerCommonUtils.partition(list, 100);
+				int total = 0;
+				for (List<T> l : partition) {
+					List<Object> values = new ArrayList<>();
+					InsertSQLForBatchDTO sqlDTO = SQLUtils.getInsertSQLForBatch(databaseType, l, values);
+					total += insertBatchDefaultMode(sqlDTO, values, l.size());
+				}
+				return total;
+			} else {
+				throw e;
+			}
+		}
 	}
 
 	private int insertBatchDefaultMode(InsertSQLForBatchDTO sqlDTO, List<Object> values, int listSize) {
