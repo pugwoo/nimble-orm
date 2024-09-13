@@ -171,8 +171,8 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			if (e.getCause() != null && "PacketTooBigException".equals(e.getCause().getClass().getSimpleName())) {
 				// 对于因为mysql max package allowed限制的情况，降级为拆分并插入，给出error log
 				LOGGER.error("Batch insert failed. Now splitting into smaller lists and retrying. You might consider increasing the max_allowed_packet or reducing the list size.", e);
-				// 什么每批100个？因为降级后的首要任务是插入成功，而不再是性能；mysql 5.6/5.7默认4M，100个一批可以支持最大每条40K，覆盖绝大部分场景
-				List<List<T>> partition = InnerCommonUtils.partition(list, 100);
+				// 什么每批200个？因为降级后的首要任务是插入成功，而不再是性能；mysql 5.6/5.7默认4M，200个一批可以支持最大每条20K，覆盖绝大部分场景；这个批次的性能约是最佳性能的50%
+				List<List<T>> partition = InnerCommonUtils.partition(list, 200);
 				int total = 0;
 				for (List<T> l : partition) {
 					List<Object> values = new ArrayList<>();
