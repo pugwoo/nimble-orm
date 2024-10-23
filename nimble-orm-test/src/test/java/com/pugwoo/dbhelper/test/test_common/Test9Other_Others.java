@@ -701,6 +701,9 @@ public abstract class Test9Other_Others {
     public void testParseDate() {
 
         // ============== LocalDateTime =================
+        assert LocalDateTime.of(2024, 3, 4, 0, 0).equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
+
+        // 带毫秒纳秒
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
         getDateInDifferentFormat("2024-03-04 11:12:13.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 

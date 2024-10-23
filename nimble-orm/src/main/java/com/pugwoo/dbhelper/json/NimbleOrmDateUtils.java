@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class NimbleOrmDateUtils {
@@ -210,9 +211,22 @@ public class NimbleOrmDateUtils {
 	    return null; // Unknown format.
 	}
 
-	// ======================================= 新的LocalDateTime解析器
+	// ======================================= 新的LocalDateTime解析器 ===================== START =====================
 
-	public static final Map<String, Object> LOCAL_DATE_TIME_FORMATTER = new HashMap<String, Object>() {{
+	public static final Map<String, Boolean> LOCAL_DATE_TIME_IS_DATE = new HashMap<String, Boolean>() {{
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", true);
+	}};
+
+	public static final Map<String, DateTimeFormatter> LOCAL_DATE_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
+
+		// 最常用的放前面，提高性能
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06
+
+		// 2017-03-06 15:23     2017/03/06 15:23
+
+
+		// 带毫秒纳秒的时间格式
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
 				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
 				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
@@ -238,13 +252,13 @@ public class NimbleOrmDateUtils {
 			return null;
 		}
 		dateString = dateString.trim();
-		for (Map.Entry<String, Object> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
 			if (dateString.matches(formatter.getKey())) {
-				if (formatter.getValue() instanceof DateTimeFormatter) {
-					return LocalDateTime.parse(dateString, (DateTimeFormatter) formatter.getValue());
-				} else if (formatter.getValue() instanceof String) {
-					return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern((String) formatter.getValue()));
+				Boolean isDate = LOCAL_DATE_TIME_IS_DATE.get(formatter.getKey());
+				if (isDate != null && isDate) {
+					dateString = dateString + " 00:00:00";
 				}
+				return LocalDateTime.parse(dateString, formatter.getValue());
 			}
 		}
 		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
