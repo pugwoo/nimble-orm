@@ -6,7 +6,21 @@ import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
+import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
+import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
+import com.pugwoo.dbhelper.exception.RowMapperFailException;
+import com.pugwoo.dbhelper.exception.ScriptErrorException;
 import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
@@ -30,7 +44,14 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * 其它的一些测试，主要为了覆盖代码或最佳实践
@@ -662,10 +683,13 @@ public abstract class Test9Other_Others {
         // ============== LocalDateTime =================
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
         assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.1234567"));
+        assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.1234567"));
 
         LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 120000000);
         assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.12"));
         assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.120"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.12"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.120"));
 
         LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 0);
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13"));
@@ -673,6 +697,11 @@ public abstract class Test9Other_Others {
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.0000000"));
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13."));
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.000000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.0000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13."));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.000000000"));
 
         // ============== LocalDate =================
 
@@ -683,7 +712,5 @@ public abstract class Test9Other_Others {
         // ============== Date =================
 
     }
-
-
 
 }

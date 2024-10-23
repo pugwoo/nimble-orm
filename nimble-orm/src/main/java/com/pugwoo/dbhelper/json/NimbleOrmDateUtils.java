@@ -213,14 +213,22 @@ public class NimbleOrmDateUtils {
 	// ======================================= 新的LocalDateTime解析器
 
 	public static final Map<String, Object> LOCAL_DATE_TIME_FORMATTER = new HashMap<String, Object>() {{
-		DateTimeFormatter formatterT = new DateTimeFormatterBuilder()
-				.appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+				.appendPattern("yyyy-MM-dd")
+				.optionalStart()
+				.appendLiteral('T')
+				.optionalEnd()
+				.optionalStart()
+				.appendLiteral(' ')
+				.optionalEnd()
+				.appendPattern("HH:mm:ss")
 				.optionalStart()
 				.appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
 				.optionalEnd()
 				.toFormatter();
+		// 2017-10-18T16:00:00[.纳秒1-9位]      2017-10-18 16:00:00[.纳秒1-9位]
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}[T ]\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?$", formatter);
 
-		put("^\\d{4}-\\d{1,2}-\\d{1,2}T\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?$", formatterT); // 2017-10-18T16:00:00[.纳秒1-9位]
 	}};
 
 	/**解析失败抛异常*/
