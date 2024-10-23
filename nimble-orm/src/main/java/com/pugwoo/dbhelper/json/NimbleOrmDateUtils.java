@@ -213,25 +213,9 @@ public class NimbleOrmDateUtils {
 	// ======================================= 新的LocalDateTime解析器
 
 	public static final Map<String, Object> LOCAL_DATE_TIME_FORMATTER = new HashMap<String, Object>() {{
-		{
-			DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-					.appendPattern("yyyy-MM-dd")
-					.optionalStart().appendLiteral('T').optionalEnd()
-					.optionalStart().appendLiteral(' ').optionalEnd()
-					.appendPattern("HH:mm:ss")
-					.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd() // 毫秒 纳秒 0-9位
-					.optionalStart().appendPattern("XXX").optionalEnd()  // 支持 +00:00 格式
-					.optionalStart().appendPattern("xxxx").optionalEnd() // 支持 +0000 格式
-					.optionalStart().appendPattern("X").optionalEnd()    // 支持 Z 格式
-					.optionalStart().appendPattern(" XXX").optionalEnd()  // 支持 " +00:00" 格式
-					.optionalStart().appendPattern(" xxxx").optionalEnd() // 支持 " +0000" 格式
-					.toFormatter();
-			// 2017-10-18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017-10-18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
-			put("^\\d{4}-\\d{1,2}-\\d{1,2}[T ]\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?Z?$", formatter);
-		}
-
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-				.appendPattern("yyyy/MM/dd")
+				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
+				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
 				.optionalStart().appendLiteral('T').optionalEnd()
 				.optionalStart().appendLiteral(' ').optionalEnd()
 				.appendPattern("HH:mm:ss")
@@ -242,6 +226,8 @@ public class NimbleOrmDateUtils {
 				.optionalStart().appendPattern(" XXX").optionalEnd()  // 支持 " +00:00" 格式
 				.optionalStart().appendPattern(" xxxx").optionalEnd() // 支持 " +0000" 格式
 				.toFormatter();
+		// 2017-10-18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017-10-18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}[T ]\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?Z?$", formatter);
 		// 2017/10/18T16:00:00[.纳秒1-9位]      2017/10/18 16:00:00[.纳秒1-9位]
 		put("^\\d{4}/\\d{1,2}/\\d{1,2}[T ]\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?Z?$", formatter);
 
