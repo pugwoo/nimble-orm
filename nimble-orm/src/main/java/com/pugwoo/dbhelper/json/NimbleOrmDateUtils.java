@@ -223,7 +223,7 @@ public class NimbleOrmDateUtils {
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06
 
-		// 2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
+		// 只到分钟：2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
 		DateTimeFormatter formatterMinute = new DateTimeFormatterBuilder()
 				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
 				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
@@ -236,9 +236,11 @@ public class NimbleOrmDateUtils {
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
 				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
 				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
+				.optionalStart().appendPattern("yyyyMMdd").optionalEnd()
 				.optionalStart().appendLiteral('T').optionalEnd()
 				.optionalStart().appendLiteral(' ').optionalEnd()
-				.appendPattern("HH:mm:ss")
+				.optionalStart().appendPattern("HH:mm:ss").optionalEnd()
+				.optionalStart().appendPattern("HHmmss").optionalEnd()
 				.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd() // 毫秒 纳秒 0-9位
 				.optionalStart().appendPattern("XXX").optionalEnd()  // 支持 +00:00 格式
 				.optionalStart().appendPattern("xxxx").optionalEnd() // 支持 +0000 格式
@@ -249,7 +251,8 @@ public class NimbleOrmDateUtils {
 		// 2017-10-18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017-10-18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
 		// 2017/10/18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017/10/18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
 		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?(Z|( ?[+-]\\d{2}:\\d{2})|( ?[+-]\\d{4}))?$", formatter);
-
+        // 20171018T160000[.纳秒1-9位][+00:00或+0000或Z]      20171018 160000[.纳秒1-9位][+00:00或+0000或Z]
+		put("^\\d{8}[T ]\\d{6}(\\.\\d{0,9})?(Z|( ?[+-]\\d{2}:\\d{2})|( ?[+-]\\d{4}))?$", formatter);
 	}};
 
 	/**解析失败抛异常*/

@@ -683,6 +683,8 @@ public abstract class Test9Other_Others {
         tmp.add(stdDateStr.replace(" ", "T"));
         tmp.add(stdDateStr.replace("-", "/"));
         tmp.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+        tmp.add(stdDateStr.replace("-", "").replace(":", ""));
+        tmp.add(stdDateStr.replace("-", "").replace(":", "").replace(" ", "T"));
 
         result.addAll(tmp);
         result.addAll(ListUtils.transform(tmp, o -> o + "Z"));
