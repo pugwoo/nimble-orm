@@ -25,13 +25,7 @@ public class MultiLocalDateTimeDeserializer extends StdDeserializer<LocalDateTim
 		JsonNode node = jp.getCodec().readTree(jp);
 		String date = node.asText();
 		try {
-			LocalDateTime localDateTime = NimbleOrmDateUtils.parseLocalDateTime(date);
-			if (localDateTime == null) {
-				throw new JsonParseException(jp,
-						"Unparseable localDateTime: \"" + date + "\". Supported formats: "
-								+ NimbleOrmDateUtils.DATE_FORMAT_REGEXPS.values());
-			}
-			return localDateTime;
+            return NimbleOrmDateUtils.parseLocalDateTimeThrowException(date);
 		} catch (Exception e) {
 			throw new JsonParseException(jp,
 					"Unparseable localDateTime: \"" + date + "\". Supported formats: "

@@ -1,6 +1,8 @@
 package com.pugwoo.dbhelper.json;
 
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -8,11 +10,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class NimbleOrmDateUtils {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(NimbleOrmDateUtils.class);
 
 	/**标准日期时间格式**/
 	public final static String FORMAT_STANDARD = "yyyy-MM-dd HH:mm:ss";
@@ -78,11 +85,6 @@ public class NimbleOrmDateUtils {
 			}
 			throw e;
 		}
-	}
-
-	/**失败返回null，不会抛异常*/
-	public static LocalDateTime parseLocalDateTime(String date) throws ParseException {
-		return toLocalDateTime(parseThrowException(date));
 	}
 
 	public static LocalDateTime toLocalDateTime(Date date) {
@@ -206,6 +208,64 @@ public class NimbleOrmDateUtils {
 	        }
 	    }
 	    return null; // Unknown format.
+	}
+
+	// ======================================= 新的LocalDateTime解析器
+
+	public static final Map<String, Object> LOCAL_DATE_TIME_FORMATTER = new HashMap<String, Object>() {{
+		DateTimeFormatter formatterT = new DateTimeFormatterBuilder()
+				.appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+				.optionalStart()
+				.appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+				.optionalEnd()
+				.toFormatter();
+
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}T\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?$", formatterT); // 2017-10-18T16:00:00[.纳秒1-9位]
+	}};
+
+	/**解析失败抛异常*/
+	public static LocalDateTime parseLocalDateTimeThrowException(String dateString) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		for (Map.Entry<String, Object> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				if (formatter.getValue() instanceof DateTimeFormatter) {
+					return LocalDateTime.parse(dateString, (DateTimeFormatter) formatter.getValue());
+				} else if (formatter.getValue() instanceof String) {
+					return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern((String) formatter.getValue()));
+				}
+			}
+		}
+		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
+	}
+
+	/**解析失败抛异常*/
+	public static LocalDateTime parseLocalDateTimeThrowException(String dateString, String pattern) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern(pattern));
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalDateTime parseLocalDateTime(String dateString) {
+		try {
+			return parseLocalDateTimeThrowException(dateString);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			return null;
+		}
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalDateTime parseLocalDateTime(String dateString, String pattern) {
+		try {
+			return parseLocalDateTimeThrowException(dateString, pattern);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			return null;
+		}
 	}
 
 }

@@ -7,6 +7,7 @@ import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
 import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import com.pugwoo.dbhelper.sql.WhereSQL;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -650,5 +652,38 @@ public abstract class Test9Other_Others {
                  || all.get(1).getId().equals(student2.getId());
         assert !all.get(0).getId().equals(all.get(1).getId());
     }
+
+    /**
+     * 测试解析日期相关
+     */
+    @Test
+    public void testParseDate() {
+
+        // ============== LocalDateTime =================
+        LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
+        assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.1234567"));
+
+        LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 120000000);
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.12"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.120"));
+
+        LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 0);
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.0000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13."));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.000000000"));
+
+        // ============== LocalDate =================
+
+
+        // ============== LocalTime =================
+
+
+        // ============== Date =================
+
+    }
+
+
 
 }
