@@ -712,7 +712,9 @@ public abstract class Test9Other_Others {
     public void testParseDate() {
 
         // ============== LocalDateTime =================
-        assert LocalDateTime.of(2024, 3, 4, 0, 0).equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
+        LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
+
 
         // 到分钟
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 11, 12);
@@ -732,6 +734,7 @@ public abstract class Test9Other_Others {
         getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
         getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
         getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304111213"));
 
         // ============== LocalDate =================
 

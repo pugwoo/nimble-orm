@@ -232,6 +232,11 @@ public class NimbleOrmDateUtils {
 				.appendPattern("HH:mm").toFormatter();
 		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}$", formatterMinute);
 
+		// 纯日期
+
+		// 其它
+		put("^\\d{14}$", DateTimeFormatter.ofPattern("yyyyMMddHHmmss")); // 20170306152356
+
 		// 带毫秒纳秒的时间格式
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
 				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
