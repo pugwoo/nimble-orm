@@ -675,7 +675,7 @@ public abstract class Test9Other_Others {
     }
 
 
-    private static List<String> getDateInDifferentFormat(String stdDateStr) {
+    private static List<String> getDateInDifferentFormatWithNanos(String stdDateStr) {
         List<String> result = new ArrayList<>();
 
         List<String> tmp = new ArrayList<>();
@@ -694,6 +694,15 @@ public abstract class Test9Other_Others {
         return result;
     }
 
+    private static List<String> getDateInDifferentFormat(String stdDateStr) {
+        List<String> result = new ArrayList<>();
+        result.add(stdDateStr);
+        result.add(stdDateStr.replace(" ", "T"));
+        result.add(stdDateStr.replace("-", "/"));
+        result.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+        return result;
+    }
+
     /**
      * 测试解析日期相关
      */
@@ -703,20 +712,24 @@ public abstract class Test9Other_Others {
         // ============== LocalDateTime =================
         assert LocalDateTime.of(2024, 3, 4, 0, 0).equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
 
+        // 到分钟
+        LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 11, 12);
+        getDateInDifferentFormat("2024-03-04 11:12").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+
         // 带毫秒纳秒
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
-        getDateInDifferentFormat("2024-03-04 11:12:13.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 120000000);
-        getDateInDifferentFormat("2024-03-04 11:12:13.12").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormat("2024-03-04 11:12:13.120").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.12").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.120").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 0);
-        getDateInDifferentFormat("2024-03-04 11:12:13").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormat("2024-03-04 11:12:13.000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormat("2024-03-04 11:12:13.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormat("2024-03-04 11:12:13.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormat("2024-03-04 11:12:13.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         // ============== LocalDate =================
 

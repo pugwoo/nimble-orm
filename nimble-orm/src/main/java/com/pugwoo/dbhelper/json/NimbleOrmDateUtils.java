@@ -223,8 +223,14 @@ public class NimbleOrmDateUtils {
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06
 
-		// 2017-03-06 15:23     2017/03/06 15:23
-
+		// 2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
+		DateTimeFormatter formatterMinute = new DateTimeFormatterBuilder()
+				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
+				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
+				.optionalStart().appendLiteral('T').optionalEnd()
+				.optionalStart().appendLiteral(' ').optionalEnd()
+				.appendPattern("HH:mm").toFormatter();
+		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}$", formatterMinute);
 
 		// 带毫秒纳秒的时间格式
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
