@@ -677,10 +677,16 @@ public abstract class Test9Other_Others {
 
     private static List<String> getDateInDifferentFormat(String stdDateStr) {
         List<String> result = new ArrayList<>();
-        result.add(stdDateStr);
-        result.add(stdDateStr.replace(" ", "T"));
-        result.add(stdDateStr.replace("-", "/"));
-        result.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+
+        List<String> tmp = new ArrayList<>();
+        tmp.add(stdDateStr);
+        tmp.add(stdDateStr.replace(" ", "T"));
+        tmp.add(stdDateStr.replace("-", "/"));
+        tmp.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+
+        result.addAll(tmp);
+        result.addAll(ListUtils.transform(tmp, o -> o + "Z"));
+
         return result;
     }
 
