@@ -684,12 +684,18 @@ public abstract class Test9Other_Others {
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
         assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.1234567"));
         assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.1234567"));
+        assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13.1234567"));
+        assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13.1234567"));
 
         LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 120000000);
         assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.12"));
         assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13.120"));
         assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.12"));
         assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.120"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13.12"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13.120"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13.12"));
+        assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13.120"));
 
         LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 0);
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04T11:12:13"));
@@ -702,6 +708,16 @@ public abstract class Test9Other_Others {
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.0000000"));
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13."));
         assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04 11:12:13.000000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13.000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13.0000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13."));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04T11:12:13.000000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13.000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13.0000000"));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13."));
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04 11:12:13.000000000"));
 
         // ============== LocalDate =================
 
