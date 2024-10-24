@@ -97,11 +97,6 @@ public class NimbleOrmDateUtils {
 		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 
-	/**失败返回null，不会抛异常*/
-	public static LocalDate parseLocalDate(String date) throws ParseException {
-		return toLocalDate(parseThrowException(date));
-	}
-
 	private static LocalDate toLocalDate(Date date) {
 		if(date == null) {return null;}
 		// java.sql.Date和java.sql.Time不支持date.toInstant()
@@ -213,18 +208,17 @@ public class NimbleOrmDateUtils {
 
 	// ======================================= 新的LocalDateTime解析器 ===================== START =====================
 
-	public static final Map<String, Boolean> LOCAL_DATE_TIME_IS_DATE = new HashMap<String, Boolean>() {{
-		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", true);
-		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", true);
-		put("^\\d{8}$", true);
-		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", true);
+	public static final Map<String, DateTimeFormatter> LOCAL_DATE_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d")); // 2017-03-06
+		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy/M/d")); // 2017/03/06
+		put("^\\d{8}$", DateTimeFormatter.ofPattern("yyyyMMdd")); // 20170306
+		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", DateTimeFormatter.ofPattern("yyyy年M月d日")); // 2017年03月30日
 	}};
 
 	public static final Map<String, DateTimeFormatter> LOCAL_DATE_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
 
 		// 最常用的放前面，提高性能
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
-		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d HH:mm:ss")); // 2017-03-06
 
 		// 只到分钟：2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
 		DateTimeFormatter formatterMinute = new DateTimeFormatterBuilder()
@@ -234,11 +228,6 @@ public class NimbleOrmDateUtils {
 				.optionalStart().appendLiteral(' ').optionalEnd()
 				.appendPattern("HH:mm").toFormatter();
 		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}$", formatterMinute);
-
-		// 纯日期，到天
-		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss")); // 2017/03/06
-		put("^\\d{8}$", DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss")); // 20170306
-		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm:ss")); // 2017年03月30日
 
 		// 其它
 		put("^\\d{14}$", DateTimeFormatter.ofPattern("yyyyMMddHHmmss")); // 20170306152356
@@ -274,14 +263,63 @@ public class NimbleOrmDateUtils {
 		dateString = dateString.trim();
 		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
 			if (dateString.matches(formatter.getKey())) {
-				Boolean isDate = LOCAL_DATE_TIME_IS_DATE.get(formatter.getKey());
-				if (isDate != null && isDate) {
-					dateString = dateString + " 00:00:00";
-				}
 				return LocalDateTime.parse(dateString, formatter.getValue());
 			}
 		}
+
+		// 尝试用LocalDate解析，再转成LocalDateTime
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				LocalDate localDate = LocalDate.parse(dateString, formatter.getValue());
+				return localDate.atStartOfDay();
+			}
+		}
+
 		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
+	}
+
+
+	/**解析失败抛异常*/
+	public static LocalDate parseLocalDateThrowException(String dateString) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		dateString = dateString.trim();
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				return LocalDate.parse(dateString, formatter.getValue());
+			}
+		}
+
+		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
+	}
+
+	/**解析失败抛异常*/
+	public static LocalDate parseLocalDateThrowException(String dateString, String pattern) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(pattern));
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalDate parseLocalDate(String dateString) {
+		try {
+			return parseLocalDateThrowException(dateString);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			return null;
+		}
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalDate parseLocalDate(String dateString, String pattern) {
+		try {
+			return parseLocalDateThrowException(dateString, pattern);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			return null;
+		}
 	}
 
 	/**解析失败抛异常*/
