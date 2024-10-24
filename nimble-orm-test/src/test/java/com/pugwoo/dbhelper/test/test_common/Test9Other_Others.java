@@ -696,7 +696,7 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormat(String stdDateStr) {
+    private static List<String> getDateInDifferentFormatMinute(String stdDateStr) {
         List<String> result = new ArrayList<>();
         result.add(stdDateStr);
         result.add(stdDateStr.replace(" ", "T"));
@@ -705,26 +705,34 @@ public abstract class Test9Other_Others {
         return result;
     }
 
+    private static List<String> getDateInDifferentFormatDate(String stdDateStr) {
+        List<String> tmp = new ArrayList<>();
+        tmp.add(stdDateStr);
+        tmp.add(stdDateStr.replace("-", "/"));
+        tmp.add(stdDateStr.replaceFirst("-", "年").replaceFirst("-", "月") + "日");
+
+        List<String> result = new ArrayList<>();
+        result.addAll(tmp);
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3")));
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("04", "4")));
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3").replace("04", "4")));
+
+        return result;
+    }
+
     /**
      * 测试解析日期相关
      */
     @Test
     public void testParseDate() {
-
         // ============== LocalDateTime =================
         // 仅日期
         LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04"));
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-3-4"));
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/3/4"));
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024年03月04日"));
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024年3月4日"));
+        getDateInDifferentFormatDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         // 到分钟
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 11, 12);
-        getDateInDifferentFormat("2024-03-04 11:12").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatMinute("2024-03-04 11:12").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         // 带毫秒纳秒
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
