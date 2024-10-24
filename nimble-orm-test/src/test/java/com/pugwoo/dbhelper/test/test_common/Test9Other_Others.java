@@ -674,24 +674,17 @@ public abstract class Test9Other_Others {
         assert !all.get(0).getId().equals(all.get(1).getId());
     }
 
-
-    private static List<String> getDateInDifferentFormatWithNanos(String stdDateStr) {
-        List<String> result = new ArrayList<>();
-
+    private static List<String> getDateInDifferentFormatDate(String stdDateStr) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
-        tmp.add(stdDateStr.replace(" ", "T"));
         tmp.add(stdDateStr.replace("-", "/"));
-        tmp.add(stdDateStr.replace(" ", "T").replace("-", "/"));
-        tmp.add(stdDateStr.replace("-", "").replace(":", ""));
-        tmp.add(stdDateStr.replace("-", "").replace(":", "").replace(" ", "T"));
+        tmp.add(stdDateStr.replaceFirst("-", "年").replaceFirst("-", "月") + "日");
 
+        List<String> result = new ArrayList<>();
         result.addAll(tmp);
-        result.addAll(ListUtils.transform(tmp, o -> o + "Z"));
-        result.addAll(ListUtils.transform(tmp, o -> o + "+0000"));
-        result.addAll(ListUtils.transform(tmp, o -> o + "+00:00"));
-        result.addAll(ListUtils.transform(tmp, o -> o + " +0000"));
-        result.addAll(ListUtils.transform(tmp, o -> o + " +00:00"));
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3")));
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("04", "4")));
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3").replace("04", "4")));
 
         return result;
     }
@@ -718,17 +711,48 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormatDate(String stdDateStr) {
+    private static List<String> getDateInDifferentFormatWithNanos(String stdDateStr) {
+
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
-        tmp.add(stdDateStr.replace("-", "/"));
-        tmp.add(stdDateStr.replaceFirst("-", "年").replaceFirst("-", "月") + "日");
+        tmp.add(stdDateStr.replace(" ", "T"));
+
+        List<String> tmp2 = new ArrayList<>();
+        tmp2.addAll(tmp);
+        tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("-", "/")));
+        tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("-", "")));
+
+        List<String> tmp3 = new ArrayList<>();
+        tmp3.addAll(tmp2);
+        tmp3.addAll(ListUtils.transform(tmp2, o -> o.replace(":", "")));
+
+        // 只有-才替换日期
+        List<String> tmp4 = new ArrayList<>();
+        tmp4.addAll(tmp3);
+        List<String> tmpDate = ListUtils.filter(tmp3, o -> o.contains("-"));
+        tmp4.addAll(ListUtils.transform(tmpDate, o -> o.replace("03", "3")));
+        tmp4.addAll(ListUtils.transform(tmpDate, o -> o.replace("04", "4")));
+        tmp4.addAll(ListUtils.transform(tmpDate, o -> o.replace("03", "3").replace("04", "4")));
+
+        // 只有有:才替换时间
+        List<String> tmp5 = new ArrayList<>();
+        tmp5.addAll(tmp4);
+        List<String> tmpTime = ListUtils.filter(tmp4, o -> o.contains(":"));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("05", "5")));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("06", "6")));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("07", "7")));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("05", "5").replace("06", "6")));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("05", "5").replace("07", "7")));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("06", "6").replace("07", "7")));
+        tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("05", "5").replace("06", "6").replace("07", "7")));
 
         List<String> result = new ArrayList<>();
-        result.addAll(tmp);
-        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3")));
-        result.addAll(ListUtils.transform(tmp, o -> o.replace("04", "4")));
-        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3").replace("04", "4")));
+        result.addAll(tmp5);
+        result.addAll(ListUtils.transform(tmp5, o -> o + "Z"));
+        result.addAll(ListUtils.transform(tmp5, o -> o + "+0000"));
+        result.addAll(ListUtils.transform(tmp5, o -> o + "+00:00"));
+        result.addAll(ListUtils.transform(tmp5, o -> o + " +0000"));
+        result.addAll(ListUtils.transform(tmp5, o -> o + " +00:00"));
 
         return result;
     }
@@ -748,21 +772,21 @@ public abstract class Test9Other_Others {
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);
         getDateInDifferentFormatMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
-        // 带毫秒纳秒
-        LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        // 到秒，可选带毫秒纳秒
+        LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 123456700);
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
-        LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 120000000);
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.12").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.120").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 120000000);
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
-        LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 0);
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304111213"));
+        LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 0);
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304050607"));
 
         // ============== LocalDate =================
 
