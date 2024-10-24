@@ -261,11 +261,10 @@ public class NimbleOrmDateUtils {
 				.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd() // 毫秒 纳秒 0-9位
 				.optionalStart().appendPattern("XXX").optionalEnd()  // 支持 +00:00 格式
 				.optionalStart().appendPattern("xxxx").optionalEnd() // 支持 +0000 格式
+				.optionalStart().appendPattern("XX").optionalEnd()    // 支持 +00 格式
 				.optionalStart().appendPattern("X").optionalEnd()    // 支持 Z 格式
 				.optionalStart().appendPattern(" XXX").optionalEnd()  // 支持 " +00:00" 格式
 				.optionalStart().appendPattern(" xxxx").optionalEnd() // 支持 " +0000" 格式
-				.optionalStart().appendPattern("XX").optionalEnd()    // 支持 +00 格式
-				.optionalStart().appendPattern(" XX").optionalEnd()   // 支持 " +00" 格式
 				.toFormatter();
 		// 2017-10-18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017-10-18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
 		// 2017/10/18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017/10/18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
