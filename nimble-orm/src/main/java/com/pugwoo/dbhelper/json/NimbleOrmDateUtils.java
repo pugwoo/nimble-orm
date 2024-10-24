@@ -211,6 +211,23 @@ public class NimbleOrmDateUtils {
 	public static final Map<String, DateTimeFormatter> LOCAL_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
 		put("^\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("H:m:s")); // 16:34:32
 		put("^\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("H:m")); // 16:34
+
+		// 时间带纳秒部分
+		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+				.optionalStart().appendPattern("H:m:s").optionalEnd()
+				.optionalStart().appendPattern("HHmmss").optionalEnd()
+				.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd() // 毫秒 纳秒 0-9位
+				.optionalStart().appendPattern("XXX").optionalEnd()  // 支持 +00:00 格式
+				.optionalStart().appendPattern("xxxx").optionalEnd() // 支持 +0000 格式
+				.optionalStart().appendPattern("XX").optionalEnd()    // 支持 +00 格式
+				.optionalStart().appendPattern("X").optionalEnd()    // 支持 Z 格式
+				.optionalStart().appendPattern(" XXX").optionalEnd()  // 支持 " +00:00" 格式
+				.optionalStart().appendPattern(" xxxx").optionalEnd() // 支持 " +0000" 格式
+				.toFormatter();
+		// 16:00:00[.纳秒1-9位][+00:00或+0000或Z]      16:00:00[.纳秒1-9位][+00:00或+0000或Z]
+		// 16:00:00[.纳秒1-9位][+00:00或+0000或Z]      16:00:00[.纳秒1-9位][+00:00或+0000或Z]
+		put("^\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?(Z|( ?[+-]\\d{2}:\\d{2})|( ?[+-](\\d{4}|\\d{2})))?$", formatter);
+		put("^\\d{6}(\\.\\d{0,9})?(Z|( ?[+-]\\d{2}:\\d{2})|( ?[+-](\\d{4}|\\d{2})))?$", formatter);
 	}};
 
 	public static final Map<String, Boolean> LOCAL_DATE_IS_MONTH = new HashMap<String, Boolean>(){{

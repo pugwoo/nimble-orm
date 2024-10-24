@@ -703,7 +703,7 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormatOnlyTime(String stdDateStr) {
+    private static List<String> getDateInDifferentFormatOnlyTime(String stdDateStr, boolean withSecond) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
         tmp.add(stdDateStr.replace("05", "5"));
@@ -712,9 +712,22 @@ public abstract class Test9Other_Others {
         tmp2.addAll(tmp);
         tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("06", "6")));
 
+        List<String> tmp3 = new ArrayList<>();
+        tmp3.addAll(tmp2);
+        tmp3.addAll(ListUtils.transform(tmp2, o -> o.replace("07", "7")));
+
+        if (!withSecond) {
+            return tmp3;
+        }
+
         List<String> result = new ArrayList<>();
-        result.addAll(tmp2);
-        result.addAll(ListUtils.transform(tmp2, o -> o.replace("07", "7")));
+        result.addAll(tmp3);
+        result.addAll(ListUtils.transform(tmp3, o -> o + "Z"));
+        result.addAll(ListUtils.transform(tmp3, o -> o + "+0000"));
+        result.addAll(ListUtils.transform(tmp3, o -> o + "+00"));
+        result.addAll(ListUtils.transform(tmp3, o -> o + "+00:00"));
+        result.addAll(ListUtils.transform(tmp3, o -> o + " +0000"));
+        result.addAll(ListUtils.transform(tmp3, o -> o + " +00:00"));
 
         return result;
     }
@@ -806,9 +819,16 @@ public abstract class Test9Other_Others {
 
         // 只有时间
         LocalDateTime localDateTimeOnlyTime = LocalDateTime.of(0, 1, 1, 5, 6);
-        getDateInDifferentFormatOnlyTime("05:06").forEach(str -> {assert localDateTimeOnlyTime.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        LocalDateTime localDateTimeOnlyTime2 = LocalDateTime.of(0, 1, 1, 5, 6, 7);
-        getDateInDifferentFormatOnlyTime("05:06:07").forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatOnlyTime("05:06", false).forEach(str -> {assert localDateTimeOnlyTime.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        LocalDateTime localDateTimeOnlyTime2 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 0);
+        getDateInDifferentFormatOnlyTime("05:06:07", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatOnlyTime("05:06:07.000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatOnlyTime("05:06:07.0000000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatOnlyTime("05:06:07.", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatOnlyTime("05:06:07.000000000", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+
+        // 只有时间，带毫秒纳秒
+        // TODO
 
         // 到分钟
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);
