@@ -703,6 +703,22 @@ public abstract class Test9Other_Others {
         return result;
     }
 
+    private static List<String> getDateInDifferentFormatOnlyTime(String stdDateStr) {
+        List<String> tmp = new ArrayList<>();
+        tmp.add(stdDateStr);
+        tmp.add(stdDateStr.replace("05", "5"));
+
+        List<String> tmp2 = new ArrayList<>();
+        tmp2.addAll(tmp);
+        tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("06", "6")));
+
+        List<String> result = new ArrayList<>();
+        result.addAll(tmp2);
+        result.addAll(ListUtils.transform(tmp2, o -> o.replace("07", "7")));
+
+        return result;
+    }
+
     private static List<String> getDateInDifferentFormatMinute(String stdDateStr) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
@@ -786,6 +802,12 @@ public abstract class Test9Other_Others {
         LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
         getDateInDifferentFormatDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
         assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
+
+        // 只有时间
+        LocalDateTime localDateTimeOnlyTime = LocalDateTime.of(0, 1, 1, 5, 6);
+        getDateInDifferentFormatOnlyTime("05:06").forEach(str -> {assert localDateTimeOnlyTime.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        LocalDateTime localDateTimeOnlyTime2 = LocalDateTime.of(0, 1, 1, 5, 6, 7);
+        getDateInDifferentFormatOnlyTime("05:06:07").forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         // 到分钟
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);

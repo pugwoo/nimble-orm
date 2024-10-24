@@ -208,6 +208,11 @@ public class NimbleOrmDateUtils {
 
 	// ======================================= 新的LocalDateTime解析器 ===================== START =====================
 
+	public static final Map<String, DateTimeFormatter> LOCAL_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
+		put("^\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("H:m:s")); // 16:34:32
+		put("^\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("H:m")); // 16:34
+	}};
+
 	public static final Map<String, Boolean> LOCAL_DATE_IS_MONTH = new HashMap<String, Boolean>(){{
 		put("^\\d{6}$", true); // 201703
 		put("^\\d{4}-\\d{1,2}$", true); // 2017-03
@@ -290,6 +295,15 @@ public class NimbleOrmDateUtils {
 				}
 				LocalDate localDate = LocalDate.parse(dateString, formatter.getValue());
 				return localDate.atStartOfDay();
+			}
+		}
+
+		// 尝试用LocalTime解析，再转成LocalDateTime
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_TIME_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				LocalTime localTime = LocalTime.parse(dateString, formatter.getValue());
+				LocalDate localDate = LocalDate.of(0, 1, 1);
+				return LocalDateTime.of(localDate, localTime);
 			}
 		}
 
