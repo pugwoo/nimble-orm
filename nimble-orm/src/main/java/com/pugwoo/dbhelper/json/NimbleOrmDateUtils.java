@@ -218,15 +218,15 @@ public class NimbleOrmDateUtils {
 	public static final Map<String, DateTimeFormatter> LOCAL_DATE_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
 
 		// 最常用的放前面，提高性能
-		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d H:m:s")); // 2017-03-06 15:23:56
 
 		// 只到分钟：2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
 		DateTimeFormatter formatterMinute = new DateTimeFormatterBuilder()
-				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
-				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
+				.optionalStart().appendPattern("yyyy-M-d").optionalEnd()
+				.optionalStart().appendPattern("yyyy/M/d").optionalEnd()
 				.optionalStart().appendLiteral('T').optionalEnd()
 				.optionalStart().appendLiteral(' ').optionalEnd()
-				.appendPattern("HH:mm").toFormatter();
+				.appendPattern("H:m").toFormatter();
 		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}$", formatterMinute);
 
 		// 其它
@@ -234,12 +234,12 @@ public class NimbleOrmDateUtils {
 
 		// 带毫秒纳秒的时间格式
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
-				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
+				.optionalStart().appendPattern("yyyy-M-d").optionalEnd()
+				.optionalStart().appendPattern("yyyy/M/d").optionalEnd()
 				.optionalStart().appendPattern("yyyyMMdd").optionalEnd()
 				.optionalStart().appendLiteral('T').optionalEnd()
 				.optionalStart().appendLiteral(' ').optionalEnd()
-				.optionalStart().appendPattern("HH:mm:ss").optionalEnd()
+				.optionalStart().appendPattern("H:m:s").optionalEnd()
 				.optionalStart().appendPattern("HHmmss").optionalEnd()
 				.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd() // 毫秒 纳秒 0-9位
 				.optionalStart().appendPattern("XXX").optionalEnd()  // 支持 +00:00 格式
