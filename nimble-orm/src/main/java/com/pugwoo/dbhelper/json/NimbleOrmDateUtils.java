@@ -208,11 +208,23 @@ public class NimbleOrmDateUtils {
 
 	// ======================================= 新的LocalDateTime解析器 ===================== START =====================
 
+	public static final Map<String, Boolean> LOCAL_DATE_IS_MONTH = new HashMap<String, Boolean>(){{
+		put("^\\d{6}$", true); // 201703
+		put("^\\d{4}-\\d{1,2}$", true); // 2017-03
+		put("^\\d{4}/\\d{1,2}$", true); // 2017/03
+		put("^\\d{4}年\\d{1,2}月$", true); // 2017年03月
+	}};
+
 	public static final Map<String, DateTimeFormatter> LOCAL_DATE_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d")); // 2017-03-06
 		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy/M/d")); // 2017/03/06
 		put("^\\d{8}$", DateTimeFormatter.ofPattern("yyyyMMdd")); // 20170306
 		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", DateTimeFormatter.ofPattern("yyyy年M月d日")); // 2017年03月30日
+
+		put("^\\d{6}$", DateTimeFormatter.ofPattern("yyyyMM-d")); // 201703
+		put("^\\d{4}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d")); // 2017-03
+		put("^\\d{4}/\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy/M-d")); // 2017/03
+		put("^\\d{4}年\\d{1,2}月$", DateTimeFormatter.ofPattern("yyyy年M月-d")); // 2017年03月
 	}};
 
 	public static final Map<String, DateTimeFormatter> LOCAL_DATE_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
@@ -272,6 +284,10 @@ public class NimbleOrmDateUtils {
 		// 尝试用LocalDate解析，再转成LocalDateTime
 		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_FORMATTER.entrySet()) {
 			if (dateString.matches(formatter.getKey())) {
+				Boolean isMonth = LOCAL_DATE_IS_MONTH.get(formatter.getKey());
+				if (isMonth != null && isMonth) {
+					dateString = dateString + "-1";
+				}
 				LocalDate localDate = LocalDate.parse(dateString, formatter.getValue());
 				return localDate.atStartOfDay();
 			}
@@ -289,6 +305,10 @@ public class NimbleOrmDateUtils {
 		dateString = dateString.trim();
 		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_FORMATTER.entrySet()) {
 			if (dateString.matches(formatter.getKey())) {
+				Boolean isMonth = LOCAL_DATE_IS_MONTH.get(formatter.getKey());
+				if (isMonth != null && isMonth) {
+					dateString = dateString + "-1";
+				}
 				return LocalDate.parse(dateString, formatter.getValue());
 			}
 		}

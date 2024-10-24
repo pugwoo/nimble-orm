@@ -674,6 +674,20 @@ public abstract class Test9Other_Others {
         assert !all.get(0).getId().equals(all.get(1).getId());
     }
 
+
+    private static List<String> getDateInDifferentFormatMonth(String stdDateStr) {
+        List<String> tmp = new ArrayList<>();
+        tmp.add(stdDateStr);
+        tmp.add(stdDateStr.replace("-", "/"));
+        tmp.add(stdDateStr.replaceFirst("-", "年") + "月");
+
+        List<String> result = new ArrayList<>();
+        result.addAll(tmp);
+        result.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3")));
+
+        return result;
+    }
+
     private static List<String> getDateInDifferentFormatDate(String stdDateStr) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
@@ -763,7 +777,12 @@ public abstract class Test9Other_Others {
     @Test
     public void testParseDate() {
         // ============== LocalDateTime =================
-        // 仅日期
+        // 到月份
+        LocalDateTime localDateTimeMonth = LocalDateTime.of(2024, 3, 1, 0, 0);
+        getDateInDifferentFormatMonth("2024-03").forEach(str -> {assert localDateTimeMonth.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        assert localDateTimeMonth.equals(NimbleOrmDateUtils.parseLocalDateTime("202403"));
+
+        // 到日期
         LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
         getDateInDifferentFormatDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
         assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
