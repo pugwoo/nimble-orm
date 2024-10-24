@@ -780,9 +780,11 @@ public abstract class Test9Other_Others {
         result.addAll(tmp5);
         result.addAll(ListUtils.transform(tmp5, o -> o + "Z"));
         result.addAll(ListUtils.transform(tmp5, o -> o + "+0000"));
+        result.addAll(ListUtils.transform(tmp5, o -> o + "+00"));
         result.addAll(ListUtils.transform(tmp5, o -> o + "+00:00"));
         result.addAll(ListUtils.transform(tmp5, o -> o + " +0000"));
         result.addAll(ListUtils.transform(tmp5, o -> o + " +00:00"));
+        //result.addAll(ListUtils.transform(tmp5, o -> o + " +00"));
 
         return result;
     }
