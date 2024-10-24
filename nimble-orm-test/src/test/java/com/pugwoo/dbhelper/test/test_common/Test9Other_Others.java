@@ -712,9 +712,15 @@ public abstract class Test9Other_Others {
     public void testParseDate() {
 
         // ============== LocalDateTime =================
+        // 仅日期
         LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
         assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
-
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-3-4"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/3/4"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024年03月04日"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024年3月4日"));
 
         // 到分钟
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 11, 12);

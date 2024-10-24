@@ -215,13 +215,16 @@ public class NimbleOrmDateUtils {
 
 	public static final Map<String, Boolean> LOCAL_DATE_TIME_IS_DATE = new HashMap<String, Boolean>() {{
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", true);
+		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", true);
+		put("^\\d{8}$", true);
+		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", true);
 	}};
 
 	public static final Map<String, DateTimeFormatter> LOCAL_DATE_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
 
 		// 最常用的放前面，提高性能
 		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
-		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d HH:mm:ss")); // 2017-03-06
 
 		// 只到分钟：2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
 		DateTimeFormatter formatterMinute = new DateTimeFormatterBuilder()
@@ -232,7 +235,10 @@ public class NimbleOrmDateUtils {
 				.appendPattern("HH:mm").toFormatter();
 		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}$", formatterMinute);
 
-		// 纯日期
+		// 纯日期，到天
+		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss")); // 2017/03/06
+		put("^\\d{8}$", DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss")); // 20170306
+		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm:ss")); // 2017年03月30日
 
 		// 其它
 		put("^\\d{14}$", DateTimeFormatter.ofPattern("yyyyMMddHHmmss")); // 20170306152356
