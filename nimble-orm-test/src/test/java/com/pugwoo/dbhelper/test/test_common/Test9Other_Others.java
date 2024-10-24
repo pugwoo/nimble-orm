@@ -697,11 +697,24 @@ public abstract class Test9Other_Others {
     }
 
     private static List<String> getDateInDifferentFormatMinute(String stdDateStr) {
+        List<String> tmp = new ArrayList<>();
+        tmp.add(stdDateStr);
+        tmp.add(stdDateStr.replace(" ", "T"));
+        tmp.add(stdDateStr.replace("-", "/"));
+        tmp.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+
+        List<String> tmp2 = new ArrayList<>();
+        tmp2.addAll(tmp);
+        tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3")));
+        tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("04", "4")));
+        tmp2.addAll(ListUtils.transform(tmp, o -> o.replace("03", "3").replace("04", "4")));
+
         List<String> result = new ArrayList<>();
-        result.add(stdDateStr);
-        result.add(stdDateStr.replace(" ", "T"));
-        result.add(stdDateStr.replace("-", "/"));
-        result.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+        result.addAll(tmp2);
+        result.addAll(ListUtils.transform(tmp2, o -> o.replace("05", "5")));
+        result.addAll(ListUtils.transform(tmp2, o -> o.replace("06", "6")));
+        result.addAll(ListUtils.transform(tmp2, o -> o.replace("05", "5").replace("06", "6")));
+
         return result;
     }
 
@@ -729,10 +742,11 @@ public abstract class Test9Other_Others {
         // 仅日期
         LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
         getDateInDifferentFormatDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
 
         // 到分钟
-        LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 11, 12);
-        getDateInDifferentFormatMinute("2024-03-04 11:12").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);
+        getDateInDifferentFormatMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
 
         // 带毫秒纳秒
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
