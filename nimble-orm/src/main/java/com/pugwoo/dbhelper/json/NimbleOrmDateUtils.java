@@ -1,6 +1,8 @@
 package com.pugwoo.dbhelper.json;
 
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -8,11 +10,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class NimbleOrmDateUtils {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(NimbleOrmDateUtils.class);
 
 	/**标准日期时间格式**/
 	public final static String FORMAT_STANDARD = "yyyy-MM-dd HH:mm:ss";
@@ -78,11 +86,6 @@ public class NimbleOrmDateUtils {
 			}
 			throw e;
 		}
-	}
-
-	/**失败返回null，不会抛异常*/
-	public static LocalDateTime parseLocalDateTime(String date) throws ParseException {
-		return toLocalDateTime(parseThrowException(date));
 	}
 
 	public static LocalDateTime toLocalDateTime(Date date) {
@@ -206,6 +209,107 @@ public class NimbleOrmDateUtils {
 	        }
 	    }
 	    return null; // Unknown format.
+	}
+
+	// ======================================= 新的LocalDateTime解析器 ===================== START =====================
+
+	public static final Map<String, Boolean> LOCAL_DATE_TIME_IS_DATE = new HashMap<String, Boolean>() {{
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", true);
+		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", true);
+		put("^\\d{8}$", true);
+		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", true);
+	}};
+
+	public static final Map<String, DateTimeFormatter> LOCAL_DATE_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
+
+		// 最常用的放前面，提高性能
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")); // 2017-03-06 15:23:56
+		put("^\\d{4}-\\d{1,2}-\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy-M-d HH:mm:ss")); // 2017-03-06
+
+		// 只到分钟：2017-03-06 15:23   2017/03/06 15:23  2017-03-06T15:23   2017/03/06T15:23
+		DateTimeFormatter formatterMinute = new DateTimeFormatterBuilder()
+				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
+				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
+				.optionalStart().appendLiteral('T').optionalEnd()
+				.optionalStart().appendLiteral(' ').optionalEnd()
+				.appendPattern("HH:mm").toFormatter();
+		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}$", formatterMinute);
+
+		// 纯日期，到天
+		put("^\\d{4}/\\d{1,2}/\\d{1,2}$", DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss")); // 2017/03/06
+		put("^\\d{8}$", DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss")); // 20170306
+		put("^\\d{4}年\\d{1,2}月\\d{1,2}日$", DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm:ss")); // 2017年03月30日
+
+		// 其它
+		put("^\\d{14}$", DateTimeFormatter.ofPattern("yyyyMMddHHmmss")); // 20170306152356
+
+		// 带毫秒纳秒的时间格式
+		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+				.optionalStart().appendPattern("yyyy-MM-dd").optionalEnd()
+				.optionalStart().appendPattern("yyyy/MM/dd").optionalEnd()
+				.optionalStart().appendPattern("yyyyMMdd").optionalEnd()
+				.optionalStart().appendLiteral('T').optionalEnd()
+				.optionalStart().appendLiteral(' ').optionalEnd()
+				.optionalStart().appendPattern("HH:mm:ss").optionalEnd()
+				.optionalStart().appendPattern("HHmmss").optionalEnd()
+				.optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd() // 毫秒 纳秒 0-9位
+				.optionalStart().appendPattern("XXX").optionalEnd()  // 支持 +00:00 格式
+				.optionalStart().appendPattern("xxxx").optionalEnd() // 支持 +0000 格式
+				.optionalStart().appendPattern("X").optionalEnd()    // 支持 Z 格式
+				.optionalStart().appendPattern(" XXX").optionalEnd()  // 支持 " +00:00" 格式
+				.optionalStart().appendPattern(" xxxx").optionalEnd() // 支持 " +0000" 格式
+				.toFormatter();
+		// 2017-10-18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017-10-18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
+		// 2017/10/18T16:00:00[.纳秒1-9位][+00:00或+0000或Z]      2017/10/18 16:00:00[.纳秒1-9位][+00:00或+0000或Z]
+		put("^\\d{4}(/\\d{1,2}/|-\\d{1,2}-)\\d{1,2}[T ]\\d{1,2}:\\d{1,2}:\\d{1,2}(\\.\\d{0,9})?(Z|( ?[+-]\\d{2}:\\d{2})|( ?[+-]\\d{4}))?$", formatter);
+        // 20171018T160000[.纳秒1-9位][+00:00或+0000或Z]      20171018 160000[.纳秒1-9位][+00:00或+0000或Z]
+		put("^\\d{8}[T ]\\d{6}(\\.\\d{0,9})?(Z|( ?[+-]\\d{2}:\\d{2})|( ?[+-]\\d{4}))?$", formatter);
+	}};
+
+	/**解析失败抛异常*/
+	public static LocalDateTime parseLocalDateTimeThrowException(String dateString) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		dateString = dateString.trim();
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				Boolean isDate = LOCAL_DATE_TIME_IS_DATE.get(formatter.getKey());
+				if (isDate != null && isDate) {
+					dateString = dateString + " 00:00:00";
+				}
+				return LocalDateTime.parse(dateString, formatter.getValue());
+			}
+		}
+		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
+	}
+
+	/**解析失败抛异常*/
+	public static LocalDateTime parseLocalDateTimeThrowException(String dateString, String pattern) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern(pattern));
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalDateTime parseLocalDateTime(String dateString) {
+		try {
+			return parseLocalDateTimeThrowException(dateString);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			return null;
+		}
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalDateTime parseLocalDateTime(String dateString, String pattern) {
+		try {
+			return parseLocalDateTimeThrowException(dateString, pattern);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			return null;
+		}
 	}
 
 }

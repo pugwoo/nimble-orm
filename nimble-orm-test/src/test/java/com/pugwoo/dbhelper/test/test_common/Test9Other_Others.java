@@ -6,7 +6,22 @@ import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.exception.CasVersionNotMatchException;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.MustProvideConstructorException;
+import com.pugwoo.dbhelper.exception.NoColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoJoinTableMemberException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
+import com.pugwoo.dbhelper.exception.NoTableAnnotationException;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.OnConditionIsNeedException;
+import com.pugwoo.dbhelper.exception.ParameterSizeNotMatchedException;
+import com.pugwoo.dbhelper.exception.RowMapperFailException;
+import com.pugwoo.dbhelper.exception.ScriptErrorException;
+import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import com.pugwoo.dbhelper.sql.WhereSQL;
@@ -28,7 +43,15 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * 其它的一些测试，主要为了覆盖代码或最佳实践
@@ -649,6 +672,84 @@ public abstract class Test9Other_Others {
         assert all.get(0).getId().equals(student2.getId())
                  || all.get(1).getId().equals(student2.getId());
         assert !all.get(0).getId().equals(all.get(1).getId());
+    }
+
+
+    private static List<String> getDateInDifferentFormatWithNanos(String stdDateStr) {
+        List<String> result = new ArrayList<>();
+
+        List<String> tmp = new ArrayList<>();
+        tmp.add(stdDateStr);
+        tmp.add(stdDateStr.replace(" ", "T"));
+        tmp.add(stdDateStr.replace("-", "/"));
+        tmp.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+        tmp.add(stdDateStr.replace("-", "").replace(":", ""));
+        tmp.add(stdDateStr.replace("-", "").replace(":", "").replace(" ", "T"));
+
+        result.addAll(tmp);
+        result.addAll(ListUtils.transform(tmp, o -> o + "Z"));
+        result.addAll(ListUtils.transform(tmp, o -> o + "+0000"));
+        result.addAll(ListUtils.transform(tmp, o -> o + "+00:00"));
+        result.addAll(ListUtils.transform(tmp, o -> o + " +0000"));
+        result.addAll(ListUtils.transform(tmp, o -> o + " +00:00"));
+
+        return result;
+    }
+
+    private static List<String> getDateInDifferentFormat(String stdDateStr) {
+        List<String> result = new ArrayList<>();
+        result.add(stdDateStr);
+        result.add(stdDateStr.replace(" ", "T"));
+        result.add(stdDateStr.replace("-", "/"));
+        result.add(stdDateStr.replace(" ", "T").replace("-", "/"));
+        return result;
+    }
+
+    /**
+     * 测试解析日期相关
+     */
+    @Test
+    public void testParseDate() {
+
+        // ============== LocalDateTime =================
+        // 仅日期
+        LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-03-04"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/03/04"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024-3-4"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024/3/4"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024年03月04日"));
+        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("2024年3月4日"));
+
+        // 到分钟
+        LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 11, 12);
+        getDateInDifferentFormat("2024-03-04 11:12").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+
+        // 带毫秒纳秒
+        LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 123456700);
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+
+        LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 120000000);
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.12").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.120").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+
+        LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 11, 12, 13, 0);
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDateInDifferentFormatWithNanos("2024-03-04 11:12:13.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304111213"));
+
+        // ============== LocalDate =================
+
+
+        // ============== LocalTime =================
+
+
+        // ============== Date =================
+
     }
 
 }
