@@ -675,7 +675,7 @@ public abstract class Test9Other_Others {
     }
 
 
-    private static List<String> getDateInDifferentFormatMonth(String stdDateStr) {
+    private static List<String> getDiffFmtMonth(String stdDateStr) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
         tmp.add(stdDateStr.replace("-", "/"));
@@ -688,7 +688,7 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormatDate(String stdDateStr) {
+    private static List<String> getDiffFmtDate(String stdDateStr) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
         tmp.add(stdDateStr.replace("-", "/"));
@@ -703,7 +703,7 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormatOnlyTime(String stdDateStr, boolean withSecond) {
+    private static List<String> getDiffFmtOnlyTime(String stdDateStr, boolean withSecond) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
         tmp.add(stdDateStr.replace("05", "5"));
@@ -733,7 +733,7 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormatMinute(String stdDateStr) {
+    private static List<String> getDiffFmtFullMinute(String stdDateStr) {
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
         tmp.add(stdDateStr.replace(" ", "T"));
@@ -755,7 +755,7 @@ public abstract class Test9Other_Others {
         return result;
     }
 
-    private static List<String> getDateInDifferentFormatWithNanos(String stdDateStr) {
+    private static List<String> getDiffFmtFullNanos(String stdDateStr) {
 
         List<String> tmp = new ArrayList<>();
         tmp.add(stdDateStr);
@@ -802,6 +802,10 @@ public abstract class Test9Other_Others {
         return result;
     }
 
+    private static LocalDateTime ldt(String str) {
+        return NimbleOrmDateUtils.parseLocalDateTime(str);
+    }
+
     /**
      * 测试解析日期相关
      */
@@ -809,55 +813,55 @@ public abstract class Test9Other_Others {
     public void testParseDate() {
         // ============== LocalDateTime =================
 
-        // 到月份
+        // 只有日期，到月份
         LocalDateTime localDateTimeMonth = LocalDateTime.of(2024, 3, 1, 0, 0);
-        getDateInDifferentFormatMonth("2024-03").forEach(str -> {assert localDateTimeMonth.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        assert localDateTimeMonth.equals(NimbleOrmDateUtils.parseLocalDateTime("202403"));
+        getDiffFmtMonth("2024-03").forEach(str -> {assert localDateTimeMonth.equals(ldt(str));});
+        assert localDateTimeMonth.equals(ldt("202403"));
 
-        // 到日期
+        // 只有日期，到日期
         LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
-        getDateInDifferentFormatDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        assert localDateTimeDate.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304"));
+        getDiffFmtDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(ldt(str));});
+        assert localDateTimeDate.equals(ldt("20240304"));
 
         // 只有时间，到分钟
         LocalDateTime localDateTimeOnlyTime = LocalDateTime.of(0, 1, 1, 5, 6);
-        getDateInDifferentFormatOnlyTime("05:06", false).forEach(str -> {assert localDateTimeOnlyTime.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDiffFmtOnlyTime("05:06", false).forEach(str -> {assert localDateTimeOnlyTime.equals(ldt(str));});
 
         // 只有时间，到秒
         LocalDateTime localDateTimeOnlyTime2 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 0);
-        getDateInDifferentFormatOnlyTime("05:06:07", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatOnlyTime("05:06:07.000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatOnlyTime("05:06:07.0000000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatOnlyTime("05:06:07.", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatOnlyTime("05:06:07.000000000", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDiffFmtOnlyTime("05:06:07", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+        getDiffFmtOnlyTime("05:06:07.000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+        getDiffFmtOnlyTime("05:06:07.0000000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+        getDiffFmtOnlyTime("05:06:07.", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+        getDiffFmtOnlyTime("05:06:07.000000000", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
 
         // 只有时间，带毫秒纳秒
-        LocalDateTime localDateTimeOnlyTime3 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 123456700);
-        getDateInDifferentFormatOnlyTime("2024-03-04 05:06:07.1234567", true).forEach(str -> {assert localDateTimeOnlyTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        LocalDateTime localDateTimeOnlyTime3 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 123456700);
+        getDiffFmtOnlyTime("05:06:07.1234567", true).forEach(str -> {assert localDateTimeOnlyTime3.equals(ldt(str));});
 
-        LocalDateTime localDateTimeOnlyTime4 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 120000000);
-        getDateInDifferentFormatOnlyTime("2024-03-04 05:06:07.12", true).forEach(str -> {assert localDateTimeOnlyTime4.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatOnlyTime("2024-03-04 05:06:07.120",true).forEach(str -> {assert localDateTimeOnlyTime4.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        LocalDateTime localDateTimeOnlyTime4 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 120000000);
+        getDiffFmtOnlyTime("05:06:07.12", true).forEach(str -> {assert localDateTimeOnlyTime4.equals(ldt(str));});
+        getDiffFmtOnlyTime("05:06:07.120",true).forEach(str -> {assert localDateTimeOnlyTime4.equals(ldt(str));});
 
-        // 到分钟
+        // 日期+时间，到分钟
         LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);
-        getDateInDifferentFormatMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDiffFmtFullMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(ldt(str));});
 
-        // 到秒，可选带毫秒纳秒
+        // 日期+时间，到秒，可选带毫秒纳秒
         LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 0);
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        assert dateTime3.equals(NimbleOrmDateUtils.parseLocalDateTime("20240304050607"));
+        getDiffFmtFullNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(ldt(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(ldt(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(ldt(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(ldt(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(ldt(str));});
+        assert dateTime3.equals(ldt("20240304050607"));
 
         LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 123456700);
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(ldt(str));});
 
         LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 120000000);
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
-        getDateInDifferentFormatWithNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(NimbleOrmDateUtils.parseLocalDateTime(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(ldt(str));});
+        getDiffFmtFullNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(ldt(str));});
 
         // ============== LocalDate =================
 
