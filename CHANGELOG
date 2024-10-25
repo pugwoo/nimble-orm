@@ -1,4 +1,6 @@
 v1.6.8 - [enhance] 支持自动降级处理mysql max package太小的限制
+       - [fix] 修复当使用isJSON=true的列，其DTO中有LocalDateTime类型，带有不为3位的纳秒数时解析错误的问题
+       - [enhance] 重写了LocalDateTime和LocalDate、LocalTime的解析器，覆盖ISO 8601所有格式
 
 2024年8月28日
 v1.6.7 - [fix] 修复del表方式的软删除，删除数据丢失的问题
