@@ -26,13 +26,7 @@ public class MultiLocalDateDeserializer extends StdDeserializer<LocalDate> {
 		String date = node.asText();
 
 		try {
-			LocalDate localDate = NimbleOrmDateUtils.parseLocalDate(date);
-			if (localDate == null) {
-				throw new JsonParseException(jp,
-						"Unparseable localDate: \"" + date + "\". Supported formats: "
-								+ NimbleOrmDateUtils.DATE_FORMAT_REGEXPS.values());
-			}
-			return localDate;
+			return NimbleOrmDateUtils.parseLocalDateThrowException(date);
 		} catch (Exception e) {
 			throw new JsonParseException(jp,
 					"Unparseable localDate: \"" + date + "\". Supported formats: "

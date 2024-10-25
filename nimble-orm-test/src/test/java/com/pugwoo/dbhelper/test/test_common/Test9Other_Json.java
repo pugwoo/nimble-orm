@@ -4,12 +4,24 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
-import com.pugwoo.dbhelper.test.entity.*;
+import com.pugwoo.dbhelper.test.entity.CourseDO;
+import com.pugwoo.dbhelper.test.entity.JsonAsTeacherDO;
+import com.pugwoo.dbhelper.test.entity.JsonDO;
+import com.pugwoo.dbhelper.test.entity.JsonRawDO;
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 2018年12月29日 17:39:42
@@ -172,6 +184,23 @@ public abstract class Test9Other_Json {
         teacherDO = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonRawDO.getId());
         assert teacherDO.getTeacher().getName().equals("wu");
         assert teacherDO.getTeacher().getBirth() == null;
+
+        // test LocalDate LocalDateTime LocalTime
+        JsonAsTeacherDO jsonAsTeacherDO = new JsonAsTeacherDO();
+        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+            jsonAsTeacherDO.setId(CommonOps.getRandomLong());
+        }
+        jsonAsTeacherDO.setTeacher(new JsonAsTeacherDO.TeacherBean());
+        jsonAsTeacherDO.getTeacher().setLocalDateTime(LocalDateTime.now());
+        jsonAsTeacherDO.getTeacher().setLocalDate(LocalDate.now());
+        jsonAsTeacherDO.getTeacher().setLocalTime(LocalTime.now());
+        assert getDBHelper().insert(jsonAsTeacherDO) == 1;
+
+        JsonAsTeacherDO jsonAsTeacher2 = getDBHelper().getByKey(JsonAsTeacherDO.class, jsonAsTeacherDO.getId());
+        assert jsonAsTeacher2.getId().equals(jsonAsTeacherDO.getId());
+        assert jsonAsTeacher2.getTeacher().getLocalDateTime().equals(jsonAsTeacherDO.getTeacher().getLocalDateTime());
+        assert jsonAsTeacher2.getTeacher().getLocalDate().equals(jsonAsTeacherDO.getTeacher().getLocalDate());
+        assert jsonAsTeacher2.getTeacher().getLocalTime().equals(jsonAsTeacherDO.getTeacher().getLocalTime());
 
     }
 
