@@ -106,11 +106,6 @@ public class NimbleOrmDateUtils {
 		return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 	}
 
-	/**失败返回null，不会抛异常*/
-	public static LocalTime parseLocalTime(String date) throws ParseException {
-		return toLocalTime(parseThrowException(date));
-	}
-
 	private static LocalTime toLocalTime(Date date) {
 		if(date == null) {return null;}
 		// java.sql.Date和java.sql.Time不支持date.toInstant()
@@ -346,6 +341,37 @@ public class NimbleOrmDateUtils {
 			}
 		}
 
+		// 尝试解析成LocalDateTime，再转LocalDate
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				LocalDateTime localDateTime = LocalDateTime.parse(dateString, formatter.getValue());
+				return localDateTime.toLocalDate();
+			}
+		}
+
+		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
+	}
+
+	/**解析失败抛异常*/
+	public static LocalTime parseLocalTimeThrowException(String dateString) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		dateString = dateString.trim();
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_TIME_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				return LocalTime.parse(dateString, formatter.getValue());
+			}
+		}
+
+		// 尝试解析成LocalDateTime，再转LocalTime
+		for (Map.Entry<String, DateTimeFormatter> formatter : LOCAL_DATE_TIME_FORMATTER.entrySet()) {
+			if (dateString.matches(formatter.getKey())) {
+				LocalDateTime localDateTime = LocalDateTime.parse(dateString, formatter.getValue());
+				return localDateTime.toLocalTime();
+			}
+		}
+
 		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
 	}
 
@@ -362,7 +388,7 @@ public class NimbleOrmDateUtils {
 		try {
 			return parseLocalDateThrowException(dateString);
 		} catch (ParseException e) {
-			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			LOGGER.error("Parse LocalDate:{} failed", dateString, e);
 			return null;
 		}
 	}
@@ -372,7 +398,7 @@ public class NimbleOrmDateUtils {
 		try {
 			return parseLocalDateThrowException(dateString, pattern);
 		} catch (ParseException e) {
-			LOGGER.error("Parse LocalDateTime:{} failed", dateString, e);
+			LOGGER.error("Parse LocalDate:{} failed", dateString, e);
 			return null;
 		}
 	}
@@ -405,4 +431,31 @@ public class NimbleOrmDateUtils {
 		}
 	}
 
+	/**解析失败抛异常*/
+	public static LocalTime parseLocalTimeThrowException(String dateString, String pattern) throws ParseException {
+		if (InnerCommonUtils.isBlank(dateString)) {
+			return null;
+		}
+		return LocalTime.parse(dateString, DateTimeFormatter.ofPattern(pattern));
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalTime parseLocalTime(String dateString) {
+		try {
+			return parseLocalTimeThrowException(dateString);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocaTime:{} failed", dateString, e);
+			return null;
+		}
+	}
+
+	/**解析失败不抛异常，返回null*/
+	public static LocalTime parseLocalTime(String dateString, String pattern) {
+		try {
+			return parseLocalTimeThrowException(dateString, pattern);
+		} catch (ParseException e) {
+			LOGGER.error("Parse LocalTime:{} failed", dateString, e);
+			return null;
+		}
+	}
 }

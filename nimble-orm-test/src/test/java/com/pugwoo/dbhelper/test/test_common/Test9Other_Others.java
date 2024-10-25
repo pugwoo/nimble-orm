@@ -43,7 +43,9 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -771,16 +773,14 @@ public abstract class Test9Other_Others {
         tmp3.addAll(ListUtils.transform(tmp2, o -> o.replace(":", "")));
 
         // 只有-才替换日期
-        List<String> tmp4 = new ArrayList<>();
-        tmp4.addAll(tmp3);
+        List<String> tmp4 = new ArrayList<>(tmp3);
         List<String> tmpDate = ListUtils.filter(tmp3, o -> o.contains("-"));
         tmp4.addAll(ListUtils.transform(tmpDate, o -> o.replace("03", "3")));
         tmp4.addAll(ListUtils.transform(tmpDate, o -> o.replace("04", "4")));
         tmp4.addAll(ListUtils.transform(tmpDate, o -> o.replace("03", "3").replace("04", "4")));
 
         // 只有有:才替换时间
-        List<String> tmp5 = new ArrayList<>();
-        tmp5.addAll(tmp4);
+        List<String> tmp5 = new ArrayList<>(tmp4);
         List<String> tmpTime = ListUtils.filter(tmp4, o -> o.contains(":"));
         tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("05", "5")));
         tmp5.addAll(ListUtils.transform(tmpTime, o -> o.replace("06", "6")));
@@ -806,68 +806,148 @@ public abstract class Test9Other_Others {
         return NimbleOrmDateUtils.parseLocalDateTime(str);
     }
 
+    private static LocalDate ld(String str) {
+        return NimbleOrmDateUtils.parseLocalDate(str);
+    }
+
+    private static LocalTime lt(String str) {
+        return NimbleOrmDateUtils.parseLocalTime(str);
+    }
+
     /**
      * 测试解析日期相关
      */
     @Test
     public void testParseDate() {
+
         // ============== LocalDateTime =================
+        {
+            // 只有日期，到月份
+            LocalDateTime localDateTimeMonth = LocalDateTime.of(2024, 3, 1, 0, 0);
+            getDiffFmtMonth("2024-03").forEach(str -> {assert localDateTimeMonth.equals(ldt(str));});
+            assert localDateTimeMonth.equals(ldt("202403"));
 
-        // 只有日期，到月份
-        LocalDateTime localDateTimeMonth = LocalDateTime.of(2024, 3, 1, 0, 0);
-        getDiffFmtMonth("2024-03").forEach(str -> {assert localDateTimeMonth.equals(ldt(str));});
-        assert localDateTimeMonth.equals(ldt("202403"));
+            // 只有日期，到日期
+            LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
+            getDiffFmtDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(ldt(str));});
+            assert localDateTimeDate.equals(ldt("20240304"));
 
-        // 只有日期，到日期
-        LocalDateTime localDateTimeDate = LocalDateTime.of(2024, 3, 4, 0, 0);
-        getDiffFmtDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(ldt(str));});
-        assert localDateTimeDate.equals(ldt("20240304"));
+            // 只有时间，到分钟
+            LocalDateTime localDateTimeOnlyTime = LocalDateTime.of(0, 1, 1, 5, 6);
+            getDiffFmtOnlyTime("05:06", false).forEach(str -> {assert localDateTimeOnlyTime.equals(ldt(str));});
 
-        // 只有时间，到分钟
-        LocalDateTime localDateTimeOnlyTime = LocalDateTime.of(0, 1, 1, 5, 6);
-        getDiffFmtOnlyTime("05:06", false).forEach(str -> {assert localDateTimeOnlyTime.equals(ldt(str));});
+            // 只有时间，到秒
+            LocalDateTime localDateTimeOnlyTime2 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 0);
+            getDiffFmtOnlyTime("05:06:07", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+            getDiffFmtOnlyTime("05:06:07.000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+            getDiffFmtOnlyTime("05:06:07.0000000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+            getDiffFmtOnlyTime("05:06:07.", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+            getDiffFmtOnlyTime("05:06:07.000000000", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
 
-        // 只有时间，到秒
-        LocalDateTime localDateTimeOnlyTime2 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 0);
-        getDiffFmtOnlyTime("05:06:07", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
-        getDiffFmtOnlyTime("05:06:07.000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
-        getDiffFmtOnlyTime("05:06:07.0000000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
-        getDiffFmtOnlyTime("05:06:07.", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
-        getDiffFmtOnlyTime("05:06:07.000000000", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(ldt(str));});
+            // 只有时间，带毫秒纳秒
+            LocalDateTime localDateTimeOnlyTime3 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 123456700);
+            getDiffFmtOnlyTime("05:06:07.1234567", true).forEach(str -> {assert localDateTimeOnlyTime3.equals(ldt(str));});
 
-        // 只有时间，带毫秒纳秒
-        LocalDateTime localDateTimeOnlyTime3 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 123456700);
-        getDiffFmtOnlyTime("05:06:07.1234567", true).forEach(str -> {assert localDateTimeOnlyTime3.equals(ldt(str));});
+            LocalDateTime localDateTimeOnlyTime4 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 120000000);
+            getDiffFmtOnlyTime("05:06:07.12", true).forEach(str -> {assert localDateTimeOnlyTime4.equals(ldt(str));});
+            getDiffFmtOnlyTime("05:06:07.120",true).forEach(str -> {assert localDateTimeOnlyTime4.equals(ldt(str));});
 
-        LocalDateTime localDateTimeOnlyTime4 = LocalDateTime.of(0, 1, 1, 5, 6, 7, 120000000);
-        getDiffFmtOnlyTime("05:06:07.12", true).forEach(str -> {assert localDateTimeOnlyTime4.equals(ldt(str));});
-        getDiffFmtOnlyTime("05:06:07.120",true).forEach(str -> {assert localDateTimeOnlyTime4.equals(ldt(str));});
+            // 日期+时间，到分钟
+            LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);
+            getDiffFmtFullMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(ldt(str));});
 
-        // 日期+时间，到分钟
-        LocalDateTime dateTimeMinute = LocalDateTime.of(2024, 3, 4, 5, 6);
-        getDiffFmtFullMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(ldt(str));});
+            // 日期+时间，到秒，可选带毫秒纳秒
+            LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 0);
+            getDiffFmtFullNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(ldt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(ldt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(ldt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(ldt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(ldt(str));});
+            assert dateTime3.equals(ldt("20240304050607"));
 
-        // 日期+时间，到秒，可选带毫秒纳秒
-        LocalDateTime dateTime3 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 0);
-        getDiffFmtFullNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(ldt(str));});
-        getDiffFmtFullNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(ldt(str));});
-        getDiffFmtFullNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(ldt(str));});
-        getDiffFmtFullNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(ldt(str));});
-        getDiffFmtFullNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(ldt(str));});
-        assert dateTime3.equals(ldt("20240304050607"));
+            LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 123456700);
+            getDiffFmtFullNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(ldt(str));});
 
-        LocalDateTime dateTime1 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 123456700);
-        getDiffFmtFullNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(ldt(str));});
-
-        LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 120000000);
-        getDiffFmtFullNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(ldt(str));});
-        getDiffFmtFullNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(ldt(str));});
+            LocalDateTime dateTime2 = LocalDateTime.of(2024, 3, 4, 5, 6, 7, 120000000);
+            getDiffFmtFullNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(ldt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(ldt(str));});
+        }
 
         // ============== LocalDate =================
+        {
+            // 只有日期，到月份
+            LocalDate localDateTimeMonth = LocalDate.of(2024, 3, 1);
+            getDiffFmtMonth("2024-03").forEach(str -> {assert localDateTimeMonth.equals(ld(str));});
+            assert localDateTimeMonth.equals(ld("202403"));
 
+            // 只有日期，到日期
+            LocalDate localDateTimeDate = LocalDate.of(2024, 3, 4);
+            getDiffFmtDate("2024-03-04").forEach(str -> {assert localDateTimeDate.equals(ld(str));});
+            assert localDateTimeDate.equals(ld("20240304"));
+
+            // 日期+时间，到分钟
+            LocalDate dateTimeMinute = LocalDate.of(2024, 3, 4);
+            getDiffFmtFullMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(ld(str));});
+
+            // 日期+时间，到秒，可选带毫秒纳秒
+            LocalDate dateTime3 = LocalDate.of(2024, 3, 4);
+            getDiffFmtFullNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(ld(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(ld(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(ld(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(ld(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(ld(str));});
+            assert dateTime3.equals(ld("20240304050607"));
+
+            LocalDate dateTime1 = LocalDate.of(2024, 3, 4);
+            getDiffFmtFullNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(ld(str));});
+
+            LocalDate dateTime2 = LocalDate.of(2024, 3, 4);
+            getDiffFmtFullNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(ld(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(ld(str));});
+        }
 
         // ============== LocalTime =================
+        {
+            // 只有时间，到分钟
+            LocalTime localDateTimeOnlyTime = LocalTime.of(5, 6);
+            getDiffFmtOnlyTime("05:06", false).forEach(str -> {assert localDateTimeOnlyTime.equals(lt(str));});
 
+            // 只有时间，到秒
+            LocalTime localDateTimeOnlyTime2 = LocalTime.of(5, 6, 7, 0);
+            getDiffFmtOnlyTime("05:06:07", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(lt(str));});
+            getDiffFmtOnlyTime("05:06:07.000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(lt(str));});
+            getDiffFmtOnlyTime("05:06:07.0000000",true).forEach(str -> {assert localDateTimeOnlyTime2.equals(lt(str));});
+            getDiffFmtOnlyTime("05:06:07.", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(lt(str));});
+            getDiffFmtOnlyTime("05:06:07.000000000", true).forEach(str -> {assert localDateTimeOnlyTime2.equals(lt(str));});
+
+            // 只有时间，带毫秒纳秒
+            LocalTime localDateTimeOnlyTime3 = LocalTime.of(5, 6, 7, 123456700);
+            getDiffFmtOnlyTime("05:06:07.1234567", true).forEach(str -> {assert localDateTimeOnlyTime3.equals(lt(str));});
+
+            LocalTime localDateTimeOnlyTime4 = LocalTime.of(5, 6, 7, 120000000);
+            getDiffFmtOnlyTime("05:06:07.12", true).forEach(str -> {assert localDateTimeOnlyTime4.equals(lt(str));});
+            getDiffFmtOnlyTime("05:06:07.120",true).forEach(str -> {assert localDateTimeOnlyTime4.equals(lt(str));});
+
+            // 日期+时间，到分钟
+            LocalTime dateTimeMinute = LocalTime.of(5, 6);
+            getDiffFmtFullMinute("2024-03-04 05:06").forEach(str -> {assert dateTimeMinute.equals(lt(str));});
+
+            // 日期+时间，到秒，可选带毫秒纳秒
+            LocalTime dateTime3 = LocalTime.of(5, 6, 7, 0);
+            getDiffFmtFullNanos("2024-03-04 05:06:07").forEach(str -> {assert dateTime3.equals(lt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.000").forEach(str -> {assert dateTime3.equals(lt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.0000000").forEach(str -> {assert dateTime3.equals(lt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.").forEach(str -> {assert dateTime3.equals(lt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.000000000").forEach(str -> {assert dateTime3.equals(lt(str));});
+            assert dateTime3.equals(lt("20240304050607"));
+
+            LocalTime dateTime1 = LocalTime.of(5, 6, 7, 123456700);
+            getDiffFmtFullNanos("2024-03-04 05:06:07.1234567").forEach(str -> {assert dateTime1.equals(lt(str));});
+
+            LocalTime dateTime2 = LocalTime.of(5, 6, 7, 120000000);
+            getDiffFmtFullNanos("2024-03-04 05:06:07.12").forEach(str -> {assert dateTime2.equals(lt(str));});
+            getDiffFmtFullNanos("2024-03-04 05:06:07.120").forEach(str -> {assert dateTime2.equals(lt(str));});
+        }
 
     }
 
