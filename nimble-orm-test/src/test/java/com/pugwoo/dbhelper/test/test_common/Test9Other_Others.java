@@ -716,18 +716,19 @@ public abstract class Test9Other_Others {
         tmp3.addAll(tmp2);
         tmp3.addAll(ListUtils.transform(tmp2, o -> o.replace("07", "7")));
 
-        if (!withSecond) {
-            return tmp3;
-        }
-
         List<String> result = new ArrayList<>();
-        result.addAll(tmp3);
-        result.addAll(ListUtils.transform(tmp3, o -> o + "Z"));
-        result.addAll(ListUtils.transform(tmp3, o -> o + "+0000"));
-        result.addAll(ListUtils.transform(tmp3, o -> o + "+00"));
-        result.addAll(ListUtils.transform(tmp3, o -> o + "+00:00"));
-        result.addAll(ListUtils.transform(tmp3, o -> o + " +0000"));
-        result.addAll(ListUtils.transform(tmp3, o -> o + " +00:00"));
+        if (!withSecond) {
+            result.addAll(tmp3);
+            result.addAll(ListUtils.transform(tmp3, o -> o + "Z"));
+        } else {
+            result.addAll(tmp3);
+            result.addAll(ListUtils.transform(tmp3, o -> o + "Z"));
+            result.addAll(ListUtils.transform(tmp3, o -> o + "+0000"));
+            result.addAll(ListUtils.transform(tmp3, o -> o + "+00"));
+            result.addAll(ListUtils.transform(tmp3, o -> o + "+00:00"));
+            result.addAll(ListUtils.transform(tmp3, o -> o + " +0000"));
+            result.addAll(ListUtils.transform(tmp3, o -> o + " +00:00"));
+        }
 
         return result;
     }

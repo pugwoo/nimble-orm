@@ -211,6 +211,7 @@ public class NimbleOrmDateUtils {
 	public static final Map<String, DateTimeFormatter> LOCAL_TIME_FORMATTER = new LinkedHashMap<String, DateTimeFormatter>() {{
 		put("^\\d{1,2}:\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("H:m:s")); // 16:34:32
 		put("^\\d{1,2}:\\d{1,2}$", DateTimeFormatter.ofPattern("H:m")); // 16:34
+		put("^\\d{1,2}:\\d{1,2}Z$", DateTimeFormatter.ofPattern("H:mX")); // 16:34Z
 
 		// 时间带纳秒部分
 		DateTimeFormatter formatter = new DateTimeFormatterBuilder()
