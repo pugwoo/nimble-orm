@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 创建这个日期解析类的目的，是让解析为Date/LocalDate/LocalDateTime/LocalTime时，支持多种格式，这些格式可能来自于其它语言、人工输入等。
+ */
 public class NimbleOrmDateUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NimbleOrmDateUtils.class);
@@ -334,7 +337,10 @@ public class NimbleOrmDateUtils {
 		throw new ParseException("Parse failed. Unsupported pattern:" + dateString, 0);
 	}
 
-	/**解析失败抛异常*/
+	/**
+	 * 解析失败抛异常<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalTime语义，如果需要时区，请使用OffsetTime类型
+	 */
 	public static LocalTime parseLocalTimeThrowException(String dateString) throws ParseException {
 		if (InnerCommonUtils.isBlank(dateString)) {
 			return null;
@@ -385,7 +391,8 @@ public class NimbleOrmDateUtils {
 		}
 	}
 
-	/**解析失败抛异常*/
+	/**解析失败抛异常<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalDateTime语义，如果需要时区，请使用OffsetDateTime类型*/
 	public static LocalDateTime parseLocalDateTimeThrowException(String dateString, String pattern) throws ParseException {
 		if (InnerCommonUtils.isBlank(dateString)) {
 			return null;
@@ -393,7 +400,8 @@ public class NimbleOrmDateUtils {
 		return LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern(pattern));
 	}
 
-	/**解析失败不抛异常，返回null*/
+	/**解析失败不抛异常，返回null<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalDateTime语义，如果需要时区，请使用OffsetDateTime类型*/
 	public static LocalDateTime parseLocalDateTime(String dateString) {
 		try {
 			return parseLocalDateTimeThrowException(dateString);
@@ -403,7 +411,8 @@ public class NimbleOrmDateUtils {
 		}
 	}
 
-	/**解析失败不抛异常，返回null*/
+	/**解析失败不抛异常，返回null<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalDateTime语义，如果需要时区，请使用OffsetDateTime类型*/
 	public static LocalDateTime parseLocalDateTime(String dateString, String pattern) {
 		try {
 			return parseLocalDateTimeThrowException(dateString, pattern);
@@ -413,7 +422,8 @@ public class NimbleOrmDateUtils {
 		}
 	}
 
-	/**解析失败抛异常*/
+	/**解析失败抛异常<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalTime语义，如果需要时区，请使用OffsetTime类型*/
 	public static LocalTime parseLocalTimeThrowException(String dateString, String pattern) throws ParseException {
 		if (InnerCommonUtils.isBlank(dateString)) {
 			return null;
@@ -421,7 +431,8 @@ public class NimbleOrmDateUtils {
 		return LocalTime.parse(dateString, DateTimeFormatter.ofPattern(pattern));
 	}
 
-	/**解析失败不抛异常，返回null*/
+	/**解析失败不抛异常，返回null<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalTime语义，如果需要时区，请使用OffsetTime类型*/
 	public static LocalTime parseLocalTime(String dateString) {
 		try {
 			return parseLocalTimeThrowException(dateString);
@@ -431,7 +442,8 @@ public class NimbleOrmDateUtils {
 		}
 	}
 
-	/**解析失败不抛异常，返回null*/
+	/**解析失败不抛异常，返回null<br>
+	 * 特别说明，即便时间带有时区，也会被忽略，这符合LocalTime语义，如果需要时区，请使用OOffsetTime类型*/
 	public static LocalTime parseLocalTime(String dateString, String pattern) {
 		try {
 			return parseLocalTimeThrowException(dateString, pattern);
