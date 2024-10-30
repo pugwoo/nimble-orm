@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
-import com.pugwoo.dbhelper.IDBHelperDataService;
+import com.pugwoo.dbhelper.DBHelperDataService;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.test.entity.CourseDO;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * 通过学生id查询该学生的所有课程，批量接口
  * @author pugwoo
  */
-public abstract class GetCourseByStudentIdServiceImpl implements IDBHelperDataService {
+public abstract class GetCourseByStudentIdServiceImpl implements DBHelperDataService {
 
 	public abstract DBHelper getDBHelper();
 

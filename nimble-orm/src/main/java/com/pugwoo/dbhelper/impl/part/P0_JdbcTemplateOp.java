@@ -3,7 +3,7 @@ package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.IDBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.DBHelperSlowSqlCallback;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
@@ -57,7 +57,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.LAZY_DETECT_DATABASE_TYPE, false);
 	}};
 
-	private IDBHelperSlowSqlCallback slowSqlCallback;
+	private DBHelperSlowSqlCallback slowSqlCallback;
 
     /**
      * 批量和非批量的log
@@ -317,7 +317,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	@Override
-	public void setSlowSqlWarningCallback(IDBHelperSlowSqlCallback callback) {
+	public void setSlowSqlWarningCallback(DBHelperSlowSqlCallback callback) {
 		this.slowSqlCallback = callback;
 	}
 

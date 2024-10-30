@@ -1,3 +1,5 @@
+v1.7.0 - [refactor]【升级须知】IDBHelperDataService名称变更为DBHelperDataService，IDBHelperSlowSqlCallback变更为DBHelperSlowSqlCallback
+
 2024年10月25日
 v1.6.8 - [enhance] 支持自动降级处理mysql max package太小的限制
        - [fix] 修复当使用isJSON=true的列，其DTO中有LocalDateTime类型，带有不为3位的纳秒数时解析错误的问题

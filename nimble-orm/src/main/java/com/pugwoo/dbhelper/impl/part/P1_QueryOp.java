@@ -1,7 +1,7 @@
 package com.pugwoo.dbhelper.impl.part;
 
 import com.pugwoo.dbhelper.DBHelperInterceptor;
-import com.pugwoo.dbhelper.IDBHelperDataService;
+import com.pugwoo.dbhelper.DBHelperDataService;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
@@ -721,8 +721,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
             List<?> relateValues;
             if (column.dataService() != void.class &&
-                    IDBHelperDataService.class.isAssignableFrom(column.dataService())) {
-                IDBHelperDataService dataService = (IDBHelperDataService)
+                    DBHelperDataService.class.isAssignableFrom(column.dataService())) {
+                DBHelperDataService dataService = (DBHelperDataService)
                         applicationContext.getBean(column.dataService());
                 List<Object> valuesList = new ArrayList<>(values);
                 relateValues = dataService.get(valuesList, column, clazz, remoteDOClass);
