@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.test.test_common;
 
 import com.pugwoo.dbhelper.DBHelper;
+import com.pugwoo.dbhelper.DBHelperSqlCallback;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
@@ -14,6 +15,27 @@ import java.util.UUID;
 public abstract class Test8Feature_SlowSqlCallback {
 
     public abstract DBHelper getDBHelper();
+
+    @Test
+    public void testLogCallback() {
+        getDBHelper().setSqlCallback(new DBHelperSqlCallback() {
+            @Override
+            public void beforeExecute(String sql, List<Object> args, int batchSize) {
+                System.out.println("==in before callback== sql:" + sql + "args:" + NimbleOrmJSON.toJson(args) + ",batchSize:" + batchSize);
+            }
+
+            @Override
+            public void afterExecute(long executeMsTime, String sql, List<Object> args, int batchSize) {
+                System.out.println("==in after callback== execMs:" + executeMsTime + "ms,"
+                        + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args) + ",batchSize:" + batchSize);
+            }
+        });
+
+        StudentDO stu1 = CommonOps.insertOne(getDBHelper(), UUID.randomUUID().toString().replace("-", ""));
+        StudentDO stu2 = getDBHelper().getOne(StudentDO.class, "where id=?", stu1.getId());
+        assert stu2.getName().equals(stu1.getName());
+        // 说明：这里手工检查一下输出
+    }
 
     @Test
     public void testSlowLog() {
