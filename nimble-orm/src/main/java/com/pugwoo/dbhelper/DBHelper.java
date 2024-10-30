@@ -156,6 +156,12 @@ public interface DBHelper {
 	void setFetchSize(int fetchSize);
 
 	/**
+	 * 设置SQL执行回调，可用于获取所有执行的sql和执行耗时
+	 * @param callback 执行回调的方法
+	 */
+	void setSqlCallback(DBHelperSqlCallback callback);
+
+	/**
 	 * 设置SQL执行超时回调，可用于自行实现将慢sql存放到db
 	 * @param callback 执行的回调方法
 	 */

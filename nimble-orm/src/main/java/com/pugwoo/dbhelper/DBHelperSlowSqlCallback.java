@@ -9,11 +9,12 @@ import java.util.List;
 public interface DBHelperSlowSqlCallback {
 
 	/**
-	 * 超时sql回调
-	 * @param executeMsTime 执行毫米数
+	 * 超时sql回调，可以通过SQLAssemblyUtils工具获得真正执行的SQL
+	 * @param executeMsTime 执行毫秒数
 	 * @param sql 执行sql
 	 * @param args 执行sql参数，如果没有则为空数组；另外如果是getRaw和executeRaw的map param参数，则传入的第一个元素是map
+	 * @param batchSize 当大于0时是批量操作模式，此时args一般只会给第一行
 	 */
-	void callback(long executeMsTime, String sql, List<Object> args);
+	void callback(long executeMsTime, String sql, List<Object> args, int batchSize);
 	
 }

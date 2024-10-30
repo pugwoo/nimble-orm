@@ -4,6 +4,7 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.DBHelperSlowSqlCallback;
+import com.pugwoo.dbhelper.DBHelperSqlCallback;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
@@ -38,11 +39,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
-	private DatabaseTypeEnum databaseType; // 数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化
+	/**数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化*/
+	private DatabaseTypeEnum databaseType;
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
-	protected Integer maxPageSize = null; // 每页最大个数，为null表示不限制
-	protected int fetchSize = 1000; // Stream流式获取数据的fetchSize大小，默认1000（一般jdbc各数据库驱动的默认值是10，过小了）
+	/**每页最大个数，为null表示不限制*/
+	protected Integer maxPageSize = null;
+	/**Stream流式获取数据的fetchSize大小，默认1000（一般jdbc各数据库驱动的默认值是10，过小了）*/
+	protected int fetchSize = 1000;
 
 	protected ApplicationContext applicationContext;
 
@@ -57,6 +61,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.LAZY_DETECT_DATABASE_TYPE, false);
 	}};
 
+	private DBHelperSqlCallback sqlCallback;
 	private DBHelperSlowSqlCallback slowSqlCallback;
 
     /**
@@ -67,6 +72,15 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
      * @param args 参数
      */
     protected void log(String sql, int batchSize, List<Object> args) {
+		try {
+			if (sqlCallback != null) {
+				sqlCallback.beforeExecute(sql, args, batchSize);
+			}
+		} catch (Throwable e) {
+			LOGGER.error("DBHelperSqlCallback call beforeExecute fail, sql:{}; params:{}",
+					sql, NimbleOrmJSON.toJson(args), e);
+		}
+
         if (batchSize > 0) { // 批量log
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 				if (LOGGER.isInfoEnabled()) {
@@ -128,6 +142,15 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
      */
     @SuppressWarnings("unchecked")
     protected void logSlow(long cost, String sql, int batchSize, List<Object> args) {
+		try {
+			if (sqlCallback != null) {
+				sqlCallback.afterExecute(cost, sql, args, batchSize);
+			}
+		} catch (Throwable e) {
+			LOGGER.error("DBHelperSqlCallback call afterExecute fail, sql:{}; params:{}",
+					sql, NimbleOrmJSON.toJson(args), e);
+		}
+
         if (cost > timeoutWarningValve) {
             String firstCallMethodStr = getFirstCallMethodStr();
             if (batchSize > 0) {
@@ -142,7 +165,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
                 try {
                     if (slowSqlCallback != null) {
-						slowSqlCallback.callback(cost, sql, args);
+						slowSqlCallback.callback(cost, sql, args, batchSize);
                     }
                 } catch (Throwable e) {
                     LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
@@ -158,7 +181,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 
                 try {
                     if (slowSqlCallback != null) {
-						slowSqlCallback.callback(cost, sql, args);
+						slowSqlCallback.callback(cost, sql, args, 0);
                     }
                 } catch (Throwable e) {
                     LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
@@ -319,6 +342,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	@Override
 	public void setSlowSqlWarningCallback(DBHelperSlowSqlCallback callback) {
 		this.slowSqlCallback = callback;
+	}
+
+	@Override
+	public void setSqlCallback(DBHelperSqlCallback callback) {
+		this.sqlCallback = callback;
 	}
 
 	@Override

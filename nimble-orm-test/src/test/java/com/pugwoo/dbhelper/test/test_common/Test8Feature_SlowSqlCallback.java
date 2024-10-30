@@ -20,7 +20,7 @@ public abstract class Test8Feature_SlowSqlCallback {
         final StringBuilder sb = new StringBuilder();
 
         getDBHelper().setSlowSqlWarningValve(1);
-        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args, batchSize) -> {
             System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
                     + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
             sb.append(sql);
@@ -42,7 +42,7 @@ public abstract class Test8Feature_SlowSqlCallback {
         final StringBuilder sb = new StringBuilder();
 
         getDBHelper().setSlowSqlWarningValve(1);
-        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args, batchSize) -> {
             if (true) {
                 throw new RuntimeException("just test");
             }
@@ -63,7 +63,7 @@ public abstract class Test8Feature_SlowSqlCallback {
         final StringBuilder sb = new StringBuilder();
 
         getDBHelper().setSlowSqlWarningValve(1);
-        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args, batchSize) -> {
             System.out.println("==in slow callback== execMs:" + executeMsTime + "ms,"
                     + "sql:" + sql + "args:" + NimbleOrmJSON.toJson(args));
             sb.append(sql);
@@ -97,7 +97,7 @@ public abstract class Test8Feature_SlowSqlCallback {
         final StringBuilder sb = new StringBuilder();
 
         getDBHelper().setSlowSqlWarningValve(1);
-        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args) -> {
+        getDBHelper().setSlowSqlWarningCallback((executeMsTime, sql, args, batchSize) -> {
             if (true) {
                 throw new RuntimeException("just test");
             }
