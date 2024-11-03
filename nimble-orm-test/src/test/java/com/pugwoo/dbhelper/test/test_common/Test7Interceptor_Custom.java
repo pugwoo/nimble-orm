@@ -153,6 +153,10 @@ public abstract class Test7Interceptor_Custom {
 		studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		studentDO.setAge(29);
 		assert getDBHelper().update(studentDO) == 1;
-		assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1 limit 12") >= 1;
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.MYSQL) {
+			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1 limit 12") >= 1; // 只有mysql支持limit (不过pg支持子查询limit，而mysql不支持)
+		} else {
+			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1") >= 1;
+		}
 	}
 }
