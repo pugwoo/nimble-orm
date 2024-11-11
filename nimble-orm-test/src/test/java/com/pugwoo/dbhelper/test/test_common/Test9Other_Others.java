@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.annotation.WhereColumn;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
@@ -403,6 +404,42 @@ public abstract class Test9Other_Others {
         whereSQL.limit(3, 3);
         all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all2.size() == 3;
+    }
+
+    @Data
+    public static class QueryStudentReq {
+        @WhereColumn("name = ?")
+        private String name;
+        @WhereColumn("age >= ?")
+        private Integer atLeastAge;
+        @WhereColumn("age <= ?")
+        private Integer maxAge;
+
+        @WhereColumn(value = "school_id=? and school_id=?", orGroupName = "schoolId") // 故意写2遍?
+        private Long schoolId1;
+        @WhereColumn(value = "school_id=?", orGroupName = "schoolId")
+        private Long schoolId2;
+    }
+
+    @Test
+    public void testWhereSQLAnnotation() {
+
+        QueryStudentReq req = new QueryStudentReq();
+        req.setName("tom");
+        req.setAtLeastAge(16);
+        // maxAge不设置，会自动被忽略
+        req.setSchoolId1(1L);
+        req.setSchoolId2(2L);
+
+        WhereSQL whereSQL = WhereSQL.buildFromAnnotation(req);
+        assert whereSQL.getSQL().trim()
+                .equalsIgnoreCase("WHERE name = ? AND age >= ? AND (school_id=? and school_id=? OR school_id=?)");
+        assert whereSQL.getParams().length == 5;
+        assert whereSQL.getParams()[0].equals("tom");
+        assert whereSQL.getParams()[1].equals(16);
+        assert whereSQL.getParams()[2].equals(1L);
+        assert whereSQL.getParams()[3].equals(1L);
+        assert whereSQL.getParams()[4].equals(2L);
     }
 
     @Test

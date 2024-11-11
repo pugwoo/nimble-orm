@@ -198,6 +198,30 @@ public class DOInfoReader {
 		}
 		return ClassInfoCache.getSqlColumnFields(clazz);
 	}
+
+
+	public static List<Field> getWhereColumns(Class<?> clazz) {
+		if (clazz == null) {
+			return new ArrayList<>(); // where column可以为空
+		}
+		List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
+		return getFieldsForWhereColumn(classLink);
+	}
+
+	private static List<Field> getFieldsForWhereColumn(List<Class<?>> classLink) {
+		List<Field> result = new ArrayList<>();
+		if(classLink == null || classLink.isEmpty()) {
+			return result;
+		}
+
+		List<Field> fieldList = new ArrayList<>();
+		for (int i = classLink.size() - 1; i >= 0; i--) {
+			Field[] fields = classLink.get(i).getDeclaredFields();
+			fieldList.addAll(InnerCommonUtils.filter(fields, o -> o.getAnnotation(WhereColumn.class) != null));
+		}
+
+		return fieldList;
+	}
 	
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
@@ -458,7 +482,7 @@ public class DOInfoReader {
 	 * 获得指定类及其父类的列表，子类在前，父类在后
 	 * @param clazz 要查询的类
 	 */
-	private static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
+	public static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
 		if (clazz == null) {
 			return new ArrayList<>();
 		}

@@ -1,8 +1,11 @@
 package com.pugwoo.dbhelper.sql;
 
+import com.pugwoo.dbhelper.annotation.WhereColumn;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -11,9 +14,12 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 辅助构造where子句及后续子句的工具
@@ -76,6 +82,84 @@ public class WhereSQL {
             this.condition = condition;
         }
         doAddParam(param);
+    }
+
+    /**
+     * 从带有@WhereColumn注解的dto对象中构造where子句
+     * @param dto 包含有@WhereColumn注解的dto
+     */
+    public static WhereSQL buildFromAnnotation(Object dto) {
+        if (dto == null) {
+            return new WhereSQL();
+        }
+
+        List<Field> fields = DOInfoReader.getWhereColumns(dto.getClass());
+        Map<String, List<Field>> fiedsMap = InnerCommonUtils.toMapList(fields,
+                o -> o.getAnnotation(WhereColumn.class).orGroupName().trim(), o -> o);
+
+        WhereSQL whereSQL = new WhereSQL();
+        for (Map.Entry<String, List<Field>> e : fiedsMap.entrySet()) {
+            WhereSQL subWhere = new WhereSQL();
+            boolean isAnd = e.getKey().isEmpty();
+            for (Field f : e.getValue()) {
+                Object value = DOInfoReader.getValue(f, dto);
+                if (!isParamValid(value)) {
+                    continue;
+                }
+                String sql = f.getAnnotation(WhereColumn.class).value();
+                int questionMarkCount = NamedParameterUtils.getQuestionMarkCount(sql);
+                if (questionMarkCount == 0) {
+                    if (isAnd) {
+                        subWhere.and(sql);
+                    } else {
+                        subWhere.or(sql);
+                    }
+                } else if (questionMarkCount == 1) {
+                    if (isAnd) {
+                        subWhere.and(sql, value);
+                    } else {
+                        subWhere.or(sql, value);
+                    }
+                } else {
+                    List<Object> params = timesParam(value, questionMarkCount);
+                    if (isAnd) {
+                        subWhere.and(sql, params.toArray());
+                    } else {
+                        subWhere.or(sql, params.toArray());
+                    }
+                }
+            }
+
+            whereSQL.and(subWhere);
+        }
+
+        return whereSQL;
+    }
+
+    private static List<Object> timesParam(Object value, int times) {
+        List<Object> params = new ArrayList<>();
+        for (int i = 0; i < times; i++) {
+            params.add(value);
+        }
+        return params;
+    }
+
+    private static boolean isParamValid(Object value) {
+        if (value == null) {
+            return false;
+        }
+
+        if (value instanceof String) {
+            return !((String) value).isEmpty();
+        }
+        if (value instanceof Map) {
+            return !((Map<?, ?>) value).isEmpty();
+        }
+        if (value instanceof Collection) {
+            return !((Collection<?>) value).isEmpty();
+        }
+
+        return true;
     }
 
     /**
