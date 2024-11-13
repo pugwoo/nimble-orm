@@ -345,7 +345,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 	private <T> void updateForDelete(T t) throws NullKeyValueException {
 		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, false, null);
+		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, false, "");
 		if (sql != null) {
 			// 没有in (?)，因此用jdbcExecuteUpdate
 			jdbcExecuteUpdate(sql, values.toArray()); // ignore update result

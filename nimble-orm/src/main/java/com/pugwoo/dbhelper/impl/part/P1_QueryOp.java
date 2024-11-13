@@ -58,7 +58,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> PageData<T> getPage(final Class<T> clazz, int page, int pageSize) {
-        return getPage(clazz, page, pageSize, null);
+        return getPage(clazz, page, pageSize, "");
     }
 
     @Override
@@ -138,12 +138,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> PageData<T> getPageWithoutCount(final Class<T> clazz, int page, int pageSize) {
-        return getPageWithoutCount(clazz, page, pageSize, null);
+        return getPageWithoutCount(clazz, page, pageSize, "");
     }
 
     @Override
     public <T> List<T> getAll(final Class<T> clazz) {
-        return _getPage(clazz, true, false, false, null, null, null).getData();
+        return _getPage(clazz, true, false, false, null, null, "").getData();
     }
 
     @Override
@@ -223,7 +223,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> T getOne(Class<T> clazz) {
-        List<T> list = _getPage(clazz, true, false, false, 0, 1, null).getData();
+        List<T> list = _getPage(clazz, true, false, false, 0, 1, "").getData();
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 

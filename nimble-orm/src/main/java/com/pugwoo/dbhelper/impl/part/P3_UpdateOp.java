@@ -74,7 +74,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 	@Override
 	public <T> int update(T t) throws NullKeyValueException {
-		return _update(t, false, true, null);
+		return _update(t, false, true, "");
 	}
 	
 	@Override
@@ -84,7 +84,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 	
 	@Override
 	public <T> int updateWithNull(T t) throws NullKeyValueException {
-		return _update(t, true, true, null);
+		return _update(t, true, true, "");
 	}
 	
 	@Override
@@ -102,7 +102,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			return 0;
 		}
 		if (list.size() == 1) {
-			return _update(list.iterator().next(), false, false, null);
+			return _update(list.iterator().next(), false, false, "");
 		}
 
 		boolean isSameClass = SQLAssert.isAllSameClass(list);
@@ -122,7 +122,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 				int rows = 0;
 				for (T t : list) {
 					if (t != null) {
-						rows += _update(t, false, false, null);
+						rows += _update(t, false, false, "");
 					}
 				}
 				return rows;
@@ -206,7 +206,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			for(T t : list) {
 				if(t != null) {
 					try {
-						rows += _update(t, false, false, null);
+						rows += _update(t, false, false, "");
 					} catch (CasVersionNotMatchException e) {
 						casUpdateFailList.add(t);
 						isThrowCasVersionNotMatchException = true;
@@ -336,7 +336,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		
 		List<Object> values;
 
-		String sql = SQLUtils.getUpdateAllSQL(getDatabaseType(), clazz, setSql, whereSql, null);
+		String sql = SQLUtils.getUpdateAllSQL(getDatabaseType(), clazz, setSql, whereSql, "");
 		
 		List<String> customsSets = new ArrayList<>();
 		List<Object> customsParams = new ArrayList<>();
@@ -363,7 +363,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			values = new ArrayList<>(argsList);
 		}
 		
-		sql = SQLUtils.getUpdateAllSQL(getDatabaseType(), clazz, setSql, whereSql, null);
+		sql = SQLUtils.getUpdateAllSQL(getDatabaseType(), clazz, setSql, whereSql, "");
 
 		return namedJdbcExecuteUpdate(sql, values.toArray());
 	}
