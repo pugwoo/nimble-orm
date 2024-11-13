@@ -11,6 +11,7 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
+import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
@@ -47,6 +48,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         int offset = (page - 1) * pageSize;
         return _getPage(clazz, true,false, true, offset, pageSize, postSql, args);
+    }
+
+    @Override
+    public <T> PageData<T> getPage(Class<T> clazz, int page, int pageSize, WhereSQL whereSQL) {
+        return whereSQL == null ? getPage(clazz, page, pageSize)
+                : getPage(clazz, page, pageSize, whereSQL.getSQL(), whereSQL.getParams());
     }
 
     @Override
@@ -106,6 +113,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public <T> long getCount(Class<T> clazz, WhereSQL whereSQL) {
+        return whereSQL == null ? getCount(clazz) : getCount(clazz, whereSQL.getSQL(), whereSQL.getParams());
+    }
+
+    @Override
     public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize,
                                                String postSql, Object... args) {
         assertPage(page);
@@ -116,6 +128,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         int offset = (page - 1) * pageSize;
         return _getPage(clazz, true, false, false, offset, pageSize, postSql, args);
+    }
+
+    @Override
+    public <T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize, WhereSQL whereSQL) {
+        return whereSQL == null ? getPageWithoutCount(clazz, page, pageSize)
+                : getPageWithoutCount(clazz, page, pageSize, whereSQL.getSQL(), whereSQL.getParams());
     }
 
     @Override
@@ -182,8 +200,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    public <T> Stream<T> getAllForStream(Class<T> clazz, WhereSQL whereSQL) {
+        return whereSQL == null ? getAllForStream(clazz) : getAllForStream(clazz, whereSQL.getSQL(), whereSQL.getParams());
+    }
+
+    @Override
     public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
         return _getPage(clazz, true,false, false, null, null, postSql, args).getData();
+    }
+
+    @Override
+    public <T> List<T> getAll(Class<T> clazz, WhereSQL whereSQL) {
+        return whereSQL == null ? getAll(clazz) : getAll(clazz, whereSQL.getSQL(), whereSQL.getParams());
     }
 
     @Override
@@ -204,6 +232,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list = _getPage(clazz, true, false, false,
                 0, 1, postSql, args).getData();
         return list == null || list.isEmpty() ? null : list.get(0);
+    }
+
+    @Override
+    public <T> T getOne(Class<T> clazz, WhereSQL whereSQL) {
+        return whereSQL == null ? getOne(clazz) : getOne(clazz, whereSQL.getSQL(), whereSQL.getParams());
     }
 
     @Override
@@ -522,6 +555,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> boolean isExist(Class<T> clazz, String postSql, Object... args) {
         return getOne(clazz, postSql, args) != null;
+    }
+
+    @Override
+    public <T> boolean isExist(Class<T> clazz, WhereSQL whereSQL) {
+        return whereSQL == null ? isExist(clazz, "") : isExist(clazz, whereSQL.getSQL(), whereSQL.getParams());
     }
 
     @Override

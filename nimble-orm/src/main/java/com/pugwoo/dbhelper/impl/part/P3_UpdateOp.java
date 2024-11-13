@@ -10,6 +10,7 @@ import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
+import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
@@ -366,5 +367,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 		return namedJdbcExecuteUpdate(sql, values.toArray());
 	}
-	
+
+	@Override
+	public <T> int updateAll(Class<T> clazz, String setSql, WhereSQL whereSQL) {
+		return whereSQL == null ? updateAll(clazz, setSql, "")
+				: updateAll(clazz, setSql, whereSQL.getSQL(), whereSQL.getParams());
+	}
 }

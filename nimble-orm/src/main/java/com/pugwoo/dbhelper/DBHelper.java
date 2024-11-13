@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.sql.WhereSQL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,6 +208,17 @@ public interface DBHelper {
 	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize, String postSql, Object... args);
 
 	/**
+	 * 查询列表，postSql可以带查询条件<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param page 从1开始
+	 * @param pageSize 每页查询个数
+	 * @param whereSQL where及后续sql和参数
+	 * @return 返回的data不会是null
+	 */
+	<T> PageData<T> getPage(Class<T> clazz, int page, int pageSize, WhereSQL whereSQL);
+
+	/**
 	 * 计算总数<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 【-支持@JoinTable-】
@@ -223,6 +235,15 @@ public interface DBHelper {
 	 * @return 总数
 	 */
 	<T> long getCount(Class<T> clazz, String postSql, Object... args);
+
+	/**
+	 * 计算总数<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param whereSQL where及后续sql和参数
+	 * @return 总数
+	 */
+	<T> long getCount(Class<T> clazz, WhereSQL whereSQL);
 
 	/**
 	 * 查询列表，没有查询条件；不查询总数<br>
@@ -244,6 +265,17 @@ public interface DBHelper {
 	 * @return 返回的data不会是null
 	 */
 	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize, String postSql, Object... args);
+
+	/**
+	 * 查询列表，postSql可以带查询条件；不查询总数<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param page 从1开始
+	 * @param pageSize 每页查询个数
+	 * @param whereSQL where及后续sql和参数
+	 * @return 返回的data不会是null
+	 */
+	<T> PageData<T> getPageWithoutCount(Class<T> clazz, int page, int pageSize, WhereSQL whereSQL);
 
 	/**
 	 * 查询列表，查询所有记录，如果数据量大请慎用<br>
@@ -274,6 +306,15 @@ public interface DBHelper {
 	<T> List<T> getAll(Class<T> clazz, String postSql, Object... args);
 
 	/**
+	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param whereSQL where及后续sql和参数
+	 * @return 返回不会是null
+	 */
+	<T> List<T> getAll(Class<T> clazz, WhereSQL whereSQL);
+
+	/**
 	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。以Stream形式返回<br>
 	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
 	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
@@ -286,12 +327,25 @@ public interface DBHelper {
 	<T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args);
 
 	/**
+	 * 查询列表，查询所有记录，postSql指定查询where及order by limit等后续语句。以Stream形式返回<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 *  说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 【-支持@JoinTable-】
+	 * @param whereSQL where及后续sql和参数
+	 * @return 返回不会是null【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
+	 */
+	<T> Stream<T> getAllForStream(Class<T> clazz, WhereSQL whereSQL);
+
+	/**
 	 * 查询列表，但只查询主键出来，postSql指定查询where及order by limit等后续语句。<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 【-支持@JoinTable-】
 	 * @param postSql where及后续语句，可包含order by,group by,limit等语句
 	 * @return 返回不会是null
 	 */
+	@Deprecated
 	<T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args);
 
 	/**
@@ -311,6 +365,15 @@ public interface DBHelper {
 	 * @return 如果不存在则返回null
 	 */
 	<T> T getOne(Class<T> clazz, String postSql, Object... args);
+
+	/**
+	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
+	 * 【会自动处理软删除记录】
+	 * @param clazz 查询的DO类【-支持@JoinTable-】
+	 * @param whereSQL where及后续sql和参数
+	 * @return 如果不存在则返回null
+	 */
+	<T> T getOne(Class<T> clazz, WhereSQL whereSQL);
 
 	/**
 	 * 执行自行指定的SQL查询语句
@@ -396,6 +459,14 @@ public interface DBHelper {
 	<T> boolean isExist(Class<T> clazz, String postSql, Object... args);
 
 	/**
+	 * 是否出现至少一条记录
+	 * @param clazz 查询的DO类
+	 * @param whereSQL where及后续sql和参数
+	 * @return 如果存在则返回true，否则返回false
+	 */
+	<T> boolean isExist(Class<T> clazz, WhereSQL whereSQL);
+
+	/**
 	 * 是否出现至少N条记录(含N条)
 	 * @param atLeastCounts 至少有N条记录（isExist方法等级于atLeastCounts=1）
 	 * @param clazz 查询的DO类
@@ -403,6 +474,7 @@ public interface DBHelper {
 	 * @param args postSql中的参数列表
 	 * @return 如果存在则返回true，否则返回false
 	 */
+	@Deprecated
 	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz, String postSql, Object... args);
 
 	/**
@@ -568,6 +640,17 @@ public interface DBHelper {
 	<T> int updateAll(Class<T> clazz, String setSql, String whereSql, Object... args);
 
 	/**
+	 * 自定义更新多行记录，会自动去掉已软删除的行。
+	 * 【重要更新 since 1.0.0】该方法修改的记录，不会再调用afterUpdate方法，如果需要获得被修改的行记录，请考虑使用canal方案。
+	 *
+	 * @param clazz 要更新的DO类
+	 * @param setSql update sql中的set sql子句，可以包括set关键字也可以不包括
+	 * @param whereSQL where及后续sql和参数
+	 * @return 实际修改条数
+	 */
+	<T> int updateAll(Class<T> clazz, String setSql, WhereSQL whereSQL);
+
+	/**
 	 * 批量更新数据库记录，返回数据库实际修改条数。【只更新非null字段，需要更新null字段请使用updateWithNull方法】<br>
 	 * <br>
 	 * 当符合以下条件时，更新数据将转换成真正的批量更新，性能可提升100倍左右：<br>
@@ -631,6 +714,15 @@ public interface DBHelper {
 	<T> int delete(Class<T> clazz, String postSql, Object... args);
 
 	/**
+	 * 自定义条件删除数据，该操作【会】自动使用软删除标记。
+	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
+	 * @param clazz 必须有默认构造方法
+	 * @param whereSQL where及后续sql和参数
+	 * @return 实际删除的条数
+	 */
+	<T> int delete(Class<T> clazz, WhereSQL whereSQL);
+
+	/**
 	 * 自定义条件删除数据（无论是否注解了软删除字段）。
 	 * <br>
 	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
@@ -641,6 +733,17 @@ public interface DBHelper {
 	 * @return 实际删除的条数
 	 */
 	<T> int deleteHard(Class<T> clazz, String postSql, Object... args);
+
+	/**
+	 * 自定义条件删除数据（无论是否注解了软删除字段）。
+	 * <br>
+	 * 对于使用了拦截器和deleteValueScript的场景，该方法的实现是先根据条件查出数据，再批量删除，以便拦截器可以记录下实际被删的数据，此时删除性能可能比较差，请权衡使用。
+	 *
+	 * @param clazz 必须有默认构造方法
+	 * @param whereSQL where及后续sql和参数
+	 * @return 实际删除的条数
+	 */
+	<T> int deleteHard(Class<T> clazz, WhereSQL whereSQL);
 
 	/**
 	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
