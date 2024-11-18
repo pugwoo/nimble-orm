@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
+import com.pugwoo.dbhelper.utils.SpringContext;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -106,26 +107,46 @@ public class WhereSQL {
                 if (!isParamValid(value)) {
                     continue;
                 }
-                String sql = f.getAnnotation(WhereColumn.class).value();
-                int questionMarkCount = NamedParameterUtils.getQuestionMarkCount(sql);
-                if (questionMarkCount == 0) {
-                    if (isAnd) {
-                        subWhere.and(sql);
+                WhereColumn whereColumn = f.getAnnotation(WhereColumn.class);
+                Class<?> customerWhereProvider = whereColumn.customWhereProvider();
+                if (customerWhereProvider != void.class) {
+                    if (CustomWhereProvider.class.isAssignableFrom(customerWhereProvider)) {
+                        CustomWhereProvider bean = (CustomWhereProvider) SpringContext.getBean(customerWhereProvider);
+                        if (bean == null) {
+                            LOGGER.error("CustomWhereProvider bean {} is null", customerWhereProvider);
+                        } else {
+                            WhereSQL wSQL = bean.provide(dto, whereColumn, f, null);
+                            if (isAnd) {
+                                subWhere.and(wSQL);
+                            } else {
+                                subWhere.or(wSQL);
+                            }
+                        }
                     } else {
-                        subWhere.or(sql);
-                    }
-                } else if (questionMarkCount == 1) {
-                    if (isAnd) {
-                        subWhere.and(sql, value);
-                    } else {
-                        subWhere.or(sql, value);
+                        LOGGER.error("CustomWhereProvider {} is not a subclass of CustomWhereProvider", customerWhereProvider);
                     }
                 } else {
-                    List<Object> params = timesParam(value, questionMarkCount);
-                    if (isAnd) {
-                        subWhere.and(sql, params.toArray());
+                    String sql = whereColumn.value();
+                    int questionMarkCount = NamedParameterUtils.getQuestionMarkCount(sql);
+                    if (questionMarkCount == 0) {
+                        if (isAnd) {
+                            subWhere.and(sql);
+                        } else {
+                            subWhere.or(sql);
+                        }
+                    } else if (questionMarkCount == 1) {
+                        if (isAnd) {
+                            subWhere.and(sql, value);
+                        } else {
+                            subWhere.or(sql, value);
+                        }
                     } else {
-                        subWhere.or(sql, params.toArray());
+                        List<Object> params = timesParam(value, questionMarkCount);
+                        if (isAnd) {
+                            subWhere.and(sql, params.toArray());
+                        } else {
+                            subWhere.or(sql, params.toArray());
+                        }
                     }
                 }
             }

@@ -31,6 +31,7 @@ import com.pugwoo.dbhelper.test.entity.AreaDO;
 import com.pugwoo.dbhelper.test.entity.AreaLocationDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.TypesDO;
+import com.pugwoo.dbhelper.test.service.MyCustomWhereProvider;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -410,7 +411,8 @@ public abstract class Test9Other_Others {
     public static class QueryStudentReq {
         @WhereColumn("name = ?")
         private String name;
-        @WhereColumn("age >= ?")
+        // @WhereColumn("age >= ?")
+        @WhereColumn(value = "", customWhereProvider = MyCustomWhereProvider.class) // 使用自定义提供的条件
         private Integer atLeastAge;
         @WhereColumn("age <= ?")
         private Integer maxAge;

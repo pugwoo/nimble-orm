@@ -30,6 +30,6 @@ public @interface WhereColumn {
     /**
      * 自定义where条件提供者，实现CustomWhereProvider接口，将从Spring容器中拿到
      */
-    // Class<?> customWhereProvider() default void.class; // TODO 待实现
+    Class<?> customWhereProvider() default void.class;
 
 }

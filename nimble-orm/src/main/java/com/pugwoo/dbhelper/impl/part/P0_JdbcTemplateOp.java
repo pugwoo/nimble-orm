@@ -13,6 +13,7 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
+import com.pugwoo.dbhelper.utils.SpringContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -27,7 +28,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -325,6 +328,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	@Override
 	public void setApplicationContext(@Nullable ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
+		SpringContext.setApplicationContext(applicationContext);
 	}
 
 	@Override
