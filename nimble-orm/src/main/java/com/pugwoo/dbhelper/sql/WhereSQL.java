@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -94,20 +95,37 @@ public class WhereSQL {
             return new WhereSQL();
         }
 
-        List<Field> fields = DOInfoReader.getWhereColumns(dto.getClass());
-        Map<String, List<Field>> fiedsMap = InnerCommonUtils.toMapList(fields,
-                o -> o.getAnnotation(WhereColumn.class).orGroupName().trim(), o -> o);
+        List<Object> fields = DOInfoReader.getWhereColumnsFieldOrMethod(dto.getClass());
+        Map<String, List<Object>> fiedsMap = InnerCommonUtils.toMapList(fields, o -> {
+                       if (o instanceof Field) {
+                           return ((Field)o).getAnnotation(WhereColumn.class).orGroupName().trim();
+                       } else {
+                           return ((Method)o).getAnnotation(WhereColumn.class).orGroupName().trim();
+                       }}, o -> o);
 
         WhereSQL whereSQL = new WhereSQL();
-        for (Map.Entry<String, List<Field>> e : fiedsMap.entrySet()) {
+        for (Map.Entry<String, List<Object>> e : fiedsMap.entrySet()) {
             WhereSQL subWhere = new WhereSQL();
             boolean isAnd = e.getKey().isEmpty();
-            for (Field f : e.getValue()) {
-                Object value = DOInfoReader.getValue(f, dto);
+            for (Object f : e.getValue()) {
+                Object value = null;
+                WhereColumn whereColumn = null;
+
+                if (f instanceof Field) {
+                    value = DOInfoReader.getValue((Field) f, dto);
+                    whereColumn = ((Field)f).getAnnotation(WhereColumn.class);
+                } else {
+                    try {
+                        whereColumn = ((Method) f).getAnnotation(WhereColumn.class);
+                        value = ((Method) f).invoke(dto);
+                    } catch (Exception e1) {
+                        throw new RuntimeException(e1);
+                    }
+                }
+
                 if (!isParamValid(value)) {
                     continue;
                 }
-                WhereColumn whereColumn = f.getAnnotation(WhereColumn.class);
                 Class<?> customerWhereProvider = whereColumn.customWhereProvider();
                 if (customerWhereProvider != void.class) {
                     if (CustomWhereProvider.class.isAssignableFrom(customerWhereProvider)) {
@@ -115,7 +133,12 @@ public class WhereSQL {
                         if (bean == null) {
                             LOGGER.error("CustomWhereProvider bean {} is null", customerWhereProvider);
                         } else {
-                            WhereSQL wSQL = bean.provide(dto, whereColumn, f, null);
+                            WhereSQL wSQL = null;
+                            if (f instanceof Field) {
+                                wSQL = bean.provide(dto, whereColumn, (Field) f, null);
+                            } else {
+                                wSQL = bean.provide(dto, whereColumn, null, (Method) f);
+                            }
                             if (isAnd) {
                                 subWhere.and(wSQL);
                             } else {
@@ -126,26 +149,34 @@ public class WhereSQL {
                         LOGGER.error("CustomWhereProvider {} is not a subclass of CustomWhereProvider", customerWhereProvider);
                     }
                 } else {
-                    String sql = whereColumn.value();
-                    int questionMarkCount = NamedParameterUtils.getQuestionMarkCount(sql);
-                    if (questionMarkCount == 0) {
+                    if (value instanceof WhereSQL) { // 因为WhereColumn可能注解在方法上，当方法返回的是WhereSQL对象时，直接使用
                         if (isAnd) {
-                            subWhere.and(sql);
+                            subWhere.and((WhereSQL) value);
                         } else {
-                            subWhere.or(sql);
-                        }
-                    } else if (questionMarkCount == 1) {
-                        if (isAnd) {
-                            subWhere.and(sql, value);
-                        } else {
-                            subWhere.or(sql, value);
+                            subWhere.or((WhereSQL) value);
                         }
                     } else {
-                        List<Object> params = timesParam(value, questionMarkCount);
-                        if (isAnd) {
-                            subWhere.and(sql, params.toArray());
+                        String sql = whereColumn.value();
+                        int questionMarkCount = NamedParameterUtils.getQuestionMarkCount(sql);
+                        if (questionMarkCount == 0) {
+                            if (isAnd) {
+                                subWhere.and(sql);
+                            } else {
+                                subWhere.or(sql);
+                            }
+                        } else if (questionMarkCount == 1) {
+                            if (isAnd) {
+                                subWhere.and(sql, value);
+                            } else {
+                                subWhere.or(sql, value);
+                            }
                         } else {
-                            subWhere.or(sql, params.toArray());
+                            List<Object> params = timesParam(value, questionMarkCount);
+                            if (isAnd) {
+                                subWhere.and(sql, params.toArray());
+                            } else {
+                                subWhere.or(sql, params.toArray());
+                            }
                         }
                     }
                 }

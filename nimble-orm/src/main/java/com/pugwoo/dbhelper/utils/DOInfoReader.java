@@ -200,24 +200,35 @@ public class DOInfoReader {
 	}
 
 
-	public static List<Field> getWhereColumns(Class<?> clazz) {
+	public static List<Object> getWhereColumnsFieldOrMethod(Class<?> clazz) {
 		if (clazz == null) {
 			return new ArrayList<>(); // where column可以为空
 		}
 		List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
-		return getFieldsForWhereColumn(classLink);
+		return getFieldsOrMethodsForWhereColumn(classLink);
 	}
 
-	private static List<Field> getFieldsForWhereColumn(List<Class<?>> classLink) {
-		List<Field> result = new ArrayList<>();
+	private static List<Object> getFieldsOrMethodsForWhereColumn(List<Class<?>> classLink) {
+		List<Object> result = new ArrayList<>();
 		if(classLink == null || classLink.isEmpty()) {
 			return result;
 		}
 
-		List<Field> fieldList = new ArrayList<>();
+		List<Object> fieldList = new ArrayList<>();
 		for (int i = classLink.size() - 1; i >= 0; i--) {
 			Field[] fields = classLink.get(i).getDeclaredFields();
 			fieldList.addAll(InnerCommonUtils.filter(fields, o -> o.getAnnotation(WhereColumn.class) != null));
+			Method[] methods = classLink.get(i).getMethods();
+			for (Method method : methods) {
+				if (method.isAnnotationPresent(WhereColumn.class)) {
+					// 检查参数个数为0且有返回值
+					if (method.getParameterCount() == 0 && !method.getReturnType().equals(Void.TYPE)) {
+						fieldList.add(method);
+					} else {
+						LOGGER.error("@WhereColumn annotation method:{} is ignored because it is not zero parameter and with return type", method);
+					}
+				}
+			}
 		}
 
 		return fieldList;

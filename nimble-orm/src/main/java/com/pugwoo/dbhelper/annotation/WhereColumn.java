@@ -11,8 +11,10 @@ import java.lang.annotation.Target;
  * 1) String类型，当不为null且isEmpty为false时生效
  * 2) Map和Collection类型，当不为null且包含至少1个元素时生效
  * 3) 其它类型不为null时生效
+ * <br>
+ * 特别说明：注解在方法上时，方法必须无参数且有返回类型
  */
-@Target({ElementType.FIELD}) // TODO 后续支持注解在方法上
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface WhereColumn {
 

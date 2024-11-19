@@ -419,8 +419,20 @@ public abstract class Test9Other_Others {
 
         @WhereColumn(value = "school_id=? and school_id=?", orGroupName = "schoolId") // 故意写2遍?
         private Long schoolId1;
-        @WhereColumn(value = "school_id=?", orGroupName = "schoolId")
+
         private Long schoolId2;
+
+        @WhereColumn(value = "school_id=?", orGroupName = "schoolId")
+        public Long getSchoolId2() {
+            return schoolId2;
+        }
+
+        @WhereColumn(value = "", orGroupName = "schoolId")
+        public WhereSQL getSomething() {
+            WhereSQL whereSQL = new WhereSQL();
+            whereSQL.and("province=?", "gd");
+            return whereSQL;
+        }
     }
 
     @Test
