@@ -427,7 +427,7 @@ public abstract class Test9Other_Others {
             return schoolId2;
         }
 
-        @WhereColumn(value = "", orGroupName = "schoolId")
+        @WhereColumn(value = "")
         public WhereSQL getSomething() {
             WhereSQL whereSQL = new WhereSQL();
             whereSQL.and("province=?", "gd");
@@ -446,14 +446,16 @@ public abstract class Test9Other_Others {
         req.setSchoolId2(2L);
 
         WhereSQL whereSQL = WhereSQL.buildFromAnnotation(req);
-        assert whereSQL.getSQL().trim()
-                .equalsIgnoreCase("WHERE name = ? AND age >= ? AND (school_id=? and school_id=? OR school_id=?)");
-        assert whereSQL.getParams().length == 5;
+        String sql = whereSQL.getSQL().trim();
+        System.out.println(sql);
+        assert sql.equalsIgnoreCase("WHERE name = ? AND age >= ? AND province=? AND (school_id=? and school_id=? OR school_id=?)");
+        assert whereSQL.getParams().length == 6;
         assert whereSQL.getParams()[0].equals("tom");
         assert whereSQL.getParams()[1].equals(16);
-        assert whereSQL.getParams()[2].equals(1L);
+        assert whereSQL.getParams()[2].equals("gd");
         assert whereSQL.getParams()[3].equals(1L);
-        assert whereSQL.getParams()[4].equals(2L);
+        assert whereSQL.getParams()[4].equals(1L);
+        assert whereSQL.getParams()[5].equals(2L);
     }
 
     @Test
