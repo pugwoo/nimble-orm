@@ -6,6 +6,7 @@ v1.7.0 - [refactor]【升级须知】IDBHelperDataService名称变更为DBHelper
        - [add] 支持创建DBHelper对象时，由用户指定数据库类型，这样可以节省启动时连接数据库的时间
        - [deprecated] 标识废弃isExistAtLeast和getAllKey方法
        - [enhance] lazy确定数据库类型默认值由false改为true，不会因为数据库原因导致应用起不来
+       - [add] WhereSQL和WhereSQLForNamedParam增加page()方法
 
 2024年10月25日
 v1.6.8 - [enhance] 支持自动降级处理mysql max package太小的限制

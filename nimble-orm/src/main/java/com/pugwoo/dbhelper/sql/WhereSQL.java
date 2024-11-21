@@ -524,6 +524,15 @@ public class WhereSQL {
         return this;
     }
 
+    /**
+     * 分页，page从1开始
+     * @param page 从1开始
+     * @param pageSize 每页个数
+     */
+    public WhereSQL page(int page, int pageSize) {
+        return limit(pageSize * (page - 1), pageSize);
+    }
+
     private void doAddParam(Object[] param) {
         if (param != null && param.length > 0) {
             if (this.params == null) {
