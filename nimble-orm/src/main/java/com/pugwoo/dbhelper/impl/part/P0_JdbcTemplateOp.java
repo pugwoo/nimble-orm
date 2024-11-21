@@ -294,6 +294,19 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 	}
 
+	public void setJdbcTemplate(JdbcTemplate jdbcTemplate, DatabaseTypeEnum databaseType) {
+		if (databaseType == null) {
+			setJdbcTemplate(jdbcTemplate);
+		} else {
+			if (jdbcTemplate == null) {
+				return;
+			}
+			this.jdbcTemplate = jdbcTemplate;
+			this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+			this.databaseType = databaseType;
+		}
+	}
+
 	/**
 	 * 可选，非必须
 	 * since 1.2
