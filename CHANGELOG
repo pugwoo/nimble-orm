@@ -3,6 +3,7 @@ v1.7.0 - [refactor]【升级须知】IDBHelperDataService名称变更为DBHelper
        - [add] 增加DBHelperSqlCallback，可以获得执行的所有sql
        - [add] 增加@WhereColumn注解，调用WhereSQL.buildFromAnnotation可以生成WhereSQL
        - [add] DBHelper对于所有接受String postSql, Object... param参数的方法，都增加支持WhereSQL传参
+       - [add] 支持创建DBHelper对象时，由用户指定数据库类型，这样可以节省启动时连接数据库的时间
        - [deprecated] 标识废弃isExistAtLeast和getAllKey方法
 
 2024年10月25日
