@@ -61,7 +61,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST, false);
 		put(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION, true);
 		put(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL, true);
-		put(FeatureEnum.LAZY_DETECT_DATABASE_TYPE, false);
+		put(FeatureEnum.LAZY_DETECT_DATABASE_TYPE, true);
 	}};
 
 	private DBHelperSqlCallback sqlCallback;
