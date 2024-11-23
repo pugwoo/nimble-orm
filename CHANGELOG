@@ -1,3 +1,4 @@
+2024年11月23日
 v1.7.0 - [refactor]【升级须知】IDBHelperDataService名称变更为DBHelperDataService; IDBHelperSlowSqlCallback变更为DBHelperSlowSqlCallback
                     DBHelperSlowSqlCallback的callback参数增加int batchSize参数，可以获得批量操作的数据量
        - [add] 增加DBHelperSqlCallback，可以获得执行的所有sql
