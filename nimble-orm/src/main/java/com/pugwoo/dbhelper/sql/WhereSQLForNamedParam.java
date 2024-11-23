@@ -372,6 +372,15 @@ public class WhereSQLForNamedParam {
         return this;
     }
 
+    /**
+     * 分页，page从1开始
+     * @param page 从1开始
+     * @param pageSize 每页个数
+     */
+    public WhereSQLForNamedParam page(int page, int pageSize) {
+        return limit(pageSize * (page - 1), pageSize);
+    }
+
     private void doAddParam(Map<String, ?> paramMap) {
         if (paramMap != null) {
             if (this.paramMap == null) {

@@ -131,8 +131,8 @@ public abstract class Test7Interceptor_Custom {
 			assert rows == 1;
 		}
 
-		insertBatch = CommonOps.insertBatch(getDBHelper(),20);
-		rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1);
+		CommonOps.insertBatch(getDBHelper(),20);
+		rows = getDBHelper().delete(StudentDO.class, "where 1=? limit 20", 1);
 
 		if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
 			assert rows >= 20;
@@ -145,14 +145,18 @@ public abstract class Test7Interceptor_Custom {
 	public void testCustomsUpdateDelete() {
 		StudentDO studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		studentDO.setAge(29);
-		getDBHelper().update(studentDO);
+		assert getDBHelper().update(studentDO) == 1;
 
-		getDBHelper().updateCustom(studentDO, "age=age+1");
-		getDBHelper().delete(StudentDO.class, "where 1=1");
+		assert getDBHelper().updateCustom(studentDO, "age=age+1") == 1;
+		assert getDBHelper().delete(StudentDO.class, "where 1=1 limit 15") >= 1;
 		
 		studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		studentDO.setAge(29);
-		getDBHelper().update(studentDO);
-		getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1");
+		assert getDBHelper().update(studentDO) == 1;
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.MYSQL) {
+			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1 limit 12") >= 1; // 只有mysql支持limit (不过pg支持子查询limit，而mysql不支持)
+		} else {
+			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1") >= 1;
+		}
 	}
 }

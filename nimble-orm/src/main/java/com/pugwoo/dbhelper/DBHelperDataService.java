@@ -9,7 +9,7 @@ import java.util.List;
  *
  * @author pugwoo
  */
-public interface IDBHelperDataService {
+public interface DBHelperDataService {
 
 	/**
 	 * 关联查询RelatedColumn的外部数据服务接口。<br>

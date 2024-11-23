@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.annotation.WhereColumn;
 import com.pugwoo.dbhelper.cache.ClassInfoCache;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.enums.JoinTypeEnum;
@@ -30,6 +31,7 @@ import com.pugwoo.dbhelper.test.entity.AreaDO;
 import com.pugwoo.dbhelper.test.entity.AreaLocationDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.entity.TypesDO;
+import com.pugwoo.dbhelper.test.service.MyCustomWhereProvider;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.AreaVO;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
@@ -403,6 +405,57 @@ public abstract class Test9Other_Others {
         whereSQL.limit(3, 3);
         all2 = getDBHelper().getAll(StudentForGroupDO.class, whereSQL.getSQL(), whereSQL.getParams());
         assert all2.size() == 3;
+    }
+
+    @Data
+    public static class QueryStudentReq {
+        @WhereColumn("name = ?")
+        private String name;
+        // @WhereColumn("age >= ?")
+        @WhereColumn(value = "", customWhereProvider = MyCustomWhereProvider.class) // 使用自定义提供的条件
+        private Integer atLeastAge;
+        @WhereColumn("age <= ?")
+        private Integer maxAge;
+
+        @WhereColumn(value = "school_id=? and school_id=?", orGroupName = "schoolId") // 故意写2遍?
+        private Long schoolId1;
+
+        private Long schoolId2;
+
+        @WhereColumn(value = "school_id=?", orGroupName = "schoolId")
+        public Long getSchoolId2() {
+            return schoolId2;
+        }
+
+        @WhereColumn(value = "")
+        public WhereSQL getSomething() {
+            WhereSQL whereSQL = new WhereSQL();
+            whereSQL.and("province=?", "gd");
+            return whereSQL;
+        }
+    }
+
+    @Test
+    public void testWhereSQLAnnotation() {
+
+        QueryStudentReq req = new QueryStudentReq();
+        req.setName("tom");
+        req.setAtLeastAge(16);
+        // maxAge不设置，会自动被忽略
+        req.setSchoolId1(1L);
+        req.setSchoolId2(2L);
+
+        WhereSQL whereSQL = WhereSQL.buildFromAnnotation(req);
+        String sql = whereSQL.getSQL().trim();
+        System.out.println(sql);
+        assert sql.equalsIgnoreCase("WHERE name = ? AND age >= ? AND province=? AND (school_id=? and school_id=? OR school_id=?)");
+        assert whereSQL.getParams().length == 6;
+        assert whereSQL.getParams()[0].equals("tom");
+        assert whereSQL.getParams()[1].equals(16);
+        assert whereSQL.getParams()[2].equals("gd");
+        assert whereSQL.getParams()[3].equals(1L);
+        assert whereSQL.getParams()[4].equals(1L);
+        assert whereSQL.getParams()[5].equals(2L);
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.SqlColumn;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
+import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +131,7 @@ public class ClassInfoCache {
             }
         }
 
-        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
         fields = getFieldsForColumn(classLink);
 
         if (isCacheEnable) {
@@ -154,7 +155,7 @@ public class ClassInfoCache {
             }
         }
 
-        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
         fields = getFieldsForSqlColumn(classLink);
 
         if (isCacheEnable) {
@@ -162,25 +163,6 @@ public class ClassInfoCache {
         }
 
         return fields;
-    }
-
-    /**
-     * 获得指定类及其父类的列表，子类在前，父类在后
-     * @param clazz 要查询的类
-     */
-    private static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
-        if (clazz == null) {
-            return new ArrayList<>();
-        }
-
-        List<Class<?>> classLink = new ArrayList<>();
-        Class<?> curClass = clazz;
-        while (curClass != null) {
-            classLink.add(curClass);
-            curClass = curClass.getSuperclass();
-        }
-
-        return classLink;
     }
 
     /**
@@ -303,7 +285,7 @@ public class ClassInfoCache {
             }
         }
 
-        List<Class<?>> classLink = getClassAndParentClasses(clazz);
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
 
         // 父类优先
         fields = new ArrayList<>();

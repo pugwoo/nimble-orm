@@ -32,7 +32,7 @@ public enum FeatureEnum {
     AUTO_EXPLAIN_SLOW_SQL,
 
     /**
-     * 是否延迟初始化数据库类型，默认[关闭]；对于多数据库的应用，不想在项目启动时对所有数据库发出连接请求，可以开启此特性
+     * 是否延迟初始化数据库类型，默认[开启]
      */
     LAZY_DETECT_DATABASE_TYPE
 

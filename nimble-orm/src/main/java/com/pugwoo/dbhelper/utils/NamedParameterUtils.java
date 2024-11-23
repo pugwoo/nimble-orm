@@ -83,6 +83,70 @@ public class NamedParameterUtils {
 	}
 
 	/**
+	 * 计算sql中?的个数，不包含'?'中的?和注释中的?
+	 */
+	public static int getQuestionMarkCount(String sql) {
+		if(sql == null || sql.isEmpty()) {
+			return 0;
+		}
+		boolean isInStr = false;
+		boolean isInComment = false;
+		int commentType = 0; // 0:无注释，1:单行注释，2:多行注释
+
+		boolean isPreBackSlash = false;
+		boolean isPreHyphen = false;
+		boolean isPreSlash = false;
+		boolean isPreAsterisk = false;
+
+		int currParamIndex = 1;
+		for(char ch : sql.toCharArray()) {
+			if(ch == '?' && !isInStr && !isInComment) {
+				currParamIndex++;
+				continue;
+			}
+
+			if (!isInComment) { // 只有不在注释中，字符串才可能出现
+				if(ch == '\'') {
+					if(!isInStr) {
+						isInStr = true;
+					} else {
+						if(!isPreBackSlash) {
+							isInStr = false;
+						}
+					}
+				}
+			}
+
+			if (!isInStr) { // 只有不在字符串中，注释才可能出现
+				if (!isInComment) {
+					if (isPreHyphen && ch == '-') {
+						isInComment = true;
+						commentType = 1;
+					} else if (isPreSlash && ch == '*') {
+						isInComment = true;
+						commentType = 2;
+					}
+				} else {
+					if (commentType == 1 && ch == '\n') {
+						isInComment = false;
+						commentType = 0;
+					} else if (commentType == 2 && isPreAsterisk && ch == '/') {
+						isInComment = false;
+						commentType = 0;
+					}
+				}
+			}
+
+			isPreBackSlash = ch == '\\';
+			isPreHyphen = ch == '-';
+			isPreSlash = ch == '/';
+			isPreAsterisk = ch == '*';
+		}
+
+        return currParamIndex - 1;
+	}
+
+	/**
 	 * 把?变成:paramN的形式，不包括'?'中的?
 	 * paramN的N从1开始
 	 * @param args 将会操作参数列表

@@ -1,8 +1,12 @@
 package com.pugwoo.dbhelper.sql;
 
+import com.pugwoo.dbhelper.annotation.WhereColumn;
 import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
+import com.pugwoo.dbhelper.utils.NamedParameterUtils;
+import com.pugwoo.dbhelper.utils.SpringContext;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -11,9 +15,13 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 辅助构造where子句及后续子句的工具
@@ -76,6 +84,134 @@ public class WhereSQL {
             this.condition = condition;
         }
         doAddParam(param);
+    }
+
+    /**
+     * 从带有@WhereColumn注解的dto对象中构造where子句
+     * @param dto 包含有@WhereColumn注解的dto
+     */
+    public static WhereSQL buildFromAnnotation(Object dto) {
+        if (dto == null) {
+            return new WhereSQL();
+        }
+
+        List<Object> fields = DOInfoReader.getWhereColumnsFieldOrMethod(dto.getClass());
+        Map<String, List<Object>> fiedsMap = InnerCommonUtils.toMapList(fields, o -> {
+                       if (o instanceof Field) {
+                           return ((Field)o).getAnnotation(WhereColumn.class).orGroupName().trim();
+                       } else {
+                           return ((Method)o).getAnnotation(WhereColumn.class).orGroupName().trim();
+                       }}, o -> o);
+
+        WhereSQL whereSQL = new WhereSQL();
+        for (Map.Entry<String, List<Object>> e : fiedsMap.entrySet()) {
+            WhereSQL subWhere = new WhereSQL();
+            boolean isAnd = e.getKey().isEmpty();
+            for (Object f : e.getValue()) {
+                Object value = null;
+                WhereColumn whereColumn = null;
+
+                if (f instanceof Field) {
+                    value = DOInfoReader.getValue((Field) f, dto);
+                    whereColumn = ((Field)f).getAnnotation(WhereColumn.class);
+                } else {
+                    try {
+                        whereColumn = ((Method) f).getAnnotation(WhereColumn.class);
+                        value = ((Method) f).invoke(dto);
+                    } catch (Exception e1) {
+                        throw new RuntimeException(e1);
+                    }
+                }
+
+                if (!isParamValid(value)) {
+                    continue;
+                }
+                Class<?> customerWhereProvider = whereColumn.customWhereProvider();
+                if (customerWhereProvider != void.class) {
+                    if (CustomWhereProvider.class.isAssignableFrom(customerWhereProvider)) {
+                        CustomWhereProvider bean = (CustomWhereProvider) SpringContext.getBean(customerWhereProvider);
+                        if (bean == null) {
+                            LOGGER.error("CustomWhereProvider bean {} is null", customerWhereProvider);
+                        } else {
+                            WhereSQL wSQL = null;
+                            if (f instanceof Field) {
+                                wSQL = bean.provide(dto, whereColumn, (Field) f, null);
+                            } else {
+                                wSQL = bean.provide(dto, whereColumn, null, (Method) f);
+                            }
+                            if (isAnd) {
+                                subWhere.and(wSQL);
+                            } else {
+                                subWhere.or(wSQL);
+                            }
+                        }
+                    } else {
+                        LOGGER.error("CustomWhereProvider {} is not a subclass of CustomWhereProvider", customerWhereProvider);
+                    }
+                } else {
+                    if (value instanceof WhereSQL) { // 因为WhereColumn可能注解在方法上，当方法返回的是WhereSQL对象时，直接使用
+                        if (isAnd) {
+                            subWhere.and((WhereSQL) value);
+                        } else {
+                            subWhere.or((WhereSQL) value);
+                        }
+                    } else {
+                        String sql = whereColumn.value();
+                        int questionMarkCount = NamedParameterUtils.getQuestionMarkCount(sql);
+                        if (questionMarkCount == 0) {
+                            if (isAnd) {
+                                subWhere.and(sql);
+                            } else {
+                                subWhere.or(sql);
+                            }
+                        } else if (questionMarkCount == 1) {
+                            if (isAnd) {
+                                subWhere.and(sql, value);
+                            } else {
+                                subWhere.or(sql, value);
+                            }
+                        } else {
+                            List<Object> params = timesParam(value, questionMarkCount);
+                            if (isAnd) {
+                                subWhere.and(sql, params.toArray());
+                            } else {
+                                subWhere.or(sql, params.toArray());
+                            }
+                        }
+                    }
+                }
+            }
+
+            whereSQL.and(subWhere);
+        }
+
+        return whereSQL;
+    }
+
+    private static List<Object> timesParam(Object value, int times) {
+        List<Object> params = new ArrayList<>();
+        for (int i = 0; i < times; i++) {
+            params.add(value);
+        }
+        return params;
+    }
+
+    private static boolean isParamValid(Object value) {
+        if (value == null) {
+            return false;
+        }
+
+        if (value instanceof String) {
+            return !((String) value).isEmpty();
+        }
+        if (value instanceof Map) {
+            return !((Map<?, ?>) value).isEmpty();
+        }
+        if (value instanceof Collection) {
+            return !((Collection<?>) value).isEmpty();
+        }
+
+        return true;
     }
 
     /**
@@ -386,6 +522,15 @@ public class WhereSQL {
         this.limit = limit;
         this.offset = offset;
         return this;
+    }
+
+    /**
+     * 分页，page从1开始
+     * @param page 从1开始
+     * @param pageSize 每页个数
+     */
+    public WhereSQL page(int page, int pageSize) {
+        return limit(pageSize * (page - 1), pageSize);
     }
 
     private void doAddParam(Object[] param) {

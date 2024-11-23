@@ -11,6 +11,7 @@ import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssert;
 import com.pugwoo.dbhelper.sql.SQLUtils;
+import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.PreHandleObject;
@@ -267,8 +268,18 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	}
 
 	@Override
+	public <T> int deleteHard(Class<T> clazz, WhereSQL whereSQL) {
+		return whereSQL == null ? deleteHard(clazz, "") : deleteHard(clazz, whereSQL.getSQL(), whereSQL.getParams());
+	}
+
+	@Override
 	public <T> int delete(Class<T> clazz, String postSql, Object... args) {
 		return _delete(clazz, false, postSql, args);
+	}
+
+	@Override
+	public <T> int delete(Class<T> clazz, WhereSQL whereSQL) {
+		return whereSQL == null ? delete(clazz, "") : delete(clazz, whereSQL.getSQL(), whereSQL.getParams());
 	}
 
 	private <T> int _delete(Class<T> clazz, boolean isHard, String postSql, Object... args) {
@@ -334,7 +345,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 	private <T> void updateForDelete(T t) throws NullKeyValueException {
 		List<Object> values = new ArrayList<>();
-		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, false, null);
+		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, false, "");
 		if (sql != null) {
 			// 没有in (?)，因此用jdbcExecuteUpdate
 			jdbcExecuteUpdate(sql, values.toArray()); // ignore update result

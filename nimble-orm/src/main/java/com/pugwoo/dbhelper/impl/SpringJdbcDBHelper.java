@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.impl;
 
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.impl.part.P6_ExecuteOp;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -16,6 +17,15 @@ public class SpringJdbcDBHelper extends P6_ExecuteOp {
 
     public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate) {
         this.setJdbcTemplate(jdbcTemplate);
+    }
+
+    /**
+     * 支持指定数据库类型，当数据库类型有指定时，不再通过jdbcTemplate判断数据库类型
+     * @param jdbcTemplate jdbcTemplate
+     * @param databaseType 数据库类型枚举
+     */
+    public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, DatabaseTypeEnum databaseType) {
+        this.setJdbcTemplate(jdbcTemplate, databaseType);
     }
 
 }

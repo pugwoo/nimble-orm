@@ -138,6 +138,26 @@ public class InnerCommonUtils {
         return partition(list.stream(), groupNum).collect(Collectors.toList());
     }
 
+    /**
+     * 转换list为map
+     */
+    public static <T, K, V> Map<K, List<V>> toMapList(Collection<T> list,
+                                                      Function<? super T, ? extends K> keyMapper,
+                                                      Function<? super T, ? extends V> valueMapper) {
+        if(list == null) {
+            return new HashMap<>();
+        }
+        Map<K, List<V>> map = new HashMap<>();
+        for(T t : list) {
+            if(t == null) {continue;}
+            K key = keyMapper.apply(t);
+            List<V> values = map.computeIfAbsent(key, k -> new ArrayList<>());
+            V value = valueMapper.apply(t);
+            values.add(value);
+        }
+        return map;
+    }
+
     public static <T> Stream<List<T>> partition(Stream<T> stream, int groupNum) {
         List<List<T>> currentBatch = new ArrayList<>(); //just to make it mutable
         currentBatch.add(new ArrayList<>(groupNum));

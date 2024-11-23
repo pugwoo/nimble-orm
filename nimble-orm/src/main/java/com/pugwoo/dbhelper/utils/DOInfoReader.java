@@ -198,6 +198,41 @@ public class DOInfoReader {
 		}
 		return ClassInfoCache.getSqlColumnFields(clazz);
 	}
+
+
+	public static List<Object> getWhereColumnsFieldOrMethod(Class<?> clazz) {
+		if (clazz == null) {
+			return new ArrayList<>(); // where column可以为空
+		}
+		List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
+		return getFieldsOrMethodsForWhereColumn(classLink);
+	}
+
+	private static List<Object> getFieldsOrMethodsForWhereColumn(List<Class<?>> classLink) {
+		List<Object> result = new ArrayList<>();
+		if(classLink == null || classLink.isEmpty()) {
+			return result;
+		}
+
+		List<Object> fieldList = new ArrayList<>();
+		for (int i = classLink.size() - 1; i >= 0; i--) {
+			Field[] fields = classLink.get(i).getDeclaredFields();
+			fieldList.addAll(InnerCommonUtils.filter(fields, o -> o.getAnnotation(WhereColumn.class) != null));
+			Method[] methods = classLink.get(i).getMethods();
+			for (Method method : methods) {
+				if (method.isAnnotationPresent(WhereColumn.class)) {
+					// 检查参数个数为0且有返回值
+					if (method.getParameterCount() == 0 && !method.getReturnType().equals(Void.TYPE)) {
+						fieldList.add(method);
+					} else {
+						LOGGER.error("@WhereColumn annotation method:{} is ignored because it is not zero parameter and with return type", method);
+					}
+				}
+			}
+		}
+
+		return fieldList;
+	}
 	
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
@@ -458,7 +493,7 @@ public class DOInfoReader {
 	 * 获得指定类及其父类的列表，子类在前，父类在后
 	 * @param clazz 要查询的类
 	 */
-	private static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
+	public static List<Class<?>> getClassAndParentClasses(Class<?> clazz) {
 		if (clazz == null) {
 			return new ArrayList<>();
 		}
