@@ -352,6 +352,9 @@ public class WhereSQL {
      * 功能同addAnd，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
     public WhereSQL and(WhereSQL whereSQL) {
+        if (whereSQL == null) {
+            return this;
+        }
         if (whereSQL.isNotOnlyHasCondition()) {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
@@ -386,6 +389,9 @@ public class WhereSQL {
      * 功能同addOr，注意：只会读取参数whereSQL的条件和参数，因此需要注意whereSQL里【不能】存在order/group by/limit等子句
      */
     public WhereSQL or(WhereSQL whereSQL) {
+        if (whereSQL == null) {
+            return this;
+        }
         if (whereSQL.isNotOnlyHasCondition()) {
             LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
         }
