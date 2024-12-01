@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -365,22 +366,74 @@ public class TypeAutoCast {
 			}
 			return (T) Double.valueOf(obj.toString());
 		}
-		
+
 		if(obj == null) {
 			return null;
 		}
-		
+
+		if(clazz == byte[].class) {
+			return (T) ((String)obj).getBytes();
+		}
 		if(clazz == String.class) {
 			return (T) obj.toString();
 		}
 		if(clazz == BigDecimal.class) {
 			return (T) new BigDecimal(obj.toString());
 		}
-		if (clazz == java.sql.Date.class && obj instanceof java.util.Date) {
-			return (T) new java.sql.Date(((java.util.Date)obj).getTime());
+		if (clazz == java.util.Date.class) {
+            try {
+                return (T) NimbleOrmDateUtils.parseThrowException(obj.toString());
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+		if (clazz == java.sql.Date.class) {
+			try {
+				Date date = NimbleOrmDateUtils.parseThrowException(obj.toString());
+                return date == null ? null : (T) new java.sql.Date(date.getTime());
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
 		}
-		if (clazz == java.sql.Time.class && obj instanceof java.util.Date) {
-			return (T) new java.sql.Time(((java.util.Date)obj).getTime());
+		if (clazz == java.sql.Time.class) {
+			try {
+				Date date = NimbleOrmDateUtils.parseThrowException(obj.toString());
+				return date == null ? null : (T) new java.sql.Time(date.getTime());
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		if (clazz == java.sql.Timestamp.class) {
+			try {
+				LocalDateTime date = NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
+				return date == null ? null : (T) Timestamp.valueOf(date);
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		if (clazz == LocalDate.class) {
+			try {
+				LocalDate date = NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
+				return (T) date;
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		if (clazz == LocalDateTime.class) {
+			try {
+				LocalDateTime date = NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
+				return (T) date;
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		if (clazz == LocalTime.class) {
+			try {
+				LocalTime date = NimbleOrmDateUtils.parseLocalTimeThrowException(obj.toString());
+				return (T) date;
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		return (T) obj;

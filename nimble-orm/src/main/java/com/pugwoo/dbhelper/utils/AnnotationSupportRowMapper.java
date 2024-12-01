@@ -9,6 +9,7 @@ import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.RowMapperFailException;
 import com.pugwoo.dbhelper.impl.part.P0_JdbcTemplateOp;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.model.RowData;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,11 +74,23 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public T mapRow(ResultSet rs, int index) {
 		// 保存当前正在处理的field，存null表示没有正在处理的field，这个记录是为了log打印出来，方便问题排查
 		AtomicReference<Field> currentField = new AtomicReference<>(null);
 
 		try {
+			// 内置的数据类型RowData
+			if (clazz == RowData.class) {
+				RowData rowData = new RowData();
+				ResultSetMetaData md = rs.getMetaData();
+				int columns = md.getColumnCount();
+				for (int i = 1; i <= columns; i++) {
+					rowData.put(md.getColumnLabel(i), rs.getObject(i));
+				}
+				return (T) rowData;
+			}
+
 			// 支持基本的类型
 			TypeAutoCast.BasicTypeResult basicTypeResult = TypeAutoCast.transBasicType(clazz, rs);
 			if (basicTypeResult.isBasicType()) {
