@@ -389,7 +389,7 @@ public class TypeAutoCast {
         }
 		if (clazz == java.sql.Date.class) {
 			try {
-				Date date = NimbleOrmDateUtils.parseThrowException(obj.toString());
+				Date date = obj instanceof Date ? (Date) obj : NimbleOrmDateUtils.parseThrowException(obj.toString());
                 return date == null ? null : (T) new java.sql.Date(date.getTime());
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -397,7 +397,7 @@ public class TypeAutoCast {
 		}
 		if (clazz == java.sql.Time.class) {
 			try {
-				Date date = NimbleOrmDateUtils.parseThrowException(obj.toString());
+				Date date = obj instanceof Date ? (Date) obj : NimbleOrmDateUtils.parseThrowException(obj.toString());
 				return date == null ? null : (T) new java.sql.Time(date.getTime());
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -405,7 +405,8 @@ public class TypeAutoCast {
 		}
 		if (clazz == java.sql.Timestamp.class) {
 			try {
-				LocalDateTime date = NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
+				LocalDateTime date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDateTime((Date) obj)
+						: NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
 				return date == null ? null : (T) Timestamp.valueOf(date);
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -413,7 +414,8 @@ public class TypeAutoCast {
 		}
 		if (clazz == LocalDate.class) {
 			try {
-				LocalDate date = NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
+				LocalDate date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDate((Date) obj)
+				    : NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -421,7 +423,8 @@ public class TypeAutoCast {
 		}
 		if (clazz == LocalDateTime.class) {
 			try {
-				LocalDateTime date = NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
+				LocalDateTime date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDateTime((Date) obj)
+				    : NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -429,7 +432,8 @@ public class TypeAutoCast {
 		}
 		if (clazz == LocalTime.class) {
 			try {
-				LocalTime date = NimbleOrmDateUtils.parseLocalTimeThrowException(obj.toString());
+				LocalTime date = obj instanceof Date ? NimbleOrmDateUtils.toLocalTime((Date) obj)
+						: NimbleOrmDateUtils.parseLocalTimeThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
