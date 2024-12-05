@@ -60,7 +60,7 @@ public class NamedParameterUtils {
 					}
 				}
 				
-				// 转换后，对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错
+				// 转换后，对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错，同时保证查询结果准确
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
 						List<String> list = new ArrayList<>(1);
@@ -236,6 +236,9 @@ public class NamedParameterUtils {
 		return sb.toString();
 	}
 
+	/**
+	 * 对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错，同时保证查询结果准确
+	 */
 	public static void preHandleParams(Map<String, ?> params) {
 		if (params == null) {
 			return;

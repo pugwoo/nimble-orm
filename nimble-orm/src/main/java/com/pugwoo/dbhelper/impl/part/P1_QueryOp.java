@@ -247,16 +247,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         log(sql, 0, forIntercept);
         long start = System.currentTimeMillis();
 
-
-        Stream<T> stream;
-        if (args == null || args.isEmpty()) {
-            stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        } else {
-            NamedParameterUtils.preHandleParams(args);
-            stream = namedParameterJdbcTemplate.queryForStream(sql, args,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        }
+        NamedParameterUtils.preHandleParams(args);
+        Stream<T> stream = namedParameterJdbcTemplate.queryForStream(sql, args,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
 
         Stream<T> result;
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
@@ -286,15 +279,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         log(sql, 0, forIntercept);
         long start = System.currentTimeMillis();
 
-        List<T> list;
-        if (args == null || args.isEmpty()) {
-            list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        } else {
-            NamedParameterUtils.preHandleParams(args);
-            list = namedParameterJdbcTemplate.query(sql, args,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        }
+        NamedParameterUtils.preHandleParams(args);
+        List<T> list = namedParameterJdbcTemplate.query(sql, args,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
 
         handleRelatedColumn(list);
 
@@ -322,16 +309,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
-        Stream<T> stream;
-        if (argsList.isEmpty()) {
-            stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        } else {
-            stream = namedParameterJdbcTemplate.queryForStream(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        }
+        Stream<T> stream = namedParameterJdbcTemplate.queryForStream(
+                NamedParameterUtils.trans(sql, argsList),
+                NamedParameterUtils.transParam(argsList),
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
 
         Stream<T> result;
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
@@ -364,16 +345,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
-        List<T> list;
-        if (argsList.isEmpty()) {
-            list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        } else {
-            list = namedParameterJdbcTemplate.query(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        }
+        List<T> list = namedParameterJdbcTemplate.query(
+                NamedParameterUtils.trans(sql, argsList),
+                NamedParameterUtils.transParam(argsList),
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
 
         handleRelatedColumn(list);
 
