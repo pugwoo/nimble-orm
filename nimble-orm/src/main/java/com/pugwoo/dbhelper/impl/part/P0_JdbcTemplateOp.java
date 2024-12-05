@@ -143,7 +143,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
      * @param batchSize 批量大小，如果大于0，则是批量
      * @param args 参数
      */
-    @SuppressWarnings("unchecked")
     protected void logSlow(long cost, String sql, int batchSize, List<Object> args) {
 		try {
 			if (sqlCallback != null) {

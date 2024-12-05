@@ -149,12 +149,16 @@ public class NamedParameterUtils {
 	/**
 	 * 把?变成:paramN的形式，不包括'?'中的?
 	 * paramN的N从1开始
-	 * @param args 将会操作参数列表
+	 * @param args 该参数可能被修改，当该参数是null或空时，返回原sql，等价于不处理
 	 */
 	public static String trans(String sql, List<Object> args) {
 		if(sql == null || sql.isEmpty()) {
 			return "";
 		}
+		if (args == null || args.isEmpty()) {
+			return sql;
+		}
+
 		StringBuilder sb = new StringBuilder();
 
 		boolean isInStr = false;
