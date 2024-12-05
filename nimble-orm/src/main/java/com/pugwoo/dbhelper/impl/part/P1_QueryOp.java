@@ -82,30 +82,22 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
-        String sqlSB = "SELECT count(*) FROM ("
+        String sql = "SELECT count(*) FROM ("
                 + SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, true, features, postSql)
                 + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz))
                 + ") tff305c6";
 
-        List<Object> argsList = InnerCommonUtils.arrayToList(args);
-
-        String sql = sqlSB;
         sql = addComment(sql);
         log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
 
-        Long rows;
-        if (argsList.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<>(),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        } else {
-            rows = namedParameterJdbcTemplate.queryForObject(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        }
+        Long rows = namedParameterJdbcTemplate.queryForObject(
+                NamedParameterUtils.trans(sql, argsList),
+                NamedParameterUtils.transParam(argsList),
+                Long.class);
 
         long cost = System.currentTimeMillis() - start;
         logSlow(cost, sql, 0, argsList);
@@ -169,18 +161,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         long start = System.currentTimeMillis();
 
-        Stream<T> list;
-
         AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, sql, argsList);
-        if (argsList.isEmpty()) {
-            list = jdbcTemplate.queryForStream(sql, mapper);
-        } else {
-            // 因为有in (?)所以用namedParameterJdbcTemplate
-            list = namedParameterJdbcTemplate.queryForStream(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    mapper);
-        }
+        Stream<T> list = namedParameterJdbcTemplate.queryForStream(
+                NamedParameterUtils.trans(sql, argsList),
+                NamedParameterUtils.transParam(argsList),
+                mapper);
 
         Stream<T> result;
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
