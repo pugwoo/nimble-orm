@@ -504,22 +504,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         log(sql, 0, argsList);
 
         long start = System.currentTimeMillis();
-        List<T> list;
-        if (argsList.isEmpty()) {
-            list = jdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
-        } else {
-            if (isUseNamedTemplate) {
-                // 因为有in (?)所以用namedParameterJdbcTemplate
-                list = namedParameterJdbcTemplate.query(
-                        NamedParameterUtils.trans(sql, argsList),
-                        NamedParameterUtils.transParam(argsList),
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
-            } else {
-                list = jdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList), argsList.toArray());
-            }
-        }
+        List<T> list = namedParameterJdbcTemplate.query(
+                NamedParameterUtils.trans(sql, argsList), NamedParameterUtils.transParam(argsList),
+                new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
 
         long total = -1; // -1 表示没有查询总数，未知
         if (withCount) {

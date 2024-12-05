@@ -16,7 +16,6 @@ public class NamedParameterUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NamedParameterUtils.class);
 	
-	@SuppressWarnings("unchecked")
 	public static Map<String, Object> transParam(List<Object> params) {
 		Map<String, Object> map = new HashMap<>();
 		if(params != null) {
