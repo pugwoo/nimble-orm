@@ -640,7 +640,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Object value = MVEL.eval(conditional, vars);
                 if (value == null) {
                     LOGGER.error("execute conditional return null, script:{}, t:{}",
-                            conditional, NimbleOrmJSON.toJson(t));
+                            conditional, NimbleOrmJSON.toJsonNoException(t));
                 } else {
                     if (value instanceof Boolean) {
                         if ((Boolean) value) {
@@ -652,11 +652,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         }
                     } else {
                         LOGGER.error("execute conditional return is not instance of Boolean, script:{}, t:{}",
-                                conditional, NimbleOrmJSON.toJson(t));
+                                conditional, NimbleOrmJSON.toJsonNoException(t));
                     }
                 }
             } catch (Throwable e) {
-                LOGGER.error("execute script fail: {}, t:{}", conditional, NimbleOrmJSON.toJson(t), e);
+                LOGGER.error("execute script fail: {}, t:{}", conditional, NimbleOrmJSON.toJsonNoException(t), e);
             }
         }
 

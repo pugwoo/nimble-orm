@@ -465,7 +465,7 @@ public class DOInfoReader {
 				method.invoke(object, value);
 			} catch (Exception e) {
 				LOGGER.error("set method:{} invoke fail, object:{}, value:{}", method.getName(),
-						NimbleOrmJSON.toJson(object), value, e);
+						NimbleOrmJSON.toJsonNoException(object), value, e);
 			}
 		} else {
 			field.setAccessible(true);
@@ -473,7 +473,7 @@ public class DOInfoReader {
 				field.set(object, value);
 			} catch (Exception e) {
 				LOGGER.error("field:{} set fail, object:{}, value:{}", field.getName(),
-						NimbleOrmJSON.toJson(object), value, e);
+						NimbleOrmJSON.toJsonNoException(object), value, e);
 			}
 		}
 	}

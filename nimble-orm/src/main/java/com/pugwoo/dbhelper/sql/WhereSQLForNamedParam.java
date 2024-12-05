@@ -218,7 +218,7 @@ public class WhereSQLForNamedParam {
             return this;
         }
         if (whereSQL.isNotOnlyHasCondition()) {
-            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
+            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJsonNoException(whereSQL));
         }
         return and(whereSQL.condition, whereSQL.paramMap);
     }
@@ -255,7 +255,7 @@ public class WhereSQLForNamedParam {
             return this;
         }
         if (whereSQL.isNotOnlyHasCondition()) {
-            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
+            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJsonNoException(whereSQL));
         }
         return or(whereSQL.condition, whereSQL.paramMap);
     }

@@ -112,7 +112,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			try {
 				if (dbT == null) {
 					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, key:{}",
-							NimbleOrmJSON.toJson(keyParams));
+							NimbleOrmJSON.toJsonNoException(keyParams));
 				} else {
 					Map<Class<?>, String> tableNames = new HashMap<>();
 					tableNames.put(t.getClass(), table.softDeleteTable());
@@ -120,13 +120,13 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 						int rows = dbHelper.insert(dbT);
 						if (rows != 1) {
 							LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
-									rows, NimbleOrmJSON.toJson(dbT));
+									rows, NimbleOrmJSON.toJsonNoException(dbT));
 						}
 					});
 				}
 			} catch (Exception e) {
 				LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",
-						NimbleOrmJSON.toJson(dbT), e);
+						NimbleOrmJSON.toJsonNoException(dbT), e);
 			}
 		}
 
@@ -231,7 +231,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				try {
 					if (all == null || all.isEmpty()) {
 						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, key:{}",
-								NimbleOrmJSON.toJson(keys));
+								NimbleOrmJSON.toJsonNoException(keys));
 					} else {
 						Map<Class<?>, String> tableNames = new HashMap<>();
 						tableNames.put(clazz, table.softDeleteTable());
@@ -239,13 +239,13 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 							int rows = dbHelper.insert(all);
 							if (rows != all.size()) {
 								LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
-										rows, NimbleOrmJSON.toJson(all));
+										rows, NimbleOrmJSON.toJsonNoException(all));
 							}
 						});
 					}
 				} catch (Exception e) {
 					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",
-							NimbleOrmJSON.toJson(all), e);
+							NimbleOrmJSON.toJsonNoException(all), e);
 				}
 			}
 
@@ -308,7 +308,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				try {
 					if (all == null || all.isEmpty()) {
 						LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data is null, postSql:{}, args:{}",
-								postSql, NimbleOrmJSON.toJson(args));
+								postSql, NimbleOrmJSON.toJsonNoException(args));
 					} else {
 						Map<Class<?>, String> tableNames = new HashMap<>();
 						tableNames.put(clazz, table.softDeleteTable());
@@ -316,13 +316,13 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 							int rows = dbHelper.insert(all);
 							if (rows != all.size()) {
 								LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, rows={}, data: {}",
-										rows, NimbleOrmJSON.toJson(all));
+										rows, NimbleOrmJSON.toJsonNoException(all));
 							}
 						});
 					}
 				} catch (Exception e) {
 					LOGGER.error("soft delete insert to table:" + table.softDeleteTable() + " error, data: {}",
-							NimbleOrmJSON.toJson(all), e);
+							NimbleOrmJSON.toJsonNoException(all), e);
 				}
 			}
 

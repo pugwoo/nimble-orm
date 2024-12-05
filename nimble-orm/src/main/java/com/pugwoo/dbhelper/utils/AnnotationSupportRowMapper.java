@@ -217,7 +217,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 							assembledSql = SQLAssemblyUtils.assembleSql(sql, args.toArray());
 						}
 					} catch (Exception e) {
-						LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJson(args), e);
+						LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJsonNoException(args), e);
 						assembledSql = "";
 					}
 				}

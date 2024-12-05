@@ -35,6 +35,19 @@ public class NimbleOrmJSON {
 		}
 	}
 
+	/**
+	 * 将对象转换成json字符串，不要抛出异常，一般用于log场景
+	 * @param obj 需要转出json的对象
+	 * @return 转换后的json语句
+	 */
+	public static String toJsonNoException(Object obj) {
+		try {
+			return objectMapper.writeValueAsString(obj);
+		} catch (Throwable e) {
+			return "JSON PARSE EXCEPTION:" + e.getClass() + " " + e.getMessage();
+		}
+	}
+
 	public static <T> T parse(String json, Class<T> clazz) throws IOException {
 		if (InnerCommonUtils.isBlank(json)) {
 			return null;

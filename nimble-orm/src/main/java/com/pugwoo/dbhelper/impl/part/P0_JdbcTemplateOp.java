@@ -81,7 +81,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			}
 		} catch (Throwable e) {
 			LOGGER.error("DBHelperSqlCallback call beforeExecute fail, sql:{}; params:{}",
-					sql, NimbleOrmJSON.toJson(args), e);
+					sql, NimbleOrmJSON.toJsonNoException(args), e);
 		}
 
         if (batchSize > 0) { // 批量log
@@ -94,7 +94,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 								firstCallMethodStr, batchSize, assembledSql);
 					} else {
 						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
-								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJson(args));
+								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
 					}
 				}
             } else {
@@ -106,7 +106,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 								firstCallMethodStr, batchSize, assembledSql);
 					} else {
 						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
-								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJson(args));
+								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
 					}
 				}
             }
@@ -118,7 +118,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					if (assembledSql != null) {
 						LOGGER.info("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
 					} else {
-						LOGGER.info("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+						LOGGER.info("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJsonNoException(args));
 					}
 				}
             } else {
@@ -128,7 +128,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					if (assembledSql != null) {
 						LOGGER.debug("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
 					} else {
-						LOGGER.debug("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJson(args));
+						LOGGER.debug("{} ExecSQL:{}; params:{}", firstCallMethodStr, sql, NimbleOrmJSON.toJsonNoException(args));
 					}
 				}
 			}
@@ -150,7 +150,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			}
 		} catch (Throwable e) {
 			LOGGER.error("DBHelperSqlCallback call afterExecute fail, sql:{}; params:{}",
-					sql, NimbleOrmJSON.toJson(args), e);
+					sql, NimbleOrmJSON.toJsonNoException(args), e);
 		}
 
         if (cost > timeoutWarningValve) {
@@ -162,7 +162,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 							firstCallMethodStr, cost, batchSize, assembledSql);
 				} else {
 					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}, params:{}",
-							firstCallMethodStr, cost, batchSize, sql, NimbleOrmJSON.toJson(args));
+							firstCallMethodStr, cost, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
 				}
 
                 try {
@@ -171,14 +171,14 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
                     }
                 } catch (Throwable e) {
                     LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
-                            sql, cost, batchSize, NimbleOrmJSON.toJson(args), e);
+                            sql, cost, batchSize, NimbleOrmJSON.toJsonNoException(args), e);
                 }
             } else {
 				String assembledSql = getAssembledSql(sql, args);
 				if (assembledSql != null) {
 					LOGGER.warn("{} SlowSQL(cost:{}ms):{}", firstCallMethodStr, cost, assembledSql);
 				} else {
-					LOGGER.warn("{} SlowSQL(cost:{}ms):{}; params:{}", firstCallMethodStr, cost, sql, NimbleOrmJSON.toJson(args));
+					LOGGER.warn("{} SlowSQL(cost:{}ms):{}; params:{}", firstCallMethodStr, cost, sql, NimbleOrmJSON.toJsonNoException(args));
 				}
 
                 try {
@@ -187,7 +187,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
                     }
                 } catch (Throwable e) {
                     LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, params:{}",
-                            sql, cost, NimbleOrmJSON.toJson(args), e);
+                            sql, cost, NimbleOrmJSON.toJsonNoException(args), e);
                 }
 
 				// 对于非batch的慢sql，自动explain一下检查是否加了索引
@@ -198,11 +198,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 							String explainSql = "EXPLAIN " + assembledSql;
 							List<Map<String, Object>> explainResult = jdbcTemplate.queryForList(explainSql);
 							LOGGER.warn("Explain SlowSQL(cost:{}ms):{}; explain result:{}",
-									cost, assembledSql, NimbleOrmJSON.toJson(explainResult));
+									cost, assembledSql, NimbleOrmJSON.toJsonNoException(explainResult));
 						}
 					} catch (Throwable e) {
 						LOGGER.error("SlowSQL explain fail, SlowSQL:{}; cost:{}ms, params:{}",
-								sql, cost, NimbleOrmJSON.toJson(args), e);
+								sql, cost, NimbleOrmJSON.toJsonNoException(args), e);
 					}
 				}
 			}
@@ -454,7 +454,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 			}
 			return SQLAssemblyUtils.assembleSql(sql, params.toArray());
 		} catch (Exception e) {
-			LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJson(params), e);
+			LOGGER.error("fail to assemble sql, sql:{}, params:{}", sql, NimbleOrmJSON.toJsonNoException(params), e);
 			return null;
 		}
 	}

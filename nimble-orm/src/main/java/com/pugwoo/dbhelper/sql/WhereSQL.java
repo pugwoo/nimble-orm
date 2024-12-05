@@ -356,7 +356,7 @@ public class WhereSQL {
             return this;
         }
         if (whereSQL.isNotOnlyHasCondition()) {
-            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
+            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJsonNoException(whereSQL));
         }
         return and(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
     }
@@ -393,7 +393,7 @@ public class WhereSQL {
             return this;
         }
         if (whereSQL.isNotOnlyHasCondition()) {
-            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJson(whereSQL));
+            LOGGER.warn("whereSQL has other properties which will be ignored:{}", NimbleOrmJSON.toJsonNoException(whereSQL));
         }
         return or(whereSQL.condition, whereSQL.params == null ? new Object[0] : whereSQL.params.toArray());
     }

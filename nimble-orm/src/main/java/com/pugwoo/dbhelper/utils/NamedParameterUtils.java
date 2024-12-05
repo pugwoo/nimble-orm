@@ -153,10 +153,11 @@ public class NamedParameterUtils {
 	 */
 	public static String trans(String sql, List<Object> args) {
 		if(sql == null || sql.isEmpty()) {
+			if (args != null && !args.isEmpty()) {
+				LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}, params:{}",
+						args.size(), 0, sql, NimbleOrmJSON.toJsonNoException(args));
+			}
 			return "";
-		}
-		if (args == null || args.isEmpty()) {
-			return sql;
 		}
 
 		StringBuilder sb = new StringBuilder();
@@ -220,12 +221,12 @@ public class NamedParameterUtils {
 		int paramCount = currParamIndex - 1;
         if (paramCount != args.size()) {
 			LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}, params:{}",
-					args.size(), paramCount, sql, NimbleOrmJSON.toJson(args));
+					args.size(), paramCount, sql, NimbleOrmJSON.toJsonNoException(args));
 			// 尝试将args里的list转换成数组，仅为防御性处理，不建议用户这样使用
 			if (paramCount > 1 && args.size() == 1 && args.get(0) instanceof List<?>) {
 				LOGGER.error("SQL args is a List, please convert to array, provide args {}, SQL:{}. "
 						+ " NimbleOrm will automatically convert it for you, although it is not recommended.",
-						NimbleOrmJSON.toJson(args), sql);
+						NimbleOrmJSON.toJsonNoException(args), sql);
 				List<?> list = (List<?>) args.get(0);
 				args.clear();
 				args.addAll(list);

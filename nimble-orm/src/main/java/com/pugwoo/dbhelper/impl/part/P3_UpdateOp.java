@@ -216,7 +216,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 			if(isThrowCasVersionNotMatchException) {
 				throw new CasVersionNotMatchException(rows, "update fail for class:"
-						+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(casUpdateFailList));
+						+ clazz.getName() + ", data:" + NimbleOrmJSON.toJsonNoException(casUpdateFailList));
 			}
 		}
 
@@ -278,7 +278,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		if (list.size() != rows) {
 			throw new CasVersionNotMatchException(rows, "update fail for class:"
-					+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(list));
+					+ clazz.getName() + ", data:" + NimbleOrmJSON.toJsonNoException(list));
 		} else {
 			list.forEach(o -> postHandleCasVersion(o, casVersionColumn));
 		}
@@ -296,7 +296,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		if(rows <= 0) {
 			throw new CasVersionNotMatchException("update fail for class:"
-					+ t.getClass().getName() + ", data:" + NimbleOrmJSON.toJson(t));
+					+ t.getClass().getName() + ", data:" + NimbleOrmJSON.toJsonNoException(t));
 		} else {
 			postHandleCasVersion(t, casVersionField);
 		}
