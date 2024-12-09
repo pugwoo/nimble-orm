@@ -253,8 +253,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		List<Object> argsList = InnerCommonUtils.arrayToList(args);
 		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
-		int rows = namedParameterJdbcTemplate.update(
-				NamedParameterUtils.trans(sql, argsList),
+		int rows = namedParameterJdbcTemplate.update(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, 0, argsList);
@@ -268,14 +267,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * @param batchSize 批量修改的大小，当它的值大于0时，切换为batchLog方式log
 	 * @param logArgs 用于日志打印的参数
 	 */
-	protected int namedJdbcExecuteUpdateWithLog(String sql, String logSql, int batchSize, List<Object> logArgs,
-												Object... args) {
+	protected int namedJdbcExecuteUpdate(String sql, String logSql, int batchSize, List<Object> logArgs,
+										 Object... args) {
 		sql = addComment(sql);
 		log(logSql, batchSize, logArgs);
 		long start = System.currentTimeMillis();
 		List<Object> argsList = InnerCommonUtils.arrayToList(args);
-		int rows = namedParameterJdbcTemplate.update(
-				NamedParameterUtils.trans(sql, argsList),
+		int rows = namedParameterJdbcTemplate.update(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, logSql, batchSize, logArgs);

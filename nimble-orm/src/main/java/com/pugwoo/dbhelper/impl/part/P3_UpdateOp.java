@@ -179,7 +179,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					}
 				}
 
-				rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
+				rows = namedJdbcExecuteUpdate(batchUpdateSQL.getSql(),
 						batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
 
 				// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
