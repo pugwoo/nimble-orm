@@ -114,7 +114,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			doInsertToDelTable(all, dbHelper, t.getClass(), table.softDeleteTable(), "");
 		}
 
-		int rows = jdbcExecuteUpdate(sql, values.toArray()); // 不会有in(?)表达式
+		int rows = namedJdbcExecuteUpdate(sql, values.toArray());
 
 		doInterceptAfterDelete(t, rows);
 		return rows;
@@ -319,8 +319,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		List<Object> values = new ArrayList<>();
 		String sql = SQLUtils.getUpdateSQL(getDatabaseType(), t, values, false, "");
 		if (sql != null) {
-			// 没有in (?)，因此用jdbcExecuteUpdate
-			jdbcExecuteUpdate(sql, values.toArray()); // ignore update result
+			namedJdbcExecuteUpdate(sql, values.toArray()); // ignore update result
 		}
 	}
 }

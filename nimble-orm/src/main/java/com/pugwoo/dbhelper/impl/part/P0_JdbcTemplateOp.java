@@ -232,20 +232,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	/**
-	 * 使用jdbcTemplate模版执行update，不支持in (?)表达式
-	 * @return 实际修改的行数
-	 */
-	protected int jdbcExecuteUpdate(String sql, Object... args) {
-		sql = addComment(sql);
-		log(sql, 0, InnerCommonUtils.arrayToList(args));
-		long start = System.currentTimeMillis();
-		int rows = jdbcTemplate.update(sql, args);// 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		logSlow(cost, sql, 0, InnerCommonUtils.arrayToList(args));
-		return rows;
-	}
-
-	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
@@ -259,7 +245,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		logSlow(cost, sql, 0, argsList);
 		return rows;
 	}
-
 
 	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
