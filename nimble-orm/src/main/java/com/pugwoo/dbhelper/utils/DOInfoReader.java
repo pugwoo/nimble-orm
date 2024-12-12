@@ -277,7 +277,9 @@ public class DOInfoReader {
 			throw new NoJoinTableMemberException("clazz is null");
 		}
 
-		List<Field> result = _getAnnotationColumns(clazz, annotationClass);
+		List<Class<?>> classLink = getClassAndParentClasses(clazz);
+		List<Field> result = _getFields(classLink, annotationClass);
+
 		if (result.isEmpty()) {
 			throw new NoJoinTableMemberException("class " + clazz.getName()
 					+ " does not have @" + annotationClass.getSimpleName() + " field");
@@ -476,17 +478,6 @@ public class DOInfoReader {
 						NimbleOrmJSON.toJsonNoException(object), value, e);
 			}
 		}
-	}
-
-	/**
-	 * 获得clazz类的有annotationClazz注解的字段field（包括clazz类及其父类，父类优先，不处理重名）。
-	 */
-	private static List<Field> _getAnnotationColumns(Class<?> clazz,
-													 Class<? extends Annotation> annotationClazz) {
-
-		List<Class<?>> classLink = getClassAndParentClasses(clazz);
-
-		return _getFields(classLink, annotationClazz);
 	}
 
 	/**
