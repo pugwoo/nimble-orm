@@ -89,18 +89,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz))
                 + ") tff305c6";
 
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-
-        Long rows = namedParameterJdbcTemplate.queryForObject(
-                NamedParameterUtils.trans(sql, argsList),
-                NamedParameterUtils.transParam(argsList),
-                Long.class);
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
+        Long rows = namedJdbcQueryForObject(Long.class, sql, argsList);
         return rows == null ? 0 : rows;
     }
 

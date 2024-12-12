@@ -231,6 +231,17 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return true;
 	}
 
+	protected <T> T namedJdbcQueryForObject(Class<T> clazz, String sql, List<Object> argsList) {
+		sql = addComment(sql);
+		log(sql, 0, argsList);
+		long start = System.currentTimeMillis();
+		T t = namedParameterJdbcTemplate.queryForObject(NamedParameterUtils.trans(sql, argsList),
+				NamedParameterUtils.transParam(argsList), clazz);
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, 0, argsList);
+		return t;
+	}
+
 	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
