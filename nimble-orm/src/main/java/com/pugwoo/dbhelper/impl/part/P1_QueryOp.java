@@ -1,12 +1,18 @@
 package com.pugwoo.dbhelper.impl.part;
 
-import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.DBHelperDataService;
+import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
+import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
@@ -15,12 +21,17 @@ import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
-import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.mvel2.MVEL;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
@@ -364,12 +375,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         String sql = sqlSB.toString();
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-        List<T> list = namedParameterJdbcTemplate.query(
-                NamedParameterUtils.trans(sql, argsList), NamedParameterUtils.transParam(argsList),
+        List<T> list = namedJdbcQuery(sql, argsList,
                 new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
 
         long total = -1; // -1 表示没有查询总数，未知
@@ -384,12 +390,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         if (!selectOnlyKey) {
             handleRelatedColumn(list);
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
-
-        if (!selectOnlyKey) {
             doInterceptorAfterQueryList(clazz, list, total, sql, argsList);
         }
 
