@@ -141,26 +141,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
-
         doInterceptBeforeQuery(clazz, sqlSB, argsList);
 
         String sql = sqlSB.toString();
-        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, sql, argsList);
-
-        Stream<T> list = namedJdbcQueryForStream(sql, argsList, mapper);
-
-        Stream<T> result;
-        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
-        if (!relatedColumns.isEmpty()) {
-            result = InnerCommonUtils.partition(list, fetchSize)
-                    .peek(this::handleRelatedColumn)
-                    .flatMap(Collection::stream);
-        } else {
-            result = list;
-        }
-
+        Stream<T> list = namedJdbcQueryForStream(sql, argsList,
+                new AnnotationSupportRowMapper<>(this, clazz, sql, argsList));
         // stream方式不支持doInterceptorAfterQueryList
-        return result;
+        return handleStreamRelatedColumn(list, clazz);
     }
 
     @Override
@@ -219,21 +206,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<Object> forIntercept = args == null ? new ArrayList<>() : InnerCommonUtils.newList(args);
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
-        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept);
-        Stream<T> stream = namedJdbcQueryForStream(sql, args, mapper);
-
-        Stream<T> result;
-        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
-        if (!relatedColumns.isEmpty()) {
-            result = InnerCommonUtils.partition(stream, fetchSize)
-                    .peek(this::handleRelatedColumn)
-                    .flatMap(Collection::stream);
-        } else {
-            result = stream;
-        }
+        Stream<T> stream = namedJdbcQueryForStream(sql, args,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
 
         // stream方式不支持doInterceptorAfterQueryList
-        return result;
+        return handleStreamRelatedColumn(stream, clazz);
     }
 
     private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, ?> args) {
@@ -267,7 +244,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             LOGGER.error("getRawForStream(Class<T> clazz, String sql, Object... args) should not use Map as args");
             return getRawByNamedParamForStream(clazz, sql, (Map<String, ?>) args[0]);
         }
-
         jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
@@ -276,18 +252,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         Stream<T> stream = namedJdbcQueryForStream(sql, argsList,
                 new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
 
-        Stream<T> result;
-        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
-        if (!relatedColumns.isEmpty()) {
-            result = InnerCommonUtils.partition(stream, fetchSize)
-                    .peek(this::handleRelatedColumn)
-                    .flatMap(Collection::stream);
-        } else {
-            result = stream;
-        }
-
         // stream方式不支持doInterceptorAfterQueryList
-        return result;
+        return handleStreamRelatedColumn(stream, clazz);
     }
 
     @Override
@@ -878,6 +844,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     private void assertPage(int page) {
         if (page < 1) {
             throw new InvalidParameterException("[page] must greater than 0");
+        }
+    }
+
+    private <T> Stream<T> handleStreamRelatedColumn(Stream<T> stream, Class<T> clazz) {
+        if (!DOInfoReader.getRelatedColumns(clazz).isEmpty()) {
+            return InnerCommonUtils.partition(stream, fetchSize).peek(this::handleRelatedColumn).flatMap(Collection::stream);
+        } else {
+            return stream;
         }
     }
 }
