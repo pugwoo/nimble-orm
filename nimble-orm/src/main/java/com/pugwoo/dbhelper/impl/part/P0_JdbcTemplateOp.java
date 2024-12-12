@@ -21,6 +21,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -253,6 +254,18 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, 0, argsList);
 		return list;
+	}
+
+	protected <T> Stream<T> namedJdbcQueryForStream(String sql, Map<String, ?> argsMap, RowMapper<T> mapper) {
+		List<Object> argsList = InnerCommonUtils.newList(argsMap);
+		sql = addComment(sql);
+		log(sql, 0, argsList);
+		long start = System.currentTimeMillis();
+		NamedParameterUtils.preHandleParams(argsMap);
+		Stream<T> stream = namedParameterJdbcTemplate.queryForStream(sql, argsMap, mapper);
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, 0, argsList);
+		return stream;
 	}
 
 	/**

@@ -216,19 +216,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, ?> args) {
         jdbcTemplate.setFetchSize(fetchSize);
 
-        List<Object> forIntercept = new ArrayList<>();
-        if (args != null) {
-            forIntercept.add(args);
-        }
+        List<Object> forIntercept = args == null ? new ArrayList<>() : InnerCommonUtils.newList(args);
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
-        sql = addComment(sql);
-        log(sql, 0, forIntercept);
-        long start = System.currentTimeMillis();
-
-        NamedParameterUtils.preHandleParams(args);
-        Stream<T> stream = namedParameterJdbcTemplate.queryForStream(sql, args,
-                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
+        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept);
+        Stream<T> stream = namedJdbcQueryForStream(sql, args, mapper);
 
         Stream<T> result;
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
@@ -239,9 +231,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         } else {
             result = stream;
         }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, forIntercept);
 
         // stream方式不支持doInterceptorAfterQueryList
         return result;
