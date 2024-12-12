@@ -234,6 +234,17 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return true;
 	}
 
+	protected <T> List<T> namedJdbcQuery(String sql, List<Object> argsList, AnnotationSupportRowMapper<T> mapper) {
+		sql = addComment(sql);
+		log(sql, 0, argsList);
+		long start = System.currentTimeMillis();
+		List<T> list = namedParameterJdbcTemplate.query(NamedParameterUtils.trans(sql, argsList),
+				NamedParameterUtils.transParam(argsList), mapper);
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, 0, argsList);
+		return list;
+	}
+
 	protected <T> List<T> namedJdbcQuery(String sql, Map<String, ?> argsMap, RowMapper<T> mapper) {
 		List<Object> argsList = InnerCommonUtils.newList(argsMap);
 		sql = addComment(sql);
