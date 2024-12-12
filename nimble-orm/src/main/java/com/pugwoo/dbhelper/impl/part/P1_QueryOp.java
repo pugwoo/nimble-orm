@@ -220,19 +220,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
-        sql = addComment(sql);
-        log(sql, 0, forIntercept);
-        long start = System.currentTimeMillis();
-
-        NamedParameterUtils.preHandleParams(args);
-        List<T> list = namedParameterJdbcTemplate.query(sql, args,
+        List<T> list = namedJdbcQuery(sql, args,
                 new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
 
         handleRelatedColumn(list);
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, forIntercept);
-
         doInterceptorAfterQueryList(clazz, list, -1, sql, forIntercept);
 
         return list;
