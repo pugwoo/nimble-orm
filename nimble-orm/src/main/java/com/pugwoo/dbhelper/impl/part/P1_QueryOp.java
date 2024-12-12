@@ -145,8 +145,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args) {
-        jdbcTemplate.setFetchSize(fetchSize);
-
         StringBuilder sqlSB = new StringBuilder();
         sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, false, features, postSql));
         sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
@@ -212,8 +210,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, ?> args) {
-        jdbcTemplate.setFetchSize(fetchSize);
-
         List<Object> forIntercept = args == null ? new ArrayList<>() : InnerCommonUtils.newList(args);
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
@@ -246,7 +242,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             LOGGER.error("getRawForStream(Class<T> clazz, String sql, Object... args) should not use Map as args");
             return getRawByNamedParamForStream(clazz, sql, (Map<String, ?>) args[0]);
         }
-        jdbcTemplate.setFetchSize(fetchSize);
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
         doInterceptBeforeQuery(clazz, sql, argsList);

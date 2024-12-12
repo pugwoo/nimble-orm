@@ -45,9 +45,10 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SpringJdbcDBHelper.class);
 
 	protected JdbcTemplate jdbcTemplate;
+	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
 	/**数据库类型，从jdbcTemplate的url解析得到；当它为null时，表示未初始化*/
 	private DatabaseTypeEnum databaseType;
-	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	protected long timeoutWarningValve = 1000;
 	/**每页最大个数，为null表示不限制*/
 	protected Integer maxPageSize = null;
@@ -272,6 +273,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		sql = addComment(sql);
 		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
+		jdbcTemplate.setFetchSize(fetchSize);
 		Stream<T> list = namedParameterJdbcTemplate.queryForStream(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList), mapper);
 		long cost = System.currentTimeMillis() - start;
@@ -285,6 +287,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		NamedParameterUtils.preHandleParams(argsMap);
+		jdbcTemplate.setFetchSize(fetchSize);
 		Stream<T> stream = namedParameterJdbcTemplate.queryForStream(sql, argsMap, mapper);
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, 0, argsList);
