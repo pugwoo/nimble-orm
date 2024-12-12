@@ -164,8 +164,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 				List<Object> params = new ArrayList<>();
 				SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(getDatabaseType(),
-						list, params, casVersionColumn,
-						keyColumns.get(0), notKeyColumns, clazz);
+						list, params, casVersionColumn, keyColumns.get(0), notKeyColumns, clazz);
 				if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
 					return 0; // not need to update, return actually update rows
 				}

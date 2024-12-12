@@ -306,6 +306,16 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		return rows;
 	}
 
+	protected int namedJdbcExecuteUpdate(String sql, Map<String, ?> argsMap) {
+		sql = addComment(sql);
+		log(sql, 0, InnerCommonUtils.newList(argsMap));
+		long start = System.currentTimeMillis();
+		int rows = namedParameterJdbcTemplate.update(sql, argsMap);
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, 0, InnerCommonUtils.newList(argsMap));
+		return rows;
+	}
+
 	/**
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 * @param logSql 用于日志打印的sql
