@@ -11,6 +11,7 @@ import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.impl.SpringJdbcDBHelper;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
+import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import com.pugwoo.dbhelper.utils.SpringContext;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 /**
  * jdbcTemplate原生操作接口封装
@@ -240,6 +242,17 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		long cost = System.currentTimeMillis() - start;
 		logSlow(cost, sql, 0, argsList);
 		return t;
+	}
+
+	protected <T> Stream<T> namedJdbcQueryForStream(String sql, List<Object> argsList, AnnotationSupportRowMapper<T> mapper) {
+		sql = addComment(sql);
+		log(sql, 0, argsList);
+		long start = System.currentTimeMillis();
+		Stream<T> list = namedParameterJdbcTemplate.queryForStream(NamedParameterUtils.trans(sql, argsList),
+				NamedParameterUtils.transParam(argsList), mapper);
+		long cost = System.currentTimeMillis() - start;
+		logSlow(cost, sql, 0, argsList);
+		return list;
 	}
 
 	/**

@@ -145,16 +145,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sqlSB, argsList);
 
         String sql = sqlSB.toString();
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-
         AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, sql, argsList);
-        Stream<T> list = namedParameterJdbcTemplate.queryForStream(
-                NamedParameterUtils.trans(sql, argsList),
-                NamedParameterUtils.transParam(argsList),
-                mapper);
+
+        Stream<T> list = namedJdbcQueryForStream(sql, argsList, mapper);
 
         Stream<T> result;
         List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
@@ -165,9 +158,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         } else {
             result = list;
         }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
 
         // stream方式不支持doInterceptorAfterQueryList
         return result;
