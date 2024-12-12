@@ -78,14 +78,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sql = SQLUtils.getSelectCountSQL(getDatabaseType(), clazz) +
                 (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted(getDatabaseType(), "", clazz));
-        sql = addComment(sql);
 
-        log(sql, 0, null);
-        long start = System.currentTimeMillis();
-        Long rows = jdbcTemplate.queryForObject(sql, Long.class);
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, null);
+        Long rows = namedJdbcQueryForObject(Long.class, sql, new ArrayList<>());
         return rows == null ? 0 : rows;
     }
 
