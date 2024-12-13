@@ -15,6 +15,7 @@ import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import com.pugwoo.dbhelper.utils.SpringContext;
+import com.pugwoo.dbhelper.utils.ValidateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -236,6 +237,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected <T> List<T> namedJdbcQuery(String sql, List<Object> argsList, AnnotationSupportRowMapper<T> mapper) {
+		ValidateUtils.assertNoEnumArgs(argsList);
 		sql = addComment(sql);
 		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
@@ -247,6 +249,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected <T> List<T> namedJdbcQuery(String sql, Map<String, ?> argsMap, RowMapper<T> mapper) {
+		ValidateUtils.assertNoEnumArgs(argsMap);
 		List<Object> argsList = InnerCommonUtils.newList(argsMap);
 		sql = addComment(sql);
 		log(sql, 0, argsList);
@@ -259,6 +262,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected <T> T namedJdbcQueryForObject(Class<T> clazz, String sql, List<Object> argsList) {
+		ValidateUtils.assertNoEnumArgs(argsList);
 		sql = addComment(sql);
 		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
@@ -270,6 +274,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected <T> Stream<T> namedJdbcQueryForStream(String sql, List<Object> argsList, AnnotationSupportRowMapper<T> mapper) {
+		ValidateUtils.assertNoEnumArgs(argsList);
 		sql = addComment(sql);
 		log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
@@ -282,6 +287,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected <T> Stream<T> namedJdbcQueryForStream(String sql, Map<String, ?> argsMap, RowMapper<T> mapper) {
+		ValidateUtils.assertNoEnumArgs(argsMap);
 		List<Object> argsList = InnerCommonUtils.newList(argsMap);
 		sql = addComment(sql);
 		log(sql, 0, argsList);
@@ -298,6 +304,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 * 使用namedParameterJdbcTemplate模版执行update，支持in(?)表达式
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, Object... args) {
+		ValidateUtils.assertNoEnumArgs(args);
 		sql = addComment(sql);
 		List<Object> argsList = InnerCommonUtils.arrayToList(args);
 		log(sql, 0, argsList);
@@ -310,6 +317,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	}
 
 	protected int namedJdbcExecuteUpdate(String sql, Map<String, ?> argsMap) {
+		ValidateUtils.assertNoEnumArgs(argsMap);
 		sql = addComment(sql);
 		log(sql, 0, InnerCommonUtils.newList(argsMap));
 		long start = System.currentTimeMillis();
@@ -327,6 +335,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	 */
 	protected int namedJdbcExecuteUpdate(String sql, String logSql, int batchSize, List<Object> logArgs,
 										 Object... args) {
+		ValidateUtils.assertNoEnumArgs(args);
 		sql = addComment(sql);
 		log(logSql, batchSize, logArgs);
 		long start = System.currentTimeMillis();
