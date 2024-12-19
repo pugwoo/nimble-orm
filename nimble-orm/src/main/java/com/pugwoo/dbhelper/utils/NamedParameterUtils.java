@@ -4,7 +4,14 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 2015年8月24日 18:37:48
@@ -73,6 +80,8 @@ public class NamedParameterUtils {
 						set.add(null);
 						param = set;
 					}
+				} else if (param instanceof YearMonth) {
+					param = param.toString();
 				}
 				
 				map.put("param" + (currParamIndex++), param);
@@ -257,6 +266,8 @@ public class NamedParameterUtils {
 					set.add(null);
 					((Map<String, Object>) params).put(entry.getKey(), set);
 				}
+			} else if (entry.getValue() instanceof YearMonth) {
+				((Map<String, Object>) params).put(entry.getKey(), ((YearMonth) entry.getValue()).toString());
 			}
 		}
 	}
