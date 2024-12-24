@@ -764,7 +764,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return sb.toString();
     }
 
-    private <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
+    /**
+     * 这个方法必须是protected，不可以是private，否则当dbhelper被AOP代理时，relatedColumn功能异常
+     */
+    protected <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
         List<Object> param = new ArrayList<>();
         for (Object obj : values) {
             if (obj instanceof List) {
@@ -778,7 +781,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 false, null, null, postSql, param.toArray()).getData();
     }
 
-    private <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
+    /**
+     * 这个方法必须是protected，不可以是private，否则当dbhelper被AOP代理时，relatedColumn功能异常
+     */
+    protected <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
         List<T> result = new ArrayList<>();
 
         for (Object value : values) {
