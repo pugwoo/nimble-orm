@@ -6,6 +6,7 @@ import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.NotAllowQueryException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.model.PageData;
+import com.pugwoo.dbhelper.model.RowData;
 import com.pugwoo.dbhelper.test.entity.*;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
 import com.pugwoo.dbhelper.test.vo.*;
@@ -473,6 +474,15 @@ public abstract class Test1Query_Basic {
         List<java.sql.Timestamp> dates7 = getDBHelper().getRaw(java.sql.Timestamp.class, "select now()");
         assert dates7.get(0) != null;
 
+    }
+
+    @Test
+    public void testGetRawRowData() {
+        StudentDO studentDO1 = CommonOps.insertOne(getDBHelper());
+        List<RowData> rows = getDBHelper().getRaw(RowData.class, "select * from t_student where id=?", studentDO1.getId());
+        assert rows.size() == 1;
+        assert rows.get(0).getString("name").equals(studentDO1.getName());
+        assert rows.get(0).getLong("id").equals(studentDO1.getId());
     }
     
     @Test

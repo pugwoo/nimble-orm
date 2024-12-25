@@ -1,12 +1,18 @@
 package com.pugwoo.dbhelper.impl.part;
 
-import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.DBHelperDataService;
+import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
-import com.pugwoo.dbhelper.exception.*;
+import com.pugwoo.dbhelper.exception.BadSQLSyntaxException;
+import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.NotAllowQueryException;
+import com.pugwoo.dbhelper.exception.NotOnlyOneKeyColumnException;
+import com.pugwoo.dbhelper.exception.NullKeyValueException;
+import com.pugwoo.dbhelper.exception.RelatedColumnFieldNotFoundException;
+import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.PageData;
 import com.pugwoo.dbhelper.sql.SQLAssert;
@@ -15,12 +21,17 @@ import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
-import com.pugwoo.dbhelper.utils.NamedParameterUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.mvel2.MVEL;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
@@ -67,14 +78,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sql = SQLUtils.getSelectCountSQL(getDatabaseType(), clazz) +
                 (isVirtualTable ? "" : SQLUtils.autoSetSoftDeleted(getDatabaseType(), "", clazz));
-        sql = addComment(sql);
 
-        log(sql, 0, null);
-        long start = System.currentTimeMillis();
-        Long rows = jdbcTemplate.queryForObject(sql, Long.class);
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, null);
+        Long rows = namedJdbcQueryForObject(Long.class, sql, new ArrayList<>());
         return rows == null ? 0 : rows;
     }
 
@@ -82,33 +87,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
-        String sqlSB = "SELECT count(*) FROM ("
+        String sql = "SELECT count(*) FROM ("
                 + SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, true, features, postSql)
                 + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz))
                 + ") tff305c6";
 
-        List<Object> argsList = InnerCommonUtils.arrayToList(args);
-
-        String sql = sqlSB;
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-
-        Long rows;
-        if (argsList.isEmpty()) {
-            rows = namedParameterJdbcTemplate.queryForObject(sql, new HashMap<>(),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        } else {
-            rows = namedParameterJdbcTemplate.queryForObject(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    Long.class); // 因为有in (?)所以用namedParameterJdbcTemplate
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
+        Long rows = namedJdbcQueryForObject(Long.class, sql, argsList);
         return rows == null ? 0 : rows;
     }
 
@@ -153,50 +139,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args) {
-        jdbcTemplate.setFetchSize(fetchSize);
-
         StringBuilder sqlSB = new StringBuilder();
         sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, false, features, postSql));
         sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
-
         doInterceptBeforeQuery(clazz, sqlSB, argsList);
 
         String sql = sqlSB.toString();
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-
-        Stream<T> list;
-
-        AnnotationSupportRowMapper<T> mapper = new AnnotationSupportRowMapper<>(this, clazz, sql, argsList);
-        if (argsList.isEmpty()) {
-            list = jdbcTemplate.queryForStream(sql, mapper);
-        } else {
-            // 因为有in (?)所以用namedParameterJdbcTemplate
-            list = namedParameterJdbcTemplate.queryForStream(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    mapper);
-        }
-
-        Stream<T> result;
-        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
-        if (!relatedColumns.isEmpty()) {
-            result = InnerCommonUtils.partition(list, fetchSize)
-                    .peek(this::handleRelatedColumn)
-                    .flatMap(Collection::stream);
-        } else {
-            result = list;
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
-
+        Stream<T> list = namedJdbcQueryForStream(sql, argsList,
+                new AnnotationSupportRowMapper<>(this, clazz, sql, argsList));
         // stream方式不支持doInterceptorAfterQueryList
-        return result;
+        return handleStreamRelatedColumn(list, clazz);
     }
 
     @Override
@@ -250,44 +204,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> Stream<T> getRawByNamedParamForStream(Class<T> clazz, String sql, Map<String, ?> args) {
-        jdbcTemplate.setFetchSize(fetchSize);
-
-        List<Object> forIntercept = new ArrayList<>();
-        if (args != null) {
-            forIntercept.add(args);
-        }
+        List<Object> forIntercept = args == null ? new ArrayList<>() : InnerCommonUtils.newList(args);
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
-        sql = addComment(sql);
-        log(sql, 0, forIntercept);
-        long start = System.currentTimeMillis();
-
-
-        Stream<T> stream;
-        if (args == null || args.isEmpty()) {
-            stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        } else {
-            NamedParameterUtils.preHandleParams(args);
-            stream = namedParameterJdbcTemplate.queryForStream(sql, args,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        }
-
-        Stream<T> result;
-        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
-        if (!relatedColumns.isEmpty()) {
-            result = InnerCommonUtils.partition(stream, fetchSize)
-                    .peek(this::handleRelatedColumn)
-                    .flatMap(Collection::stream);
-        } else {
-            result = stream;
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, forIntercept);
+        Stream<T> stream = namedJdbcQueryForStream(sql, args,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
 
         // stream方式不支持doInterceptorAfterQueryList
-        return result;
+        return handleStreamRelatedColumn(stream, clazz);
     }
 
     private <T> List<T> getRawByNamedParam(Class<T> clazz, String sql, Map<String, ?> args) {
@@ -297,25 +221,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
-        sql = addComment(sql);
-        log(sql, 0, forIntercept);
-        long start = System.currentTimeMillis();
-
-        List<T> list;
-        if (args == null || args.isEmpty()) {
-            list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        } else {
-            NamedParameterUtils.preHandleParams(args);
-            list = namedParameterJdbcTemplate.query(sql, args,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
-        }
+        List<T> list = namedJdbcQuery(sql, args,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
 
         handleRelatedColumn(list);
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, forIntercept);
-
         doInterceptorAfterQueryList(clazz, list, -1, sql, forIntercept);
 
         return list;
@@ -328,41 +237,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             return getRawByNamedParamForStream(clazz, sql, (Map<String, ?>) args[0]);
         }
 
-        jdbcTemplate.setFetchSize(fetchSize);
-
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
         doInterceptBeforeQuery(clazz, sql, argsList);
 
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-        Stream<T> stream;
-        if (argsList.isEmpty()) {
-            stream = namedParameterJdbcTemplate.queryForStream(sql, new HashMap<>(),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        } else {
-            stream = namedParameterJdbcTemplate.queryForStream(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        }
-
-        Stream<T> result;
-        List<Field> relatedColumns = DOInfoReader.getRelatedColumns(clazz);
-        if (!relatedColumns.isEmpty()) {
-            result = InnerCommonUtils.partition(stream, fetchSize)
-                    .peek(this::handleRelatedColumn)
-                    .flatMap(Collection::stream);
-        } else {
-            result = stream;
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
+        Stream<T> stream = namedJdbcQueryForStream(sql, argsList,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
 
         // stream方式不支持doInterceptorAfterQueryList
-        return result;
+        return handleStreamRelatedColumn(stream, clazz);
     }
 
     @Override
@@ -375,29 +257,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
         doInterceptBeforeQuery(clazz, sql, argsList);
 
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-        List<T> list;
-        if (argsList.isEmpty()) {
-            list = namedParameterJdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        } else {
-            list = namedParameterJdbcTemplate.query(
-                    NamedParameterUtils.trans(sql, argsList),
-                    NamedParameterUtils.transParam(argsList),
-                    new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
-        }
-
+        List<T> list = namedJdbcQuery(sql, argsList,
+                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
         handleRelatedColumn(list);
 
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
-
-
         doInterceptorAfterQueryList(clazz, list, -1, sql, argsList);
-
         return list;
     }
 
@@ -500,26 +364,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         String sql = sqlSB.toString();
-        sql = addComment(sql);
-        log(sql, 0, argsList);
-
-        long start = System.currentTimeMillis();
-        List<T> list;
-        if (argsList.isEmpty()) {
-            list = jdbcTemplate.query(sql,
-                    new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
-        } else {
-            if (isUseNamedTemplate) {
-                // 因为有in (?)所以用namedParameterJdbcTemplate
-                list = namedParameterJdbcTemplate.query(
-                        NamedParameterUtils.trans(sql, argsList),
-                        NamedParameterUtils.transParam(argsList),
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
-            } else {
-                list = jdbcTemplate.query(sql,
-                        new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList), argsList.toArray());
-            }
-        }
+        List<T> list = namedJdbcQuery(sql, argsList,
+                new AnnotationSupportRowMapper<>(this, clazz, selectOnlyKey, sql, argsList));
 
         long total = -1; // -1 表示没有查询总数，未知
         if (withCount) {
@@ -533,12 +379,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         if (!selectOnlyKey) {
             handleRelatedColumn(list);
-        }
-
-        long cost = System.currentTimeMillis() - start;
-        logSlow(cost, sql, 0, argsList);
-
-        if (!selectOnlyKey) {
             doInterceptorAfterQueryList(clazz, list, total, sql, argsList);
         }
 
@@ -640,7 +480,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 Object value = MVEL.eval(conditional, vars);
                 if (value == null) {
                     LOGGER.error("execute conditional return null, script:{}, t:{}",
-                            conditional, NimbleOrmJSON.toJson(t));
+                            conditional, NimbleOrmJSON.toJsonNoException(t));
                 } else {
                     if (value instanceof Boolean) {
                         if ((Boolean) value) {
@@ -652,11 +492,11 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                         }
                     } else {
                         LOGGER.error("execute conditional return is not instance of Boolean, script:{}, t:{}",
-                                conditional, NimbleOrmJSON.toJson(t));
+                                conditional, NimbleOrmJSON.toJsonNoException(t));
                     }
                 }
             } catch (Throwable e) {
-                LOGGER.error("execute script fail: {}, t:{}", conditional, NimbleOrmJSON.toJson(t), e);
+                LOGGER.error("execute script fail: {}, t:{}", conditional, NimbleOrmJSON.toJsonNoException(t), e);
             }
         }
 
@@ -924,7 +764,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return sb.toString();
     }
 
-    private <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
+    /**
+     * 这个方法必须是protected，不可以是private，否则当dbhelper被AOP代理时，relatedColumn功能异常
+     */
+    protected <T> List<T> getAllForRelatedColumn(final Class<T> clazz, String postSql, Set<Object> values) {
         List<Object> param = new ArrayList<>();
         for (Object obj : values) {
             if (obj instanceof List) {
@@ -938,7 +781,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 false, null, null, postSql, param.toArray()).getData();
     }
 
-    private <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
+    /**
+     * 这个方法必须是protected，不可以是private，否则当dbhelper被AOP代理时，relatedColumn功能异常
+     */
+    protected <T> List<T> getAllForRelatedColumnBySingleValue(final Class<T> clazz, String postSql, Set<Object> values) {
         List<T> result = new ArrayList<>();
 
         for (Object value : values) {
@@ -972,6 +818,14 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     private void assertPage(int page) {
         if (page < 1) {
             throw new InvalidParameterException("[page] must greater than 0");
+        }
+    }
+
+    private <T> Stream<T> handleStreamRelatedColumn(Stream<T> stream, Class<T> clazz) {
+        if (!DOInfoReader.getRelatedColumns(clazz).isEmpty()) {
+            return InnerCommonUtils.partition(stream, fetchSize).peek(this::handleRelatedColumn).flatMap(Collection::stream);
+        } else {
+            return stream;
         }
     }
 }

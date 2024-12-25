@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.SqlColumn;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.exception.EnumNotSupportedException;
 import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
@@ -13,7 +14,11 @@ import org.slf4j.LoggerFactory;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -133,6 +138,15 @@ public class ClassInfoCache {
 
         List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
         fields = getFieldsForColumn(classLink);
+
+        // 检查field的类型有无enum枚举类型
+        for (Field field : fields) {
+            Class<?> type = field.getType();
+            if (type.isEnum()) {
+                throw new EnumNotSupportedException("enum type is not supported in column field: "
+                        + field.getName() + ", class:" + clazz.getName());
+            }
+        }
 
         if (isCacheEnable) {
             classColumnFieldMap.put(clazz, fields);

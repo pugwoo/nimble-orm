@@ -1,3 +1,9 @@
+2024年12月25日
+v1.7.1 - [add] DBHelper.getRaw方法增加支持内置类型RowData，该类型获取指定数据类型要优于Map.class
+       - [enhance] 增加检查：不允许DO字段使用枚举类型，不允许SQL入参中存在枚举类型参数，否则抛出EnumNotSupportedException
+       - [enhance] 当用户使用java.time.YearMonth类型作为入参时，自动处理成String类型
+       - [fix] 修复当DBHelper被SpringAOP代理时，@RelateColumn功能指定dbHelper beanName时，抛出NullPointerException的问题
+
 2024年11月23日
 v1.7.0 - [refactor]【升级须知】IDBHelperDataService名称变更为DBHelperDataService; IDBHelperSlowSqlCallback变更为DBHelperSlowSqlCallback
                     DBHelperSlowSqlCallback的callback参数增加int batchSize参数，可以获得批量操作的数据量

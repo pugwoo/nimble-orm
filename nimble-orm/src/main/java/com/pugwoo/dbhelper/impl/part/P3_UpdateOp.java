@@ -164,8 +164,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 				List<Object> params = new ArrayList<>();
 				SQLUtils.BatchUpdateResultDTO batchUpdateSQL = SQLUtils.getBatchUpdateSQL(getDatabaseType(),
-						list, params, casVersionColumn,
-						keyColumns.get(0), notKeyColumns, clazz);
+						list, params, casVersionColumn, keyColumns.get(0), notKeyColumns, clazz);
 				if (InnerCommonUtils.isBlank(batchUpdateSQL.getSql())) {
 					return 0; // not need to update, return actually update rows
 				}
@@ -179,7 +178,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					}
 				}
 
-				rows = namedJdbcExecuteUpdateWithLog(batchUpdateSQL.getSql(),
+				rows = namedJdbcExecuteUpdate(batchUpdateSQL.getSql(),
 						batchUpdateSQL.getLogSql(), list.size(), batchUpdateSQL.getLogParams(), params.toArray());
 
 				// 对于clickhouse,case when的批量update方式无法获取正在的修改条数，只能把1转成全部数量
@@ -216,7 +215,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 			if(isThrowCasVersionNotMatchException) {
 				throw new CasVersionNotMatchException(rows, "update fail for class:"
-						+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(casUpdateFailList));
+						+ clazz.getName() + ", data:" + NimbleOrmJSON.toJsonNoException(casUpdateFailList));
 			}
 		}
 
@@ -278,7 +277,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		if (list.size() != rows) {
 			throw new CasVersionNotMatchException(rows, "update fail for class:"
-					+ clazz.getName() + ", data:" + NimbleOrmJSON.toJson(list));
+					+ clazz.getName() + ", data:" + NimbleOrmJSON.toJsonNoException(list));
 		} else {
 			list.forEach(o -> postHandleCasVersion(o, casVersionColumn));
 		}
@@ -296,7 +295,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		}
 		if(rows <= 0) {
 			throw new CasVersionNotMatchException("update fail for class:"
-					+ t.getClass().getName() + ", data:" + NimbleOrmJSON.toJson(t));
+					+ t.getClass().getName() + ", data:" + NimbleOrmJSON.toJsonNoException(t));
 		} else {
 			postHandleCasVersion(t, casVersionField);
 		}

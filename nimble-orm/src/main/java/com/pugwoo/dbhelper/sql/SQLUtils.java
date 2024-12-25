@@ -652,7 +652,7 @@ public class SQLUtils {
 		for (T t : list) {
 			Object key = DOInfoReader.getValue(keyColumn, t);
 			if (key == null) {
-				throw new NullKeyValueException("class:" + t.getClass().getName() + ",values:" + NimbleOrmJSON.toJson(t));
+				throw new NullKeyValueException("class:" + t.getClass().getName() + ",values:" + NimbleOrmJSON.toJsonNoException(t));
 			}
 			keys.add(key);
 		}

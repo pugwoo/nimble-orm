@@ -4,7 +4,14 @@ import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 2015年8月24日 18:37:48
@@ -16,7 +23,6 @@ public class NamedParameterUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NamedParameterUtils.class);
 	
-	@SuppressWarnings("unchecked")
 	public static Map<String, Object> transParam(List<Object> params) {
 		Map<String, Object> map = new HashMap<>();
 		if(params != null) {
@@ -61,7 +67,7 @@ public class NamedParameterUtils {
 					}
 				}
 				
-				// 转换后，对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错
+				// 转换后，对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错，同时保证查询结果准确
 				if(param instanceof List<?>) {
 					if(((List<?>) param).isEmpty()) {
 						List<String> list = new ArrayList<>(1);
@@ -74,6 +80,8 @@ public class NamedParameterUtils {
 						set.add(null);
 						param = set;
 					}
+				} else if (param instanceof YearMonth) {
+					param = param.toString();
 				}
 				
 				map.put("param" + (currParamIndex++), param);
@@ -149,12 +157,17 @@ public class NamedParameterUtils {
 	/**
 	 * 把?变成:paramN的形式，不包括'?'中的?
 	 * paramN的N从1开始
-	 * @param args 将会操作参数列表
+	 * @param args 该参数可能被修改，当该参数是null或空时，返回原sql，等价于不处理
 	 */
 	public static String trans(String sql, List<Object> args) {
 		if(sql == null || sql.isEmpty()) {
+			if (args != null && !args.isEmpty()) {
+				LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}, params:{}",
+						args.size(), 0, sql, NimbleOrmJSON.toJsonNoException(args));
+			}
 			return "";
 		}
+
 		StringBuilder sb = new StringBuilder();
 
 		boolean isInStr = false;
@@ -216,12 +229,12 @@ public class NamedParameterUtils {
 		int paramCount = currParamIndex - 1;
         if (paramCount != args.size()) {
 			LOGGER.error("SQL args not matched, provide args count:{}, expected:{}, SQL:{}, params:{}",
-					args.size(), paramCount, sql, NimbleOrmJSON.toJson(args));
+					args.size(), paramCount, sql, NimbleOrmJSON.toJsonNoException(args));
 			// 尝试将args里的list转换成数组，仅为防御性处理，不建议用户这样使用
 			if (paramCount > 1 && args.size() == 1 && args.get(0) instanceof List<?>) {
 				LOGGER.error("SQL args is a List, please convert to array, provide args {}, SQL:{}. "
 						+ " NimbleOrm will automatically convert it for you, although it is not recommended.",
-						NimbleOrmJSON.toJson(args), sql);
+						NimbleOrmJSON.toJsonNoException(args), sql);
 				List<?> list = (List<?>) args.get(0);
 				args.clear();
 				args.addAll(list);
@@ -232,6 +245,9 @@ public class NamedParameterUtils {
 		return sb.toString();
 	}
 
+	/**
+	 * 对于param是空的List或Set，则List或Set插入null，此动作时防止SQL出错，同时保证查询结果准确
+	 */
 	public static void preHandleParams(Map<String, ?> params) {
 		if (params == null) {
 			return;
@@ -250,6 +266,8 @@ public class NamedParameterUtils {
 					set.add(null);
 					((Map<String, Object>) params).put(entry.getKey(), set);
 				}
+			} else if (entry.getValue() instanceof YearMonth) {
+				((Map<String, Object>) params).put(entry.getKey(), ((YearMonth) entry.getValue()).toString());
 			}
 		}
 	}
