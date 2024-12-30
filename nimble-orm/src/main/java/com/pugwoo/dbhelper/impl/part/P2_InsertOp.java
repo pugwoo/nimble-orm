@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
@@ -190,11 +191,12 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		String sql = addComment(sqlDTO.getSql());
 		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
 		List<Object> paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
-		log(sqlForLog, listSize, paramForLog);
+		ScheduledFuture<?> logFeature = log(sqlForLog, listSize, paramForLog);
 
 		long start = System.currentTimeMillis();
 		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sqlForLog, listSize, paramForLog);
 		return total;
 	}
@@ -202,7 +204,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 	private int insertBatchJDBCTemplateMode(String sql, List<Object[]> values) {
 		sql = addComment(sql);
 		List<Object> paramForLog = values.isEmpty() ? null : InnerCommonUtils.arrayToList(values.get(0));
-		log(sql, values.size(), paramForLog);
+		ScheduledFuture<?> logFeature = log(sql, values.size(), paramForLog);
 		String sqlForLog = sql;
 
 		long start = System.currentTimeMillis();
@@ -218,6 +220,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 			total += result;
 		}
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sqlForLog, values.size(), paramForLog);
 		return total;
 	}
@@ -285,7 +288,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		String sql1 = SQLUtils.getInsertSQL(getDatabaseType(), t, values, isWithNullValue);
 		final String sql = addComment(sql1);
-		log(sql, 0, values);
+		ScheduledFuture<?> logFeature = log(sql, 0, values);
 		
 		final long start = System.currentTimeMillis();
 
@@ -341,6 +344,7 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		}
 
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, values);
 		
 		if(withInterceptor) {

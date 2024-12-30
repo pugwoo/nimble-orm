@@ -35,6 +35,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 /**
@@ -67,19 +71,34 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		put(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION, true);
 		put(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL, true);
 		put(FeatureEnum.LAZY_DETECT_DATABASE_TYPE, true);
+		put(FeatureEnum.LOG_EXECUTING_SLOW_SQL, true);
 	}};
 
 	private DBHelperSqlCallback sqlCallback;
 	private DBHelperSlowSqlCallback slowSqlCallback;
 
+	private static ScheduledExecutorService logSlowScheduler = Executors.newScheduledThreadPool(1,
+			new InnerCommonUtils.MyThreadFactory("DBHelper-LogSlowScheduler"));
+	private static final long EXECUTING_SLOW_SQL_THRESHOLD_SECONDS = 60;
+
+	protected void cancel(ScheduledFuture<?> feature) {
+		if (feature != null) {
+			try {
+				feature.cancel(false);
+			} catch (Throwable e) {
+				LOGGER.error("cancel logSlowScheduler fail:{}", feature, e);
+			}
+		}
+	}
+
     /**
-     * 批量和非批量的log
+     * 批量和非批量的log，该日志会在执行SQL之前调用
      *
      * @param sql 要log的sql
      * @param batchSize 如果大于0，则是批量log方式
      * @param args 参数
      */
-    protected void log(String sql, int batchSize, List<Object> args) {
+    protected ScheduledFuture<?> log(String sql, int batchSize, List<Object> args) {
 		try {
 			if (sqlCallback != null) {
 				sqlCallback.beforeExecute(sql, args, batchSize);
@@ -89,14 +108,23 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					sql, NimbleOrmJSON.toJsonNoException(args), e);
 		}
 
+		ScheduledFuture<?> logFeature = null;
+		final String firstCallMethodStr;
+		final String assembledSql;
+		if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL) && LOGGER.isInfoEnabled() || LOGGER.isDebugEnabled()
+		    || features.get(FeatureEnum.LOG_EXECUTING_SLOW_SQL)) {
+			firstCallMethodStr = getFirstCallMethodStr();
+			assembledSql = getAssembledSql(sql, args);
+		} else {
+            firstCallMethodStr = null;
+            assembledSql = null;
+        }
+
         if (batchSize > 0) { // 批量log
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 				if (LOGGER.isInfoEnabled()) {
-					String firstCallMethodStr = getFirstCallMethodStr();
-					String assembledSql = getAssembledSql(sql, args);
 					if (assembledSql != null) {
-						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}",
-								firstCallMethodStr, batchSize, assembledSql);
+						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}", firstCallMethodStr, batchSize, assembledSql);
 					} else {
 						LOGGER.info("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
 								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
@@ -104,22 +132,28 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				}
             } else {
 				if (LOGGER.isDebugEnabled()) {
-					String firstCallMethodStr = getFirstCallMethodStr();
-					String assembledSql = getAssembledSql(sql, args);
 					if (assembledSql != null) {
-						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}",
-								firstCallMethodStr, batchSize, assembledSql);
+						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}", firstCallMethodStr, batchSize, assembledSql);
 					} else {
 						LOGGER.debug("{} Batch ExecSQL(totalRows:{}):{}; first row params:{}",
 								firstCallMethodStr, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
 					}
 				}
             }
+			if (features.get(FeatureEnum.LOG_EXECUTING_SLOW_SQL)) {
+				logFeature = logSlowScheduler.schedule(() -> {
+					if (assembledSql != null) {
+						LOGGER.warn("{} SlowSQL(Executed for {} seconds, no response yet) Batch(totalRows:{}):{}",
+								firstCallMethodStr, EXECUTING_SLOW_SQL_THRESHOLD_SECONDS, batchSize, assembledSql);
+					} else {
+						LOGGER.warn("{} SlowSQL(Executed for {} seconds, no response yet) Batch(totalRows:{}):{}; first row params:{}",
+								firstCallMethodStr, EXECUTING_SLOW_SQL_THRESHOLD_SECONDS, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
+					}
+				}, EXECUTING_SLOW_SQL_THRESHOLD_SECONDS, TimeUnit.SECONDS);
+			}
         } else {
             if (features.get(FeatureEnum.LOG_SQL_AT_INFO_LEVEL)) {
 				if (LOGGER.isInfoEnabled()) {
-					String firstCallMethodStr = getFirstCallMethodStr();
-					String assembledSql = getAssembledSql(sql, args);
 					if (assembledSql != null) {
 						LOGGER.info("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
 					} else {
@@ -128,8 +162,6 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 				}
             } else {
 				if (LOGGER.isDebugEnabled()) {
-					String firstCallMethodStr = getFirstCallMethodStr();
-					String assembledSql = getAssembledSql(sql, args);
 					if (assembledSql != null) {
 						LOGGER.debug("{} ExecSQL:{}", firstCallMethodStr, assembledSql);
 					} else {
@@ -137,11 +169,24 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					}
 				}
 			}
+			if (features.get(FeatureEnum.LOG_EXECUTING_SLOW_SQL)) {
+				logFeature = logSlowScheduler.schedule(() -> {
+					if (assembledSql != null) {
+						LOGGER.warn("{} SlowSQL(Executed for {} seconds, no response yet):{}",
+								firstCallMethodStr, EXECUTING_SLOW_SQL_THRESHOLD_SECONDS, assembledSql);
+					} else {
+						LOGGER.warn("{} SlowSQL(Executed for {} seconds, no response yet):{}; params:{}",
+								firstCallMethodStr, sql, EXECUTING_SLOW_SQL_THRESHOLD_SECONDS, NimbleOrmJSON.toJsonNoException(args));
+					}
+				}, EXECUTING_SLOW_SQL_THRESHOLD_SECONDS, TimeUnit.SECONDS);
+			}
 		}
+
+		return logFeature;
 	}
 
     /**
-     * 记录慢sql请求
+     * 记录慢sql请求，该方法会在SQL执行之后调用
      *
      * @param cost 请求耗时，毫秒
      * @param sql 要记录的sql
@@ -166,7 +211,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}",
 							firstCallMethodStr, cost, batchSize, assembledSql);
 				} else {
-					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}, params:{}",
+					LOGGER.warn("{} SlowSQL(cost:{}ms) Batch(totalRows:{}):{}, first row params:{}",
 							firstCallMethodStr, cost, batchSize, sql, NimbleOrmJSON.toJsonNoException(args));
 				}
 
@@ -175,7 +220,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 						slowSqlCallback.callback(cost, sql, args, batchSize);
                     }
                 } catch (Throwable e) {
-                    LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, params:{}",
+                    LOGGER.error("DBHelperSlowSqlCallback fail, SlowSQL:{}; cost:{}ms, listSize:{}, first row params:{}",
                             sql, cost, batchSize, NimbleOrmJSON.toJsonNoException(args), e);
                 }
             } else {
@@ -239,11 +284,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected <T> List<T> namedJdbcQuery(String sql, List<Object> argsList, AnnotationSupportRowMapper<T> mapper) {
 		ValidateUtils.assertNoEnumArgs(argsList);
 		sql = addComment(sql);
-		log(sql, 0, argsList);
+		ScheduledFuture<?> logFeature = log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		List<T> list = namedParameterJdbcTemplate.query(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList), mapper);
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, argsList);
 		return list;
 	}
@@ -252,11 +298,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		ValidateUtils.assertNoEnumArgs(argsMap);
 		List<Object> argsList = InnerCommonUtils.newList(argsMap);
 		sql = addComment(sql);
-		log(sql, 0, argsList);
+		ScheduledFuture<?> logFeature = log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		NamedParameterUtils.preHandleParams(argsMap);
 		List<T> list = namedParameterJdbcTemplate.query(sql, argsMap, mapper);
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, argsList);
 		return list;
 	}
@@ -264,11 +311,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected <T> T namedJdbcQueryForObject(Class<T> clazz, String sql, List<Object> argsList) {
 		ValidateUtils.assertNoEnumArgs(argsList);
 		sql = addComment(sql);
-		log(sql, 0, argsList);
+		ScheduledFuture<?> logFeature = log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		T t = namedParameterJdbcTemplate.queryForObject(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList), clazz);
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, argsList);
 		return t;
 	}
@@ -276,12 +324,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected <T> Stream<T> namedJdbcQueryForStream(String sql, List<Object> argsList, AnnotationSupportRowMapper<T> mapper) {
 		ValidateUtils.assertNoEnumArgs(argsList);
 		sql = addComment(sql);
-		log(sql, 0, argsList);
+		ScheduledFuture<?> logFeature = log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		jdbcTemplate.setFetchSize(fetchSize);
 		Stream<T> list = namedParameterJdbcTemplate.queryForStream(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList), mapper);
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, argsList);
 		return list;
 	}
@@ -290,12 +339,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		ValidateUtils.assertNoEnumArgs(argsMap);
 		List<Object> argsList = InnerCommonUtils.newList(argsMap);
 		sql = addComment(sql);
-		log(sql, 0, argsList);
+		ScheduledFuture<?> logFeature = log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		NamedParameterUtils.preHandleParams(argsMap);
 		jdbcTemplate.setFetchSize(fetchSize);
 		Stream<T> stream = namedParameterJdbcTemplate.queryForStream(sql, argsMap, mapper);
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, argsList);
 		return stream;
 	}
@@ -307,11 +357,12 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		ValidateUtils.assertNoEnumArgs(args);
 		sql = addComment(sql);
 		List<Object> argsList = InnerCommonUtils.arrayToList(args);
-		log(sql, 0, argsList);
+		ScheduledFuture<?> logFeature = log(sql, 0, argsList);
 		long start = System.currentTimeMillis();
 		int rows = namedParameterJdbcTemplate.update(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, argsList);
 		return rows;
 	}
@@ -319,10 +370,11 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 	protected int namedJdbcExecuteUpdate(String sql, Map<String, ?> argsMap) {
 		ValidateUtils.assertNoEnumArgs(argsMap);
 		sql = addComment(sql);
-		log(sql, 0, InnerCommonUtils.newList(argsMap));
+		ScheduledFuture<?> logFeature = log(sql, 0, InnerCommonUtils.newList(argsMap));
 		long start = System.currentTimeMillis();
 		int rows = namedParameterJdbcTemplate.update(sql, argsMap);
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, sql, 0, InnerCommonUtils.newList(argsMap));
 		return rows;
 	}
@@ -337,12 +389,13 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 										 Object... args) {
 		ValidateUtils.assertNoEnumArgs(args);
 		sql = addComment(sql);
-		log(logSql, batchSize, logArgs);
+		ScheduledFuture<?> logFeature = log(logSql, batchSize, logArgs);
 		long start = System.currentTimeMillis();
 		List<Object> argsList = InnerCommonUtils.arrayToList(args);
 		int rows = namedParameterJdbcTemplate.update(NamedParameterUtils.trans(sql, argsList),
 				NamedParameterUtils.transParam(argsList)); // 因为有in (?) 所以使用namedParameterJdbcTemplate
 		long cost = System.currentTimeMillis() - start;
+		cancel(logFeature);
 		logSlow(cost, logSql, batchSize, logArgs);
 		return rows;
 	}

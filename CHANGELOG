@@ -1,5 +1,6 @@
 
-v1.7.2 - [del] 移除isExistAtLeast和getAllKey方法
+v1.7.2 - [add] 支持打印执行中尚未结束的慢SQL，默认执行超过60秒未返回，打印慢sql
+       - [del] 移除isExistAtLeast和getAllKey方法
 
 2024年12月25日
 v1.7.1 - [add] DBHelper.getRaw方法增加支持内置类型RowData，该类型获取指定数据类型要优于Map.class

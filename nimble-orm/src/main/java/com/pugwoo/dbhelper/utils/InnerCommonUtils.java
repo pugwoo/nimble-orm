@@ -2,6 +2,8 @@ package com.pugwoo.dbhelper.utils;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -359,4 +361,18 @@ public class InnerCommonUtils {
         return java.util.Base64.getDecoder().decode(str);
     }
 
+    public static class MyThreadFactory implements ThreadFactory {
+
+        private final AtomicInteger count = new AtomicInteger(1);
+        private final String threadNamePrefix;
+
+        public MyThreadFactory(String threadNamePrefix) {
+            this.threadNamePrefix = threadNamePrefix;
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, threadNamePrefix + "-" + count.getAndIncrement());
+        }
+    }
 }
