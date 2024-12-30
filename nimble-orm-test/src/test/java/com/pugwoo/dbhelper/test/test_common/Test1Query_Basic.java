@@ -85,11 +85,6 @@ public abstract class Test1Query_Basic {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         assert getDBHelper().isExist(StudentDO.class, null);
         assert getDBHelper().isExist(StudentDO.class, "where id=?", studentDO.getId());
-        assert getDBHelper().isExistAtLeast(1, StudentDO.class,
-                "where id=?", studentDO.getId());
-
-        assert !getDBHelper().isExistAtLeast(2, StudentDO.class,
-                "where id=?", studentDO.getId());
     }
 
     @Test 

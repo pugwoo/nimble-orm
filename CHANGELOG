@@ -1,3 +1,6 @@
+
+v1.7.2 - [del] 移除isExistAtLeast和getAllKey方法
+
 2024年12月25日
 v1.7.1 - [add] DBHelper.getRaw方法增加支持内置类型RowData，该类型获取指定数据类型要优于Map.class
        - [enhance] 增加检查：不允许DO字段使用枚举类型，不允许SQL入参中存在枚举类型参数，否则抛出EnumNotSupportedException
@@ -408,7 +411,7 @@ v0.4.0 - [del] 删除掉DBHelper中对JDBCTemplate native封装的方法(queryFo
 
 2017年6月10日
 v0.3.7 - [add] 增加isExist和isExistAtLeast两个方法
-       - [del] 标记DBHelper中jdbcTemplate的基本封装方法为废弃@Deprecated
+       - [del] 标记DBHelper中jdbcTemplate的基本封装方法为废弃
 
 2017年5月27日
 v0.3.6 - [add] 增加单表select表别名t配置，join表别名支持配置
