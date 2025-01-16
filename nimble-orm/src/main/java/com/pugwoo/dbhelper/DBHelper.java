@@ -339,16 +339,6 @@ public interface DBHelper {
 	<T> Stream<T> getAllForStream(Class<T> clazz, WhereSQL whereSQL);
 
 	/**
-	 * 查询列表，但只查询主键出来，postSql指定查询where及order by limit等后续语句。<br>
-	 * 【会自动处理软删除记录】
-	 * @param clazz 【-支持@JoinTable-】
-	 * @param postSql where及后续语句，可包含order by,group by,limit等语句
-	 * @return 返回不会是null
-	 */
-	@Deprecated
-	<T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args);
-
-	/**
 	 * 查询一条记录，如果有多条，也只返回第一条。该方法适合于知道返回值只有一条记录的情况。<br>
 	 * 【会自动处理软删除记录】
 	 * @param clazz 【-支持@JoinTable-】
@@ -465,17 +455,6 @@ public interface DBHelper {
 	 * @return 如果存在则返回true，否则返回false
 	 */
 	<T> boolean isExist(Class<T> clazz, WhereSQL whereSQL);
-
-	/**
-	 * 是否出现至少N条记录(含N条)
-	 * @param atLeastCounts 至少有N条记录（isExist方法等级于atLeastCounts=1）
-	 * @param clazz 查询的DO类
-	 * @param postSql 不能有limit子句
-	 * @param args postSql中的参数列表
-	 * @return 如果存在则返回true，否则返回false
-	 */
-	@Deprecated
-	<T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz, String postSql, Object... args);
 
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了

@@ -168,8 +168,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return whereSQL == null ? getAll(clazz) : getAll(clazz, whereSQL.getSQL(), whereSQL.getParams());
     }
 
-    @Override
-    public <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
+    protected  <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
         assertNotVirtualTable(clazz);
 
         return _getPage(clazz, true, true, false, null, null, postSql, args).getData();
@@ -400,15 +399,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> boolean isExist(Class<T> clazz, WhereSQL whereSQL) {
         return whereSQL == null ? isExist(clazz, "") : isExist(clazz, whereSQL.getSQL(), whereSQL.getParams());
-    }
-
-    @Override
-    public <T> boolean isExistAtLeast(int atLeastCounts, Class<T> clazz,
-                                      String postSql, Object... args) {
-        if (atLeastCounts == 1) {
-            return isExist(clazz, postSql, args);
-        }
-        return getCount(clazz, postSql, args) >= atLeastCounts;
     }
 
     //////////////////// 拦截器封装方法
