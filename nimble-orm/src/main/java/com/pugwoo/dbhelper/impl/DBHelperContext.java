@@ -1,5 +1,7 @@
 package com.pugwoo.dbhelper.impl;
 
+import com.pugwoo.dbhelper.impl.part.P0_JdbcTemplateOp;
+import com.pugwoo.dbhelper.model.RunningSqlData;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +11,7 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -185,6 +188,13 @@ public class DBHelperContext {
             insertDefaultValueMap.put(insertDefaultValueMapName, map);
         }
         map.put(clazz, value);
+    }
+
+    /**
+     * 获取正在运行的SQL
+     */
+    public static Collection<RunningSqlData> getRunningSql() {
+        return P0_JdbcTemplateOp.runningSqlMap.values();
     }
 
 }

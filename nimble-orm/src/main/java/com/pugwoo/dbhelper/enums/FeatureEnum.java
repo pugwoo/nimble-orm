@@ -39,6 +39,11 @@ public enum FeatureEnum {
     /**
      * 是否打印运行中的慢SQL（超过30秒未返回则打印），不需要等待SQL执行完就可以打印出来，便于排查迟迟未返回的慢SQL，默认[开启]
      */
-    LOG_EXECUTING_SLOW_SQL
+    LOG_EXECUTING_SLOW_SQL,
+
+    /**
+     * 是否记录运行中的SQL，默认[开启]
+     */
+    RECORD_RUNNING_SQL
 
 }

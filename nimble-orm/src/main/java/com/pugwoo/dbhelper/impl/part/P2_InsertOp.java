@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
+import com.pugwoo.dbhelper.impl.dto.LogFutureDTO;
 import com.pugwoo.dbhelper.json.NimbleOrmDateUtils;
 import com.pugwoo.dbhelper.sql.InsertSQLForBatchDTO;
 import com.pugwoo.dbhelper.sql.SQLAssert;
@@ -21,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
 
 public abstract class P2_InsertOp extends P1_QueryOp {
 	
@@ -191,38 +191,42 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		String sql = addComment(sqlDTO.getSql());
 		String sqlForLog = sqlDTO.getSql().substring(0, sqlDTO.getSqlLogEndIndex());
 		List<Object> paramForLog = values.subList(0, sqlDTO.getParamLogEndIndex());
-		ScheduledFuture<?> logFeature = log(sqlForLog, listSize, paramForLog);
-
-		long start = System.currentTimeMillis();
-		int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		long cost = System.currentTimeMillis() - start;
-		cancel(logFeature);
-		logSlow(cost, sqlForLog, listSize, paramForLog);
-		return total;
+		LogFutureDTO logFeature = log(sqlForLog, listSize, paramForLog);
+        try {
+			long start = System.currentTimeMillis();
+			int total = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
+			long cost = System.currentTimeMillis() - start;
+			logSlow(cost, sqlForLog, listSize, paramForLog);
+			return total;
+		} finally {
+			cancel(logFeature);
+		}
 	}
 
 	private int insertBatchJDBCTemplateMode(String sql, List<Object[]> values) {
 		sql = addComment(sql);
 		List<Object> paramForLog = values.isEmpty() ? null : InnerCommonUtils.arrayToList(values.get(0));
-		ScheduledFuture<?> logFeature = log(sql, values.size(), paramForLog);
-		String sqlForLog = sql;
-
-		long start = System.currentTimeMillis();
-		int total = 0;
-		int[] rows = jdbcTemplate.batchUpdate(sql, values);
-		for (int row : rows) {
-			int result = row;
-			if (row == -2) {
-				result = 1; // -2 means Statement.SUCCESS_NO_INFO
-			} else if (row < 0) {
-				result = 0; // not success
+		LogFutureDTO logFeature = log(sql, values.size(), paramForLog);
+		try {
+			String sqlForLog = sql;
+			long start = System.currentTimeMillis();
+			int total = 0;
+			int[] rows = jdbcTemplate.batchUpdate(sql, values);
+			for (int row : rows) {
+				int result = row;
+				if (row == -2) {
+					result = 1; // -2 means Statement.SUCCESS_NO_INFO
+				} else if (row < 0) {
+					result = 0; // not success
+				}
+				total += result;
 			}
-			total += result;
+			long cost = System.currentTimeMillis() - start;
+			logSlow(cost, sqlForLog, values.size(), paramForLog);
+			return total;
+		} finally {
+			cancel(logFeature);
 		}
-		long cost = System.currentTimeMillis() - start;
-		cancel(logFeature);
-		logSlow(cost, sqlForLog, values.size(), paramForLog);
-		return total;
 	}
 
 	@Override
@@ -288,69 +292,71 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		
 		String sql1 = SQLUtils.getInsertSQL(getDatabaseType(), t, values, isWithNullValue);
 		final String sql = addComment(sql1);
-		ScheduledFuture<?> logFeature = log(sql, 0, values);
-		
-		final long start = System.currentTimeMillis();
+		LogFutureDTO logFeature = log(sql, 0, values);
+		try {
+			final long start = System.currentTimeMillis();
 
-		DatabaseTypeEnum databaseType = getDatabaseType();
+			DatabaseTypeEnum databaseType = getDatabaseType();
 
-		int rows;
-		Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
-		// 有自增注解且该字段值为null时才回查
-		if (autoIncrementField != null && DOInfoReader.getValue(autoIncrementField, t) == null) {
-			GeneratedKeyHolder holder = new GeneratedKeyHolder();
-			rows = jdbcTemplate.update(con -> {
-				PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-				for (int i = 0; i < values.size(); i++) {
+			int rows;
+			Field autoIncrementField = DOInfoReader.getAutoIncrementField(t.getClass());
+			// 有自增注解且该字段值为null时才回查
+			if (autoIncrementField != null && DOInfoReader.getValue(autoIncrementField, t) == null) {
+				GeneratedKeyHolder holder = new GeneratedKeyHolder();
+				rows = jdbcTemplate.update(con -> {
+					PreparedStatement statement = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+					for (int i = 0; i < values.size(); i++) {
+						if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
+							Object value = values.get(i);
+							if (value != null) {
+								// postgresql不支持java.util.Date，需要转换
+								if (value instanceof java.util.Date) {
+									value = NimbleOrmDateUtils.toLocalDateTime((java.util.Date) value);
+								}
+							}
+							statement.setObject(i + 1, value);
+						} else {
+							statement.setObject(i + 1, values.get(i));
+						}
+					}
+					return statement;
+				}, holder);
+
+				if(rows > 0) {
 					if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
-						Object value = values.get(i);
-						if (value != null) {
-							// postgresql不支持java.util.Date，需要转换
-							if (value instanceof java.util.Date) {
-								value = NimbleOrmDateUtils.toLocalDateTime((java.util.Date) value);
+						// 对于postgresql，会返回整个列的所有字段，所以这里需要取出来
+						Map<String, Object> map = holder.getKeys();
+						if (map != null) {
+							Object key = map.get(autoIncrementField.getAnnotation(Column.class).value());
+							logIfNull(key, autoIncrementField);
+							if (key != null) {
+								DOInfoReader.setValue(autoIncrementField, t, key);
 							}
 						}
-						statement.setObject(i + 1, value);
 					} else {
-						statement.setObject(i + 1, values.get(i));
-					}
-				}
-				return statement;
-			}, holder);
-
-			if(rows > 0) {
-				if (databaseType == DatabaseTypeEnum.POSTGRESQL) {
-					// 对于postgresql，会返回整个列的所有字段，所以这里需要取出来
-					Map<String, Object> map = holder.getKeys();
-					if (map != null) {
-						Object key = map.get(autoIncrementField.getAnnotation(Column.class).value());
+						Number key = holder.getKey();
 						logIfNull(key, autoIncrementField);
-						if (key != null) {
-							DOInfoReader.setValue(autoIncrementField, t, key);
+						if (key != null)  {
+							long primaryKey = key.longValue();
+							DOInfoReader.setValue(autoIncrementField, t, primaryKey);
 						}
 					}
-				} else {
-					Number key = holder.getKey();
-					logIfNull(key, autoIncrementField);
-					if (key != null)  {
-						long primaryKey = key.longValue();
-						DOInfoReader.setValue(autoIncrementField, t, primaryKey);
-					}
 				}
+
+			} else {
+				rows = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
 			}
 
-		} else {
-			rows = jdbcTemplate.update(sql, values.toArray()); // 此处可以用jdbcTemplate，因为没有in (?)表达式
-		}
+			long cost = System.currentTimeMillis() - start;
+			logSlow(cost, sql, 0, values);
 
-		long cost = System.currentTimeMillis() - start;
-		cancel(logFeature);
-		logSlow(cost, sql, 0, values);
-		
-		if(withInterceptor) {
-			doInterceptAfterInsert(t, rows);
+			if(withInterceptor) {
+				doInterceptAfterInsert(t, rows);
+			}
+			return rows;
+		} finally {
+			cancel(logFeature);
 		}
-		return rows;
 	}
 
 	/**抽取出来是不对这个log进行覆盖率统计*/

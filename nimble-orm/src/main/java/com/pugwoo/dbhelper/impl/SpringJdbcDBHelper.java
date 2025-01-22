@@ -19,6 +19,11 @@ public class SpringJdbcDBHelper extends P6_ExecuteOp {
         this.setJdbcTemplate(jdbcTemplate);
     }
 
+    public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, String dbHelperName) {
+        this.setJdbcTemplate(jdbcTemplate);
+        this.setDbHelperName(dbHelperName);
+    }
+
     /**
      * 支持指定数据库类型，当数据库类型有指定时，不再通过jdbcTemplate判断数据库类型
      * @param jdbcTemplate jdbcTemplate
@@ -26,6 +31,11 @@ public class SpringJdbcDBHelper extends P6_ExecuteOp {
      */
     public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, DatabaseTypeEnum databaseType) {
         this.setJdbcTemplate(jdbcTemplate, databaseType);
+    }
+
+    public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, DatabaseTypeEnum databaseType, String dbHelperName) {
+        this.setJdbcTemplate(jdbcTemplate, databaseType);
+        this.setDbHelperName(dbHelperName);
     }
 
 }
