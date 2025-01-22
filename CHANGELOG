@@ -1,3 +1,6 @@
+2025年1月23日
+v1.7.3 - [add] 增加DBContext.getRunningSql方法，查询当前正在执行的SQL
+
 2025年1月16日
 v1.7.2 - [add] 支持打印执行中尚未结束的慢SQL，默认执行超过60秒未返回，打印慢sql
        - [del] 移除isExistAtLeast和getAllKey方法
