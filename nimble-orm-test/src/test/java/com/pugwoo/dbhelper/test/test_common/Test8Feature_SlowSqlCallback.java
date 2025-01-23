@@ -3,14 +3,20 @@ package com.pugwoo.dbhelper.test.test_common;
 import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperSqlCallback;
 import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
+import com.pugwoo.dbhelper.impl.DBHelperContext;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
+import com.pugwoo.dbhelper.model.RowData;
+import com.pugwoo.dbhelper.model.RunningSqlData;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.wooutils.thread.ThreadPoolUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public abstract class Test8Feature_SlowSqlCallback {
 
@@ -147,6 +153,33 @@ public abstract class Test8Feature_SlowSqlCallback {
 
         getDBHelper().setSlowSqlWarningValve(1000);
         getDBHelper().setSlowSqlWarningCallback(null);
+    }
+
+    /**查询正在执行的sql*/
+    @Test
+    public void testGetRunningSql() throws Exception {
+
+        ThreadPoolExecutor pool = ThreadPoolUtils.createThreadPool(2, 100, 2, "test");
+        for (int i = 0; i < 2; i++) {
+            final int finalI = i;
+            pool.execute(() -> {
+                if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+                    getDBHelper().getRaw(RowData.class, "select pg_sleep(1) as ab89defded" + finalI);
+                } else {
+                    getDBHelper().getRaw(RowData.class, "select sleep(1) as ab89defded" + finalI);
+                }
+            });
+        }
+
+        Thread.sleep(500);
+
+        Collection<RunningSqlData> runningSql = DBHelperContext.getRunningSql();
+        assert runningSql.size() == 2;
+        for (RunningSqlData runningSqlData : runningSql) {
+            assert runningSqlData.getSql().contains("sleep(1) as ab89defded");
+        }
+
+        ThreadPoolUtils.shutdownAndWaitAllTermination(pool);
     }
 
 }
