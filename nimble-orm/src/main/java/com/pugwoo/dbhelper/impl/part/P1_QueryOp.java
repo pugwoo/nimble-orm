@@ -194,11 +194,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getRaw(Class<T> clazz, String sql, Map<String, ?> args) {
+        sql = SQLUtils.removeEndSemicolon(sql);
         return getRawByNamedParam(clazz, sql, args);
     }
 
     @Override
     public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Map<String, ?> args) {
+        sql = SQLUtils.removeEndSemicolon(sql);
         return getRawByNamedParamForStream(clazz, sql, args);
     }
 
@@ -231,6 +233,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> Stream<T> getRawForStream(Class<T> clazz, String sql, Object... args) {
+        sql = SQLUtils.removeEndSemicolon(sql);
         if (args != null && args.length == 1 && args[0] instanceof Map) {
             LOGGER.error("getRawForStream(Class<T> clazz, String sql, Object... args) should not use Map as args");
             return getRawByNamedParamForStream(clazz, sql, (Map<String, ?>) args[0]);
@@ -248,6 +251,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getRaw(Class<T> clazz, String sql, Object... args) {
+        sql = SQLUtils.removeEndSemicolon(sql);
         if (args != null && args.length == 1 && args[0] instanceof Map) {
             LOGGER.error("getRaw(Class<T> clazz, String sql, Object... args) should not use Map as args");
             return getRawByNamedParam(clazz, sql, (Map<String, ?>) args[0]);

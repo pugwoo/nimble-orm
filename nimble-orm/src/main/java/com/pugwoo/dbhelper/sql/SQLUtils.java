@@ -1360,6 +1360,26 @@ public class SQLUtils {
 	}
 
 	/**
+	 * 如果sql以;结尾，那么移除该分号，返回移除完的sql
+	 */
+	public static String removeEndSemicolon(String sql) {
+		if (sql == null) {
+			return "";
+		}
+
+		int i = sql.length() - 1;
+		// 从末尾向前遍历，跳过所有空白字符
+		while (i >= 0 && Character.isWhitespace(sql.charAt(i))) {
+			i--;
+		}
+		// 检查最后一个非空白字符是否为';'
+		if (i >= 0 && sql.charAt(i) == ';') {
+			return sql.substring(0, i);
+		}
+		return sql; // 不处理
+	}
+
+	/**
 	 * 自动为【最后】where sql字句加上软删除查询字段。
 	 * 说明：不支持virtualTable虚拟表。
 	 *

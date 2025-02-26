@@ -1,3 +1,5 @@
+v1.7.4 - [enhance] 对于getRaw方法，自动移除sql末尾的分号
+
 2025年1月23日
 v1.7.3 - [add] 增加DBContext.getRunningSql方法，查询当前正在执行的SQL
 
