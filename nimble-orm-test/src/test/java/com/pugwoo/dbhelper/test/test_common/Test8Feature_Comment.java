@@ -67,21 +67,21 @@ public abstract class Test8Feature_Comment {
         AtomicBoolean isWithComment = new AtomicBoolean(false);
         Thread thread = new Thread(() -> {
             try {
-                Thread.sleep(500);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
             List<Map> processlist = getDBHelper().getRaw(Map.class, "SHOW PROCESSLIST");
             for (Map<String, Object> p : processlist) {
                 String info = (String) p.get("Info");
                 System.out.println("===" + info);
-                if (info != null && info.contains(localComment) && info.contains("select sleep(1)")) {
+                if (info != null && info.contains(localComment) && info.contains("select sleep(2)")) {
                     isWithComment.set(true);
                 }
             }
         });
         thread.start();
 
-        getDBHelper().getRaw(String.class, "select sleep(1)");
+        getDBHelper().getRaw(String.class, "select sleep(2)");
 
         thread.join();
 

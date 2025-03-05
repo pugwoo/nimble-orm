@@ -132,7 +132,12 @@ public abstract class Test7Interceptor_Custom {
 		}
 
 		CommonOps.insertBatch(getDBHelper(),20);
-		rows = getDBHelper().delete(StudentDO.class, "where 1=? limit 20", 1);
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL ||
+		   getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+			rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1); // ck/pg不支持delete limit
+		} else {
+			rows = getDBHelper().delete(StudentDO.class, "where 1=? limit 20", 1);
+		}
 
 		if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
 			assert rows >= 20;
@@ -148,15 +153,23 @@ public abstract class Test7Interceptor_Custom {
 		assert getDBHelper().update(studentDO) == 1;
 
 		assert getDBHelper().updateCustom(studentDO, "age=age+1") == 1;
-		assert getDBHelper().delete(StudentDO.class, "where 1=1 limit 15") >= 1;
+
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE
+		    || getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+			assert getDBHelper().delete(StudentDO.class, "where 1=1") >= 1; // 不支持limit写法
+		} else {
+			assert getDBHelper().delete(StudentDO.class, "where 1=1 limit 15") >= 1;
+		}
+
 		
 		studentDO = CommonOps.insertOne(getDBHelper(), "nick");
 		studentDO.setAge(29);
 		assert getDBHelper().update(studentDO) == 1;
-		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.MYSQL) {
-			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1 limit 12") >= 1; // 只有mysql支持limit (不过pg支持子查询limit，而mysql不支持)
+		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE
+				|| getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1") >= 1; // 不支持limit写法
 		} else {
-			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1") >= 1;
+			assert getDBHelper().updateAll(StudentDO.class, "age=age+1", "where 1=1 limit 12") >= 1; // 只有mysql支持limit (不过pg支持子查询limit，而mysql不支持)
 		}
 	}
 }
