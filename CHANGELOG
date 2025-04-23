@@ -1,3 +1,4 @@
+2025年4月23日
 v1.7.4 - [enhance] 对于getRaw方法，自动移除sql末尾的分号
        - [enhance] 优化delete(Class,postSql,args)方法，支持有拦截器且DO类没有key的情况
 

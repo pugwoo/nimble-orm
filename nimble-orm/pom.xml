@@ -4,7 +4,7 @@
 
 	<groupId>com.pugwoo</groupId>
 	<artifactId>nimble-orm</artifactId>
-	<version>1.7.3</version>
+	<version>1.7.4</version>
 	<packaging>jar</packaging>
 
 	<name>nimble-orm</name>
@@ -44,7 +44,7 @@
         <dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>2.0.16</version>
+			<version>2.0.17</version>
 		</dependency>
         <!-- SQL parser 4.9 is the latest version that supports jdk 1.8 -->
 		<dependency>
@@ -56,12 +56,12 @@
 		<dependency>
 		    <groupId>com.fasterxml.jackson.core</groupId>
 		    <artifactId>jackson-databind</artifactId>
-		    <version>2.18.2</version>
+		    <version>2.18.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.18.2</version>
+			<version>2.18.3</version>
 		</dependency>
 		<!-- mvel -->
 		<dependency>
