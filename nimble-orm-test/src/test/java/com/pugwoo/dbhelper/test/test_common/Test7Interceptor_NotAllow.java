@@ -81,7 +81,7 @@ public abstract class Test7Interceptor_NotAllow {
         boolean isThrow = false;
         try {
             getDBHelper().delete(StudentDO.class, "where id=?", studentDO.getId());
-        } catch (NotAllowModifyException e) {
+        } catch (NotAllowModifyException | NotAllowQueryException e) {
             isThrow = true;
         }
         assert isThrow;

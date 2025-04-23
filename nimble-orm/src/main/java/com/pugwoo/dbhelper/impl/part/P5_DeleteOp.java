@@ -5,6 +5,7 @@ import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
+import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
 import com.pugwoo.dbhelper.exception.NullKeyValueException;
 import com.pugwoo.dbhelper.exception.SpringBeanNotMatchException;
@@ -29,10 +30,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 		List<Object> tList = new ArrayList<>();
 		tList.add(t);
-		doInterceptBeforeDelete(tList);
+		doInterceptBeforeDeleteList(tList);
 	}
 
-	private void doInterceptBeforeDelete(List<Object> tList) {
+	private void doInterceptBeforeDeleteList(List<Object> tList) {
 		for (DBHelperInterceptor interceptor : interceptors) {
 			boolean isContinue = interceptor.beforeDelete(tList);
 			if (!isContinue) {
@@ -47,10 +48,10 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		}
 		List<Object> tList = new ArrayList<>();
 		tList.add(t);
-		doInterceptAfterDelete(tList, rows);
+		doInterceptAfterDeleteList(tList, rows);
 	}
 
-	private void doInterceptAfterDelete(final List<Object> tList, final int rows) {
+	private void doInterceptAfterDeleteList(final List<Object> tList, final int rows) {
 		if (InnerCommonUtils.isEmpty(interceptors)) {
 			return; // 内部实现尽量不调用executeAfterCommit
 		}
@@ -184,6 +185,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				PreHandleObject.preHandleDelete(t);
 			}
 
+			List<Object> listTmp = new ArrayList<>(list);
+			doInterceptBeforeDeleteList(listTmp);
+
 			List<Object> keys = new ArrayList<>();
 			for(T t : list) {
 				Object key = DOInfoReader.getValue(keyField, t);
@@ -191,10 +195,6 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 					keys.add(key);
 				}
 			}
-
-			List<Object> listTmp = new ArrayList<>(list);
-			doInterceptBeforeDelete(listTmp);
-
 			Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 
 			String sql;
@@ -207,17 +207,16 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 			Table table = DOInfoReader.getTable(clazz);
 			if (!isHard && InnerCommonUtils.isNotBlank(table.softDeleteTable())) {
+				// 查回数据
+				List<?> all = getAll(clazz, where, keys);
 				// 将删除的数据存到另外一张表中
 				DBHelper dbHelper = getDBHelper(table.softDeleteDBHelperBean());
-
-				// 查回数据并插入到软删除表
-				List<?> all = dbHelper.getAll(clazz, where, keys);
 				doInsertToDelTable(all, dbHelper, clazz, table.softDeleteTable(), "");
 			}
 
 			int rows = namedJdbcExecuteUpdate(sql, keys);
 
-			doInterceptAfterDelete(listTmp, rows);
+			doInterceptAfterDeleteList(listTmp, rows);
 			return rows;
 		} else {
 			int rows = 0;
@@ -248,6 +247,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		return whereSQL == null ? delete(clazz, "") : delete(clazz, whereSQL.getSQL(), whereSQL.getParams());
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T> int _delete(Class<T> clazz, boolean isHard, String postSql, Object... args) {
 		if(InnerCommonUtils.isBlank(postSql)) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请明确传入where 1=1
@@ -257,28 +257,52 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
 		String sql;
 
-		if((interceptors == null || interceptors.isEmpty()) && !isUseDeleteValueScript(clazz)) { // 没有配置拦截器，则直接删除
-			if(isHard || softDelete == null) { // 物理删除
-				sql = SQLUtils.getCustomDeleteSQL(getDatabaseType(), clazz, postSql);
-			} else { // 软删除
-				sql = SQLUtils.getCustomSoftDeleteSQL(getDatabaseType(), clazz, postSql, softDelete);
+		List<T> all = null;
+
+		if (isUseDeleteValueScript(clazz)) {
+			all = getAll(clazz, postSql, args);
+			for(T t : all) {
+				PreHandleObject.preHandleDelete(t);
 			}
-
-			Table table = DOInfoReader.getTable(clazz);
-			if (!isHard && InnerCommonUtils.isNotBlank(table.softDeleteTable())) {
-				// 将删除的数据存到另外一张表中
-				DBHelper dbHelper = getDBHelper(table.softDeleteDBHelperBean());
-
-				// 查回数据并插入到软删除表
-				List<?> all = dbHelper.getAll(clazz, postSql, args);
-				doInsertToDelTable(all, dbHelper, clazz, table.softDeleteTable(), postSql, args);
+			try {
+				_update(all, false, false);
+			} catch (NoKeyColumnAnnotationException e) {
+				LOGGER.error("update data before delete fail, please make sure that class {} have a key column, data:{}",
+						clazz, NimbleOrmJSON.toJsonNoException(all), e);
+			} catch (Exception e1) {
+				LOGGER.error("update data before delete fail, data:{}", NimbleOrmJSON.toJsonNoException(all), e1);
 			}
-
-			return namedJdbcExecuteUpdate(sql, args);
-		} else { // 配置了拦截器，则先查出key，再删除
-			List<T> allKey = getAllKey(clazz, postSql, args);
-			return delete(allKey);
 		}
+
+		if (interceptors != null && !interceptors.isEmpty()) {
+			if (all == null) {
+				all = getAll(clazz, postSql, args);
+			}
+			doInterceptBeforeDeleteList((List<Object>) all);
+		}
+
+		Table table = DOInfoReader.getTable(clazz);
+		if (!isHard && InnerCommonUtils.isNotBlank(table.softDeleteTable())) {
+			// 查回数据
+			if (all == null) {
+				all = getAll(clazz, postSql, args);
+			}
+			// 将删除的数据存到另外一张表中
+			DBHelper dbHelper = getDBHelper(table.softDeleteDBHelperBean());
+			doInsertToDelTable(all, dbHelper, clazz, table.softDeleteTable(), postSql, args);
+		}
+
+		if(isHard || softDelete == null) { // 物理删除
+			sql = SQLUtils.getCustomDeleteSQL(getDatabaseType(), clazz, postSql);
+		} else { // 软删除
+			sql = SQLUtils.getCustomSoftDeleteSQL(getDatabaseType(), clazz, postSql, softDelete);
+		}
+		int rows = namedJdbcExecuteUpdate(sql, args);
+
+		if (interceptors != null && !interceptors.isEmpty()) {
+			doInterceptAfterDeleteList((List<Object>)all, rows);
+		}
+		return rows;
 	}
 
 	private void doInsertToDelTable(List<?> all, DBHelper dbHelper,
@@ -286,22 +310,22 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 									String postSql, Object... args) {
 		try {
 			if (all == null || all.isEmpty()) {
-				LOGGER.error("soft delete insert to table:" + softDeleteTableName + " error, data is null, postSql:{}, args:{}",
-						postSql, NimbleOrmJSON.toJsonNoException(args));
+                LOGGER.error("soft delete insert to table:{} error, data is null, postSql:{}, args:{}",
+						softDeleteTableName, postSql, NimbleOrmJSON.toJsonNoException(args));
 			} else {
 				Map<Class<?>, String> tableNames = new HashMap<>();
 				tableNames.put(clazz, softDeleteTableName);
 				DBHelper.withTableNames(tableNames, () -> {
 					int rows = dbHelper.insert(all);
 					if (rows != all.size()) {
-						LOGGER.error("soft delete insert to table:" + softDeleteTableName + " error, rows={}, data: {}",
-								rows, NimbleOrmJSON.toJsonNoException(all));
+                        LOGGER.error("soft delete insert to table:{} error, rows={}, data: {}",
+								softDeleteTableName, rows, NimbleOrmJSON.toJsonNoException(all));
 					}
 				});
 			}
 		} catch (Exception e) {
-			LOGGER.error("soft delete insert to table:" + softDeleteTableName + " error, data: {}",
-					NimbleOrmJSON.toJsonNoException(all), e);
+            LOGGER.error("soft delete insert to table:{} error, data: {}",
+					softDeleteTableName, NimbleOrmJSON.toJsonNoException(all), e);
 		}
 	}
 

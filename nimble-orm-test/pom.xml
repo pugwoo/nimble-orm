@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
-			<version>0.6.0-patch4</version>
+			<version>0.7.2</version>
 		</dependency>
 		<!-- clickhosue-jdbc 0.4.6+ 默认使用lz4压缩，所以需要引入lz4-java包 -->
 		<dependency>
@@ -56,7 +56,7 @@
 		<dependency>
 			<groupId>com.pugwoo</groupId>
 			<artifactId>nimble-orm</artifactId>
-			<version>1.7.3</version>
+			<version>1.7.4</version>
 		</dependency>
 
 		<dependency>

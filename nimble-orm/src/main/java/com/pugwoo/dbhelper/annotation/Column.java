@@ -163,7 +163,8 @@ public @interface Column {
 	/**
 	 * 当设置了非空字符串时，在对象删除数据之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再写入数据库（软删除时）。<br>
 	 * 说明：无论是否是软删除，该脚本都会被执行。<br>
-     * 【特别注意】对于delete(Class clazz, String postSql, Object... args)方法，有使用该脚本的DO类将使用逐个删除的方式进行删除，此时性能可能比较慢，对于快速批量删除的场景，请勿使用deleteValueScript脚本。
+     * 【特别注意】对于delete(Class clazz, String postSql, Object... args)方法，有使用该脚本的DO类将使用逐个删除的方式进行删除，此时性能可能比较慢，对于快速批量删除的场景，请勿使用deleteValueScript脚本。<br>
+	 * 【注意】当DO没有注解主键isKey且是软删除时，deleteValueScript虽然执行了，但是没有办法update到数据库中。
 	 */
 	String deleteValueScript() default "";
 

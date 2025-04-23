@@ -22,6 +22,7 @@ public @interface Table {
 
 	/**
 	 * 指定软删除表名，本表删除时，会将删除的数据插入到该表中，该表的结构必须和本表一致。<br>
+	 * 如遇软删除结构不一致或不存在，导致写入软删除表失败时，将log并优先保证原表删除正常进行。
 	 */
 	String softDeleteTable() default "";
 

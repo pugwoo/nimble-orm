@@ -671,7 +671,6 @@ public interface DBHelper {
 	 */
 	<T> int delete(Collection<T> list) throws NullKeyValueException;
 
-
 	/**
 	 * 硬删除数据库记录（无论是否注解了软删除字段），返回数据库实际修改条数。
 	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。

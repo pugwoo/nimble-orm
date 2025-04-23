@@ -74,35 +74,42 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 
 	@Override
 	public <T> int update(T t) throws NullKeyValueException {
-		return _update(t, false, true, "");
+		return _update(t, false, true, true, "");
 	}
 	
 	@Override
 	public <T> int update(T t, String postSql, Object... args) throws NullKeyValueException {
-		return _update(t, false, true, postSql, args);
+		return _update(t, false, true, true, postSql, args);
 	}
 	
 	@Override
 	public <T> int updateWithNull(T t) throws NullKeyValueException {
-		return _update(t, true, true, "");
+		return _update(t, true, true, true, "");
 	}
 	
 	@Override
 	public <T> int updateWithNull(T t, String postSql, Object... args) throws NullKeyValueException {
-		return _update(t, true, true, postSql, args);
+		return _update(t, true, true, true, postSql, args);
 	}
 
 	@Override
 	public <T> int update(Collection<T> list) throws NullKeyValueException {
-		list = InnerCommonUtils.filterNonNull(list);
-		doInterceptBeforeUpdate(list, null, null);
-		list = InnerCommonUtils.filterNonNull(list);
+		return _update(list, true, true);
+	}
 
+	protected <T> int _update(Collection<T> list, boolean withInterceptor, boolean preHandleUpdate)
+			throws NullKeyValueException {
+		list = InnerCommonUtils.filterNonNull(list);
+		if (withInterceptor) {
+			doInterceptBeforeUpdate(list, null, null);
+		}
+
+		list = InnerCommonUtils.filterNonNull(list);
 		if (InnerCommonUtils.isEmpty(list)) {
 			return 0;
 		}
 		if (list.size() == 1) {
-			return _update(list.iterator().next(), false, false, "");
+			return _update(list.iterator().next(), false, withInterceptor, preHandleUpdate, "");
 		}
 
 		boolean isSameClass = SQLAssert.isAllSameClass(list);
@@ -122,7 +129,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 				int rows = 0;
 				for (T t : list) {
 					if (t != null) {
-						rows += _update(t, false, false, "");
+						rows += _update(t, false, withInterceptor, preHandleUpdate, "");
 					}
 				}
 				return rows;
@@ -145,7 +152,9 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 					return 0; // not need to update
 				}
 
-				list.forEach(PreHandleObject::preHandleUpdate);
+				if (preHandleUpdate) {
+					list.forEach(PreHandleObject::preHandleUpdate);
+				}
 
 				// 找到notKeyColumns中的casVersionColumn，并从notKeyColumns中移除
 				Field casVersionColumn = null;
@@ -205,7 +214,7 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			for(T t : list) {
 				if(t != null) {
 					try {
-						rows += _update(t, false, false, "");
+						rows += _update(t, false, withInterceptor, preHandleUpdate, "");
 					} catch (CasVersionNotMatchException e) {
 						casUpdateFailList.add(t);
 						isThrowCasVersionNotMatchException = true;
@@ -219,11 +228,13 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 			}
 		}
 
-		doInterceptAfterUpdate(list, rows);
+		if (withInterceptor) {
+			doInterceptAfterUpdate(list, rows);
+		}
 		return rows;
 	}
 	
-	private <T> int _update(T t, boolean withNull, boolean withInterceptors,
+	private <T> int _update(T t, boolean withNull, boolean withInterceptors, boolean preHandleUpdate,
 			String postSql, Object... args) throws NullKeyValueException {
 		if (t == null) {
 			return 0;
@@ -232,8 +243,10 @@ public abstract class P3_UpdateOp extends P2_InsertOp {
 		if(DOInfoReader.getNotKeyColumns(t.getClass()).isEmpty()) {
 			return 0; // not need to update
 		}
-		
-		PreHandleObject.preHandleUpdate(t);
+
+		if (preHandleUpdate) {
+			PreHandleObject.preHandleUpdate(t);
+		}
 		
 		List<Object> tList = new ArrayList<>();
 		tList.add(t);
