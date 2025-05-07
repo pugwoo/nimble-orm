@@ -68,12 +68,8 @@ public abstract class Test4Delete_Basic {
 
         List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(), random);
         int rows = getDBHelper().delete(insertBatch);
-        // clickhouse只会返回1
-        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
-            assert rows == insertBatch.size();
-        } else {
-            assert rows == 1;
-        }
+
+        assert rows == insertBatch.size();
 
         for (StudentDO studentDO : insertBatch) {
             assert getDBHelper().getByKey(StudentDO.class, studentDO.getId()) == null;
@@ -202,12 +198,7 @@ public abstract class Test4Delete_Basic {
         }
 
         rows = getDBHelper().delete(list);
-        // clickhouse没有办法正确返回修改条数
-        if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
-            assert rows == list.size();
-        } else {
-            assert rows == 1;
-        }
+        assert rows == list.size();
 
         List<StudentHardDeleteDO> all = getDBHelper().getAll(StudentHardDeleteDO.class, "where id in (?)", ids);
         assert all.isEmpty();

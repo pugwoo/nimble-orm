@@ -151,6 +151,15 @@ public class PreHandleObject {
             }
         }
     }
+
+	public static <T> void preHandleDeleteList(Collection<T> tList) {
+		if (tList == null) {
+			return;
+		}
+		for(T t : tList) {
+			preHandleDelete(t);
+		}
+	}
 	
 	public static <T> void preHandleUpdate(T t) {
 		if(t == null) {

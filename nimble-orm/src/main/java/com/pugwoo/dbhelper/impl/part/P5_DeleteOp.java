@@ -4,6 +4,7 @@ import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
 import com.pugwoo.dbhelper.annotation.Table;
+import com.pugwoo.dbhelper.enums.DatabaseTypeEnum;
 import com.pugwoo.dbhelper.exception.InvalidParameterException;
 import com.pugwoo.dbhelper.exception.NoKeyColumnAnnotationException;
 import com.pugwoo.dbhelper.exception.NotAllowModifyException;
@@ -157,32 +158,28 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			}
 		}
 
-		boolean batchDelete = false; // 当所有list都是一个类型，且key是1个，且没有用到deleteValueScript时
+		boolean batchDelete = false; // 当所有list都是一个类型，且key是1个
 		Field keyField = null;
 		if(SQLAssert.isAllSameClass(list)) {
 			List<Field> keyFields = DOInfoReader.getKeyColumns(clazz);
 			if(keyFields.size() == 1) {
 				keyField = keyFields.get(0);
-
-				boolean isUseDeleteValueScript = false;
-				List<Field> fields = DOInfoReader.getColumns(clazz);
-				for(Field field : fields) {
-					Column column = field.getAnnotation(Column.class);
-					if(InnerCommonUtils.isNotBlank(column.deleteValueScript())) {
-						isUseDeleteValueScript = true;
-						break;
-					}
-				}
-
-				if(!isUseDeleteValueScript) {
-					batchDelete = true;
-				}
+				batchDelete = true;
 			}
 		}
 
 		if(batchDelete) {
-			for(T t : list) {
-				PreHandleObject.preHandleDelete(t);
+			PreHandleObject.preHandleDeleteList(list);
+
+			if (isUseDeleteValueScript(clazz)) {
+				try {
+					_update(list, false, false);
+				} catch (NoKeyColumnAnnotationException e) {
+					LOGGER.error("update data before delete fail, please make sure that class {} have a key column, data:{}",
+							clazz, NimbleOrmJSON.toJsonNoException(list), e);
+				} catch (Exception e1) {
+					LOGGER.error("update data before delete fail, data:{}", NimbleOrmJSON.toJsonNoException(list), e1);
+				}
 			}
 
 			List<Object> listTmp = new ArrayList<>(list);
@@ -217,6 +214,14 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 			int rows = namedJdbcExecuteUpdate(sql, keys);
 
 			doInterceptAfterDeleteList(listTmp, rows);
+
+			// 对于clickhouse,批量方式无法获取修改条数，只能把1转成全部数量
+			if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+				if (rows > 0) {
+					rows = list.size();
+				}
+			}
+
 			return rows;
 		} else {
 			int rows = 0;
@@ -251,7 +256,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 	private <T> int _delete(Class<T> clazz, boolean isHard, String postSql, Object... args) {
 		if(InnerCommonUtils.isBlank(postSql)) { // warning: very dangerous
 			// 不支持缺省条件来删除。如果需要全表删除，请明确传入where 1=1
-			throw new InvalidParameterException("delete postSql is blank. it's very dangerous. use WHERE 1=1 to confirm delete all");
+			throw new InvalidParameterException("delete postSql is blank. it's very dangerous. use `WHERE 1=1` to confirm delete all");
 		}
 
 		Field softDelete = DOInfoReader.getSoftDeleteColumn(clazz); // 支持软删除
@@ -260,10 +265,8 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		List<T> all = null;
 
 		if (isUseDeleteValueScript(clazz)) {
-			all = getAll(clazz, postSql, args);
-			for(T t : all) {
-				PreHandleObject.preHandleDelete(t);
-			}
+			all = super.getAll(clazz, postSql, args);
+			PreHandleObject.preHandleDeleteList(all);
 			try {
 				_update(all, false, false);
 			} catch (NoKeyColumnAnnotationException e) {

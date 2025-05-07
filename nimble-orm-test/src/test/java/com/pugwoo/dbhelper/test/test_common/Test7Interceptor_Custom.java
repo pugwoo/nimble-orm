@@ -125,11 +125,7 @@ public abstract class Test7Interceptor_Custom {
 	public void batchDelete() {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(),10);
 		int rows = getDBHelper().delete(insertBatch);
-		if (getDBHelper().getDatabaseType() != DatabaseTypeEnum.CLICKHOUSE) {
-			assert rows == insertBatch.size();
-		} else {
-			assert rows == 1;
-		}
+		assert rows == insertBatch.size();
 
 		CommonOps.insertBatch(getDBHelper(),20);
 		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.POSTGRESQL ||

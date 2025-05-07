@@ -75,11 +75,7 @@ public abstract class Test4Delete_SoftDeleteTable {
         List<Long> ids = ListUtils.transform(studentDOS, o -> o.getId());
         Map<Long, StudentDO> map = ListUtils.toMap(studentDOS, o -> o.getId(), o -> o);
 
-        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            assert getDBHelper().delete(studentDOS) == 1;
-        } else {
-            assert getDBHelper().delete(studentDOS) == 9;
-        }
+        assert getDBHelper().delete(studentDOS) == 9;
 
         // 测试数据已经被删除了
         assert getDBHelper().getAll(StudentDO.class, " where id in (?)", ids).isEmpty();
