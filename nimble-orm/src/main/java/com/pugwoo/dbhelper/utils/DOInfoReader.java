@@ -177,18 +177,15 @@ public class DOInfoReader {
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
 	 */
-	public static List<Field> getColumns(Class<?> clazz)
-			throws NoColumnAnnotationException {
+	public static List<Field> getColumns(Class<?> clazz) throws NoColumnAnnotationException {
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
 
 		List<Field> result = ClassInfoCache.getColumnFields(clazz);
 		if (InnerCommonUtils.isEmpty(result)) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column fields");
+			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
 		}
-
 		return result;
 	}
 
@@ -232,20 +229,6 @@ public class DOInfoReader {
 		}
 
 		return fieldList;
-	}
-	
-	/**
-	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
-	 * 该方法只用于select读操作。
-	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
-	 * @return 不会返回null
-	 */
-	public static List<Field> getColumnsForSelect(Class<?> clazz) {
-		List<Field> result = getColumns(clazz);
-		if (result.isEmpty()) {
-			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
-		}
-		return result;
 	}
 
 	/**

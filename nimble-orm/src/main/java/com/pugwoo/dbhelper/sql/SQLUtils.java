@@ -67,8 +67,8 @@ public class SQLUtils {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
             } else {
-                List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType());
-                List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType());
+                List<Field> fields1 = DOInfoReader.getColumns(leftTableField.getType());
+                List<Field> fields2 = DOInfoReader.getColumns(rightTableField.getType());
                 sql.append(joinColumnForSelect(databaseType, fields1,  joinLeftTable.alias() + ".", features));
                 sql.append(",");
                 sql.append(joinColumnForSelect(databaseType, fields2,  joinRightTable.alias() + ".", features));
@@ -118,7 +118,7 @@ public class SQLUtils {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 			} else {
-                List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
+                List<Field> fields = DOInfoReader.getColumns(clazz);
                 sql.append(joinColumnForSelect(databaseType, fields, null, features));
             }
 
@@ -133,7 +133,7 @@ public class SQLUtils {
 	 */
 	private static String getComputedColumnsForCountSelect(DatabaseTypeEnum databaseType, Class<?> clazz, String fieldPrefix,
 													Map<FeatureEnum, Boolean> features, String postSql) {
-		List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
+		List<Field> fields = DOInfoReader.getColumns(clazz);
 
 		List<Field> field2 = new ArrayList<>();
 		for (Field field : fields) {

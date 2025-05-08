@@ -93,7 +93,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				Object t1 = leftJoinField.getType().newInstance();
 				JoinLeftTable joinLeftTable = leftJoinField.getAnnotation(JoinLeftTable.class);
 
-				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType());
+				List<Field> fieldsT1 = DOInfoReader.getColumns(leftJoinField.getType());
 				boolean isT1AllNull = handleFieldAndIsAllFieldNull(fieldsT1, joinLeftTable.alias(), t1, rs, currentField);
 				currentField.set(leftJoinField); // 因为handleFieldAndIsAllFieldNull中会修改currentField，所以重新设置
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
@@ -104,14 +104,14 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				Object t2 = rightJoinField.getType().newInstance();
 				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
 
-				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType());
+				List<Field> fieldsT2 = DOInfoReader.getColumns(rightJoinField.getType());
 				boolean isT2AllNull = handleFieldAndIsAllFieldNull(fieldsT2, joinRightTable.alias(), t2, rs, currentField);
 				currentField.set(rightJoinField);
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
 				currentField.set(null);
 
 			} else {
-				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz);
+				List<Field> fields = DOInfoReader.getColumns(clazz);
 				for (Field field : fields) {
 					currentField.set(field);
 
