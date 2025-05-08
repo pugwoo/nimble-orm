@@ -90,7 +90,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
         String sql = "SELECT count(*) FROM ("
-                + SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, true, features, postSql)
+                + SQLUtils.getSelectSQL(getDatabaseType(), clazz, true, features, postSql)
                 + (isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz))
                 + ") tff305c6";
 
@@ -140,7 +140,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args) {
         StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, false, features, postSql));
+        sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, features, postSql));
         sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
@@ -338,7 +338,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
         StringBuilder sqlSB = new StringBuilder();
-        sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, false, features, postSql));
+        sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, features, postSql));
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
         if (limit != null && !isVirtualTable) {
             try {

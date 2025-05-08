@@ -34,14 +34,13 @@ public class SQLUtils {
 	/**
 	 * select 字段 from t_table, 不包含where子句及以后的语句
 	 * @param clazz 注解了Table的类
-	 * @param selectOnlyKey 是否只查询key
 	 * @param isSelect1 是否只select 1，不查询实际字段；当该值为true时，selectOnlyKey无效。
 	 * @param features 将dbHelper的特性开关传入，用于处理生成的SQL
 	 * @param postSql 将postSql传入，目前仅用于确定select 1字段的附加computed字段是否加入
 	 * @return 返回拼凑返回的SQL
 	 */
 	public static String getSelectSQL(DatabaseTypeEnum databaseType, Class<?> clazz,
-									  boolean selectOnlyKey, boolean isSelect1,
+									  boolean isSelect1,
 									  Map<FeatureEnum, Boolean> features, String postSql) {
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ");
@@ -68,8 +67,8 @@ public class SQLUtils {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
             } else {
-                List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), selectOnlyKey);
-                List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), selectOnlyKey);
+                List<Field> fields1 = DOInfoReader.getColumnsForSelect(leftTableField.getType(), false);
+                List<Field> fields2 = DOInfoReader.getColumnsForSelect(rightTableField.getType(), false);
                 sql.append(joinColumnForSelect(databaseType, fields1,  joinLeftTable.alias() + ".", features));
                 sql.append(",");
                 sql.append(joinColumnForSelect(databaseType, fields2,  joinRightTable.alias() + ".", features));
@@ -119,7 +118,7 @@ public class SQLUtils {
 					sql.append(",").append(computedColumnsForCountSelect);
 				}
 			} else {
-                List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
+                List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, false);
                 sql.append(joinColumnForSelect(databaseType, fields, null, features));
             }
 
