@@ -58,7 +58,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         int offset = (page - 1) * pageSize;
-        return _getPage(clazz, true,false, true, offset, pageSize, postSql, args);
+        return _getPage(clazz, false, true, offset, pageSize, postSql, args);
     }
 
     @Override
@@ -113,7 +113,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         int offset = (page - 1) * pageSize;
-        return _getPage(clazz, true, false, false, offset, pageSize, postSql, args);
+        return _getPage(clazz,  false, false, offset, pageSize, postSql, args);
     }
 
     @Override
@@ -129,7 +129,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAll(final Class<T> clazz) {
-        return _getPage(clazz, true, false, false, null, null, "").getData();
+        return _getPage(clazz,  false, false, null, null, "").getData();
     }
 
     @Override
@@ -160,7 +160,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> List<T> getAll(final Class<T> clazz, String postSql, Object... args) {
-        return _getPage(clazz, true,false, false, null, null, postSql, args).getData();
+        return _getPage(clazz, false, false, null, null, postSql, args).getData();
     }
 
     @Override
@@ -170,13 +170,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> T getOne(Class<T> clazz) {
-        List<T> list = _getPage(clazz, true, false, false, 0, 1, "").getData();
+        List<T> list = _getPage(clazz,  false, false, 0, 1, "").getData();
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
     @Override
     public <T> T getOne(Class<T> clazz, String postSql, Object... args) {
-        List<T> list = _getPage(clazz, true, false, false,
+        List<T> list = _getPage(clazz,  false, false,
                 0, 1, postSql, args).getData();
         return list == null || list.isEmpty() ? null : list.get(0);
     }
@@ -318,7 +318,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
         }
 
-        return (List<T>) _getPage(t.getClass(), true, false,
+        return (List<T>) _getPage(t.getClass(),  false,
                 false, null, limit, sql.toString(), args.toArray()).getData();
     }
 
@@ -333,7 +333,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
      * @param postSql sql的where/group/order等sql语句
      * @param args 参数
      */
-    private <T> PageData<T> _getPage(Class<T> clazz, boolean isUseNamedTemplate,
+    private <T> PageData<T> _getPage(Class<T> clazz,
                                      boolean selectOnlyKey, boolean withCount,
                                      Integer offset, Integer limit,
                                      String postSql, Object... args) {
@@ -765,7 +765,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
         }
 
-        return _getPage(clazz, false, false,
+        return _getPage(clazz,  false,
                 false, null, null, postSql, param.toArray()).getData();
     }
 
@@ -779,7 +779,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             List<Object> param = new ArrayList<>();
             param.add(value);
 
-            List<T> results = _getPage(clazz, false, false,
+            List<T> results = _getPage(clazz,  false,
                     false, null, null, postSql, param.toArray()).getData();
             result.addAll(results);
         }
