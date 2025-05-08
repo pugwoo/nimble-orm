@@ -41,23 +41,12 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private Field leftJoinField;
 	private Field rightJoinField;
 
-	private boolean selectOnlyKey = false; // 是否只选择主键列，默认false
-
-	private String sql;
-	private List<Object> args;
+	private final String sql;
+	private final List<Object> args;
 	private volatile String assembledSql;
 
 	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, String sql, List<Object> args) {
 		this.dbHelper = dbHelper;
-		this.sql = sql;
-		this.args = args;
-		handleClazz(clazz);
-	}
-
-	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, boolean selectOnlyKey,
-			String sql, List<Object> args) {
-		this.dbHelper = dbHelper;
-		this.selectOnlyKey = selectOnlyKey;
 		this.sql = sql;
 		this.args = args;
 		handleClazz(clazz);
@@ -104,7 +93,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				Object t1 = leftJoinField.getType().newInstance();
 				JoinLeftTable joinLeftTable = leftJoinField.getAnnotation(JoinLeftTable.class);
 
-				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType(), selectOnlyKey);
+				List<Field> fieldsT1 = DOInfoReader.getColumnsForSelect(leftJoinField.getType(), false);
 				boolean isT1AllNull = handleFieldAndIsAllFieldNull(fieldsT1, joinLeftTable.alias(), t1, rs, currentField);
 				currentField.set(leftJoinField); // 因为handleFieldAndIsAllFieldNull中会修改currentField，所以重新设置
 				// 如果关联对象的所有字段都是null值，那么该对象设置为null值
@@ -115,14 +104,14 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 				Object t2 = rightJoinField.getType().newInstance();
 				JoinRightTable joinRightTable = rightJoinField.getAnnotation(JoinRightTable.class);
 
-				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType(), selectOnlyKey);
+				List<Field> fieldsT2 = DOInfoReader.getColumnsForSelect(rightJoinField.getType(), false);
 				boolean isT2AllNull = handleFieldAndIsAllFieldNull(fieldsT2, joinRightTable.alias(), t2, rs, currentField);
 				currentField.set(rightJoinField);
 				DOInfoReader.setValue(rightJoinField, obj, isT2AllNull ? null : t2);
 				currentField.set(null);
 
 			} else {
-				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, selectOnlyKey);
+				List<Field> fields = DOInfoReader.getColumnsForSelect(clazz, false);
 				for (Field field : fields) {
 					currentField.set(field);
 
@@ -190,7 +179,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			currentField.set(field);
 
 			Column column = field.getAnnotation(Column.class);
-			String columnName = tableAlias + "." + column.value();;
+			String columnName = tableAlias + "." + column.value();
 
 			Object value = getFromRS(rs, columnName, field);
 			if(value != null) { // 这个值是否为null直接来自于数据库，不受是否设置了column.readIfNullScript()的影响

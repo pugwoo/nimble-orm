@@ -203,7 +203,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
         Stream<T> stream = namedJdbcQueryForStream(sql, args,
-                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
+                new AnnotationSupportRowMapper<>(this, clazz, sql, forIntercept));
 
         // stream方式不支持doInterceptorAfterQueryList
         return handleStreamRelatedColumn(stream, clazz);
@@ -217,7 +217,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, forIntercept);
 
         List<T> list = namedJdbcQuery(sql, args,
-                new AnnotationSupportRowMapper<>(this, clazz, false, sql, forIntercept));
+                new AnnotationSupportRowMapper<>(this, clazz, sql, forIntercept));
 
         handleRelatedColumn(list);
         doInterceptorAfterQueryList(clazz, list, -1, sql, forIntercept);
@@ -237,7 +237,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         Stream<T> stream = namedJdbcQueryForStream(sql, argsList,
-                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
+                new AnnotationSupportRowMapper<>(this, clazz, sql, argsList));
 
         // stream方式不支持doInterceptorAfterQueryList
         return handleStreamRelatedColumn(stream, clazz);
@@ -255,7 +255,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         doInterceptBeforeQuery(clazz, sql, argsList);
 
         List<T> list = namedJdbcQuery(sql, argsList,
-                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
+                new AnnotationSupportRowMapper<>(this, clazz, sql, argsList));
         handleRelatedColumn(list);
 
         doInterceptorAfterQueryList(clazz, list, -1, sql, argsList);
@@ -358,7 +358,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
         String sql = sqlSB.toString();
         List<T> list = namedJdbcQuery(sql, argsList,
-                new AnnotationSupportRowMapper<>(this, clazz, false, sql, argsList));
+                new AnnotationSupportRowMapper<>(this, clazz, sql, argsList));
 
         long total = -1; // -1 表示没有查询总数，未知
         if (withCount) {
