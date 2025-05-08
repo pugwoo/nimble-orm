@@ -168,12 +168,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         return whereSQL == null ? getAll(clazz) : getAll(clazz, whereSQL.getSQL(), whereSQL.getParams());
     }
 
-    protected  <T> List<T> getAllKey(Class<T> clazz, String postSql, Object... args) {
-        assertNotVirtualTable(clazz);
-
-        return _getPage(clazz, true, true, false, null, null, postSql, args).getData();
-    }
-
     @Override
     public <T> T getOne(Class<T> clazz) {
         List<T> list = _getPage(clazz, true, false, false, 0, 1, "").getData();
