@@ -211,9 +211,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					}
 				}
 			}
-			return assembledSql;
-		} else {
-			return assembledSql;
-		}
-	}
+        }
+        return assembledSql;
+    }
 }
