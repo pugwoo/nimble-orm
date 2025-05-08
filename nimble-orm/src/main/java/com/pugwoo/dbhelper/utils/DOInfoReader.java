@@ -237,23 +237,17 @@ public class DOInfoReader {
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
 	 * 该方法只用于select读操作。
-	 * @param selectOnlyKey 是否只select主键
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
 	 */
-	public static List<Field> getColumnsForSelect(Class<?> clazz, boolean selectOnlyKey) {
+	public static List<Field> getColumnsForSelect(Class<?> clazz) {
 		List<Field> result = getColumns(clazz);
-
-		if(selectOnlyKey) {
-			result = InnerCommonUtils.filter(result, o -> o.getAnnotation(Column.class).isKey());
-		}
 		if (result.isEmpty()) {
 			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
 		}
-
 		return result;
 	}
-	
+
 	/**
 	 * 获得注解了@JoinLeftTable的字段，如果没有注解，抛出NoJoinTableMemberException
 	 */
