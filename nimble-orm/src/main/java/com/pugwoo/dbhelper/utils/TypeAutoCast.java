@@ -22,7 +22,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 2015年8月22日 16:58:48
@@ -30,7 +29,7 @@ import java.util.Objects;
  * @author pugwoo
  */
 public class TypeAutoCast {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeAutoCast.class);
 
 	public static class BasicTypeResult {
@@ -62,14 +61,14 @@ public class TypeAutoCast {
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType) throws Exception {
 		int columnIndex = rs.findColumn(columnName);
-		Object result = rs.getObject(columnIndex);
-		if(result == null) { // 保证null会返回null值
-			return null;
-		}
-		
+//		Object result = rs.getObject(columnIndex);
+//		if(result == null) { // 保证null会返回null值
+//			return null;
+//		}
+
 		Column column = field.getAnnotation(Column.class);
 		if(column != null && column.isJSON()) { // 优先处理标记为json的列
-			String valStr = (result instanceof String) ? (String) result : rs.getString(columnIndex);
+			String valStr = /*(result instanceof String) ? (String) result :*/ rs.getString(columnIndex);
 			if(InnerCommonUtils.isBlank(valStr)) {
 				return null;
 			}
@@ -79,7 +78,7 @@ public class TypeAutoCast {
 				if (genericType instanceof Class) {
 					return NimbleOrmJSON.parse(valStr, field.getType());
 				} else { // 处理泛型
-				    return NimbleOrmJSON.parseGeneric(valStr, (ParameterizedType) genericType);
+					return NimbleOrmJSON.parseGeneric(valStr, (ParameterizedType) genericType);
 				}
 			} catch(Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, genericType, e);
@@ -90,50 +89,78 @@ public class TypeAutoCast {
 		Class<?> clazz = field.getType();
 
 		if(clazz == String.class) {
-			return result instanceof String ? result : rs.getString(columnIndex);
+			return /*result instanceof String ? result :*/ rs.getString(columnIndex);
 		}
-		if(clazz == Integer.class || clazz == int.class) {
-			return result instanceof Integer ? result : rs.getInt(columnIndex);
+		if (clazz == Integer.class) {
+			int value = rs.getInt(columnIndex);
+			return rs.wasNull() ? null : value;
 		}
-		if(clazz == Long.class || clazz == long.class) {
-			return result instanceof Long ? result : rs.getLong(columnIndex);
+		if(clazz == int.class) {
+			return /*result instanceof Integer ? result :*/ rs.getInt(columnIndex);
 		}
-		if(clazz == Boolean.class || clazz == boolean.class) {
-			return result instanceof Boolean ? result : rs.getBoolean(columnIndex);
+		if (clazz == Long.class) {
+			long value = rs.getLong(columnIndex);
+			return rs.wasNull() ? null : value;
 		}
-		if(clazz == Byte.class || clazz == byte.class) {
-			return result instanceof Byte ? result : rs.getByte(columnIndex);
+		if(clazz == long.class) {
+			return /*result instanceof Long ? result :*/ rs.getLong(columnIndex);
+		}
+		if (clazz == Boolean.class) {
+			boolean value = rs.getBoolean(columnIndex);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == boolean.class) {
+			return /*result instanceof Boolean ? result :*/ rs.getBoolean(columnIndex);
+		}
+		if (clazz == Byte.class) {
+			byte value = rs.getByte(columnIndex);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == byte.class) {
+			return /*result instanceof Byte ? result :*/ rs.getByte(columnIndex);
 		}
 		if(clazz == byte[].class) {
 			if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-				return InnerCommonUtils.decodeBase64(result instanceof String ? (String) result :
-								rs.getString(columnIndex));
+				return InnerCommonUtils.decodeBase64(/*result instanceof String ? (String) result :*/
+						rs.getString(columnIndex));
 			}
-			return result instanceof byte[] ? result : rs.getBytes(columnIndex);
+			return /*result instanceof byte[] ? result :*/ rs.getBytes(columnIndex);
 		}
-		if(clazz == Short.class || clazz == short.class) {
-			return result instanceof Short ? result : rs.getShort(columnIndex);
+		if (clazz == Short.class) {
+			short value = rs.getShort(columnIndex);
+			return rs.wasNull() ? null : value;
 		}
-		if(clazz == Float.class || clazz == float.class) {
-			return result instanceof Float ? result : rs.getFloat(columnIndex);
+		if(clazz == short.class) {
+			return /*result instanceof Short ? result :*/ rs.getShort(columnIndex);
 		}
-		if(clazz == Double.class || clazz == double.class) {
-			return result instanceof Double ? result : rs.getDouble(columnIndex);
+		if(clazz == Float.class) {
+			float value = rs.getFloat(columnIndex);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == float.class) {
+			return /*result instanceof Float ? result :*/ rs.getFloat(columnIndex);
+		}
+		if(clazz == Double.class) {
+			double value = rs.getDouble(columnIndex);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == double.class) {
+			return /*result instanceof Double ? result :*/ rs.getDouble(columnIndex);
 		}
 		if(clazz == BigDecimal.class) {
-			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
+			return /*result instanceof BigDecimal ? result :*/ rs.getBigDecimal(columnIndex);
 		}
 		if (clazz == java.util.Date.class) {
 			// 说明：这里要严格匹配，因为java.sql.Date是java.util.Date的子类，但行为不同
-			if (Objects.equals(result.getClass(), java.util.Date.class)) {
-				return result;
-			}
+			//if (Objects.equals(result.getClass(), java.util.Date.class)) {
+			//	return result;
+			//}
 			return getDate(rs, columnIndex);
 		}
 		if (clazz == LocalDateTime.class) {
-			if (result instanceof LocalDateTime) {
-				return result;
-			}
+			//if (result instanceof LocalDateTime) {
+			//	return result;
+			//}
 			Date date = getDate(rs, columnIndex);
 			if (date == null) {
 				return null;
@@ -141,9 +168,9 @@ public class TypeAutoCast {
 			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 		}
 		if (clazz == LocalDate.class) {
-			if (result instanceof LocalDate) {
-				return result;
-			}
+			//if (result instanceof LocalDate) {
+			//	return result;
+			//}
 			Date date = getDate(rs, columnIndex);
 			if (date == null) {
 				return null;
@@ -151,9 +178,9 @@ public class TypeAutoCast {
 			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 		}
 		if (clazz == LocalTime.class) {
-			if (result instanceof LocalTime) {
-				return result;
-			}
+			//if (result instanceof LocalTime) {
+			//	return result;
+			//}
 			Date date = getDate(rs, columnIndex);
 			if (date == null) {
 				return null;
@@ -161,16 +188,16 @@ public class TypeAutoCast {
 			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
 		}
 		if (clazz == java.sql.Date.class) {
-			return result instanceof java.sql.Date ? result : rs.getDate(columnIndex);
+			return /*result instanceof java.sql.Date ? result :*/ rs.getDate(columnIndex);
 		}
 		if (clazz == java.sql.Time.class) {
-			return result instanceof java.sql.Time ? result : rs.getDate(columnIndex);
+			return /*result instanceof java.sql.Time ? result :*/ rs.getDate(columnIndex);
 		}
 		if (clazz == java.sql.Timestamp.class) {
-			return result instanceof java.sql.Timestamp ? result : rs.getTimestamp(columnIndex);
+			return /*result instanceof java.sql.Timestamp ? result :*/ rs.getTimestamp(columnIndex);
 		}
-		
-		return result;
+
+		return rs.getObject(columnIndex);
 	}
 
 	private static Date getDate(ResultSet rs, int columnIndex) throws Exception {
@@ -277,7 +304,7 @@ public class TypeAutoCast {
 
 		return result;
 	}
-	
+
 	/**
 	 * 自动转换类型
 	 * @param obj 要转换的对象
@@ -289,7 +316,7 @@ public class TypeAutoCast {
 		if(clazz.isInstance(obj)) {
 			return (T) obj;
 		}
-		
+
 		// 对于obj是null但是目标clazz是【基础类型】时，转成 0
 		if(clazz == Integer.class || clazz == int.class) {
 			if(obj == null) {
@@ -381,16 +408,16 @@ public class TypeAutoCast {
 			return (T) new BigDecimal(obj.toString());
 		}
 		if (clazz == java.util.Date.class) {
-            try {
-                return (T) NimbleOrmDateUtils.parseThrowException(obj.toString());
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            }
-        }
+			try {
+				return (T) NimbleOrmDateUtils.parseThrowException(obj.toString());
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+		}
 		if (clazz == java.sql.Date.class) {
 			try {
 				Date date = obj instanceof Date ? (Date) obj : NimbleOrmDateUtils.parseThrowException(obj.toString());
-                return date == null ? null : (T) new java.sql.Date(date.getTime());
+				return date == null ? null : (T) new java.sql.Date(date.getTime());
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
 			}
@@ -415,7 +442,7 @@ public class TypeAutoCast {
 		if (clazz == LocalDate.class) {
 			try {
 				LocalDate date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDate((Date) obj)
-				    : NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
+						: NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -424,7 +451,7 @@ public class TypeAutoCast {
 		if (clazz == LocalDateTime.class) {
 			try {
 				LocalDateTime date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDateTime((Date) obj)
-				    : NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
+						: NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);

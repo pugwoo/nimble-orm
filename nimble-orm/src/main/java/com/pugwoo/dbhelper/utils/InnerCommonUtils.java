@@ -358,6 +358,11 @@ public class InnerCommonUtils {
     }
 
     public static byte[] decodeBase64(String str) {
+        if (str == null) {
+            return null;
+        } else if (str.isEmpty()) {
+            return new byte[0];
+        }
         return java.util.Base64.getDecoder().decode(str);
     }
 
