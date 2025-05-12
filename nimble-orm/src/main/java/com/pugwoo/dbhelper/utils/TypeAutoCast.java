@@ -58,8 +58,8 @@ public class TypeAutoCast {
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
-	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType) throws Exception {
-		Column column = field.getAnnotation(Column.class);
+	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType,
+								   Column column) throws Exception {
 		if(column != null && column.isJSON()) { // 优先处理标记为json的列
 			String valStr = rs.getString(columnName);
 			if(InnerCommonUtils.isBlank(valStr)) {

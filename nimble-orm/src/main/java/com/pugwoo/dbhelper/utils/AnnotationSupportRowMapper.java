@@ -116,7 +116,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					currentField.set(field);
 
 					Column column = field.getAnnotation(Column.class);
-					Object value = getFromRS(rs, column.value(), field);
+					Object value = getFromRS(rs, column.value(), field, column);
 					if (value == null && InnerCommonUtils.isNotBlank(column.readIfNullScript())) {
 						value = ScriptUtils.getValueFromScript(column.ignoreScriptError(), column.readIfNullScript());
 					}
@@ -148,13 +148,13 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	/**当列不存在时，默认warn log出来，支持配置为抛出异常*/
 	private Object getFromRS(ResultSet rs,
 							 String columnName,
-							 Field field) throws Exception {
+							 Field field, Column column) throws Exception {
 		if (dbHelper instanceof P0_JdbcTemplateOp) {
 			boolean throwErrorIfColumnNotExist =
 					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
 			if (!throwErrorIfColumnNotExist) {
 				try {
-					return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType());
+					return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
 				} catch (SQLException e) {
 					String message = e.getMessage();
 					if (!(message.contains("not found") /*mysql/pg*/ || message.contains("does not exist") /*clickhouse*/
@@ -165,10 +165,10 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 					return null;
 				}
 			} else {
-				return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType());
+				return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
 			}
 		} else {
-			return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType());
+			return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
 		}
 	}
 
@@ -181,7 +181,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			Column column = field.getAnnotation(Column.class);
 			String columnName = tableAlias + "." + column.value();
 
-			Object value = getFromRS(rs, columnName, field);
+			Object value = getFromRS(rs, columnName, field, column);
 			if(value != null) { // 这个值是否为null直接来自于数据库，不受是否设置了column.readIfNullScript()的影响
 				isAllNull = false;
 			}
