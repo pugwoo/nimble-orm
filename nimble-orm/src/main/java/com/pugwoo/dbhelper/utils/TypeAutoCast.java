@@ -233,8 +233,9 @@ public class TypeAutoCast {
 
 	private static LocalDate getLocalDate(ResultSet rs, String columnName) throws Exception {
 		try {
-			java.sql.Date date = rs.getDate(columnName);
-			return date == null ? null : date.toLocalDate();
+			// 特别说明：在mysql的ResultSetImpl实现中，rs.getDate实现复杂，效率很低，所以之类不要用rs.getDate
+			Timestamp timestamp = rs.getTimestamp(columnName);
+			return timestamp == null ? null : timestamp.toLocalDateTime().toLocalDate();
 		} catch (Exception e) {
 			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
 			String str = rs.getString(columnName);
@@ -247,8 +248,9 @@ public class TypeAutoCast {
 
 	private static LocalDate getLocalDate(ResultSet rs) throws Exception {
 		try {
-			java.sql.Date date = rs.getDate(1);
-			return date == null ? null : date.toLocalDate();
+			// 特别说明：在mysql的ResultSetImpl实现中，rs.getDate实现复杂，效率很低，所以之类不要用rs.getDate
+			Timestamp timestamp = rs.getTimestamp(1);
+			return timestamp == null ? null : timestamp.toLocalDateTime().toLocalDate();
 		} catch (Exception e) {
 			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
 			String str = rs.getString(1);
