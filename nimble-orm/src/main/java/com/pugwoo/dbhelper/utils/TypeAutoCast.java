@@ -18,7 +18,6 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -151,18 +150,10 @@ public class TypeAutoCast {
 			return getLocalDateTime(rs, columnName);
 		}
 		if (clazz == LocalDate.class) {
-			Date date = getDate(rs, columnName);
-			if (date == null) {
-				return null;
-			}
-			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			return getLocalDate(rs, columnName);
 		}
 		if (clazz == LocalTime.class) {
-			Date date = getDate(rs, columnName);
-			if (date == null) {
-				return null;
-			}
-			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+			return getLocalTime(rs, columnName);
 		}
 		if (clazz == java.sql.Date.class) {
 			return rs.getDate(columnName);
@@ -240,6 +231,62 @@ public class TypeAutoCast {
 		}
 	}
 
+	private static LocalDate getLocalDate(ResultSet rs, String columnName) throws Exception {
+		try {
+			java.sql.Date date = rs.getDate(columnName);
+			return date == null ? null : date.toLocalDate();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnName);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDate(str.trim());
+		}
+	}
+
+	private static LocalDate getLocalDate(ResultSet rs) throws Exception {
+		try {
+			java.sql.Date date = rs.getDate(1);
+			return date == null ? null : date.toLocalDate();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDate(str.trim());
+		}
+	}
+
+	private static LocalTime getLocalTime(ResultSet rs, String columnName) throws Exception {
+		try {
+			java.sql.Time time = rs.getTime(columnName);
+			return time == null ? null : time.toLocalTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnName);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalTime(str.trim());
+		}
+	}
+
+	private static LocalTime getLocalTime(ResultSet rs) throws Exception {
+		try {
+			java.sql.Time time = rs.getTime(1);
+			return time == null ? null : time.toLocalTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalTime(str.trim());
+		}
+	}
+
 	/**
 	 * 转换基本类型
 	 */
@@ -285,20 +332,10 @@ public class TypeAutoCast {
 			result.setValue(getLocalDateTime(rs));
 		} else if (clazz == LocalDate.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs);
-			if (date == null) {
-				result.setValue(null);
-			} else {
-				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-			}
+			result.setValue(getLocalDate(rs));
 		} else if (clazz == LocalTime.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs);
-			if (date == null) {
-				result.setValue(null);
-			} else {
-				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime());
-			}
+			result.setValue(getLocalTime(rs));
 		} else if (clazz == java.sql.Date.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getDate(1));
