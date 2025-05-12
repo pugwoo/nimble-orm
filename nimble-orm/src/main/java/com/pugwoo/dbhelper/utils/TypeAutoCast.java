@@ -148,11 +148,7 @@ public class TypeAutoCast {
 			return getDate(rs, columnName);
 		}
 		if (clazz == LocalDateTime.class) {
-			Date date = getDate(rs, columnName);
-			if (date == null) {
-				return null;
-			}
-			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+			return getLocalDateTime(rs, columnName);
 		}
 		if (clazz == LocalDate.class) {
 			Date date = getDate(rs, columnName);
@@ -216,6 +212,34 @@ public class TypeAutoCast {
 		}
 	}
 
+	private static LocalDateTime getLocalDateTime(ResultSet rs, String columnName) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(columnName);
+			return timestamp == null ? null : timestamp.toLocalDateTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnName);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDateTime(str.trim());
+		}
+	}
+
+	private static LocalDateTime getLocalDateTime(ResultSet rs) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(1);
+			return timestamp == null ? null : timestamp.toLocalDateTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDateTime(str.trim());
+		}
+	}
+
 	/**
 	 * 转换基本类型
 	 */
@@ -258,12 +282,7 @@ public class TypeAutoCast {
 			result.setValue(date);
 		} else if (clazz == LocalDateTime.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs);
-			if (date == null) {
-				result.setValue(null);
-			} else {
-				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-			}
+			result.setValue(getLocalDateTime(rs));
 		} else if (clazz == LocalDate.class) {
 			result.setBasicType(true);
 			Date date = getDate(rs);
