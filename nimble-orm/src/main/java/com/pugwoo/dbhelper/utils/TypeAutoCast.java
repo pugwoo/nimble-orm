@@ -198,9 +198,9 @@ public class TypeAutoCast {
 		}
 	}
 
-	private static Date getDate(ResultSet rs, int columnIndex) throws Exception {
+	private static Date getDate(ResultSet rs) throws Exception {
 		try {
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			Timestamp timestamp = rs.getTimestamp(1);
 			if (timestamp == null) {
 				return null;
 			}
@@ -208,7 +208,7 @@ public class TypeAutoCast {
 			return new Date(timestamp.getTime());
 		} catch (Exception e) {
 			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
-			String str = rs.getString(columnIndex);
+			String str = rs.getString(1);
 			if (InnerCommonUtils.isBlank(str)) {
 				return null;
 			}
@@ -254,11 +254,11 @@ public class TypeAutoCast {
 			result.setValue(rs.getBigDecimal(1));
 		} else if (clazz == java.util.Date.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
+			Date date = getDate(rs);
 			result.setValue(date);
 		} else if (clazz == LocalDateTime.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
+			Date date = getDate(rs);
 			if (date == null) {
 				result.setValue(null);
 			} else {
@@ -266,7 +266,7 @@ public class TypeAutoCast {
 			}
 		} else if (clazz == LocalDate.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
+			Date date = getDate(rs);
 			if (date == null) {
 				result.setValue(null);
 			} else {
@@ -274,7 +274,7 @@ public class TypeAutoCast {
 			}
 		} else if (clazz == LocalTime.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
+			Date date = getDate(rs);
 			if (date == null) {
 				result.setValue(null);
 			} else {
