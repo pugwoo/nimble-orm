@@ -177,18 +177,15 @@ public class DOInfoReader {
 	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
 	 * @return 不会返回null
 	 */
-	public static List<Field> getColumns(Class<?> clazz)
-			throws NoColumnAnnotationException {
+	public static List<Field> getColumns(Class<?> clazz) throws NoColumnAnnotationException {
 		if(clazz == null) {
 			throw new NoColumnAnnotationException("class is null");
 		}
 
 		List<Field> result = ClassInfoCache.getColumnFields(clazz);
 		if (InnerCommonUtils.isEmpty(result)) {
-			throw new NoColumnAnnotationException("class " + clazz.getName()
-					+ " does not have any @Column fields");
+			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
 		}
-
 		return result;
 	}
 
@@ -233,27 +230,7 @@ public class DOInfoReader {
 
 		return fieldList;
 	}
-	
-	/**
-	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先。
-	 * 该方法只用于select读操作。
-	 * @param selectOnlyKey 是否只select主键
-	 * @throws NoColumnAnnotationException 当没有一个@Column注解时抛出
-	 * @return 不会返回null
-	 */
-	public static List<Field> getColumnsForSelect(Class<?> clazz, boolean selectOnlyKey) {
-		List<Field> result = getColumns(clazz);
 
-		if(selectOnlyKey) {
-			result = InnerCommonUtils.filter(result, o -> o.getAnnotation(Column.class).isKey());
-		}
-		if (result.isEmpty()) {
-			throw new NoColumnAnnotationException("class " + clazz.getName() + " does not have any @Column fields");
-		}
-
-		return result;
-	}
-	
 	/**
 	 * 获得注解了@JoinLeftTable的字段，如果没有注解，抛出NoJoinTableMemberException
 	 */

@@ -18,11 +18,9 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 2015年8月22日 16:58:48
@@ -30,7 +28,7 @@ import java.util.Objects;
  * @author pugwoo
  */
 public class TypeAutoCast {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeAutoCast.class);
 
 	public static class BasicTypeResult {
@@ -60,16 +58,10 @@ public class TypeAutoCast {
 	 * 从ResultSet中读出数据并转成成对应的类型，如果指定类型rs无法转换，则不转换。
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
-	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType) throws Exception {
-		int columnIndex = rs.findColumn(columnName);
-		Object result = rs.getObject(columnIndex);
-		if(result == null) { // 保证null会返回null值
-			return null;
-		}
-		
-		Column column = field.getAnnotation(Column.class);
+	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType,
+								   Column column) throws Exception {
 		if(column != null && column.isJSON()) { // 优先处理标记为json的列
-			String valStr = (result instanceof String) ? (String) result : rs.getString(columnIndex);
+			String valStr = rs.getString(columnName);
 			if(InnerCommonUtils.isBlank(valStr)) {
 				return null;
 			}
@@ -79,7 +71,7 @@ public class TypeAutoCast {
 				if (genericType instanceof Class) {
 					return NimbleOrmJSON.parse(valStr, field.getType());
 				} else { // 处理泛型
-				    return NimbleOrmJSON.parseGeneric(valStr, (ParameterizedType) genericType);
+					return NimbleOrmJSON.parseGeneric(valStr, (ParameterizedType) genericType);
 				}
 			} catch(Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, genericType, e);
@@ -90,92 +82,94 @@ public class TypeAutoCast {
 		Class<?> clazz = field.getType();
 
 		if(clazz == String.class) {
-			return result instanceof String ? result : rs.getString(columnIndex);
+			return rs.getString(columnName);
 		}
-		if(clazz == Integer.class || clazz == int.class) {
-			return result instanceof Integer ? result : rs.getInt(columnIndex);
+		if (clazz == Integer.class) {
+			int value = rs.getInt(columnName);
+			return rs.wasNull() ? null : value;
 		}
-		if(clazz == Long.class || clazz == long.class) {
-			return result instanceof Long ? result : rs.getLong(columnIndex);
+		if(clazz == int.class) {
+			return rs.getInt(columnName);
 		}
-		if(clazz == Boolean.class || clazz == boolean.class) {
-			return result instanceof Boolean ? result : rs.getBoolean(columnIndex);
+		if (clazz == Long.class) {
+			long value = rs.getLong(columnName);
+			return rs.wasNull() ? null : value;
 		}
-		if(clazz == Byte.class || clazz == byte.class) {
-			return result instanceof Byte ? result : rs.getByte(columnIndex);
+		if(clazz == long.class) {
+			return rs.getLong(columnName);
+		}
+		if (clazz == Boolean.class) {
+			boolean value = rs.getBoolean(columnName);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == boolean.class) {
+			return rs.getBoolean(columnName);
+		}
+		if (clazz == Byte.class) {
+			byte value = rs.getByte(columnName);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == byte.class) {
+			return rs.getByte(columnName);
 		}
 		if(clazz == byte[].class) {
 			if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
-				return InnerCommonUtils.decodeBase64(result instanceof String ? (String) result :
-								rs.getString(columnIndex));
+				return InnerCommonUtils.decodeBase64(rs.getString(columnName));
 			}
-			return result instanceof byte[] ? result : rs.getBytes(columnIndex);
+			return rs.getBytes(columnName);
 		}
-		if(clazz == Short.class || clazz == short.class) {
-			return result instanceof Short ? result : rs.getShort(columnIndex);
+		if (clazz == Short.class) {
+			short value = rs.getShort(columnName);
+			return rs.wasNull() ? null : value;
 		}
-		if(clazz == Float.class || clazz == float.class) {
-			return result instanceof Float ? result : rs.getFloat(columnIndex);
+		if(clazz == short.class) {
+			return rs.getShort(columnName);
 		}
-		if(clazz == Double.class || clazz == double.class) {
-			return result instanceof Double ? result : rs.getDouble(columnIndex);
+		if(clazz == Float.class) {
+			float value = rs.getFloat(columnName);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == float.class) {
+			return rs.getFloat(columnName);
+		}
+		if(clazz == Double.class) {
+			double value = rs.getDouble(columnName);
+			return rs.wasNull() ? null : value;
+		}
+		if(clazz == double.class) {
+			return rs.getDouble(columnName);
 		}
 		if(clazz == BigDecimal.class) {
-			return result instanceof BigDecimal ? result : rs.getBigDecimal(columnIndex);
+			return rs.getBigDecimal(columnName);
 		}
 		if (clazz == java.util.Date.class) {
-			// 说明：这里要严格匹配，因为java.sql.Date是java.util.Date的子类，但行为不同
-			if (Objects.equals(result.getClass(), java.util.Date.class)) {
-				return result;
-			}
-			return getDate(rs, columnIndex);
+			// 说明：这里要严格匹配，虽然java.sql.Date是java.util.Date的子类，但行为不同
+			return getDate(rs, columnName);
 		}
 		if (clazz == LocalDateTime.class) {
-			if (result instanceof LocalDateTime) {
-				return result;
-			}
-			Date date = getDate(rs, columnIndex);
-			if (date == null) {
-				return null;
-			}
-			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+			return getLocalDateTime(rs, columnName);
 		}
 		if (clazz == LocalDate.class) {
-			if (result instanceof LocalDate) {
-				return result;
-			}
-			Date date = getDate(rs, columnIndex);
-			if (date == null) {
-				return null;
-			}
-			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			return getLocalDate(rs, columnName);
 		}
 		if (clazz == LocalTime.class) {
-			if (result instanceof LocalTime) {
-				return result;
-			}
-			Date date = getDate(rs, columnIndex);
-			if (date == null) {
-				return null;
-			}
-			return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+			return getLocalTime(rs, columnName);
 		}
 		if (clazz == java.sql.Date.class) {
-			return result instanceof java.sql.Date ? result : rs.getDate(columnIndex);
+			return rs.getDate(columnName);
 		}
 		if (clazz == java.sql.Time.class) {
-			return result instanceof java.sql.Time ? result : rs.getDate(columnIndex);
+			return rs.getDate(columnName);
 		}
 		if (clazz == java.sql.Timestamp.class) {
-			return result instanceof java.sql.Timestamp ? result : rs.getTimestamp(columnIndex);
+			return rs.getTimestamp(columnName);
 		}
-		
-		return result;
-	}
 
-	private static Date getDate(ResultSet rs, int columnIndex) throws Exception {
+		return rs.getObject(columnName);
+	}
+	private static Date getDate(ResultSet rs, String columnName) throws Exception {
 		try {
-			Timestamp timestamp = rs.getTimestamp(columnIndex);
+			Timestamp timestamp = rs.getTimestamp(columnName);
 			if (timestamp == null) {
 				return null;
 			}
@@ -183,11 +177,115 @@ public class TypeAutoCast {
 			return new Date(timestamp.getTime());
 		} catch (Exception e) {
 			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
-			String str = rs.getString(columnIndex);
+			String str = rs.getString(columnName);
 			if (InnerCommonUtils.isBlank(str)) {
 				return null;
 			}
 			return NimbleOrmDateUtils.parseThrowException(str.trim());
+		}
+	}
+
+	private static Date getDate(ResultSet rs) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(1);
+			if (timestamp == null) {
+				return null;
+			}
+			// 对于java.util.Date类型，一般是java.sql.Timestamp，所以特意做了转换
+			return new Date(timestamp.getTime());
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseThrowException(str.trim());
+		}
+	}
+
+	private static LocalDateTime getLocalDateTime(ResultSet rs, String columnName) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(columnName);
+			return timestamp == null ? null : timestamp.toLocalDateTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnName);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDateTime(str.trim());
+		}
+	}
+
+	private static LocalDateTime getLocalDateTime(ResultSet rs) throws Exception {
+		try {
+			Timestamp timestamp = rs.getTimestamp(1);
+			return timestamp == null ? null : timestamp.toLocalDateTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDateTime(str.trim());
+		}
+	}
+
+	private static LocalDate getLocalDate(ResultSet rs, String columnName) throws Exception {
+		try {
+			// 特别说明：在mysql的ResultSetImpl实现中，rs.getDate实现复杂，效率很低，所以之类不要用rs.getDate
+			Timestamp timestamp = rs.getTimestamp(columnName);
+			return timestamp == null ? null : timestamp.toLocalDateTime().toLocalDate();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnName);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDate(str.trim());
+		}
+	}
+
+	private static LocalDate getLocalDate(ResultSet rs) throws Exception {
+		try {
+			// 特别说明：在mysql的ResultSetImpl实现中，rs.getDate实现复杂，效率很低，所以之类不要用rs.getDate
+			Timestamp timestamp = rs.getTimestamp(1);
+			return timestamp == null ? null : timestamp.toLocalDateTime().toLocalDate();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalDate(str.trim());
+		}
+	}
+
+	private static LocalTime getLocalTime(ResultSet rs, String columnName) throws Exception {
+		try {
+			java.sql.Time time = rs.getTime(columnName);
+			return time == null ? null : time.toLocalTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(columnName);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalTime(str.trim());
+		}
+	}
+
+	private static LocalTime getLocalTime(ResultSet rs) throws Exception {
+		try {
+			java.sql.Time time = rs.getTime(1);
+			return time == null ? null : time.toLocalTime();
+		} catch (Exception e) {
+			// 尝试通过获取字符串自行进行解析，有些jdbc driver不支持getTimestamp
+			String str = rs.getString(1);
+			if (InnerCommonUtils.isBlank(str)) {
+				return null;
+			}
+			return NimbleOrmDateUtils.parseLocalTime(str.trim());
 		}
 	}
 
@@ -229,32 +327,17 @@ public class TypeAutoCast {
 			result.setValue(rs.getBigDecimal(1));
 		} else if (clazz == java.util.Date.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
+			Date date = getDate(rs);
 			result.setValue(date);
 		} else if (clazz == LocalDateTime.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
-			if (date == null) {
-				result.setValue(null);
-			} else {
-				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-			}
+			result.setValue(getLocalDateTime(rs));
 		} else if (clazz == LocalDate.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
-			if (date == null) {
-				result.setValue(null);
-			} else {
-				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-			}
+			result.setValue(getLocalDate(rs));
 		} else if (clazz == LocalTime.class) {
 			result.setBasicType(true);
-			Date date = getDate(rs, 1);
-			if (date == null) {
-				result.setValue(null);
-			} else {
-				result.setValue(date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime());
-			}
+			result.setValue(getLocalTime(rs));
 		} else if (clazz == java.sql.Date.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getDate(1));
@@ -277,7 +360,7 @@ public class TypeAutoCast {
 
 		return result;
 	}
-	
+
 	/**
 	 * 自动转换类型
 	 * @param obj 要转换的对象
@@ -289,7 +372,7 @@ public class TypeAutoCast {
 		if(clazz.isInstance(obj)) {
 			return (T) obj;
 		}
-		
+
 		// 对于obj是null但是目标clazz是【基础类型】时，转成 0
 		if(clazz == Integer.class || clazz == int.class) {
 			if(obj == null) {
@@ -381,16 +464,16 @@ public class TypeAutoCast {
 			return (T) new BigDecimal(obj.toString());
 		}
 		if (clazz == java.util.Date.class) {
-            try {
-                return (T) NimbleOrmDateUtils.parseThrowException(obj.toString());
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            }
-        }
+			try {
+				return (T) NimbleOrmDateUtils.parseThrowException(obj.toString());
+			} catch (ParseException e) {
+				throw new RuntimeException(e);
+			}
+		}
 		if (clazz == java.sql.Date.class) {
 			try {
 				Date date = obj instanceof Date ? (Date) obj : NimbleOrmDateUtils.parseThrowException(obj.toString());
-                return date == null ? null : (T) new java.sql.Date(date.getTime());
+				return date == null ? null : (T) new java.sql.Date(date.getTime());
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
 			}
@@ -415,7 +498,7 @@ public class TypeAutoCast {
 		if (clazz == LocalDate.class) {
 			try {
 				LocalDate date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDate((Date) obj)
-				    : NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
+						: NimbleOrmDateUtils.parseLocalDateThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
@@ -424,7 +507,7 @@ public class TypeAutoCast {
 		if (clazz == LocalDateTime.class) {
 			try {
 				LocalDateTime date = obj instanceof Date ? NimbleOrmDateUtils.toLocalDateTime((Date) obj)
-				    : NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
+						: NimbleOrmDateUtils.parseLocalDateTimeThrowException(obj.toString());
 				return (T) date;
 			} catch (ParseException e) {
 				throw new RuntimeException(e);

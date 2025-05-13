@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 public abstract class Test4Delete_HardDelete {
@@ -32,12 +31,7 @@ public abstract class Test4Delete_HardDelete {
         // 删除2条记录
         students.remove(1);
         rows = getDBHelper().deleteHard(students);
-        // clickhouse没有办法返回真实的删除条数
-        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            assert rows == 1;
-        } else {
-            assert rows == 2;
-        }
+        assert rows == 2;
 
         one = getDBHelper().getOne(StudentHardDeleteDO.class, "where id=?", students.get(0).getId());
         assert null == one;
@@ -84,11 +78,7 @@ public abstract class Test4Delete_HardDelete {
 
         list.remove(1);
         rows = getDBHelper().deleteHard(list);
-        if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-            assert rows == 1;
-        } else {
-            assert rows == 2;
-        }
+        assert rows == 2;
 
         assert getDBHelper().getOne(CasVersionDO.class, "where id=?", list.get(0).getId()) == null;
         assert getDBHelper().getOne(CasVersionDO.class, "where id=?", list.get(1).getId()) == null;

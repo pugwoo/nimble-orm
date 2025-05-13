@@ -101,11 +101,7 @@ public abstract class Test7Interceptor_Default {
 		List<StudentDO> insertBatch = CommonOps.insertBatch(getDBHelper(),10);
 		int rows = getDBHelper().delete(insertBatch);
 
-		if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
-			assert rows == 1;
-		} else {
-			assert rows == insertBatch.size();
-		}
+		assert rows == insertBatch.size();
 
 		insertBatch = CommonOps.insertBatch(getDBHelper(),20);
 		rows = getDBHelper().delete(StudentDO.class, "where 1=?", 1);
