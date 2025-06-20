@@ -371,6 +371,15 @@ public class DOInfoReader {
 	}
 
 	/**
+	 * 获得所有有@FillColumn注解的列，包括继承的父类中的，顺序父类先
+	 *
+	 * @return 不会返回null
+	 */
+	public static List<Field> getFillColumns(Class<?> clazz) {
+		return ClassInfoCache.getFillColumns(clazz);
+	}
+
+	/**
 	 * 优先通过getter获得值，如果没有getter，则直接获取
 	 */
 	public static Object getValue(Field field, Object object) {

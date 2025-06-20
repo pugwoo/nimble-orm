@@ -1,0 +1,84 @@
+package com.pugwoo.dbhelper.test.test_common;
+
+import com.pugwoo.dbhelper.test.entity.SchoolDO;
+import com.pugwoo.dbhelper.test.entity.StudentDO;
+import com.pugwoo.dbhelper.test.utils.CommonOps;
+import com.pugwoo.dbhelper.test.vo.StudentVO;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+/**
+ * 测试 @FillColumn 注解功能
+ */
+public abstract class Test1Query_FillColumn extends Test0Config_NewDBHelper {
+
+    @Test
+    public void testFillColumnBasic() {
+        // 插入测试数据
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "TestSchool");
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
+
+        // 查询学生信息，应该自动填充学校名称
+        StudentVO studentVO = getDBHelper().getOne(StudentVO.class, "where id=?", studentDO.getId());
+        
+        System.out.println("Student: " + studentVO.getName());
+        System.out.println("School ID: " + studentVO.getSchoolId());
+        System.out.println("School Name (filled): " + studentVO.getSchoolName());
+        
+        // 验证填充的学校名称不为空
+        assert studentVO.getSchoolName() != null : "School name should be filled";
+        
+        // 如果脚本正确实现，应该能获取到学校名称
+        // 这里只是验证字段被填充了，具体的值取决于脚本的实现
+    }
+
+    @Test
+    public void testFillColumnList() {
+        // 插入测试数据
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "TestSchool");
+        StudentDO studentDO1 = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
+        StudentDO studentDO2 = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
+
+        // 查询学生列表，应该自动填充学校名称
+        List<StudentVO> studentVOList = getDBHelper().getAll(StudentVO.class, 
+            "where school_id=?", schoolDO.getId());
+        
+        assert studentVOList.size() >= 2 : "Should have at least 2 students";
+        
+        for (StudentVO studentVO : studentVOList) {
+            System.out.println("Student: " + studentVO.getName());
+            System.out.println("School ID: " + studentVO.getSchoolId());
+            System.out.println("School Name (filled): " + studentVO.getSchoolName());
+            
+            // 验证填充的学校名称不为空
+            assert studentVO.getSchoolName() != null : "School name should be filled";
+        }
+    }
+
+    @Test
+    public void testHandleFillColumnManually() {
+        // 插入测试数据
+        SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "TestSchool");
+        StudentDO studentDO = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
+
+        // 先查询基本的学生信息（不会自动处理FillColumn）
+        StudentDO basicStudent = getDBHelper().getOne(StudentDO.class, "where id=?", studentDO.getId());
+        
+        // 创建StudentVO并复制基本信息
+        StudentVO studentVO = new StudentVO();
+        studentVO.setId(basicStudent.getId());
+        studentVO.setName(basicStudent.getName());
+        studentVO.setSchoolId(basicStudent.getSchoolId());
+        
+        // 手动处理FillColumn
+        getDBHelper().handleFillColumn(studentVO);
+        
+        System.out.println("Student: " + studentVO.getName());
+        System.out.println("School ID: " + studentVO.getSchoolId());
+        System.out.println("School Name (filled): " + studentVO.getSchoolName());
+        
+        // 验证填充的学校名称不为空
+        assert studentVO.getSchoolName() != null : "School name should be filled";
+    }
+}

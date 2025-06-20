@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.cache;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.FillColumn;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.SqlColumn;
 import com.pugwoo.dbhelper.annotation.Table;
@@ -287,6 +288,7 @@ public class ClassInfoCache {
     // ==================================================================================
 
     private static final Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> fillColumnMap = new ConcurrentHashMap<>();
 
     public static List<Field> getRelatedColumns(Class<?> clazz) {
         boolean isCacheEnable = DBHelperContext.isCacheEnabled();
@@ -314,6 +316,36 @@ public class ClassInfoCache {
 
         if (isCacheEnable) {
             relatedColumnMap.put(clazz, fields);
+        }
+        return fields;
+    }
+
+    public static List<Field> getFillColumns(Class<?> clazz) {
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        List<Field> fields;
+        if (isCacheEnable) {
+            fields = fillColumnMap.get(clazz);
+            if (fields != null) {
+                return fields;
+            }
+        }
+
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
+
+        // 父类优先
+        fields = new ArrayList<>();
+        for (int i = classLink.size() - 1; i >= 0; i--) {
+            Field[] f = classLink.get(i).getDeclaredFields();
+            for (Field field : f) {
+                if (field.getAnnotation(FillColumn.class) != null) {
+                    fields.add(field);
+                }
+            }
+        }
+
+        if (isCacheEnable) {
+            fillColumnMap.put(clazz, fields);
         }
         return fields;
     }

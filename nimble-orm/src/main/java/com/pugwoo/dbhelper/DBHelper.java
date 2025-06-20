@@ -482,6 +482,32 @@ public interface DBHelper {
 	 */
 	<T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties);
 
+	/**
+	 * 单独抽离出处理FillColumn的类，参数t不需要@Table的注解了
+	 * @param t 需要处理FillColumn的对象
+	 */
+	<T> void handleFillColumn(T t);
+
+	/**
+	 * 单独抽离出处理FillColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
+	 * @param list 需要处理FillColumn的对象列表
+	 */
+	<T> void handleFillColumn(List<T> list);
+
+	/**
+	 * 单独抽离出处理FillColumn的类，参数t不需要@Table的注解了
+	 * @param t 需要处理FillColumn的对象
+	 * @param fillColumnProperties 只处理制定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
+	 */
+	<T> void handleFillColumn(T t, String... fillColumnProperties);
+
+	/**
+	 * 单独抽离出处理FillColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
+	 * @param list 需要处理FillColumn的对象列表
+	 * @param fillColumnProperties 只处理制定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
+	 */
+	<T> void handleFillColumn(List<T> list, String... fillColumnProperties);
+
 	// ===============Query methods END ==================================
 
 	/**
