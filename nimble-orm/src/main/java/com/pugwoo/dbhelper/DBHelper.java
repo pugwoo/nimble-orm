@@ -111,6 +111,13 @@ public interface DBHelper {
 	 */
 	void turnOffFeature(FeatureEnum featureEnum);
 
+	/**
+	 * 查询特性的开关状态
+	 * @param featureEnum 特性枚举
+	 * @return true表示打开，false表示关闭。如果特性未设置，返回false
+	 */
+	boolean getFeatureStatus(FeatureEnum featureEnum);
+
 	// =====================================================================
 
 	/**
