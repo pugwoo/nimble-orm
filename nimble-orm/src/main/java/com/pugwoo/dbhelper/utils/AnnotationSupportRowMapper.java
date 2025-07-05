@@ -18,7 +18,9 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,6 +45,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private final String sql;
 	private final List<Object> args;
 	private volatile String assembledSql;
+
+	/**用于控制不存在的列只warning log一次和查询一次*/
+	private final Set<String> warningColumnNotExists = new HashSet<>();
 
 	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, String sql, List<Object> args) {
 		this.dbHelper = dbHelper;
@@ -150,6 +155,11 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 							 Field field, Column column) throws Exception {
 		boolean throwErrorIfColumnNotExist = dbHelper.getFeatureStatus(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
 		if (!throwErrorIfColumnNotExist) {
+			// 如果columnName已经确定不在rs中了，那么不再查询
+			if (warningColumnNotExists.contains(columnName)) {
+				return null;
+			}
+
 			try {
 				return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
 			} catch (SQLException e) {
@@ -158,7 +168,12 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 						|| message.contains("找不到") /*pg*/)) {
 					throw e;
 				}
-				LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
+
+				if (!warningColumnNotExists.contains(columnName)) {
+					warningColumnNotExists.add(columnName);
+					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
+				}
+
 				return null;
 			}
 		} else {
