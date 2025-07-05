@@ -7,7 +7,6 @@ import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.RowMapperFailException;
-import com.pugwoo.dbhelper.impl.part.P0_JdbcTemplateOp;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.RowData;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
@@ -19,7 +18,9 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -44,6 +45,9 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private final String sql;
 	private final List<Object> args;
 	private volatile String assembledSql;
+
+	/**用于控制不存在的列只warning log一次和查询一次*/
+	private final Set<String> warningColumnNotExists = new HashSet<>();
 
 	public AnnotationSupportRowMapper(DBHelper dbHelper, Class<T> clazz, String sql, List<Object> args) {
 		this.dbHelper = dbHelper;
@@ -149,23 +153,28 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private Object getFromRS(ResultSet rs,
 							 String columnName,
 							 Field field, Column column) throws Exception {
-		if (dbHelper instanceof P0_JdbcTemplateOp) {
-			boolean throwErrorIfColumnNotExist =
-					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
-			if (!throwErrorIfColumnNotExist) {
-				try {
-					return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
-				} catch (SQLException e) {
-					String message = e.getMessage();
-					if (!(message.contains("not found") /*mysql/pg*/ || message.contains("does not exist") /*clickhouse*/
-					      || message.contains("找不到") /*pg*/)) {
-						throw e;
-					}
-					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
-					return null;
-				}
-			} else {
+		boolean throwErrorIfColumnNotExist = dbHelper.getFeatureStatus(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
+		if (!throwErrorIfColumnNotExist) {
+			// 如果columnName已经确定不在rs中了，那么不再查询
+			if (warningColumnNotExists.contains(columnName)) {
+				return null;
+			}
+
+			try {
 				return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
+			} catch (SQLException e) {
+				String message = e.getMessage();
+				if (!(message.contains("not found") /*mysql/pg*/ || message.contains("does not exist") /*clickhouse*/
+						|| message.contains("找不到") /*pg*/)) {
+					throw e;
+				}
+
+				if (!warningColumnNotExists.contains(columnName)) {
+					warningColumnNotExists.add(columnName);
+					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
+				}
+
+				return null;
 			}
 		} else {
 			return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);

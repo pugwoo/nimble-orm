@@ -267,7 +267,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
                 }
 
 				// 对于非batch的慢sql，自动explain一下检查是否加了索引
-				boolean autoExplainSlowSql = getFeature(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
+				boolean autoExplainSlowSql = getFeatureStatus(FeatureEnum.AUTO_EXPLAIN_SLOW_SQL);
 				if (autoExplainSlowSql && getDatabaseType() == DatabaseTypeEnum.MYSQL) {
 					try {
 						if (assembledSql != null) {
@@ -456,7 +456,7 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		}
 		this.jdbcTemplate = jdbcTemplate;
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-		if (!getFeature(FeatureEnum.LAZY_DETECT_DATABASE_TYPE)) {
+		if (!getFeatureStatus(FeatureEnum.LAZY_DETECT_DATABASE_TYPE)) {
 			this.databaseType = getDatabaseType(jdbcTemplate);
 		}
 	}
@@ -543,7 +543,8 @@ public abstract class P0_JdbcTemplateOp implements DBHelper, ApplicationContextA
 		features.put(featureEnum, false);
 	}
 
-	public boolean getFeature(FeatureEnum featureEnum) {
+	@Override
+	public boolean getFeatureStatus(FeatureEnum featureEnum) {
 		Boolean enabled = features.get(featureEnum);
 		return enabled != null && enabled;
 	}
