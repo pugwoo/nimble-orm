@@ -342,7 +342,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
         if (limit != null && !isVirtualTable) {
             try {
-                boolean autoAddOrderForPagination = getFeature(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION);
+                boolean autoAddOrderForPagination = getFeatureStatus(FeatureEnum.AUTO_ADD_ORDER_FOR_PAGINATION);
                 postSql = SQLUtils.removeLimitAndAddOrder(getDatabaseType(), postSql, autoAddOrderForPagination, clazz);
             } catch (Exception e) {
                 LOGGER.error("removeLimitAndAddOrder fail for class:{}, postSql:{}",

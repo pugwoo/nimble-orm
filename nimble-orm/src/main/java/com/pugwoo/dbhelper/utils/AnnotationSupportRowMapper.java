@@ -7,7 +7,6 @@ import com.pugwoo.dbhelper.annotation.JoinRightTable;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
 import com.pugwoo.dbhelper.exception.RowMapperFailException;
-import com.pugwoo.dbhelper.impl.part.P0_JdbcTemplateOp;
 import com.pugwoo.dbhelper.json.NimbleOrmJSON;
 import com.pugwoo.dbhelper.model.RowData;
 import com.pugwoo.dbhelper.sql.SQLAssemblyUtils;
@@ -149,23 +148,18 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 	private Object getFromRS(ResultSet rs,
 							 String columnName,
 							 Field field, Column column) throws Exception {
-		if (dbHelper instanceof P0_JdbcTemplateOp) {
-			boolean throwErrorIfColumnNotExist =
-					((P0_JdbcTemplateOp) dbHelper).getFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
-			if (!throwErrorIfColumnNotExist) {
-				try {
-					return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
-				} catch (SQLException e) {
-					String message = e.getMessage();
-					if (!(message.contains("not found") /*mysql/pg*/ || message.contains("does not exist") /*clickhouse*/
-					      || message.contains("找不到") /*pg*/)) {
-						throw e;
-					}
-					LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
-					return null;
-				}
-			} else {
+		boolean throwErrorIfColumnNotExist = dbHelper.getFeatureStatus(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
+		if (!throwErrorIfColumnNotExist) {
+			try {
 				return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);
+			} catch (SQLException e) {
+				String message = e.getMessage();
+				if (!(message.contains("not found") /*mysql/pg*/ || message.contains("does not exist") /*clickhouse*/
+						|| message.contains("找不到") /*pg*/)) {
+					throw e;
+				}
+				LOGGER.warn("column:[{}] not found in ResultSet, class:{}, field:{}", columnName, clazz, field);
+				return null;
 			}
 		} else {
 			return TypeAutoCast.getFromRS(rs, columnName, field, dbHelper.getDatabaseType(), column);

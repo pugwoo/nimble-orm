@@ -1,3 +1,5 @@
+v1.7.6 - [add] DBHelper接口增加boolean getFeatureStatus(FeatureEnum featureEnum)接口查询当前特性开关状态
+
 2025年5月13日
 v1.7.5 - [enhance] 优化批量delete时，DO类带有deleteValueScript的性能，支持批量性能了
        - [enhance] 优化AnnotationSupportRowMapper，提升5%性能
