@@ -605,7 +605,7 @@ public interface DBHelper {
 
 	/**
 	 * 自定义set字句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。
-	 * @param t 必须提供key
+	 * @param t 必须提供key，该方法除了用到t中的key和casVersion(如有)、updateValueScript(如有)，并不会更新t的其它常规属性
 	 * @param setSql 可包含set关键字也可不包含，多个则用逗号隔开，【不能】包含where子句，例如a=a+1,c=b 或 set a=a+1,c=b
 	 * @param args set子句的参数
 	 * @return 实际修改的条数
