@@ -6,7 +6,7 @@ import java.util.List;
  * 2017年9月5日 11:12:00
  * 数据库操作拦截器，拦截器的命名为[before|after][select|update|insert|delete]，拦截器将影响全局，请谨慎使用。
  * 拦截器是栈式的，按拦截器的顺序，before顺序调用，after逆序调用。
- * 
+ * <br>
  * 关于拦截器的设计想法：
  * 1. 查询拦截器，用于数据安全拦截和数据查询审计。
  * 2. 修改拦截器，用于在修改、插入、删除之前和之后做一些操作。
@@ -97,7 +97,7 @@ public interface DBHelperInterceptor {
     
     /**
      * delete前执行，包括软删除和物理删除
-     * @param tList 删除前的对象列表
+     * @param tList 删除前的对象列表，immutable，请勿修改该list
      * @return 返回true继续执行，返回false中断执行并抛出NotAllowQueryException
      */
 	default boolean beforeDelete(List<Object> tList) {
