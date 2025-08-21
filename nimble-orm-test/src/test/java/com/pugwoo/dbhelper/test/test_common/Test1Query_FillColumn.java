@@ -37,22 +37,20 @@ public abstract class Test1Query_FillColumn extends Test0Config_NewDBHelper {
     public void testFillColumnList() {
         // 插入测试数据
         SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "TestSchool");
-        StudentDO studentDO1 = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
-        StudentDO studentDO2 = CommonOps.insertOne(getDBHelper(), schoolDO.getId());
+        CommonOps.insertOne(getDBHelper(), schoolDO.getId());
+        CommonOps.insertOne(getDBHelper(), schoolDO.getId());
 
         // 查询学生列表，应该自动填充学校名称
         List<StudentVO> studentVOList = getDBHelper().getAll(StudentVO.class, 
             "where school_id=?", schoolDO.getId());
         
-        assert studentVOList.size() >= 2 : "Should have at least 2 students";
+        assert studentVOList.size() == 2;
         
         for (StudentVO studentVO : studentVOList) {
-            System.out.println("Student: " + studentVO.getName());
-            System.out.println("School ID: " + studentVO.getSchoolId());
-            System.out.println("School Name (filled): " + studentVO.getSchoolName());
-            
-            // 验证填充的学校名称不为空
-            assert studentVO.getSchoolName() != null : "School name should be filled";
+            assert studentVO.getSchoolName().equals("School_" + schoolDO.getId());
+            assert studentVO.getSchoolGroupName().equals("Group_" + studentVO.getSchoolName());
+            assert studentVO.getClassName().equals("Class_" + studentVO.getId() + "_" + schoolDO.getId());
+            assert studentVO.getNotFoundFillField().equals("notfound");
         }
     }
 
@@ -73,12 +71,10 @@ public abstract class Test1Query_FillColumn extends Test0Config_NewDBHelper {
         
         // 手动处理FillColumn
         getDBHelper().handleFillColumn(studentVO);
-        
-        System.out.println("Student: " + studentVO.getName());
-        System.out.println("School ID: " + studentVO.getSchoolId());
-        System.out.println("School Name (filled): " + studentVO.getSchoolName());
-        
-        // 验证填充的学校名称不为空
-        assert studentVO.getSchoolName() != null : "School name should be filled";
+
+        assert studentVO.getSchoolName().equals("School_" + schoolDO.getId());
+        assert studentVO.getSchoolGroupName().equals("Group_" + studentVO.getSchoolName());
+        assert studentVO.getClassName().equals("Class_" + studentVO.getId() + "_" + schoolDO.getId());
+        assert studentVO.getNotFoundFillField().equals("notfound");
     }
 }
