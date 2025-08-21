@@ -287,6 +287,116 @@ public class ClassInfoCache {
 
     // ==================================================================================
 
+    private static final Map<String, Field> refFieldMap = new ConcurrentHashMap<>();
+    private static final Map<String, Boolean> refFieldNullMap = new ConcurrentHashMap<>();
+
+    /**
+     * 获取参考字段的缓存，支持数据库字段名和Java字段名
+     * @param clazz 类
+     * @param refFieldName 参考字段名
+     * @return 找到的Field，不存在返回null
+     */
+    public static Field getRefField(Class<?> clazz, String refFieldName) {
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+        String cacheKey = clazz.getName() + "#" + refFieldName;
+
+        Field field = null;
+        if (isCacheEnable) {
+            field = refFieldMap.get(cacheKey);
+            if (field != null) {
+                return field;
+            }
+            Boolean isNull = refFieldNullMap.get(cacheKey);
+            if (isNull != null && isNull) {
+                return null;
+            }
+        }
+
+        // 查找逻辑
+        field = findRefField(clazz, refFieldName);
+
+        if (isCacheEnable) {
+            if (field == null) {
+                refFieldNullMap.put(cacheKey, true);
+            } else {
+                refFieldMap.put(cacheKey, field);
+            }
+        }
+
+        return field;
+    }
+
+    /**
+     * 查找参考字段的实际逻辑
+     */
+    private static Field findRefField(Class<?> clazz, String refFieldName) {
+        if (InnerCommonUtils.isBlank(refFieldName)) {
+            return null;
+        }
+
+        // 首先尝试通过数据库字段名查找
+        try {
+            List<Field> columns = getColumnFields(clazz);
+            for (Field field : columns) {
+                Column column = field.getAnnotation(Column.class);
+                if (column != null && column.value().equals(refFieldName)) {
+                    return field;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get field by column name: {}", refFieldName, e);
+        }
+
+        // 然后尝试通过Java字段名查找
+        try {
+            Field field = clazz.getDeclaredField(refFieldName);
+            return field;
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get field by field name: {}", refFieldName, e);
+        }
+
+        // 最后尝试通过驼峰命名转换查找（如school_id -> schoolId）
+        try {
+            String camelCaseName = toCamelCase(refFieldName);
+            Field field = clazz.getDeclaredField(camelCaseName);
+            return field;
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get field by camel case field name: {}", refFieldName, e);
+        }
+
+        LOGGER.error("Cannot find ref field: {} in class: {}", refFieldName, clazz.getName());
+        return null;
+    }
+
+    /**
+     * 将下划线命名转换为驼峰命名
+     */
+    private static String toCamelCase(String underscoreName) {
+        if (underscoreName == null || underscoreName.isEmpty()) {
+            return underscoreName;
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = false;
+
+        for (char c : underscoreName.toCharArray()) {
+            if (c == '_') {
+                capitalizeNext = true;
+            } else {
+                if (capitalizeNext) {
+                    result.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            }
+        }
+
+        return result.toString();
+    }
+
+    // ==================================================================================
+
     private static final Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
     private static final Map<Class<?>, List<Field>> fillColumnMap = new ConcurrentHashMap<>();
 

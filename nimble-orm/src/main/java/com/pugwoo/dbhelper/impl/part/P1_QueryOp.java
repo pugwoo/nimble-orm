@@ -851,70 +851,13 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
      * 获取参考字段的值，支持数据库字段名和Java字段名
      */
     private Object getRefFieldValue(Object obj, String refFieldName, Class<?> clazz) {
-        if (InnerCommonUtils.isBlank(refFieldName)) {
-            return null;
-        }
-
-        // 首先尝试通过数据库字段名查找
-        try {
-            List<Field> columns = DOInfoReader.getColumns(clazz);
-            for (Field field : columns) {
-                Column column = field.getAnnotation(Column.class);
-                if (column != null && column.value().equals(refFieldName)) {
-                    return DOInfoReader.getValue(field, obj);
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get value by column name: {}", refFieldName, e);
-        }
-        
-        // 然后尝试通过Java字段名查找
-        try {
-            Field field = clazz.getDeclaredField(refFieldName);
+        Field field = DOInfoReader.getRefField(clazz, refFieldName);
+        if (field != null) {
             return DOInfoReader.getValue(field, obj);
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get value by field name: {}", refFieldName, e);
         }
-        
-        // 最后尝试通过驼峰命名转换查找（如school_id -> schoolId）
-        try {
-            String camelCaseName = toCamelCase(refFieldName);
-            Field field = clazz.getDeclaredField(camelCaseName);
-            return DOInfoReader.getValue(field, obj);
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get value by camel case field name: {}", refFieldName, e);
-        }
-        
-        LOGGER.error("Cannot find ref field: {} in class: {}", refFieldName, clazz.getName());
         return null;
     }
-    
-    /**
-     * 将下划线命名转换为驼峰命名
-     */
-    private String toCamelCase(String underscoreName) {
-        if (underscoreName == null || underscoreName.isEmpty()) {
-            return underscoreName;
-        }
-        
-        StringBuilder result = new StringBuilder();
-        boolean capitalizeNext = false;
-        
-        for (char c : underscoreName.toCharArray()) {
-            if (c == '_') {
-                capitalizeNext = true;
-            } else {
-                if (capitalizeNext) {
-                    result.append(Character.toUpperCase(c));
-                    capitalizeNext = false;
-                } else {
-                    result.append(Character.toLowerCase(c));
-                }
-            }
-        }
-        
-        return result.toString();
-    }
+
     
     
     /**获得用于查询remoteColumn的列，如果多个列时用加上()*/
