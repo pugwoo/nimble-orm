@@ -347,21 +347,24 @@ public class ClassInfoCache {
             LOGGER.debug("Failed to get field by column name: {}", refFieldName, e);
         }
 
-        // 然后尝试通过Java字段名查找
-        try {
-            Field field = clazz.getDeclaredField(refFieldName);
-            return field;
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get field by field name: {}", refFieldName, e);
+        // 获取类继承链，从子类到父类
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
+
+        // 遍历类继承链查找字段，优先子类，再父类
+        for (Class<?> currentClass : classLink) {
+            try {
+                return currentClass.getDeclaredField(refFieldName);
+            } catch (NoSuchFieldException ignored) {
+            }
         }
 
-        // 最后尝试通过驼峰命名转换查找（如school_id -> schoolId）
-        try {
-            String camelCaseName = toCamelCase(refFieldName);
-            Field field = clazz.getDeclaredField(camelCaseName);
-            return field;
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get field by camel case field name: {}", refFieldName, e);
+        // 尝试转成驼峰形式
+        String camelCaseName = toCamelCase(refFieldName);
+        for (Class<?> currentClass : classLink) {
+            try {
+                return currentClass.getDeclaredField(camelCaseName);
+            } catch (NoSuchFieldException ignored) {
+            }
         }
 
         LOGGER.error("Cannot find ref field: {} in class: {}", refFieldName, clazz.getName());
