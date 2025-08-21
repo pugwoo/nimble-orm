@@ -182,8 +182,11 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 				}
 			}
 
-			List<Object> listTmp = new ArrayList<>(list);
-			doInterceptBeforeDeleteList(listTmp);
+			List<Object> listTmp = null;
+			if (interceptors != null && !interceptors.isEmpty()) {
+				listTmp = new ArrayList<>(list);
+				doInterceptBeforeDeleteList(listTmp);
+			}
 
 			List<Object> keys = new ArrayList<>();
 			for(T t : list) {
@@ -213,7 +216,9 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 
 			int rows = namedJdbcExecuteUpdate(sql, keys);
 
-			doInterceptAfterDeleteList(listTmp, rows);
+			if (interceptors != null && !interceptors.isEmpty()) {
+				doInterceptAfterDeleteList(listTmp, rows);
+			}
 
 			// 对于clickhouse,批量方式无法获取修改条数，只能把1转成全部数量
 			if (getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
@@ -303,7 +308,7 @@ public abstract class P5_DeleteOp extends P4_InsertOrUpdateOp {
 		int rows = namedJdbcExecuteUpdate(sql, args);
 
 		if (interceptors != null && !interceptors.isEmpty()) {
-			doInterceptAfterDeleteList((List<Object>)all, rows);
+			doInterceptAfterDeleteList((List<Object>) all, rows);
 		}
 		return rows;
 	}
