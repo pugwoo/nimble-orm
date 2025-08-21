@@ -1,5 +1,6 @@
 package com.pugwoo.dbhelper.test.test_common;
 
+import com.pugwoo.dbhelper.DBHelper;
 import com.pugwoo.dbhelper.test.entity.SchoolDO;
 import com.pugwoo.dbhelper.test.entity.StudentDO;
 import com.pugwoo.dbhelper.test.utils.CommonOps;
@@ -11,7 +12,9 @@ import java.util.List;
 /**
  * 测试 @FillColumn 注解功能
  */
-public abstract class Test1Query_FillColumn extends Test0Config_NewDBHelper {
+public abstract class Test1Query_FillColumn {
+
+    public abstract DBHelper getDBHelper();
 
     @Test
     public void testFillColumnBasic() {
