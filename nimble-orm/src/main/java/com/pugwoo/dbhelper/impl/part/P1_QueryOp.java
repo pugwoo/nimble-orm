@@ -22,7 +22,6 @@ import com.pugwoo.dbhelper.sql.WhereSQL;
 import com.pugwoo.dbhelper.utils.AnnotationSupportRowMapper;
 import com.pugwoo.dbhelper.utils.DOInfoReader;
 import com.pugwoo.dbhelper.utils.InnerCommonUtils;
-import com.pugwoo.dbhelper.utils.ScriptUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import org.mvel2.MVEL;
 
@@ -777,6 +776,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             String[] refFields = fillColumn.refField().split(",");
             for (int i = 0; i < refFields.length; i++) {
                 refFields[i] = refFields[i].trim();
+                if (refFields[i].isEmpty()) {
+                    LOGGER.error("refField:{} contains empty field name", fillColumn.refField());
+                }
             }
             
             // 为每个对象执行填充逻辑
@@ -849,6 +851,10 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
      * 获取参考字段的值，支持数据库字段名和Java字段名
      */
     private Object getRefFieldValue(Object obj, String refFieldName, Class<?> clazz) {
+        if (InnerCommonUtils.isBlank(refFieldName)) {
+            return null;
+        }
+
         // 首先尝试通过数据库字段名查找
         try {
             List<Field> columns = DOInfoReader.getColumns(clazz);

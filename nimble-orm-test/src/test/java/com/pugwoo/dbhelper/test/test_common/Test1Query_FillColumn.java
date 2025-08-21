@@ -27,10 +27,10 @@ public abstract class Test1Query_FillColumn extends Test0Config_NewDBHelper {
         System.out.println("School Name (filled): " + studentVO.getSchoolName());
         
         // 验证填充的学校名称不为空
-        assert studentVO.getSchoolName() != null : "School name should be filled";
-        
-        // 如果脚本正确实现，应该能获取到学校名称
-        // 这里只是验证字段被填充了，具体的值取决于脚本的实现
+        assert studentVO.getSchoolName().equals("School_" + schoolDO.getId());
+        assert studentVO.getSchoolGroupName().equals("Group_" + studentVO.getSchoolName());
+        assert studentVO.getClassName().equals("Class_" + studentVO.getId() + "_" + schoolDO.getId());
+        assert studentVO.getNotFoundFillField().equals("notfound");
     }
 
     @Test

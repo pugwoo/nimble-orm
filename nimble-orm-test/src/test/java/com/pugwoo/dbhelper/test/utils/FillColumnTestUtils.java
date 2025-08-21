@@ -30,7 +30,7 @@ public class FillColumnTestUtils {
      */
     public static String getClassNameByIds(Object classId1, Object classId2) {
         if (classId1 == null && classId2 == null) {
-            return null;
+            return "notfound";
         }
         return "Class_" + classId1 + "_" + classId2;
     }

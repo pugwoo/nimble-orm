@@ -40,8 +40,10 @@ public class StudentVO extends StudentDO {
 	private String schoolGroupName;
 
 	// 这个是个示例，演示当多个列决定一个列的场景
-	@FillColumn(refField = "class_id1,class_id2", fillScript = "com.pugwoo.dbhelper.test.utils.FillColumnTestUtils.getClassNameByIds(refField1, refField2)")
+	@FillColumn(refField = "id, school_id", fillScript = "com.pugwoo.dbhelper.test.utils.FillColumnTestUtils.getClassNameByIds(refField1, refField2)")
 	private String className;
+
+	@FillColumn(refField = "notField1,notFiled2", fillScript = "com.pugwoo.dbhelper.test.utils.FillColumnTestUtils.getClassNameByIds(refField1, refField2)")
+	private String notFoundFillField;
 	
-	/*第一个参数固定叫 refField 或 refField1，剩下的按顺序叫  refField2,  refField3, refField4 ..*/
 }

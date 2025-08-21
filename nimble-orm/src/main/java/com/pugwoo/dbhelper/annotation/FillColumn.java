@@ -31,11 +31,6 @@ public @interface FillColumn {
     String fillScript();
 
     /**
-     * 列注释
-     */
-    String comment() default "";
-
-    /**
      * 用于控制该FillColumn是否启用的mvel脚本，其中使用变量t表示当前DO类实例。
      * 当为空或返回true时启用该FillColumn属性，当返回false或mvel脚本报错时不启用。
      */
