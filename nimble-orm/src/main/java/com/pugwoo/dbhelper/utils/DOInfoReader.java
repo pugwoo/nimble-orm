@@ -170,6 +170,10 @@ public class DOInfoReader {
         ParameterizedType stringListType = (ParameterizedType) field.getGenericType();
 		return (Class<?>) stringListType.getActualTypeArguments()[0];
 	}
+
+	public static Field getRefField(Class<?> clazz, String refFieldName) {
+		return ClassInfoCache.getRefField(clazz, refFieldName);
+	}
 	
 	/**
 	 * 获得所有有@Column注解的列，包括继承的父类中的，顺序父类先
@@ -368,6 +372,15 @@ public class DOInfoReader {
 	 */
 	public static List<Field> getRelatedColumns(Class<?> clazz) {
 		return ClassInfoCache.getRelatedColumns(clazz);
+	}
+
+	/**
+	 * 获得所有有@FillColumn注解的列，包括继承的父类中的，顺序父类先
+	 *
+	 * @return 不会返回null
+	 */
+	public static List<Field> getFillColumns(Class<?> clazz) {
+		return ClassInfoCache.getFillColumns(clazz);
 	}
 
 	/**

@@ -3,6 +3,7 @@ package com.pugwoo.dbhelper.impl.part;
 import com.pugwoo.dbhelper.DBHelperDataService;
 import com.pugwoo.dbhelper.DBHelperInterceptor;
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.FillColumn;
 import com.pugwoo.dbhelper.annotation.JoinTable;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.enums.FeatureEnum;
@@ -220,6 +221,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 new AnnotationSupportRowMapper<>(this, clazz, sql, forIntercept));
 
         handleRelatedColumn(list);
+        handleFillColumn(list);
         doInterceptorAfterQueryList(clazz, list, -1, sql, forIntercept);
 
         return list;
@@ -257,6 +259,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         List<T> list = namedJdbcQuery(sql, argsList,
                 new AnnotationSupportRowMapper<>(this, clazz, sql, argsList));
         handleRelatedColumn(list);
+        handleFillColumn(list);
 
         doInterceptorAfterQueryList(clazz, list, -1, sql, argsList);
         return list;
@@ -371,6 +374,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
 
         handleRelatedColumn(list);
+        handleFillColumn(list);
         doInterceptorAfterQueryList(clazz, list, total, sql, argsList);
 
         PageData<T> pageData = new PageData<>();
@@ -694,7 +698,167 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
         }
     }
+    
+    // ======================= 处理 FillColumn数据 ========================
+    
+    @Override
+    public <T> void handleFillColumn(T t) {
+        postHandleFillColumnSingle(t);
+    }
+    
+    @Override
+    public <T> void handleFillColumn(T t, String... fillColumnProperties) {
+        postHandleFillColumnSingle(t, fillColumnProperties);
+    }
+    
+    @Override
+    public <T> void handleFillColumn(List<T> list) {
+        postHandleFillColumn(list);
+    }
+    
+    @Override
+    public <T> void handleFillColumn(List<T> list, String... fillColumnProperties) {
+        postHandleFillColumn(list, fillColumnProperties);
+    }
+    
+    /**单个填充*/
+    private <T> void postHandleFillColumnSingle(T t, String... fillColumnProperties) {
+        if (t == null) {
+            return;
+        }
+        List<T> list = new ArrayList<>();
+        list.add(t);
+        
+        postHandleFillColumn(list, fillColumnProperties);
+    }
+    
+    /**批量填充，要求批量操作的都是相同的类*/
+    private <T> void postHandleFillColumn(List<T> tList, String... fillColumnProperties) {
+        if (tList == null || tList.isEmpty()) {
+            return;
+        }
+        Class<?> clazz = getElementClass(tList);
+        if (clazz == null) {
+            return;
+        }
+        
+        List<Field> fillColumns = DOInfoReader.getFillColumns(clazz);
+        if (fillColumns.isEmpty()) {
+            return; // 不需要处理了
+        }
+        
+        SQLAssert.allSameClass(tList);
+        
+        for (Field field : fillColumns) {
+            // 只处理指定的field
+            if (InnerCommonUtils.isNotEmpty(fillColumnProperties)) {
+                boolean isContain = InnerCommonUtils.isContains(field.getName(), fillColumnProperties);
+                if (!isContain) {
+                    continue;
+                }
+            }
+            
+            FillColumn fillColumn = field.getAnnotation(FillColumn.class);
+            if (InnerCommonUtils.isBlank(fillColumn.refField())) {
+                LOGGER.error("field:{} refField is blank", field.getName());
+                continue;
+            }
+            if (InnerCommonUtils.isBlank(fillColumn.fillScript())) {
+                LOGGER.error("field:{} fillScript is blank", field.getName());
+                continue;
+            }
+            
+            // 根据conditional判断该FillColumn是否进行处理
+            List<T> tListFiltered = filterFillColumnConditional(tList, fillColumn.conditional());
 
+            // 解析refField，支持多个字段用逗号分隔
+            String[] refFields = fillColumn.refField().split(",");
+            for (int i = 0; i < refFields.length; i++) {
+                refFields[i] = refFields[i].trim();
+                if (refFields[i].isEmpty()) {
+                    LOGGER.error("refField:{} contains empty field name", fillColumn.refField());
+                }
+            }
+            
+            // 为每个对象执行填充逻辑
+            for (T t : tListFiltered) {
+                try {
+                    // 构建脚本参数
+                    Map<String, Object> scriptVars = new HashMap<>();
+                    
+                    // 获取参考字段的值
+                    for (int i = 0; i < refFields.length; i++) {
+                        Object refValue = getRefFieldValue(t, refFields[i], clazz);
+                        if (i == 0) {
+                            scriptVars.put("refField", refValue);
+                            scriptVars.put("refField1", refValue);
+                        } else {
+                            scriptVars.put("refField" + (i + 1), refValue);
+                        }
+                    }
+                    
+                    // 执行填充脚本
+                    Object fillValue = MVEL.eval(fillColumn.fillScript(), scriptVars);
+                    
+                    // 设置填充值到目标字段
+                    DOInfoReader.setValue(field, t, fillValue);
+                    
+                } catch (Throwable e) {
+                    LOGGER.error("execute fillScript fail: {}, field: {}, object: {}",
+                            fillColumn.fillScript(), field.getName(), NimbleOrmJSON.toJsonNoException(t), e);
+                    if (!fillColumn.ignoreScriptError()) {
+                        throw new RuntimeException("FillColumn script execution failed", e);
+                    }
+                }
+            }
+        }
+    }
+    
+    private <T> List<T> filterFillColumnConditional(List<T> tList, String conditional) {
+        if (InnerCommonUtils.isBlank(conditional)) {
+            return tList;
+        }
+        
+        List<T> result = new ArrayList<>();
+        for (T t : tList) {
+            Map<String, Object> vars = new HashMap<>();
+            vars.put("t", t);
+            try {
+                Object value = MVEL.eval(conditional, vars);
+                if (value == null) {
+                    LOGGER.error("execute conditional return null, script:{}, t:{}",
+                            conditional, NimbleOrmJSON.toJsonNoException(t));
+                } else {
+                    if (value instanceof Boolean) {
+                        if ((Boolean) value) {
+                            result.add(t);
+                        }
+                    } else {
+                        LOGGER.error("execute conditional return is not instance of Boolean, script:{}, t:{}",
+                                conditional, NimbleOrmJSON.toJsonNoException(t));
+                    }
+                }
+            } catch (Throwable e) {
+                LOGGER.error("execute script fail: {}, t:{}", conditional, NimbleOrmJSON.toJsonNoException(t), e);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 获取参考字段的值，支持数据库字段名和Java字段名
+     */
+    private Object getRefFieldValue(Object obj, String refFieldName, Class<?> clazz) {
+        Field field = DOInfoReader.getRefField(clazz, refFieldName);
+        if (field != null) {
+            return DOInfoReader.getValue(field, obj);
+        }
+        return null;
+    }
+
+    
+    
     /**获得用于查询remoteColumn的列，如果多个列时用加上()*/
     private String getWhereColumnForRelated(List<DOInfoReader.RelatedField> remoteField) {
         boolean isSingleColumn = remoteField.size() == 1;
@@ -802,8 +966,18 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     private <T> Stream<T> handleStreamRelatedColumn(Stream<T> stream, Class<T> clazz) {
-        if (!DOInfoReader.getRelatedColumns(clazz).isEmpty()) {
-            return InnerCommonUtils.partition(stream, fetchSize).peek(this::handleRelatedColumn).flatMap(Collection::stream);
+        boolean hasRelatedColumn = !DOInfoReader.getRelatedColumns(clazz).isEmpty();
+        boolean hasFillColumn = !DOInfoReader.getFillColumns(clazz).isEmpty();
+
+        if (hasRelatedColumn || hasFillColumn) {
+            return InnerCommonUtils.partition(stream, fetchSize).peek(list -> {
+                if (hasRelatedColumn) {
+                    handleRelatedColumn(list);
+                }
+                if (hasFillColumn) {
+                    handleFillColumn(list);
+                }
+            }).flatMap(Collection::stream);
         } else {
             return stream;
         }

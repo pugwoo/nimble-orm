@@ -1,6 +1,7 @@
 package com.pugwoo.dbhelper.cache;
 
 import com.pugwoo.dbhelper.annotation.Column;
+import com.pugwoo.dbhelper.annotation.FillColumn;
 import com.pugwoo.dbhelper.annotation.RelatedColumn;
 import com.pugwoo.dbhelper.annotation.SqlColumn;
 import com.pugwoo.dbhelper.annotation.Table;
@@ -286,7 +287,121 @@ public class ClassInfoCache {
 
     // ==================================================================================
 
+    private static final Map<String, Field> refFieldMap = new ConcurrentHashMap<>();
+    private static final Map<String, Boolean> refFieldNullMap = new ConcurrentHashMap<>();
+
+    /**
+     * 获取参考字段的缓存，支持数据库字段名和Java字段名
+     * @param clazz 类
+     * @param refFieldName 参考字段名
+     * @return 找到的Field，不存在返回null
+     */
+    public static Field getRefField(Class<?> clazz, String refFieldName) {
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+        String cacheKey = clazz.getName() + "#" + refFieldName;
+
+        Field field = null;
+        if (isCacheEnable) {
+            field = refFieldMap.get(cacheKey);
+            if (field != null) {
+                return field;
+            }
+            Boolean isNull = refFieldNullMap.get(cacheKey);
+            if (isNull != null && isNull) {
+                return null;
+            }
+        }
+
+        // 查找逻辑
+        field = findRefField(clazz, refFieldName);
+
+        if (isCacheEnable) {
+            if (field == null) {
+                refFieldNullMap.put(cacheKey, true);
+            } else {
+                refFieldMap.put(cacheKey, field);
+            }
+        }
+
+        return field;
+    }
+
+    /**
+     * 查找参考字段的实际逻辑
+     */
+    private static Field findRefField(Class<?> clazz, String refFieldName) {
+        if (InnerCommonUtils.isBlank(refFieldName)) {
+            return null;
+        }
+
+        // 首先尝试通过数据库字段名查找
+        try {
+            List<Field> columns = getColumnFields(clazz);
+            for (Field field : columns) {
+                Column column = field.getAnnotation(Column.class);
+                if (column != null && column.value().equals(refFieldName)) {
+                    return field;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get field by column name: {}", refFieldName, e);
+        }
+
+        // 获取类继承链，从子类到父类
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
+
+        // 遍历类继承链查找字段，优先子类，再父类
+        for (Class<?> currentClass : classLink) {
+            try {
+                return currentClass.getDeclaredField(refFieldName);
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+
+        // 尝试转成驼峰形式
+        String camelCaseName = toCamelCase(refFieldName);
+        for (Class<?> currentClass : classLink) {
+            try {
+                return currentClass.getDeclaredField(camelCaseName);
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+
+        LOGGER.error("Cannot find ref field: {} in class: {}", refFieldName, clazz.getName());
+        return null;
+    }
+
+    /**
+     * 将下划线命名转换为驼峰命名
+     */
+    private static String toCamelCase(String underscoreName) {
+        if (underscoreName == null || underscoreName.isEmpty()) {
+            return underscoreName;
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = false;
+
+        for (char c : underscoreName.toCharArray()) {
+            if (c == '_') {
+                capitalizeNext = true;
+            } else {
+                if (capitalizeNext) {
+                    result.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            }
+        }
+
+        return result.toString();
+    }
+
+    // ==================================================================================
+
     private static final Map<Class<?>, List<Field>> relatedColumnMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> fillColumnMap = new ConcurrentHashMap<>();
 
     public static List<Field> getRelatedColumns(Class<?> clazz) {
         boolean isCacheEnable = DBHelperContext.isCacheEnabled();
@@ -314,6 +429,36 @@ public class ClassInfoCache {
 
         if (isCacheEnable) {
             relatedColumnMap.put(clazz, fields);
+        }
+        return fields;
+    }
+
+    public static List<Field> getFillColumns(Class<?> clazz) {
+        boolean isCacheEnable = DBHelperContext.isCacheEnabled();
+
+        List<Field> fields;
+        if (isCacheEnable) {
+            fields = fillColumnMap.get(clazz);
+            if (fields != null) {
+                return fields;
+            }
+        }
+
+        List<Class<?>> classLink = DOInfoReader.getClassAndParentClasses(clazz);
+
+        // 父类优先
+        fields = new ArrayList<>();
+        for (int i = classLink.size() - 1; i >= 0; i--) {
+            Field[] f = classLink.get(i).getDeclaredFields();
+            for (Field field : f) {
+                if (field.getAnnotation(FillColumn.class) != null) {
+                    fields.add(field);
+                }
+            }
+        }
+
+        if (isCacheEnable) {
+            fillColumnMap.put(clazz, fields);
         }
         return fields;
     }

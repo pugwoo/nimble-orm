@@ -489,6 +489,32 @@ public interface DBHelper {
 	 */
 	<T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties);
 
+	/**
+	 * 单独抽离出处理FillColumn的类，参数t不需要@Table的注解了
+	 * @param t 需要处理FillColumn的对象
+	 */
+	<T> void handleFillColumn(T t);
+
+	/**
+	 * 单独抽离出处理FillColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
+	 * @param list 需要处理FillColumn的对象列表
+	 */
+	<T> void handleFillColumn(List<T> list);
+
+	/**
+	 * 单独抽离出处理FillColumn的类，参数t不需要@Table的注解了
+	 * @param t 需要处理FillColumn的对象
+	 * @param fillColumnProperties 只处理制定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
+	 */
+	<T> void handleFillColumn(T t, String... fillColumnProperties);
+
+	/**
+	 * 单独抽离出处理FillColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
+	 * @param list 需要处理FillColumn的对象列表
+	 * @param fillColumnProperties 只处理制定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
+	 */
+	<T> void handleFillColumn(List<T> list, String... fillColumnProperties);
+
 	// ===============Query methods END ==================================
 
 	/**
@@ -605,7 +631,7 @@ public interface DBHelper {
 
 	/**
 	 * 自定义set字句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。
-	 * @param t 必须提供key
+	 * @param t 必须提供key，该方法除了用到t中的key和casVersion(如有)、updateValueScript(如有)，并不会更新t的其它常规属性
 	 * @param setSql 可包含set关键字也可不包含，多个则用逗号隔开，【不能】包含where子句，例如a=a+1,c=b 或 set a=a+1,c=b
 	 * @param args set子句的参数
 	 * @return 实际修改的条数

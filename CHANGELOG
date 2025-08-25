@@ -1,3 +1,6 @@
+2025年8月25日
+v1.8.0 - [add] 增加@FillColumn功能
+
 2025年7月5日
 v1.7.6 - [add] DBHelper接口增加boolean getFeatureStatus(FeatureEnum featureEnum)接口查询当前特性开关状态
        - [enhance] 优化AnnotationSupportRowMapper性能：当@Column注解的列在ResultSet中找不到时的性能
