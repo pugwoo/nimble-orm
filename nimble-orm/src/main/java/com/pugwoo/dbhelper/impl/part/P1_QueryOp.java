@@ -759,10 +759,6 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
             }
             
             FillColumn fillColumn = field.getAnnotation(FillColumn.class);
-            
-            // 根据conditional判断该FillColumn是否进行处理
-            List<T> tListFiltered = filterFillColumnConditional(tList, fillColumn.conditional(), field);
-            
             if (InnerCommonUtils.isBlank(fillColumn.refField())) {
                 LOGGER.error("field:{} refField is blank", field.getName());
                 continue;
@@ -772,6 +768,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                 continue;
             }
             
+            // 根据conditional判断该FillColumn是否进行处理
+            List<T> tListFiltered = filterFillColumnConditional(tList, fillColumn.conditional());
+
             // 解析refField，支持多个字段用逗号分隔
             String[] refFields = fillColumn.refField().split(",");
             for (int i = 0; i < refFields.length; i++) {
@@ -815,7 +814,7 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
     }
     
-    private <T> List<T> filterFillColumnConditional(List<T> tList, String conditional, Field field) {
+    private <T> List<T> filterFillColumnConditional(List<T> tList, String conditional) {
         if (InnerCommonUtils.isBlank(conditional)) {
             return tList;
         }
