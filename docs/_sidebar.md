@@ -9,4 +9,5 @@
 - 手册
 
   - [软删除](/manual/soft-delete "软删除")
+  - [设置时间](/manual/auto-time "设置时间")
 

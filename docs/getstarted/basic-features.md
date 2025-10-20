@@ -42,4 +42,36 @@ private Boolean deleted;
 
 这样ORM就会自动给所有的查询和update都加上`where deleted=0`，自动将所有delete硬删除改成`update set deleted=1`的方式。我们的代码，除了DO类注解了deleted，其它地方基本上不需要写delete字段。
 
-这也是nimble-orm为何声称是渐进式使用、对重构友好的原因，你不需要在一开始就确定要软删除。
+这也是nimble-orm为何声称是渐进式使用、对重构友好的原因，你不需要在一开始就确定要软删除。更多细节请查看完整说明：[软删除](/manual/soft-delete "软删除")。
+
+## 新增和更新时间
+
+在实际业务中，我们常常需要在「新增」时自动设置创建时间，在「更新」时自动刷新更新时间。nimble-orm 通过在 DO 字段上使用注解属性即可实现这一点，无需手写赋值代码。
+
+##### 假设你已经有了两个时间字段
+
+假设你为 t_student 表增加了创建时间和更新时间字段：
+
+```sql
+alter table t_student
+  ADD COLUMN create_time DATETIME NOT NULL COMMENT '创建时间' AFTER name,
+  ADD COLUMN update_time DATETIME NOT NULL COMMENT '更新时间' AFTER create_time;
+```
+
+##### 现在你需要自动设置上时间
+
+你只需要在 DO 类上为时间字段加上注解：
+
+```java
+// 新增时，当原值为 null，自动设置为当前时间
+@Column(value = "create_time", setTimeWhenInsert = true)
+private LocalDateTime createTime;
+
+// 更新时（无论原值是否为 null）自动设置为当前时间
+@Column(value = "update_time", setTimeWhenUpdate = true)
+private LocalDateTime updateTime;
+```
+
+这样 ORM 就会在插入时自动填充 create_time，在更新时自动填充 update_time，开发者不需要在业务代码里手动维护这两个字段的值。
+
+更多细节，请查看完整说明：[设置时间](/manual/auto-time "设置时间")。
