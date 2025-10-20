@@ -3,8 +3,8 @@
 
 - 入门
 
-  - [快速入门](/quickstart "快速入门")
-  - [基础特性](/basic-features "基础特性")
+  - [快速入门](/getstarted/quickstart "快速入门")
+  - [基础特性](/getstarted/basic-features "基础特性")
 
 - 手册
 
