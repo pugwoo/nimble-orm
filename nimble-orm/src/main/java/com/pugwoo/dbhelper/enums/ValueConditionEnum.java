@@ -6,6 +6,11 @@ package com.pugwoo.dbhelper.enums;
 public enum ValueConditionEnum {
 
     /**
+     * 默认值，等同于WHEN_NULL，用于区分是默认没设置还是设置了WHEN_NULL
+     */
+    DEFAULT_WHEN_NULL("DEFAULT_WHEN_NULL", "默认值，等同于WHEN_NULL"),
+
+    /**
      * 当值为null时
      */
     WHEN_NULL("WHEN_NULL", "当值为null时"),

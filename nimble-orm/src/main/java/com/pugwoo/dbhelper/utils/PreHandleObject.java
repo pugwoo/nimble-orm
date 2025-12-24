@@ -74,9 +74,13 @@ public class PreHandleObject {
 			// 优先级较低
 			String insertValueScript = column.insertValueScript();
 			if(InnerCommonUtils.isNotBlank(insertValueScript)) {
-				ValueConditionEnum valueConditionEnum = table.insertValueCondition();
+				// Column的insertValueCondition优先级高于Table的insertValueCondition
+				ValueConditionEnum valueConditionEnum = column.insertValueCondition();
+				if (valueConditionEnum == ValueConditionEnum.DEFAULT_WHEN_NULL) {
+					valueConditionEnum = table.insertValueCondition();
+				}
 				Object value = DOInfoReader.getValue(field, t);
-				if (valueConditionEnum == null || valueConditionEnum == ValueConditionEnum.WHEN_NULL) {
+				if (valueConditionEnum == ValueConditionEnum.DEFAULT_WHEN_NULL || valueConditionEnum == ValueConditionEnum.WHEN_NULL) {
 					if (value == null) {
 						ScriptUtils.setValueFromScript(t, field, column.ignoreScriptError(), insertValueScript);
 					}
@@ -95,9 +99,13 @@ public class PreHandleObject {
 			if(hasDefaultValueMap && !column.isKey()) {
 				Object defaultValue = defaultValueMap.get(field.getType());
 				if(defaultValue != null) {
-					ValueConditionEnum valueConditionEnum = table.insertValueCondition();
+					// Column的insertValueCondition优先级高于Table的insertValueCondition
+					ValueConditionEnum valueConditionEnum = column.insertValueCondition();
+					if (valueConditionEnum == ValueConditionEnum.DEFAULT_WHEN_NULL) {
+						valueConditionEnum = table.insertValueCondition();
+					}
 					Object value = DOInfoReader.getValue(field, t);
-					if (valueConditionEnum == null || valueConditionEnum == ValueConditionEnum.WHEN_NULL) {
+					if (valueConditionEnum == ValueConditionEnum.DEFAULT_WHEN_NULL || valueConditionEnum == ValueConditionEnum.WHEN_NULL) {
 						if (value == null) {
 							DOInfoReader.setValue(field, t, defaultValue);
 						}

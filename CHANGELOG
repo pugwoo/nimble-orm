@@ -1,3 +1,5 @@
+v1.8.1 - [fix] 修复@Column的insertValueCondition设置优先级低于@Table的insertValueCondition的问题
+
 2025年8月25日
 v1.8.0 - [add] 增加@FillColumn功能
 

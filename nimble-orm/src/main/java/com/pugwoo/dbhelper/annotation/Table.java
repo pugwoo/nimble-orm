@@ -38,9 +38,9 @@ public @interface Table {
 	String insertDefaultValueMap() default "";
 
 	/**
-	 * insertValueScript脚本的执行条件，默认为null，表示只有当原值为null时才执行脚本
+	 * insertValueScript脚本的执行条件，默认为DEFAULT_WHEN_NULL，表示只有当原值为null时才执行脚本
 	 */
-	ValueConditionEnum insertValueCondition() default ValueConditionEnum.WHEN_NULL;
+	ValueConditionEnum insertValueCondition() default ValueConditionEnum.DEFAULT_WHEN_NULL;
 
 	/**
 	 * 虚拟表SQL，从select开始的完整SQL，该方式只对查询操作有效。当非空时有效，此时value()表名失效。<br>
