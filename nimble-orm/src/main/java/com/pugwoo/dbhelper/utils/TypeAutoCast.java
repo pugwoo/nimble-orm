@@ -25,6 +25,7 @@ import java.util.Map;
 /**
  * 2015年8月22日 16:58:48
  * 自动转换类型
+ * 
  * @author pugwoo
  */
 public class TypeAutoCast {
@@ -59,10 +60,10 @@ public class TypeAutoCast {
 	 * 2018年4月24日 11:48:32 新增支持标记为isJSON的列的处理。
 	 */
 	public static Object getFromRS(ResultSet rs, String columnName, Field field, DatabaseTypeEnum databaseType,
-								   Column column) throws Exception {
-		if(column != null && column.isJSON()) { // 优先处理标记为json的列
+			Column column) throws Exception {
+		if (column != null && column.isJSON()) { // 优先处理标记为json的列
 			String valStr = rs.getString(columnName);
-			if(InnerCommonUtils.isBlank(valStr)) {
+			if (InnerCommonUtils.isBlank(valStr)) {
 				return null;
 			}
 
@@ -73,7 +74,7 @@ public class TypeAutoCast {
 				} else { // 处理泛型
 					return NimbleOrmJSON.parseGeneric(valStr, (ParameterizedType) genericType);
 				}
-			} catch(Exception e) {
+			} catch (Exception e) {
 				LOGGER.error("parse column to JSON fail, json:{}, type:{}", valStr, genericType, e);
 				return valStr; // 作为string返回，交由上一级处理
 			}
@@ -81,38 +82,38 @@ public class TypeAutoCast {
 
 		Class<?> clazz = field.getType();
 
-		if(clazz == String.class) {
+		if (clazz == String.class) {
 			return rs.getString(columnName);
 		}
 		if (clazz == Integer.class) {
 			int value = rs.getInt(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == int.class) {
+		if (clazz == int.class) {
 			return rs.getInt(columnName);
 		}
 		if (clazz == Long.class) {
 			long value = rs.getLong(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == long.class) {
+		if (clazz == long.class) {
 			return rs.getLong(columnName);
 		}
 		if (clazz == Boolean.class) {
 			boolean value = rs.getBoolean(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == boolean.class) {
+		if (clazz == boolean.class) {
 			return rs.getBoolean(columnName);
 		}
 		if (clazz == Byte.class) {
 			byte value = rs.getByte(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == byte.class) {
+		if (clazz == byte.class) {
 			return rs.getByte(columnName);
 		}
-		if(clazz == byte[].class) {
+		if (clazz == byte[].class) {
 			if (databaseType == DatabaseTypeEnum.CLICKHOUSE) {
 				return InnerCommonUtils.decodeBase64(rs.getString(columnName));
 			}
@@ -122,24 +123,24 @@ public class TypeAutoCast {
 			short value = rs.getShort(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == short.class) {
+		if (clazz == short.class) {
 			return rs.getShort(columnName);
 		}
-		if(clazz == Float.class) {
+		if (clazz == Float.class) {
 			float value = rs.getFloat(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == float.class) {
+		if (clazz == float.class) {
 			return rs.getFloat(columnName);
 		}
-		if(clazz == Double.class) {
+		if (clazz == Double.class) {
 			double value = rs.getDouble(columnName);
 			return rs.wasNull() ? null : value;
 		}
-		if(clazz == double.class) {
+		if (clazz == double.class) {
 			return rs.getDouble(columnName);
 		}
-		if(clazz == BigDecimal.class) {
+		if (clazz == BigDecimal.class) {
 			return rs.getBigDecimal(columnName);
 		}
 		if (clazz == java.util.Date.class) {
@@ -167,6 +168,7 @@ public class TypeAutoCast {
 
 		return rs.getObject(columnName);
 	}
+
 	private static Date getDate(ResultSet rs, String columnName) throws Exception {
 		try {
 			Timestamp timestamp = rs.getTimestamp(columnName);
@@ -295,34 +297,34 @@ public class TypeAutoCast {
 	public static BasicTypeResult transBasicType(Class<?> clazz, ResultSet rs) throws Exception {
 		BasicTypeResult result = new BasicTypeResult();
 
-		if(clazz == String.class) {
+		if (clazz == String.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getString(1));
-		} else if(clazz == Integer.class || clazz == int.class) {
+		} else if (clazz == Integer.class || clazz == int.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getInt(1));
-		} else if(clazz == Long.class || clazz == long.class) {
+		} else if (clazz == Long.class || clazz == long.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getLong(1));
-		} else if(clazz == Boolean.class || clazz == boolean.class) {
+		} else if (clazz == Boolean.class || clazz == boolean.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getBoolean(1));
-		} else if(clazz == Byte.class || clazz == byte.class) {
+		} else if (clazz == Byte.class || clazz == byte.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getByte(1));
-		} else if(clazz == byte[].class) {
+		} else if (clazz == byte[].class) {
 			result.setBasicType(true);
 			result.setValue(rs.getBytes(1));
-		} else if(clazz == Short.class || clazz == short.class) {
+		} else if (clazz == Short.class || clazz == short.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getShort(1));
-		} else if(clazz == Float.class || clazz == float.class) {
+		} else if (clazz == Float.class || clazz == float.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getFloat(1));
-		} else if(clazz == Double.class || clazz == double.class) {
+		} else if (clazz == Double.class || clazz == double.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getDouble(1));
-		} else if(clazz == BigDecimal.class) {
+		} else if (clazz == BigDecimal.class) {
 			result.setBasicType(true);
 			result.setValue(rs.getBigDecimal(1));
 		} else if (clazz == java.util.Date.class) {
@@ -363,105 +365,138 @@ public class TypeAutoCast {
 
 	/**
 	 * 自动转换类型
-	 * @param obj 要转换的对象
+	 * 
+	 * @param obj   要转换的对象
 	 * @param clazz 要转换成的类型
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T cast(Object obj, Class<T> clazz) {
 		// 已经是同类型的就不用转
-		if(clazz.isInstance(obj)) {
+		if (clazz.isInstance(obj)) {
 			return (T) obj;
 		}
 
 		// 对于obj是null但是目标clazz是【基础类型】时，转成 0
-		if(clazz == Integer.class || clazz == int.class) {
-			if(obj == null) {
+		if (clazz == Integer.class || clazz == int.class) {
+			if (obj == null) {
 				return clazz == int.class ? (T) Integer.valueOf(0) : null;
 			}
-			if(obj instanceof Integer) {
+			if (obj instanceof Integer) {
 				return (T) obj;
 			}
-			return (T) Integer.valueOf(obj.toString());
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == int.class ? (T) Integer.valueOf(0) : null;
+			}
+			return (T) Integer.valueOf(str);
 		}
-		if(clazz == Long.class || clazz == long.class) {
-			if(obj == null) {
+		if (clazz == Long.class || clazz == long.class) {
+			if (obj == null) {
 				return clazz == long.class ? (T) Long.valueOf(0L) : null;
 			}
-			if(obj instanceof Long) {
+			if (obj instanceof Long) {
 				return (T) obj;
 			}
-			return (T) Long.valueOf(obj.toString());
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == long.class ? (T) Long.valueOf(0L) : null;
+			}
+			return (T) Long.valueOf(str);
 		}
-		if(clazz == Byte.class || clazz == byte.class) {
-			if(obj == null) {
+		if (clazz == Byte.class || clazz == byte.class) {
+			if (obj == null) {
 				return clazz == byte.class ? (T) Byte.valueOf((byte) 0) : null;
 			}
-			if(obj instanceof Byte) {
+			if (obj instanceof Byte) {
 				return (T) obj;
 			}
-			return (T) Byte.valueOf(obj.toString());
-		}
-		if(clazz == Character.class || clazz == char.class) {
-			if(obj == null) {
-				return clazz == char.class ? (T) Character.valueOf((char)0) : null;
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == byte.class ? (T) Byte.valueOf((byte) 0) : null;
 			}
-			if(obj instanceof Character) {
+			return (T) Byte.valueOf(str);
+		}
+		if (clazz == Character.class || clazz == char.class) {
+			if (obj == null) {
+				return clazz == char.class ? (T) Character.valueOf((char) 0) : null;
+			}
+			if (obj instanceof Character) {
 				return (T) obj;
 			}
-			return (T) Character.valueOf((char)0); // char没有办法从其它类型转
+			return (T) Character.valueOf((char) 0); // char没有办法从其它类型转
 		}
-		if(clazz == Short.class || clazz == short.class) {
-			if(obj == null) {
+		if (clazz == Short.class || clazz == short.class) {
+			if (obj == null) {
 				return clazz == short.class ? (T) Short.valueOf((short) 0) : null;
 			}
-			if(obj instanceof Short) {
+			if (obj instanceof Short) {
 				return (T) obj;
 			}
-			return (T) Short.valueOf(obj.toString());
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == short.class ? (T) Short.valueOf((short) 0) : null;
+			}
+			return (T) Short.valueOf(str);
 		}
-		if(clazz == Boolean.class || clazz == boolean.class) {
-			if(obj == null) {
+		if (clazz == Boolean.class || clazz == boolean.class) {
+			if (obj == null) {
 				return clazz == boolean.class ? (T) Boolean.FALSE : null;
 			}
-			if(obj instanceof Boolean) {
+			if (obj instanceof Boolean) {
 				return (T) obj;
 			}
-			if(obj instanceof Number) {
+			if (obj instanceof Number) {
 				return (T) Boolean.valueOf(((Number) obj).intValue() != 0);
 			}
-			return (T) Boolean.valueOf(obj.toString());
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == boolean.class ? (T) Boolean.FALSE : null;
+			}
+			return (T) Boolean.valueOf(str);
 		}
-		if(clazz == Float.class || clazz == float.class) {
-			if(obj == null) {
+		if (clazz == Float.class || clazz == float.class) {
+			if (obj == null) {
 				return clazz == float.class ? (T) Float.valueOf(0f) : null;
 			}
-			if(obj instanceof Float) {
+			if (obj instanceof Float) {
 				return (T) obj;
 			}
-			return (T) Float.valueOf(obj.toString());
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == float.class ? (T) Float.valueOf(0f) : null;
+			}
+			return (T) Float.valueOf(str);
 		}
-		if(clazz == Double.class || clazz == double.class) {
-			if(obj == null) {
+		if (clazz == Double.class || clazz == double.class) {
+			if (obj == null) {
 				return clazz == double.class ? (T) Double.valueOf(0d) : null;
 			}
-			if(obj instanceof Double) {
+			if (obj instanceof Double) {
 				return (T) obj;
 			}
-			return (T) Double.valueOf(obj.toString());
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return clazz == double.class ? (T) Double.valueOf(0d) : null;
+			}
+			return (T) Double.valueOf(str);
 		}
 
-		if(obj == null) {
+		if (obj == null) {
 			return null;
 		}
 
-		if(clazz == byte[].class) {
-			return (T) ((String)obj).getBytes();
+		if (clazz == byte[].class) {
+			return (T) ((String) obj).getBytes();
 		}
-		if(clazz == String.class) {
+		if (clazz == String.class) {
 			return (T) obj.toString();
 		}
-		if(clazz == BigDecimal.class) {
-			return (T) new BigDecimal(obj.toString());
+		if (clazz == BigDecimal.class) {
+			String str = obj.toString();
+			if (str.isEmpty()) {
+				return null;
+			}
+			return (T) new BigDecimal(str);
 		}
 		if (clazz == java.util.Date.class) {
 			try {
@@ -529,10 +564,11 @@ public class TypeAutoCast {
 	/**
 	 * 转换成sql值的字符串形式，带上单引号。
 	 * 例如传入hello, 返回 'hello'
+	 * 
 	 * @param object 不应该为null，如果为null则返回空字符串''
 	 */
 	public static String toSqlValueStr(Object object) {
-		if(object == null) {
+		if (object == null) {
 			return "''";
 		}
 

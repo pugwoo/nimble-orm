@@ -145,9 +145,9 @@ public @interface Column {
 	String insertValueScript() default "";
 
 	/**
-	 * insertValueScript脚本的执行条件，默认为null，表示只有当原值为null时才执行脚本
+	 * insertValueScript脚本的执行条件，默认为DEFAULT_WHEN_NULL，表示只有当原值为null时才执行脚本
 	 */
-	ValueConditionEnum insertValueCondition() default ValueConditionEnum.WHEN_NULL;
+	ValueConditionEnum insertValueCondition() default ValueConditionEnum.DEFAULT_WHEN_NULL;
 
 	/**
 	 * 当设置了非空字符串时，在对象更新数据库之前，会自动执行该mvel脚本获得值，并把值设置到DO中，再插入数据库。<br>
