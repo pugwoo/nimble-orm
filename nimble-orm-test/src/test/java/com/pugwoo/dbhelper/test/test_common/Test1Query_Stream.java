@@ -149,4 +149,53 @@ public abstract class Test1Query_Stream {
         stream3.close();
     }
 
+    @Test
+    public void testGetRawStreamAsMap() {
+        getDBHelper().delete(StudentHardDeleteDO.class, "where 1=1");
+
+        getDBHelper().setFetchSize(5);
+
+        int size = 9;
+        String prefix = UUID.randomUUID().toString().replace("-", "");
+        List<StudentDO> students = CommonOps.insertBatch(getDBHelper(), size, prefix);
+
+        // 测试 getRawForStreamAsMap(String sql, Object... args)
+        try (Stream<java.util.Map<String, Object>> stream = getDBHelper().getRawForStreamAsMap(
+                "select * from t_student where name like ?", prefix + "%")) {
+            List<java.util.Map<String, Object>> list = stream.collect(Collectors.toList());
+            assert list.size() == size;
+            for (java.util.Map<String, Object> map : list) {
+                assert map.get("name") != null;
+                String name = map.get("name").toString();
+                assert name.startsWith(prefix);
+            }
+        }
+
+        // 测试 getRawForStreamAsMap(String sql, Map<String, ?> args)
+        try (Stream<java.util.Map<String, Object>> stream = getDBHelper().getRawForStreamAsMap(
+                "select * from t_student where name like :name", MapUtils.of("name", prefix + "%"))) {
+            List<java.util.Map<String, Object>> list = stream.collect(Collectors.toList());
+            assert list.size() == size;
+            for (java.util.Map<String, Object> map : list) {
+                assert map.get("name") != null;
+                String name = map.get("name").toString();
+                assert name.startsWith(prefix);
+            }
+        }
+
+        // 测试没有参数的
+        try (Stream<java.util.Map<String, Object>> stream = getDBHelper().getRawForStreamAsMap(
+                "select * from t_student")) {
+            List<java.util.Map<String, Object>> list = stream.collect(Collectors.toList());
+            assert list.size() == getDBHelper().getRawOne(Integer.class, "select count(*) from t_student");
+        }
+
+        // 测试空map参数的
+        try (Stream<java.util.Map<String, Object>> stream = getDBHelper().getRawForStreamAsMap(
+                "select * from t_student", new HashMap<>())) {
+            List<java.util.Map<String, Object>> list = stream.collect(Collectors.toList());
+            assert list.size() == getDBHelper().getRawOne(Integer.class, "select count(*) from t_student");
+        }
+    }
+
 }

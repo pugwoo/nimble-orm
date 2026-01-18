@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * 测试读操作相关
@@ -42,7 +43,7 @@ public abstract class Test1Query_Basic {
         });
     }
 
-    @Test 
+    @Test
     public void testGetByKey() {
         Long id = CommonOps.insertOne(getDBHelper()).getId();
 
@@ -53,8 +54,8 @@ public abstract class Test1Query_Basic {
         Date createTime = student2.getCreateTime();
         assert createTime != null;
         assert !(DateUtils.getHour(createTime) == 0 &&
-                 DateUtils.getMinute(createTime) == 0 &&
-                 DateUtils.getSecond(createTime) == 0);
+                DateUtils.getMinute(createTime) == 0 &&
+                DateUtils.getSecond(createTime) == 0);
 
         // student的时间戳在当前时间10秒以内才算合格
         assert System.currentTimeMillis() - createTime.getTime() < 10000;
@@ -80,19 +81,19 @@ public abstract class Test1Query_Basic {
         assert isThrowException;
     }
 
-    @Test 
+    @Test
     public void testExists() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         assert getDBHelper().isExist(StudentDO.class, null);
         assert getDBHelper().isExist(StudentDO.class, "where id=?", studentDO.getId());
     }
 
-    @Test 
+    @Test
     public void testGetList() {
         // 测试获取全部
         List<StudentDO> list = getDBHelper().getAll(StudentDO.class);
         System.out.println("total:" + list.size());
-        for(StudentDO studentDO : list) {
+        for (StudentDO studentDO : list) {
             System.out.println(studentDO);
         }
 
@@ -103,13 +104,14 @@ public abstract class Test1Query_Basic {
         ids[0] = 2L;
         ids[1] = 4L;
         ids[2] = 6L;
-        //List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
-        //		ids); // 这样是错误的范例，getAll只会取ids的第一个参数传入in (?)中
-        // List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in (?)",
-        //        ids, 1); // 这是一种hack的写法，后面带上的参数1，可以让Java把ids当作单个参数处理；但还是不建议这样用
-        List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in (?)", new Object[]{ids}); // 推荐写法
+        // List<StudentDO> list2 = dbHelper.getAll(StudentDO.class, "where id in (?)",
+        // ids); // 这样是错误的范例，getAll只会取ids的第一个参数传入in (?)中
+        // List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in
+        // (?)",
+        // ids, 1); // 这是一种hack的写法，后面带上的参数1，可以让Java把ids当作单个参数处理；但还是不建议这样用
+        List<StudentDO> list2 = getDBHelper().getAll(StudentDO.class, "where id in (?)", new Object[] { ids }); // 推荐写法
         System.out.println("total:" + list2.size());
-        for(StudentDO studentDO : list2) {
+        for (StudentDO studentDO : list2) {
             System.out.println(studentDO);
         }
 
@@ -123,7 +125,7 @@ public abstract class Test1Query_Basic {
 
         List<Object[]> param = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            param.add(new Object[]{studentDOS.get(i).getId(), studentDOS.get(i).getName()});
+            param.add(new Object[] { studentDOS.get(i).getId(), studentDOS.get(i).getName() });
         }
 
         List<StudentDO> studentDOS2 = getDBHelper().getAll(StudentDO.class, "where (id,name) in (?)", param);
@@ -143,13 +145,13 @@ public abstract class Test1Query_Basic {
             assert studentDOS2.isEmpty();
         } else {
             param = new ArrayList<>();
-            param.add(new Object[]{null, null});
+            param.add(new Object[] { null, null });
             studentDOS2 = getDBHelper().getAll(StudentDO.class, "where (id,name) in (?)", param);
             assert studentDOS2.isEmpty();
         }
     }
 
-    @Test 
+    @Test
     public void testGetByExample() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
 
@@ -174,22 +176,23 @@ public abstract class Test1Query_Basic {
     /**
      * 以array数组方式传入容易有歧义，推荐传入List参数值；因此这里只是测试正确性，实际上不建议这样用
      */
-    @Test 
+    @Test
     public void testGetByArray() {
-        List<StudentDO> list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new long[]{50,51,52});
+        List<StudentDO> list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new long[] { 50, 51, 52 });
         System.out.println(list.size());
-        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new int[]{50,51,52});
+        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new int[] { 50, 51, 52 });
         System.out.println(list.size());
-        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new short[]{50,51,52});
+        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new short[] { 50, 51, 52 });
         System.out.println(list.size());
 
         // char非常不建议当数字使用，这里不再测试
-        // list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new char[]{50,51,52});
+        // list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new
+        // char[]{50,51,52});
         // System.out.println(list.size());
 
-        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new float[]{50,51,52});
+        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new float[] { 50, 51, 52 });
         System.out.println(list.size());
-        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new double[]{50,51,52});
+        list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new double[] { 50, 51, 52 });
         System.out.println(list.size());
 
     }
@@ -207,7 +210,6 @@ public abstract class Test1Query_Basic {
         list = getDBHelper().getAll(StudentDO.class, "where id in (?)", new HashSet<Long>());
         assert list.isEmpty();
 
-
         Map<String, Object> params = new HashMap<>();
         params.put("idsList", new ArrayList<>());
         params.put("idsSet", new HashSet<>());
@@ -224,8 +226,6 @@ public abstract class Test1Query_Basic {
         assert list.isEmpty();
     }
 
-
-
     @Test
     public void testGetJoin() {
         SchoolDO schoolDO = CommonOps.insertOneSchoolDO(getDBHelper(), "sysu");
@@ -240,7 +240,7 @@ public abstract class Test1Query_Basic {
 
         PageData<StudentSchoolJoinVO> pageData = getDBHelper().getPage(StudentSchoolJoinVO.class, 1, 10);
         assert pageData.getData().size() > 0;
-        for(StudentSchoolJoinVO vo : pageData.getData()) {
+        for (StudentSchoolJoinVO vo : pageData.getData()) {
             assert vo.getStudentDO() != null;
         }
 
@@ -261,7 +261,7 @@ public abstract class Test1Query_Basic {
         pageData = getDBHelper().getPage(StudentSchoolJoinVO.class, 1, 10,
                 "where t1.name like ?", "nick%");
         assert pageData.getData().size() > 0;
-        for(StudentSchoolJoinVO vo : pageData.getData()) {
+        for (StudentSchoolJoinVO vo : pageData.getData()) {
             assert vo.getStudentDO() != null;
         }
 
@@ -273,13 +273,13 @@ public abstract class Test1Query_Basic {
         // right join test
         PageData<StudentSchoolJoinVO2> pageData2 = getDBHelper().getPage(StudentSchoolJoinVO2.class, 1, 10);
         assert pageData2.getData().size() > 0;
-        for(StudentSchoolJoinVO2 vo : pageData2.getData()) {
+        for (StudentSchoolJoinVO2 vo : pageData2.getData()) {
             assert vo.getStudentDO() != null;
         }
 
     }
 
-    @Test 
+    @Test
     public void testDateTime() {
 
         getDBHelper().turnOnFeature(FeatureEnum.LOG_SQL_AT_INFO_LEVEL);
@@ -295,8 +295,8 @@ public abstract class Test1Query_Basic {
         assert one.getDeleteTime() != null;
     }
 
-    /**测试软删除DO查询条件中涉及到OR条件的情况*/
-    @Test 
+    /** 测试软删除DO查询条件中涉及到OR条件的情况 */
+    @Test
     public void testQueryWithDeletedAndOr() {
         // 先清表
         getDBHelper().delete(StudentDO.class, "where 1=1");
@@ -307,7 +307,7 @@ public abstract class Test1Query_Basic {
         CommonOps.insertBatch(getDBHelper(), 10);
         List<StudentDO> all = getDBHelper().getAll(StudentDO.class, "where 1=1 or 1=1"); // 重点
         assert all.size() == 10; // 只应该查出10条记录，而不是20条以上的记录
-        for(StudentDO studentDO : all) {
+        for (StudentDO studentDO : all) {
             assert !studentDO.getDeleted();
         }
 
@@ -315,8 +315,8 @@ public abstract class Test1Query_Basic {
         assert all.size() == 10;
     }
 
-    /**测试join真删除的类*/
-    @Test 
+    /** 测试join真删除的类 */
+    @Test
     public void testJoinTrueDelete() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
         // 说明：clickhouse如果不加and t2.id=?会慢到30秒超时
@@ -350,7 +350,7 @@ public abstract class Test1Query_Basic {
         getDBHelper().turnOffFeature(FeatureEnum.THROW_EXCEPTION_IF_COLUMN_NOT_EXIST);
     }
 
-    @Test 
+    @Test
     public void testGetRaw() {
         final StudentDO studentDO1 = CommonOps.insertOne(getDBHelper());
         final StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
@@ -365,7 +365,6 @@ public abstract class Test1Query_Basic {
                 "select id,name from t_student where name=?", studentDO1.getName());
         assert list2.size() == 1;
         assert list2.get(0).get("name").equals(studentDO1.getName());
-
 
         Map<String, Object> params = new HashMap<>();
         params.put("name", studentDO1.getName());
@@ -411,14 +410,73 @@ public abstract class Test1Query_Basic {
                 MapUtils.of("name", UUID.randomUUID().toString())) == null;
     }
 
-    @Test 
+    @Test
+    public void testGetRawAsMap() {
+        final StudentDO studentDO1 = CommonOps.insertOne(getDBHelper());
+        final StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
+
+        // 测试 getRawAsMap(String sql, Object... args)
+        List<Map<String, Object>> listMap = getDBHelper().getRawAsMap(
+                "select id,name from t_student where name=?", studentDO1.getName());
+        assert listMap.size() == 1;
+        assert listMap.get(0).get("name").equals(studentDO1.getName());
+
+        // 测试 getRawAsMap(String sql, Map<String, ?> args)
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", studentDO1.getName());
+        listMap = getDBHelper().getRawAsMap(
+                "select id,name from t_student where name=:name", params);
+        assert listMap.size() == 1;
+        assert listMap.get(0).get("name").equals(studentDO1.getName());
+
+        // 测试 getRawOneAsMap(String sql, Object... args)
+        Map<String, Object> oneMap = getDBHelper().getRawOneAsMap(
+                "select id,name from t_student where name=?", studentDO1.getName());
+        assert oneMap != null;
+        assert oneMap.get("name").equals(studentDO1.getName());
+
+        // 测试 getRawOneAsMap(String sql, Map<String, ?> args)
+        oneMap = getDBHelper().getRawOneAsMap(
+                "select id,name from t_student where name=:name", params);
+        assert oneMap != null;
+        assert oneMap.get("name").equals(studentDO1.getName());
+
+        // 测试 getRawForStreamAsMap(String sql, Object... args)
+        try (Stream<Map<String, Object>> stream = getDBHelper().getRawForStreamAsMap(
+                "select id,name from t_student where name=?", studentDO1.getName())) {
+            List<Map<String, Object>> streamList = stream.collect(java.util.stream.Collectors.toList());
+            assert streamList.size() == 1;
+            assert streamList.get(0).get("name").equals(studentDO1.getName());
+        }
+
+        // 测试 getRawForStreamAsMap(String sql, Map<String, ?> args)
+        try (Stream<Map<String, Object>> stream = getDBHelper().getRawForStreamAsMap(
+                "select id,name from t_student where name=:name", params)) {
+            List<Map<String, Object>> streamList = stream.collect(java.util.stream.Collectors.toList());
+            assert streamList.size() == 1;
+            assert streamList.get(0).get("name").equals(studentDO1.getName());
+        }
+
+        // 测试查询不到值的情况
+        oneMap = getDBHelper().getRawOneAsMap(
+                "select * from t_student where name=?", UUID.randomUUID().toString());
+        assert oneMap == null;
+
+        oneMap = getDBHelper().getRawOneAsMap(
+                "select * from t_student where name=:name",
+                MapUtils.of("name", UUID.randomUUID().toString()));
+        assert oneMap == null;
+    }
+
+    @Test
     public void testGetRawWithBasicType() {
 
         StudentDO studentDO1 = CommonOps.insertOne(getDBHelper());
         StudentDO studentDO2 = CommonOps.insertOne(getDBHelper());
         StudentDO studentDO3 = CommonOps.insertOne(getDBHelper());
 
-        List<String> studentNames = getDBHelper().getRaw(String.class, "select name from t_student where deleted=false");
+        List<String> studentNames = getDBHelper().getRaw(String.class,
+                "select name from t_student where deleted=false");
 
         assert studentNames.contains(studentDO1.getName());
         assert studentNames.contains(studentDO2.getName());
@@ -447,7 +505,8 @@ public abstract class Test1Query_Basic {
         List<Double> count4 = getDBHelper().getRaw(Double.class, "select count(*) from t_student where deleted=false");
         assert count4.get(0) >= 3;
 
-        List<BigDecimal> count5 = getDBHelper().getRaw(BigDecimal.class, "select count(*) from t_student where deleted=false");
+        List<BigDecimal> count5 = getDBHelper().getRaw(BigDecimal.class,
+                "select count(*) from t_student where deleted=false");
         assert count5.get(0).compareTo(BigDecimal.valueOf(3)) >= 0;
 
         List<Date> dates = getDBHelper().getRaw(Date.class, "select now()");
@@ -474,12 +533,13 @@ public abstract class Test1Query_Basic {
     @Test
     public void testGetRawRowData() {
         StudentDO studentDO1 = CommonOps.insertOne(getDBHelper());
-        List<RowData> rows = getDBHelper().getRaw(RowData.class, "select * from t_student where id=?", studentDO1.getId());
+        List<RowData> rows = getDBHelper().getRaw(RowData.class, "select * from t_student where id=?",
+                studentDO1.getId());
         assert rows.size() == 1;
         assert rows.get(0).getString("name").equals(studentDO1.getName());
         assert rows.get(0).getLong("id").equals(studentDO1.getId());
     }
-    
+
     @Test
     public void testSum() {
         // 故意让sum的记录不存在
@@ -490,7 +550,7 @@ public abstract class Test1Query_Basic {
         CommonOps.insertBatch(getDBHelper(), 30);
 
         PageData<StudentSumVO> pageData = getDBHelper().getPage(StudentSumVO.class,
-                1, 10, "where deleted=false group by name order by COALESCE(sum(age), 0)");  // 注意，由于VO不再继承DO，所以这里要记得写deleted=0
+                1, 10, "where deleted=false group by name order by COALESCE(sum(age), 0)"); // 注意，由于VO不再继承DO，所以这里要记得写deleted=0
 
         assert pageData.getTotal() == 30;
         assert pageData.getData().size() == 10;
@@ -499,7 +559,7 @@ public abstract class Test1Query_Basic {
     /**
      * 测试相同列字段名称的情况
      */
-    
+
     @Test
     public void testSameColumn() {
         StudentDO studentDO = CommonOps.insertOne(getDBHelper());
