@@ -439,6 +439,66 @@ public interface DBHelper {
 	<T> T getRawOne(Class<T> clazz, String sql, Map<String, ?> args);
 
 	/**
+	 * 执行自行指定的SQL查询语句
+	 *
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 * @return 返回Map<String, Object>列表
+	 */
+	List<Map<String, Object>> getRawAsMap(String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL查询语句，支持通过namedParameter的方式传入参数，放到args里面
+	 *
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param args 自定义参数
+	 * @return 返回Map<String, Object>列表
+	 */
+	List<Map<String, Object>> getRawAsMap(String sql, Map<String, ?> args);
+
+	/**
+	 * 执行自行指定的SQL查询语句，以流Stream的形式返回。<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 * 说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 * @return 【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
+	 */
+	Stream<Map<String, Object>> getRawForStreamAsMap(String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL查询语句，支持通过namedParameter的方式传入参数，放到args里面，以流Stream的形式返回。<br>
+	 * 【特别注意】为了确保Stream方式查询有效，请确保jdbc的URL参数带上：useCursorFetch=true<br>
+	 * 说明：可以通过setFetchSize方法修改流式获取数据时，每次获取的数据条数<br>
+	 * 说明：Stream方式不会调用拦截器的afterQuery<br>
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param args 自定义参数
+	 * @return 【重要】请在获取完数据之后，close stream，不然会一直占用数据库连接。
+	 */
+	Stream<Map<String, Object>> getRawForStreamAsMap(String sql, Map<String, ?> args);
+
+	/**
+	 * 执行自行指定的SQL查询语句，只返回第一行
+	 * （特别说明，当有多行时也只返回第一行而不会失败或告警）
+	 *
+	 * @param sql 自定义SQL
+	 * @param args 自定义参数
+	 * @return 返回Map<String, Object>
+	 */
+	Map<String, Object> getRawOneAsMap(String sql, Object... args);
+
+	/**
+	 * 执行自行指定的SQL查询语句，支持通过namedParameter的方式传入参数，放到args里面，只返回第一行
+	 * （特别说明，当有多行时也只返回第一行而不会失败或告警）
+	 *
+	 * @param sql 自定义SQL，参数用namedParameter的方式
+	 * @param args 自定义参数
+	 * @return 返回Map<String, Object>
+	 */
+	Map<String, Object> getRawOneAsMap(String sql, Map<String, ?> args);
+
+	/**
 	 * 根据给定的对象t查询跟t的非null值完全相等的记录。
 	 * 因为很容易出现当t的全部属性全为null时，把整个表都查询出来的问题，特要求调用者给定limit参数，该参数为返回的最大条目数。
 	 * @param t 提供查询条件的对象t

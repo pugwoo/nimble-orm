@@ -284,6 +284,42 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getRawAsMap(String sql, Object... args) {
+        return (List<Map<String, Object>>) (List<?>) getRaw(Map.class, sql, args);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getRawAsMap(String sql, Map<String, ?> args) {
+        return (List<Map<String, Object>>) (List<?>) getRaw(Map.class, sql, args);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Stream<Map<String, Object>> getRawForStreamAsMap(String sql, Object... args) {
+        return (Stream<Map<String, Object>>) (Stream<?>) getRawForStream(Map.class, sql, args);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Stream<Map<String, Object>> getRawForStreamAsMap(String sql, Map<String, ?> args) {
+        return (Stream<Map<String, Object>>) (Stream<?>) getRawForStream(Map.class, sql, args);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getRawOneAsMap(String sql, Object... args) {
+        return getRawOne(Map.class, sql, args);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getRawOneAsMap(String sql, Map<String, ?> args) {
+        return getRawOne(Map.class, sql, args);
+    }
+
+    @Override
     @SuppressWarnings({"unchecked"})
     public <T> List<T> getByExample(T t, int limit) {
         assertNotVirtualTable(t.getClass());
