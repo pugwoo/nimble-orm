@@ -1,3 +1,4 @@
+2026年1月19日
 v1.8.2 - [add] getRaw系列方法都增加AsMap的方法，返回Map<String, Object>的类型
        - [add] 增加insertBatchWithoutReturnId(Collection<T> list, int chunkSize)方法
 
