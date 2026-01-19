@@ -440,6 +440,31 @@ public abstract class Test2Insert_Basic {
         assert getDBHelper().insertBatchWithoutReturnId(students) == 0;
     }
 
+    @Test
+    public void testInsertBatchWithoutReturnIdWithChunkSize() {
+        int TOTAL = 100; // 总数
+        int CHUNK_SIZE = 27; // 分块大小，不能被100整除
+
+        List<StudentDO> list = new ArrayList<>();
+        for (int i = 0; i < TOTAL; i++) {
+            StudentDO studentDO = new StudentDO();
+            if (getDBHelper().getDatabaseType() == DatabaseTypeEnum.CLICKHOUSE) {
+                studentDO.setId(CommonOps.getRandomLong());
+            }
+            studentDO.setName(uuidName());
+            list.add(studentDO);
+        }
+
+        int rows = getDBHelper().insertBatchWithoutReturnId(list, CHUNK_SIZE);
+        assert rows == TOTAL;
+
+        // 验证数据是否正确插入
+        List<StudentDO> inserted = getDBHelper().getAll(StudentDO.class,
+                "where name in (" + String.join(",", Collections.nCopies(TOTAL, "?")) + ")",
+                list.stream().map(StudentDO::getName).toArray());
+        assert inserted.size() == TOTAL;
+    }
+
     // 测试一个没有key的do，此时用户自己指定了id
     @Data
     @Table("t_student")

@@ -398,8 +398,8 @@ public class DOInfoReader {
 			}
 		}
 
-		field.setAccessible(true);
 		try {
+            field.setAccessible(true);
 			return field.get(object);
 		} catch (Exception e) {
 			LOGGER.error("field:{} get fail", field, e);
@@ -460,8 +460,8 @@ public class DOInfoReader {
 						NimbleOrmJSON.toJsonNoException(object), value, e);
 			}
 		} else {
-			field.setAccessible(true);
 			try {
+                field.setAccessible(true);
 				field.set(object, value);
 			} catch (Exception e) {
 				LOGGER.error("field:{} set fail, object:{}, value:{}", field.getName(),
