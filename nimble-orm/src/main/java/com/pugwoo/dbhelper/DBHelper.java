@@ -443,7 +443,7 @@ public interface DBHelper {
 	 *
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
-	 * @return 返回Map<String, Object>列表
+	 * @return 返回Map&lt;String, Object&gt;列表
 	 */
 	List<Map<String, Object>> getRawAsMap(String sql, Object... args);
 
@@ -452,7 +452,7 @@ public interface DBHelper {
 	 *
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
-	 * @return 返回Map<String, Object>列表
+	 * @return 返回Map&lt;String, Object&gt;列表
 	 */
 	List<Map<String, Object>> getRawAsMap(String sql, Map<String, ?> args);
 
@@ -484,7 +484,7 @@ public interface DBHelper {
 	 *
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
-	 * @return 返回Map<String, Object>
+	 * @return 返回Map&lt;String, Object&gt;
 	 */
 	Map<String, Object> getRawOneAsMap(String sql, Object... args);
 
@@ -494,7 +494,7 @@ public interface DBHelper {
 	 *
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param args 自定义参数
-	 * @return 返回Map<String, Object>
+	 * @return 返回Map&lt;String, Object&gt;
 	 */
 	Map<String, Object> getRawOneAsMap(String sql, Map<String, ?> args);
 
