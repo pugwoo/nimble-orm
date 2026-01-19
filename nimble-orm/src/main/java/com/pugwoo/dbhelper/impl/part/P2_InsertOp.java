@@ -111,6 +111,26 @@ public abstract class P2_InsertOp extends P1_QueryOp {
 		return insertBatchWithoutReturnId(list, true);
 	}
 
+	@Override
+	public <T> int insertBatchWithoutReturnId(Collection<T> list, int chunkSize) {
+		list = InnerCommonUtils.filterNonNull(list);
+		if (InnerCommonUtils.isEmpty(list)) {
+			return 0;
+		}
+
+		if (chunkSize < 1) {
+			throw new IllegalArgumentException("chunkSize must be greater than 0");
+		}
+
+		// 使用InnerCommonUtils.partition将list分组
+		List<List<T>> partitions = InnerCommonUtils.partition(list, chunkSize);
+		int total = 0;
+		for (List<T> partition : partitions) {
+			total += insertBatchWithoutReturnId(partition, true);
+		}
+		return total;
+	}
+
 	private <T> int insertBatchWithoutReturnId(Collection<T> list, boolean withInterceptor) {
 		/*
 		 * 批量插入的主要优化点：

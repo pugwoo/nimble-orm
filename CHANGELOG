@@ -1,4 +1,5 @@
 v1.8.2 - [add] getRaw系列方法都增加AsMap的方法，返回Map<String, Object>的类型
+       - [add] 增加insertBatchWithoutReturnId(Collection<T> list, int chunkSize)方法
 
 2025年12月30日
 v1.8.1 - [fix] 修复@Column的insertValueCondition设置优先级低于@Table的insertValueCondition的问题

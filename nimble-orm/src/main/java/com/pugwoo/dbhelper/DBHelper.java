@@ -605,6 +605,18 @@ public interface DBHelper {
 	<T> int insertBatchWithoutReturnId(Collection<T> list);
 
 	/**
+	 * 批量插入多条记录，返回数据库实际修改的条数。<br>
+	 * <br>
+	 * 【重点】不会自动设置插入数据的返回自增ID（拦截器里也拿不到ID），也不会设置回数据库的默认值<br>
+	 * 该方法会先按chunkSize将list分组，然后逐个分组插入<br>
+	 * 
+	 * @param list      需要插入的DO对象实例列表
+	 * @param chunkSize 每批次插入的数量
+	 * @return 实际修改的条数
+	 */
+	<T> int insertBatchWithoutReturnId(Collection<T> list, int chunkSize);
+
+	/**
 	 * 批量插入多条记录，返回数据库实际修改的条数。【不支持拦截器】<br>
 	 * @param tableName 插入的表名
 	 * @param list 列名和值
