@@ -13,13 +13,19 @@ public class SpringJdbcDBHelper extends P6_ExecuteOp {
 	// 实现分别安排在impl.part包下几个文件中
 
     public SpringJdbcDBHelper() {
+        // 处理clickhouse jdbc 0.8.x/0.9.x + 的兼容性问题
+        System.setProperty("clickhouse.jdbc.v1", "true");
     }
 
     public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate) {
+        // 处理clickhouse jdbc 0.8.x/0.9.x + 的兼容性问题
+        System.setProperty("clickhouse.jdbc.v1", "true");
         this.setJdbcTemplate(jdbcTemplate);
     }
 
     public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, String dbHelperName) {
+        // 处理clickhouse jdbc 0.8.x/0.9.x + 的兼容性问题
+        System.setProperty("clickhouse.jdbc.v1", "true");
         this.setJdbcTemplate(jdbcTemplate);
         this.setDbHelperName(dbHelperName);
     }
@@ -30,10 +36,14 @@ public class SpringJdbcDBHelper extends P6_ExecuteOp {
      * @param databaseType 数据库类型枚举
      */
     public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, DatabaseTypeEnum databaseType) {
+        // 处理clickhouse jdbc 0.8.x/0.9.x + 的兼容性问题
+        System.setProperty("clickhouse.jdbc.v1", "true");
         this.setJdbcTemplate(jdbcTemplate, databaseType);
     }
 
     public SpringJdbcDBHelper(JdbcTemplate jdbcTemplate, DatabaseTypeEnum databaseType, String dbHelperName) {
+        // 处理clickhouse jdbc 0.8.x/0.9.x + 的兼容性问题
+        System.setProperty("clickhouse.jdbc.v1", "true");
         this.setJdbcTemplate(jdbcTemplate, databaseType);
         this.setDbHelperName(dbHelperName);
     }

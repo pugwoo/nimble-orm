@@ -2,12 +2,12 @@
 
 # 支持的数据库
 
-| 数据库        | 支持情况                          |
-|------------|-------------------------------|
-| MySQL      | 支持                            |
-| PostgreSQL | 支持                            |
-| Clickhouse | 支持。jdbc版本最高支持至0.7.2，勿用0.8.x版本 |
-| TiDB       | 支持                            |
+| 数据库        | 支持情况  |
+|------------|-------|
+| MySQL      | 支持    |
+| PostgreSQL | 支持    |
+| Clickhouse | 支持    |
+| TiDB       | 支持    |
 
 这是一个基于Spring JdbcTemplate的小工具，帮助开发者简单地完成增删改查。为什么还需要在众多存在的ORM，如MyBatis/Hibernate的情况下再写一个ORM呢？
 
@@ -197,8 +197,6 @@ public class StudentSchoolJoinVO {
 
 4. 虽然mysql数据库支持使用单引号和双引号来表示字符串，但在SQL标准中，定义的是单引号，并没有双引号。因此，nimble-orm为了处理规范和简单，只支持单引号表示字符串。
 
-5. nimble-orm支持多数据源，在多数据源事务管理器的情况下，nimble-orm仍能正常工作。
+5. 不建议使用java.sql.Timestamp/java.sql.Date/java.sql.Time类型，推荐使用LocalDate和LocalDateTime类型。目前clickhouse 0.4.6驱动仍不能正确处理java.sql.Timestamp类型。
 
-6. 不建议使用java.sql.Timestamp/java.sql.Date/java.sql.Time类型，推荐使用LocalDate和LocalDateTime类型。目前clickhouse 0.4.6驱动仍不能正确处理java.sql.Timestamp类型。
-
-7. 不建议使用clickhouse jdbc 0.8.x版本。该版本存在2个致命问题：1) 不再支持update/delete SQL 2) ResultSet的findColumn返回的值一直是0，这个值应该>=1. 0.7.x以下的版本没有这2个问题。建议充分测试clickhouse驱动的兼容性再升级clickhouse驱动。
+6. 慎用clickhouse jdbc 0.8.x版本。该版本存在致命问题：ResultSet的findColumn返回的值一直是0，这个值应该>=1. 0.7.x或0.9.x版本没有这个问题。建议充分测试clickhouse驱动的兼容性再升级clickhouse驱动。
