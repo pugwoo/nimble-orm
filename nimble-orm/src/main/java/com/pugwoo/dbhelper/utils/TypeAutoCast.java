@@ -160,7 +160,7 @@ public class TypeAutoCast {
 			return rs.getDate(columnName);
 		}
 		if (clazz == java.sql.Time.class) {
-			return rs.getDate(columnName);
+			return rs.getTime(columnName);
 		}
 		if (clazz == java.sql.Timestamp.class) {
 			return rs.getTimestamp(columnName);
