@@ -63,7 +63,7 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 }
 ```
 
-项目只需要maven引入：
+项目只需要maven引入，最低jdk版本为jdk-21：
 
 ```xml
 <dependency>
