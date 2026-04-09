@@ -63,13 +63,13 @@ public class StudentDO extends IdableSoftDeleteBaseDO { // 这里用不用继承
 }
 ```
 
-项目只需要maven引入：
+项目只需要maven引入，最低jdk版本为jdk-21：
 
 ```xml
 <dependency>
     <groupId>com.pugwoo</groupId>
     <artifactId>nimble-orm</artifactId>
-    <version>1.8.3</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
