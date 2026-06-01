@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.AbstractMap;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public final class RowData extends AbstractMap<String, Object> {
 
-    private Map<String, Object> row = new HashMap<>();
+    private Map<String, Object> row = new LinkedHashMap<>();
 
     @Override
     @NonNull

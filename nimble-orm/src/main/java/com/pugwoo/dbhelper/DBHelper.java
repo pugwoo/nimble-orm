@@ -26,7 +26,7 @@ public interface DBHelper {
 	// =============== Dynamic Table Name ===================================
 
 	/**
-	 * 获取指定类的表名，适合于分表场景；执行完成后会自动还原成原来的表名。<br>
+	 * 临时设置指定类的表名，适合于分表场景；执行完成后会自动还原成原来的表名。<br>
 	 * @param tableNames 设置DO类对应的表名
 	 * @param runnable 要执行的代码
 	 */
@@ -151,7 +151,7 @@ public interface DBHelper {
 	void setSlowSqlWarningValve(long timeMS);
 
 	/**
-	 * 设置允许的每页最大的个数，当页数超过允许的最大页数时，设置为最大页数。
+	 * 设置允许的每页最大记录数，当请求的每页条数超过该值时，自动截断为最大条数。
 	 * 默认对每页最大个数没有限制，该限制只对getPage和getPageWithoutCount接口生效。
 	 * @param maxPageSize 允许的每页最大的个数
 	 */
@@ -538,14 +538,14 @@ public interface DBHelper {
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数t不需要@Table的注解了
 	 * @param t 需要处理RelatedColumn的对象
-	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
+	 * @param relatedColumnProperties 只处理指定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleRelatedColumn(T t, String... relatedColumnProperties);
 
 	/**
 	 * 单独抽离出处理RelatedColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
 	 * @param list 需要处理RelatedColumn的对象列表
-	 * @param relatedColumnProperties 只处理制定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
+	 * @param relatedColumnProperties 只处理指定的这些RelatedColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleRelatedColumn(List<T> list, String... relatedColumnProperties);
 
@@ -564,14 +564,14 @@ public interface DBHelper {
 	/**
 	 * 单独抽离出处理FillColumn的类，参数t不需要@Table的注解了
 	 * @param t 需要处理FillColumn的对象
-	 * @param fillColumnProperties 只处理制定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
+	 * @param fillColumnProperties 只处理指定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleFillColumn(T t, String... fillColumnProperties);
 
 	/**
 	 * 单独抽离出处理FillColumn的类，参数list的元素不需要@Table的注解了。但要求list都同一class类型的对象。
 	 * @param list 需要处理FillColumn的对象列表
-	 * @param fillColumnProperties 只处理制定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
+	 * @param fillColumnProperties 只处理指定的这些FillColumn注解的成员变量，这个的值是成员变量的名称
 	 */
 	<T> void handleFillColumn(List<T> list, String... fillColumnProperties);
 
@@ -580,7 +580,7 @@ public interface DBHelper {
 	/**
 	 * 插入一条记录<br>
 	 * 如果包含了自增id，则自增Id会被设置。<br>
-	 * 【注】只插入非null的值，如要需要插入null值，则用insertWithNull。
+	 * 【注】只插入非null的值，如需要插入null值，则用insertWithNull。
 	 * @param t 需要插入的DO对象实例
 	 * @return 实际修改的条数
 	 */
@@ -643,21 +643,21 @@ public interface DBHelper {
 
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。只有非null的值会更新或插入。
-	 * @param t 需要插入的DO对象实例
+	 * @param t 需要插入或更新的DO对象实例
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdate(T t);
 
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。包括null的值会更新或插入。
-	 * @param t 需要插入的DO对象实例
+	 * @param t 需要插入或更新的DO对象实例
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdateWithNull(T t);
 
 	/**
 	 * 如果t有主键，则更新值；否则插入记录。只有非null的值会更新或插入。
-	 * @param list 需要插入的DO对象实例列表
+	 * @param list 需要插入或更新的DO对象实例列表
 	 * @return 返回数据库实际修改的条数
 	 */
 	<T> int insertOrUpdate(Collection<T> list);
@@ -702,7 +702,7 @@ public interface DBHelper {
 	<T> int update(T t, String postSql, Object... args) throws NullKeyValueException;
 
 	/**
-	 * 自定义set字句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。
+	 * 自定义set子句更新，用于单个sql进行值更新，例如set reads = reads + 1这种情况。
 	 * @param t 必须提供key，该方法除了用到t中的key和casVersion(如有)、updateValueScript(如有)，并不会更新t的其它常规属性
 	 * @param setSql 可包含set关键字也可不包含，多个则用逗号隔开，【不能】包含where子句，例如a=a+1,c=b 或 set a=a+1,c=b
 	 * @param args set子句的参数
@@ -770,7 +770,7 @@ public interface DBHelper {
 	 * 删除数据库记录，返回数据库实际修改条数。
 	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
 	 * 该操作【会】自动使用软删除进行删除
-	 * @param list 要更新的对象列表
+	 * @param list 要删除的对象列表
 	 * @return 实际删除的条数
 	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
 	 */
@@ -780,7 +780,7 @@ public interface DBHelper {
 	 * 硬删除数据库记录（无论是否注解了软删除字段），返回数据库实际修改条数。
 	 * 推荐使用单个主键的表使用该方法，当list所有对象都是同一个类时，将会拼凑为一条sql进行删除，效率提升多。
 	 *
-	 * @param list 要更新的对象列表
+	 * @param list 要删除的对象列表
 	 * @return 实际删除的条数
 	 * @throws NullKeyValueException 当任意一个值没有带key时，抛出异常
 	 */
@@ -829,8 +829,8 @@ public interface DBHelper {
 	<T> int deleteHard(Class<T> clazz, WhereSQL whereSQL);
 
 	/**
-	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
-	 *
+	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作<br>
+	 * 特别说明：MySQL的 optimize table 请用getRaw执行，因为它返回一个表数据
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
 	 * @return 返回影响的行数
@@ -838,8 +838,8 @@ public interface DBHelper {
 	int executeRaw(String sql, Object... args);
 
 	/**
-	 * 执行自行指定的SQL语句，支持通过namedParameter的方式传入参数，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
-	 *
+	 * 执行自行指定的SQL语句，支持通过namedParameter的方式传入参数，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作<br>
+     * 特别说明：MySQL的 optimize table 请用getRaw执行，因为它返回一个表数据
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param paramMap 自定义参数
 	 * @return 返回影响的行数
