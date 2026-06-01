@@ -829,8 +829,8 @@ public interface DBHelper {
 	<T> int deleteHard(Class<T> clazz, WhereSQL whereSQL);
 
 	/**
-	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
-	 *
+	 * 执行自行指定的SQL语句，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作<br>
+	 * 特别说明：MySQL的 optimize table 请用getRaw执行，因为它返回一个表数据
 	 * @param sql 自定义SQL
 	 * @param args 自定义参数
 	 * @return 返回影响的行数
@@ -838,8 +838,8 @@ public interface DBHelper {
 	int executeRaw(String sql, Object... args);
 
 	/**
-	 * 执行自行指定的SQL语句，支持通过namedParameter的方式传入参数，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作
-	 *
+	 * 执行自行指定的SQL语句，支持通过namedParameter的方式传入参数，支持in(?)表达式，支持INSERT UPDATE DELETE TRUNCATE操作<br>
+     * 特别说明：MySQL的 optimize table 请用getRaw执行，因为它返回一个表数据
 	 * @param sql 自定义SQL，参数用namedParameter的方式
 	 * @param paramMap 自定义参数
 	 * @return 返回影响的行数
