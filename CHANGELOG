@@ -1,7 +1,8 @@
+2026年6月1日
 v1.8.4 - [enhance] getRaw返回的Map默认按ResultSet的顺序返回，即使用LinkedHashMap代替HashMap
 
 2026年4月8日
-v1.8.3 - [important] 重要说明：这是支持jdk8的最后一个版本，后续不再新增功能，仅修复bug
+v1.8.3 - [important] 重要说明：这是支持jdk8的最后一个版本，后续不再新增功能，仅修复bug或重要增强
        - [enhance] 兼容clickhouse jdbc 0.9.x版本
 
 2026年1月19日
