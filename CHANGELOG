@@ -1,3 +1,6 @@
+2026年6月1日
+v2.0.1 - [enhance] getRaw返回的Map默认按ResultSet的顺序返回，即使用LinkedHashMap代替HashMap
+
 2026年4月8日
 v2.0.0 - [upgrade] 重要说明：jdk升级到21，最低支持jdk版本为21
 
