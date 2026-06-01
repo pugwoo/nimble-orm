@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -353,7 +353,7 @@ public class TypeAutoCast {
 			result.setBasicType(true);
 			ResultSetMetaData md = rs.getMetaData();
 			int columns = md.getColumnCount();
-			Map<String, Object> map = new HashMap<>(columns);
+			Map<String, Object> map = new LinkedHashMap<>(columns);
 			for (int i = 1; i <= columns; i++) {
 				map.put(md.getColumnLabel(i), rs.getObject(i));
 			}
