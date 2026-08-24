@@ -15,7 +15,7 @@ spring:
     postgresql:
       jdbc-url: jdbc:postgresql://192.168.0.111:5432/postgres?stringtype=unspecified&currentSchema=nimbleorm
       username: postgres
-      password: homeserver
+      password: 123456
       driver-class-name: org.postgresql.Driver
 
 # 是否运行压测测试
