@@ -188,7 +188,7 @@ public class AnnotationSupportRowMapper<T> implements RowMapper<T> {
 			currentField.set(field);
 
 			Column column = field.getAnnotation(Column.class);
-            // 对于computed的字段，.换成_
+            // 计算列 value 不带表别名，结果列名是 表别名_value
             String columnName;
             if (InnerCommonUtils.isBlank(column.computed())) {
                 columnName = tableAlias + "." + column.value();

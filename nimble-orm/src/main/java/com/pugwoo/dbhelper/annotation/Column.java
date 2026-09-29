@@ -31,7 +31,10 @@ public @interface Column {
 	boolean isJSON() default false;
 	
 	/**
-	 * 计算列。注意：计算列的别名为value属性的值，不需要再写上as 别名。
+	 * 计算列。别名由框架生成，不需要再写 as 别名。<br>
+	 * value 不要带表别名。单表查询时，别名就是 value。<br>
+	 * Join 查询时，引用该计算列请使用 表别名_value，例如 t1_nameWithHi。<br>
+	 * 表达式内部引用真实列时，仍要写表别名，例如 CONCAT(t1.name,'hi')。
 	 */
 	String computed() default "";
 	

@@ -242,6 +242,7 @@ public abstract class Test1Query_Basic {
         assert pageData.getData().size() > 0;
         for (StudentSchoolJoinVO vo : pageData.getData()) {
             assert vo.getStudentDO() != null;
+            assertNameWithHi(vo);
         }
 
         List<StudentSchoolJoinVO> all = getDBHelper().getAll(StudentSchoolJoinVO.class, "where t1.id in (?)",
@@ -257,12 +258,16 @@ public abstract class Test1Query_Basic {
         assert all.get(1).getVo2().getSchoolDO().getId().equals(schoolDO.getId());
         assert all.get(0).getVo3().getSchoolDO().getId().equals(schoolDO.getId());
         assert all.get(1).getVo3().getSchoolDO().getId().equals(schoolDO.getId());
+        for (StudentSchoolJoinVO vo : all) {
+            assertNameWithHi(vo);
+        }
 
         pageData = getDBHelper().getPage(StudentSchoolJoinVO.class, 1, 10,
                 "where t1.name like ?", "nick%");
         assert pageData.getData().size() > 0;
         for (StudentSchoolJoinVO vo : pageData.getData()) {
             assert vo.getStudentDO() != null;
+            assertNameWithHi(vo);
         }
 
         long total = getDBHelper().getCount(StudentSchoolJoinVO.class);
@@ -699,6 +704,14 @@ public abstract class Test1Query_Basic {
             assert new EqualUtils().isEqual(two, three);
         }
 
+    }
+
+    private static void assertNameWithHi(StudentSchoolJoinVO vo) {
+        String name = vo.getStudentDO().getName();
+        if (name == null) {
+            return;
+        }
+        assert vo.getStudentDO().getNameWithHi().equals(name + "hi");
     }
 
 }

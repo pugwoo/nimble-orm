@@ -1562,8 +1562,8 @@ public class SQLUtils {
 			Column column = field.getAnnotation(Column.class);
 
 			if(InnerCommonUtils.isNotBlank(column.computed())) {
-				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
-                // 2026年9月29日20:53:16 计算列fieldPrefix里的.换成_
+				// 计算列 value 不要带表别名。表达式不会自动加表别名，需自行写 t1.列名。
+				// Join 时 AS 别名为 表别名_value，引用该计算列时使用这个名称。
 				sb.append("(").append(SQLUtils.getComputedColumn(databaseType, column, features)).append(") AS ")
 						.append(getColumnName(databaseType, column, fieldPrefix.replace(".", "_"))).append(sep);
 			} else {

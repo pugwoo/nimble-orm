@@ -12,7 +12,7 @@ public class StudentSchoolJoinVO {
 
 	@Data
 	public static class StudentVO extends StudentDO {
-		// 特别注意：计算列的computed中的列要加上表的别称，例如t1.
+		// value 不要带表别名。表达式里引用真实列要加别名，例如 t1.name。引用该计算列时用 t1_nameWithHi
 		@Column(value = "nameWithHi", computed = "CONCAT(t1.name,'hi')")
 		private String nameWithHi;
 	}
