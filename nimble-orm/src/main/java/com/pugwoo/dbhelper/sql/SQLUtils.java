@@ -1237,7 +1237,7 @@ public class SQLUtils {
 		}
 	}
 
-	private static List<OrderByElement> _getDefaultOrderByElement(DatabaseTypeEnum databaseType, Class<?> clazz, String prefix) {
+	private static List<OrderByElement> _getDefaultOrderByElement(DatabaseTypeEnum databaseType, Class<?> clazz, String tableName) {
 		List<Field> orderColumn = DOInfoReader.getKeyColumnsNoThrowsException(clazz);
 		if (orderColumn.isEmpty()) { // 如果没有主键，那么全字段排序
 			orderColumn = DOInfoReader.getColumns(clazz);
@@ -1247,15 +1247,22 @@ public class SQLUtils {
 			OrderByElement ele = new OrderByElement();
 			Column column = field.getAnnotation(Column.class);
 			if (InnerCommonUtils.isBlank(column.computed())) {
-				ele.setExpression(new net.sf.jsqlparser.schema.Column(prefix + getColumnName(databaseType, field)));
+                net.sf.jsqlparser.schema.Column jsqlparserColumn;
+                if (InnerCommonUtils.isBlank(tableName)) {
+                    jsqlparserColumn = new net.sf.jsqlparser.schema.Column(getColumnName(databaseType, field));
+                } else {
+                    jsqlparserColumn = new net.sf.jsqlparser.schema.Column(
+                            new net.sf.jsqlparser.schema.Table(tableName), getColumnName(databaseType, field));
+                }
+				ele.setExpression(jsqlparserColumn);
 			} else {
-				ele.setExpression(new net.sf.jsqlparser.schema.Column(getColumnName(databaseType, field, prefix)));
+				ele.setExpression(new net.sf.jsqlparser.schema.Column(getColumnName(databaseType, field,
+                        InnerCommonUtils.isBlank(tableName) ? "" : (tableName + "_"))));
 			}
 			list.add(ele);
 		}
 		return list;
 	}
-
 	private static List<OrderByElement> getDefaultOrderByElement(DatabaseTypeEnum databaseType, Class<?> clazz) {
 		JoinTable joinTable = DOInfoReader.getJoinTable(clazz);
 		if (joinTable == null) {
@@ -1266,8 +1273,8 @@ public class SQLUtils {
 			JoinLeftTable joinLeftTable = leftTableField.getAnnotation(JoinLeftTable.class);
 			JoinRightTable joinRightTable = rightTableField.getAnnotation(JoinRightTable.class);
 			List<OrderByElement> list = new ArrayList<>();
-			list.addAll(_getDefaultOrderByElement(databaseType, leftTableField.getType(), joinLeftTable.alias() + "."));
-			list.addAll(_getDefaultOrderByElement(databaseType, rightTableField.getType(), joinRightTable.alias() + "."));
+			list.addAll(_getDefaultOrderByElement(databaseType, leftTableField.getType(), joinLeftTable.alias()));
+			list.addAll(_getDefaultOrderByElement(databaseType, rightTableField.getType(), joinRightTable.alias()));
 			return list;
 		}
 	}
@@ -1555,9 +1562,10 @@ public class SQLUtils {
 			Column column = field.getAnnotation(Column.class);
 
 			if(InnerCommonUtils.isNotBlank(column.computed())) {
-				// 计算列不支持默认前缀，当join时，请自行区分计算字段的命名
+				// 计算列 value 不要带表别名。表达式不会自动加表别名，需自行写 t1.列名。
+				// Join 时 AS 别名为 表别名_value，引用该计算列时使用这个名称。
 				sb.append("(").append(SQLUtils.getComputedColumn(databaseType, column, features)).append(") AS ")
-						.append(getColumnName(databaseType, column, fieldPrefix)).append(sep);
+						.append(getColumnName(databaseType, column, fieldPrefix.replace(".", "_"))).append(sep);
 			} else {
 				if (fieldPrefix.isEmpty()) {
 					String columnName = getColumnName(databaseType, column);

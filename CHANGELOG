@@ -1,3 +1,7 @@
+2026年9月29日
+v2.0.2 - [upgrade] 升级jsqlparser到5.4，升级jackson到2.22.3
+       - [enhance] JoinVO下的computed列的别名改成：表alias_列value，如果用到JoinVO+computed列，注意sql中如有引用列名，需要同步修改
+
 2026年6月1日
 v2.0.1 - [enhance] getRaw返回的Map默认按ResultSet的顺序返回，即使用LinkedHashMap代替HashMap
 
