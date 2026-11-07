@@ -88,6 +88,8 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
     @Override
     public <T> long getCount(Class<T> clazz, String postSql, Object... args) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
+        // 计数查询不需要加行锁，且for update等行锁子句不能出现在子查询中，这里直接移除
+        postSql = SQLUtils.removeLockingClause(postSql);
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
         String sql = "SELECT count(*) FROM ("
@@ -140,9 +142,17 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
 
     @Override
     public <T> Stream<T> getAllForStream(Class<T> clazz, String postSql, Object... args) {
+        // postSql末尾的行锁子句（如for update）必须位于整条SQL的最后，先摘出来，最后再拼回去，
+        // 否则经autoSetSoftDeleted解析重组后，行锁子句可能会被排到order by之前而导致语法错误
+        String lockingClause = SQLUtils.extractLockingClause(postSql);
+        postSql = SQLUtils.removeLockingClause(postSql);
+
         StringBuilder sqlSB = new StringBuilder();
         sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, features, postSql));
         sqlSB.append(SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
+        if (InnerCommonUtils.isNotBlank(lockingClause)) {
+            sqlSB.append(" ").append(lockingClause);
+        }
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
         doInterceptBeforeQuery(clazz, sqlSB, argsList);
@@ -376,6 +386,12 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
                                      String postSql, Object... args) {
         boolean isVirtualTable = DOInfoReader.isVirtualTable(clazz);
 
+        // postSql末尾的行锁子句（如for update）必须位于order by/limit之后、整条SQL的最后，
+        // 先摘出来，等limit拼完后再拼回去；否则会拼出 "... FOR UPDATE ORDER BY ... LIMIT ..." 的错误语法。
+        // 同时计数查询getCount拿到的是已摘除行锁子句的postSql，不会把行锁子句带进count子查询中。
+        String lockingClause = SQLUtils.extractLockingClause(postSql);
+        postSql = SQLUtils.removeLockingClause(postSql);
+
         StringBuilder sqlSB = new StringBuilder();
         sqlSB.append(SQLUtils.getSelectSQL(getDatabaseType(), clazz, false, features, postSql));
         // 当limit不为null时，分页由orm内部控制，此时postSql不应该包含limit子句，这里尝试去除
@@ -390,6 +406,9 @@ public abstract class P1_QueryOp extends P0_JdbcTemplateOp {
         }
         sqlSB.append(isVirtualTable ? (postSql == null ? "\n" : "\n" + postSql) : SQLUtils.autoSetSoftDeleted(getDatabaseType(), postSql, clazz));
         sqlSB.append(SQLUtils.genLimitSQL(getDatabaseType(), offset, limit));
+        if (InnerCommonUtils.isNotBlank(lockingClause)) {
+            sqlSB.append(" ").append(lockingClause);
+        }
 
         List<Object> argsList = InnerCommonUtils.arrayToList(args);
 
