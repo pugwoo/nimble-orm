@@ -1,3 +1,6 @@
+2026年11月7日
+v1.8.5 - [fix] 修复getOne/getPage的postSql里加for update子句导致报错的问题
+
 2026年9月29日
 v2.0.2 - [upgrade] 升级jsqlparser到5.4，升级jackson到2.22.3
        - [enhance] JoinVO下的computed列的别名改成：表alias_列value，如果用到JoinVO+computed列，注意sql中如有引用列名，需要同步修改
