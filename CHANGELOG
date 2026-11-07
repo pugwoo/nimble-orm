@@ -1,4 +1,7 @@
 2026年11月7日
+v2.0.3 - [fix] 修复getOne/getPage的postSql里加for update子句导致报错的问题
+
+2026年11月7日
 v1.8.5 - [fix] 修复getOne/getPage的postSql里加for update子句导致报错的问题
 
 2026年9月29日
