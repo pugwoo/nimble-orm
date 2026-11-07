@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SQL解析工具类
@@ -1482,6 +1484,51 @@ public class SQLUtils {
 		}
 	}
 	
+	/**
+	 * 行锁子句的匹配模式，匹配postSql【末尾】的行锁子句，例如：
+	 * for update、for update nowait、for update skip locked、for update of t_student nowait、
+	 * for share（PostgreSQL的for no key update、for key share同理）、lock in share mode等。
+	 * <br>
+	 * 说明：MySQL/PostgreSQL都要求行锁子句位于order by/limit之后、整条select语句的最后，
+	 * 因此带limit的查询方法在拼凑order by/limit之前，需要先用extractLockingClause将行锁子句摘出来，
+	 * 待limit拼完后再拼回去；而计数查询则应直接移除行锁子句（行锁子句不能出现在子查询中，计数本身也不需要加锁）。
+	 */
+	private static final Pattern LOCKING_CLAUSE_PATTERN = Pattern.compile(
+			"\\b(FOR\\s+(?:NO\\s+KEY\\s+UPDATE|UPDATE|KEY\\s+SHARE|SHARE)"
+					+ "(?:\\s+OF\\s+[\\w`\"\\.]+(?:\\s*,\\s*[\\w`\"\\.]+)*)?"
+					+ "(?:\\s+(?:NOWAIT|SKIP\\s+LOCKED))?"
+					+ "|LOCK\\s+IN\\s+SHARE\\s+MODE)\\s*;?\\s*$",
+			Pattern.CASE_INSENSITIVE);
+
+	/**
+	 * 提取postSql末尾的行锁子句（例如for update），保持用户书写的原文（含大小写）。
+	 * @param postSql 从where开始的子句
+	 * @return 行锁子句；postSql为空或末尾没有行锁子句时返回空字符串
+	 */
+	public static String extractLockingClause(String postSql) {
+		if (InnerCommonUtils.isBlank(postSql)) {
+			return "";
+		}
+		Matcher matcher = LOCKING_CLAUSE_PATTERN.matcher(postSql);
+		return matcher.find() ? matcher.group(1).trim() : "";
+	}
+
+	/**
+	 * 移除postSql末尾的行锁子句（例如for update）。
+	 * @param postSql 从where开始的子句
+	 * @return 移除行锁子句后的postSql；没有行锁子句时原样返回（含postSql为null的情况）
+	 */
+	public static String removeLockingClause(String postSql) {
+		if (InnerCommonUtils.isBlank(postSql)) {
+			return postSql;
+		}
+		Matcher matcher = LOCKING_CLAUSE_PATTERN.matcher(postSql);
+		if (matcher.find()) {
+			return postSql.substring(0, matcher.start(1)).trim();
+		}
+		return postSql;
+	}
+
 	/**
 	 * 拼凑limit字句。前面有空格。
 	 * @param offset 可以为null

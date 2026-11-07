@@ -1,3 +1,5 @@
+v1.8.5 - [fix] 修复getOne/getPage的postSql里加for update子句导致报错的问题
+
 2026年6月1日
 v1.8.4 - [enhance] getRaw返回的Map默认按ResultSet的顺序返回，即使用LinkedHashMap代替HashMap
 
